@@ -1,0 +1,101 @@
+{
+  "_warning": "SYNTHETIC FIXTURES ONLY. No real people. Manual/rule-based generation for P0 integration testing.",
+  "cases": [
+    {
+      "case_id": "CASE-01-ALL-PASS",
+      "application_id": "APP-TEST-001",
+      "applicant_id": "CUS-TEST-001",
+      "monthly_income": 60000,
+      "monthly_obligations": 15000,
+      "credit_score": 780,
+      "employment_months": 36,
+      "loan_amount": 300000,
+      "loan_tenure_months": 36,
+      "expected_decision": "APPROVED"
+    },
+    {
+      "case_id": "CASE-02-FOIR-FAIL",
+      "application_id": "APP-TEST-002",
+      "applicant_id": "CUS-TEST-002",
+      "monthly_income": 32000,
+      "monthly_obligations": 18500,
+      "credit_score": 760,
+      "employment_months": 24,
+      "loan_amount": 300000,
+      "loan_tenure_months": 36,
+      "expected_decision": "REJECTED"
+    },
+    {
+      "case_id": "CASE-03-CREDIT-FAIL",
+      "application_id": "APP-TEST-003",
+      "applicant_id": "CUS-TEST-003",
+      "monthly_income": 55000,
+      "monthly_obligations": 10000,
+      "credit_score": 650,
+      "employment_months": 30,
+      "loan_amount": 300000,
+      "loan_tenure_months": 36,
+      "expected_decision": "REJECTED"
+    },
+    {
+      "case_id": "CASE-04-EMPLOYMENT-FAIL",
+      "application_id": "APP-TEST-004",
+      "applicant_id": "CUS-TEST-004",
+      "monthly_income": 50000,
+      "monthly_obligations": 12000,
+      "credit_score": 750,
+      "employment_months": 5,
+      "loan_amount": 300000,
+      "loan_tenure_months": 36,
+      "expected_decision": "REJECTED"
+    },
+    {
+      "case_id": "CASE-05-MULTI-FAIL",
+      "application_id": "APP-TEST-005",
+      "applicant_id": "CUS-TEST-005",
+      "monthly_income": 32000,
+      "monthly_obligations": 18500,
+      "credit_score": 690,
+      "employment_months": 8,
+      "loan_amount": 300000,
+      "loan_tenure_months": 36,
+      "expected_decision": "REJECTED"
+    },
+    {
+      "case_id": "CASE-06-BOUNDARY",
+      "application_id": "APP-TEST-006",
+      "applicant_id": "CUS-TEST-006",
+      "monthly_income": 25000,
+      "monthly_obligations": 11250,
+      "credit_score": 700,
+      "employment_months": 12,
+      "loan_amount": 200000,
+      "loan_tenure_months": 24,
+      "expected_decision": "APPROVED"
+    },
+    {
+      "case_id": "CASE-07-MISSING",
+      "application_id": "APP-TEST-007",
+      "applicant_id": "CUS-TEST-007",
+      "monthly_income": 40000,
+      "monthly_obligations": 10000,
+      "credit_score": null,
+      "employment_months": null,
+      "loan_amount": 250000,
+      "loan_tenure_months": 24,
+      "expected_decision": "ERROR"
+    },
+    {
+      "case_id": "CASE-08-INVALID",
+      "application_id": "APP-TEST-008",
+      "applicant_id": "CUS-TEST-008",
+      "monthly_income": -5000,
+      "monthly_obligations": 10000,
+      "credit_score": 950,
+      "employment_months": -3,
+      "loan_amount": 250000,
+      "loan_tenure_months": 24,
+      "expected_decision": "ERROR"
+    }
+  ]
+}

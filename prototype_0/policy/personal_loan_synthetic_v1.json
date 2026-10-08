@@ -1,0 +1,53 @@
+{
+  "policy_id": "PERSONAL_LOAN",
+  "policy_version": "synthetic-v1",
+  "synthetic": true,
+  "warning": "SYNTHETIC TEST POLICY ONLY. Not a VaaniLabs policy. Never use for real lending decisions.",
+  "currency": "INR",
+  "rules": [
+    {
+      "rule_id": "MIN_MONTHLY_INCOME",
+      "rule_name": "Minimum monthly income",
+      "reason_code": "ERR_INCOME_BELOW_MINIMUM",
+      "description": "Applicant monthly income must be at least Rs 25,000.",
+      "operator": ">=",
+      "threshold": 25000,
+      "field": "monthly_income",
+      "customer_visible": true,
+      "policy_version": "synthetic-v1"
+    },
+    {
+      "rule_id": "FOIR_MAX_45",
+      "rule_name": "Maximum FOIR",
+      "reason_code": "ERR_FOIR_EXCEEDED",
+      "description": "Fixed-Obligation-to-Income Ratio (monthly_obligations / monthly_income) must not exceed 0.45.",
+      "operator": "<=",
+      "threshold": 0.45,
+      "field": "foir",
+      "customer_visible": true,
+      "policy_version": "synthetic-v1"
+    },
+    {
+      "rule_id": "MIN_CREDIT_SCORE",
+      "rule_name": "Minimum credit score",
+      "reason_code": "ERR_CREDIT_SCORE_BELOW_MINIMUM",
+      "description": "Credit score must be at least 700.",
+      "operator": ">=",
+      "threshold": 700,
+      "field": "credit_score",
+      "customer_visible": true,
+      "policy_version": "synthetic-v1"
+    },
+    {
+      "rule_id": "MIN_EMPLOYMENT_TENURE",
+      "rule_name": "Minimum employment tenure",
+      "reason_code": "ERR_EMPLOYMENT_TENURE_SHORT",
+      "description": "Continuous employment must be at least 12 months.",
+      "operator": ">=",
+      "threshold": 12,
+      "field": "employment_months",
+      "customer_visible": true,
+      "policy_version": "synthetic-v1"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+zen-engine==2.1.2
+pydantic>=2.0
+requests>=2.31
+pytest>=8.0

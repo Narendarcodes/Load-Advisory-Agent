@@ -1,0 +1,20 @@
+{
+  "_comment": "P0 ZEN decision model for PERSONAL_LOAN synthetic-v1. Single expressionNode: ZEN v2 graph nodes receive ONLY the previous node's output (verified), so every expression here is self-contained against the root input — nothing references a sibling-computed key.",
+  "nodes": [
+    {"id": "in1", "type": "inputNode", "name": "Request"},
+    {"id": "uw1", "type": "expressionNode", "name": "underwrite_personal_loan_synthetic_v1",
+     "content": {"expressions": [
+       {"id": "e_foir", "key": "foir", "value": "monthly_obligations / monthly_income"},
+       {"id": "e_inc", "key": "income_pass", "value": "monthly_income >= 25000"},
+       {"id": "e_foirp", "key": "foir_pass", "value": "monthly_obligations / monthly_income <= 0.45"},
+       {"id": "e_cr", "key": "credit_pass", "value": "credit_score >= 700"},
+       {"id": "e_emp", "key": "employment_pass", "value": "employment_months >= 12"},
+       {"id": "e_dec", "key": "decision", "value": "monthly_income >= 25000 and monthly_obligations / monthly_income <= 0.45 and credit_score >= 700 and employment_months >= 12 ? 'APPROVED' : 'REJECTED'"}
+     ]}},
+    {"id": "out1", "type": "outputNode", "name": "Response"}
+  ],
+  "edges": [
+    {"id": "ed1", "sourceId": "in1", "type": "edge", "targetId": "uw1"},
+    {"id": "ed2", "sourceId": "uw1", "type": "edge", "targetId": "out1"}
+  ]
+}
