@@ -9,8 +9,8 @@ import os
 
 import pytest
 
-from prototype_0.integration.decision_orchestrator import decide
-from prototype_0.integration.frappe_adapter import (
+from loan_advisory.application.decision_orchestrator import decide
+from loan_advisory.infrastructure.frappe_adapter import (
     FrappeClient,
     FrappeUnavailable,
     MockStore,

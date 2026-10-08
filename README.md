@@ -13,9 +13,9 @@ ZEN Engine 2.1.2 · pydantic v2 · Frappe Lending 16.6.1 (frappe 16.51.0, erpnex
 ```powershell
 pip install -r requirements.txt
 python -m pytest tests/ -q                       # 9 passed, 5 skipped without live env
-python prototype_0/scripts/run_p0.py             # all fixtures + what-if demo
-python prototype_0/scripts/inspect_zen_trace.py  # decision + result + trace dump
-python -m prototype_0.integration.decision_orchestrator  # single-app demo check
+python scripts/development/run_p0.py             # all fixtures + what-if demo
+python scripts/development/inspect_zen_trace.py  # decision + result + trace dump
+python -m loan_advisory.application.decision_orchestrator  # single-app demo check (needs apps/api/src on PYTHONPATH)
 ```
 
 ## Live Frappe (P1)
@@ -35,10 +35,11 @@ P0 comparison, test results). Footprint: +7.28 GB images, +301 MB volumes,
 
 ## Where things live
 
-- Synthetic policy: `prototype_0/policy/personal_loan_synthetic_v1.json` (NOT real policy)
-- Synthetic data: `prototype_0/data/applicants.json` (8 cases, no real people)
-- ZEN model: `prototype_0/decisions/personal_loan_v1.json`
-- Mapping/orchestration/evidence: `prototype_0/integration/`, `prototype_0/evidence/`
+- Synthetic policy: `decision_engine/policies/personal_loan_synthetic_v1.json` (NOT real policy)
+- Synthetic data: `data/synthetic/applicants.json` (8 cases, no real people)
+- ZEN model: `decision_engine/decisions/personal_loan_v1.json`
+- API/adapter/orchestration: `apps/api/src/loan_advisory/` (application + infrastructure)
+- Frappe stack config: `infra/frappe/` (`loanrangers.yml`, `apps.json`)
 - Docs: `docs/p0-*.md` (versions, env, frappe, zen, mapping, integration, results…)
 
 ## Limitations

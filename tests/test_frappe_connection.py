@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from prototype_0.integration.frappe_adapter import (
+from loan_advisory.infrastructure.frappe_adapter import (
     FrappeClient,
     FrappeUnavailable,
     MockStore,

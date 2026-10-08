@@ -6,20 +6,20 @@ ERROR evidence object. We NEVER fabricate a decision.
 import json
 import time
 from datetime import datetime, timezone
-from pathlib import Path
 
 import zen
 
-from prototype_0.evidence.decision_evidence import build_evidence
-from prototype_0.integration import frappe_adapter
-from prototype_0.integration.frappe_adapter import (
+from decision_engine.evidence.decision_evidence import build_evidence
+from decision_engine.paths import repo_root
+from loan_advisory.infrastructure import frappe_adapter
+from loan_advisory.infrastructure.frappe_adapter import (
     FrappeUnavailable,
     UnknownApplication,
     from_frappe_doc,
 )
 
-DECISIONS_DIR = Path(__file__).resolve().parents[1] / "decisions"
-POLICY_PATH = Path(__file__).resolve().parents[1] / "policy" / "personal_loan_synthetic_v1.json"
+DECISIONS_DIR = repo_root() / "decision_engine" / "decisions"
+POLICY_PATH = repo_root() / "decision_engine" / "policies" / "personal_loan_synthetic_v1.json"
 
 _engine = None
 _decision = None

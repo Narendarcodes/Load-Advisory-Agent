@@ -17,13 +17,13 @@ Mapping (Frappe field -> canonical field -> ZEN input field):
 """
 import json
 import os
-from pathlib import Path
 
 import requests
 
-from prototype_0.contracts.underwriting import UnderwritingInput
+from decision_engine.paths import repo_root
+from decision_engine.schemas.underwriting import UnderwritingInput
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+DATA_DIR = repo_root() / "data" / "synthetic"
 
 
 class FrappeUnavailable(Exception):

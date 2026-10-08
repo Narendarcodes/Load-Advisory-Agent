@@ -3,8 +3,9 @@ import json
 import sys
 
 sys.path.insert(0, ".")
+sys.path.insert(0, "apps/api/src")
 
-from prototype_0.integration.decision_orchestrator import decide
+from loan_advisory.application.decision_orchestrator import decide
 
 app_id = sys.argv[1] if len(sys.argv) > 1 else "APP-TEST-005"
 ev = decide(app_id)

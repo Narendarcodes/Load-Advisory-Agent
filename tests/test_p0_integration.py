@@ -2,11 +2,11 @@
 import json
 from pathlib import Path
 
-from prototype_0.integration.decision_orchestrator import decide
-from prototype_0.integration.frappe_adapter import MockStore
+from loan_advisory.application.decision_orchestrator import decide
+from loan_advisory.infrastructure.frappe_adapter import MockStore
 
 FIXTURES = json.loads(
-    (Path(__file__).resolve().parents[1] / "prototype_0" / "data" / "applicants.json").read_text()
+    (Path(__file__).resolve().parents[1] / "data" / "synthetic" / "applicants.json").read_text()
 )["cases"]
 
 

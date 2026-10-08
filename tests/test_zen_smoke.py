@@ -4,7 +4,7 @@ from pathlib import Path
 
 import zen
 
-JDM = Path(__file__).resolve().parents[1] / "prototype_0" / "decisions" / "personal_loan_v1.json"
+JDM = Path(__file__).resolve().parents[1] / "decision_engine" / "decisions" / "personal_loan_v1.json"
 
 
 def test_zen_smoke():
