@@ -31,5 +31,6 @@ def test_live_frappe_roundtrip():
         client = FrappeClient()
     except FrappeUnavailable as e:
         pytest.skip(str(e))
-    doc = client.get("APP-TEST-001")
-    assert doc["name"] == "APP-TEST-001"
+    # Live fixture name comes from the P1 setup (Frappe autoname blocks APP-TEST-001).
+    doc = client.get(os.environ.get("FRAPPE_P1_APP", "ACC-LOAP-2026-00001"))
+    assert doc["applicant"] == "CUS-TEST-001"

@@ -1,25 +1,37 @@
-# Loan Advisory Agent — Prototype 0 (Frappe Lending + ZEN Engine)
+# Loan Advisory Agent — P0 (decision core) + P1 (live Frappe)
 
-P0 answers one question: can a synthetic loan application flow
-Frappe → canonical schema → ZEN → deterministic decision + rule evidence + trace?
-Yes — proven end-to-end (mock Frappe store; live-site install is the one open step).
+P0: mock Frappe → canonical → ZEN → decision + evidence + trace — GREEN.
+P1: **live** Frappe Lending 16.6.1 → same adapter/schema/ZEN — GREEN
+(live `ACC-LOAP-2026-00001` ≡ mock `APP-TEST-005`: REJECTED, identical rules).
 
 ## Stack
 
-ZEN Engine 2.1.2 · pydantic v2 · Frappe Lending v16 (pending live install) · pytest
+ZEN Engine 2.1.2 · pydantic v2 · Frappe Lending 16.6.1 (frappe 16.51.0, erpnext 16.50.0, Docker) · pytest
 
 ## Run
 
 ```powershell
 pip install -r requirements.txt
-python -m pytest tests/ -q                       # 7 passed, 1 skipped (live Frappe)
+python -m pytest tests/ -q                       # 9 passed, 5 skipped without live env
 python prototype_0/scripts/run_p0.py             # all fixtures + what-if demo
 python prototype_0/scripts/inspect_zen_trace.py  # decision + result + trace dump
 python -m prototype_0.integration.decision_orchestrator  # single-app demo check
 ```
 
-Live Frappe (optional): set `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET`
-— `FrappeClient` takes over from the mock store; no code changes.
+## Live Frappe (P1)
+
+Start the stack (frappe_docker clone, outside this repo):
+`docker compose --project-name loanrangers -f loanrangers.yml up -d --pull missing`
+(site `p1loan.local` → `http://127.0.0.1:8080`). Then:
+
+```powershell
+$env:FRAPPE_URL="http://127.0.0.1:8080"; $env:FRAPPE_API_KEY="<key>"; $env:FRAPPE_API_SECRET="<secret>"
+python -m pytest tests/ -q                       # 14 passed (incl. live round trip)
+```
+
+Details: `docs/p1-*.md` (installation, resources, API, live integration,
+P0 comparison, test results). Footprint: +7.28 GB images, +301 MB volumes,
+≈845 MB idle RAM.
 
 ## Where things live
 
@@ -31,8 +43,8 @@ Live Frappe (optional): set `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET`
 
 ## Limitations
 
-- Frappe runs against a synthetic in-memory store until the WSL2/Docker bench
-  install is done (`docs/p0-environment.md` has the steps).
+- Live DocTypes use Frappe autonames (`ACC-LOAP-…`); `APP-TEST-00x` IDs exist
+  only in the mock store. Loan Application forbids rename.
 - ZEN 2.x nodes see only the previous node's output → single self-contained
   expression node (documented in `docs/p0-zen.md`).
-- No write-back, no workflow trigger, no LLM/agent — all explicitly P1.
+- No workflow trigger, no LLM/agent — explicitly future work.
