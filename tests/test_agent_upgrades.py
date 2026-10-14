@@ -324,3 +324,64 @@ def test_stream_endpoint_sends_sentences_then_the_final_response(tmp_path):
     assert kinds[:2] == ["sentence", "sentence"] and kinds[-1] == "final"
     assert events[0]["text"] == "Your recorded decision is REJECTED."
     assert events[-1]["response"]["intent"] == "explain"
+
+
+# ------------------------------------------------------------------ voice worker helpers (no livekit needed)
+def test_voice_settings_from_env(monkeypatch):
+    monkeypatch.setenv("VOICE_HTTP_TIMEOUT_S", "40")
+    monkeypatch.setenv("VOICE_FILLER_AFTER_S", "3.5")
+    v = S.VoiceSettings.from_env()
+    assert v.http_timeout_s == 40 and v.filler_after_s == 3.5
+    assert v.http_timeout_s > S.AgentSettings.from_env().voice_deadline_s  # the graph's deadline fires first
+    assert set(v.filler) >= {"en", "hi", "te"} and set(v.unreachable) >= {"en", "hi", "te"}
+
+
+def _events(spec):
+    """spec: list of (delay_s, event) -> async iterator of events."""
+    import asyncio
+
+    async def gen():
+        for d, ev in spec:
+            await asyncio.sleep(d)
+            yield ev
+    return gen()
+
+
+def test_speakable_yields_sentences_and_reports_the_final_response():
+    import asyncio
+
+    from loan_advisory.agent.streaming import speakable
+    finals = []
+    spec = [(0.01, {"type": "sentence", "text": "One."}), (0.01, {"type": "sentence", "text": "Two."}),
+            (0.01, {"type": "final", "response": {"answer": "One. Two."}})]
+
+    async def run():
+        return [t async for t in speakable(_events(spec), filler_after_s=5, filler_text="One moment.", on_final=finals.append)]
+    assert asyncio.run(run()) == ["One.", "Two."]
+    assert finals == [{"answer": "One. Two."}]
+
+
+def test_speakable_says_one_moment_once_when_the_graph_is_slow():
+    import asyncio
+
+    from loan_advisory.agent.streaming import speakable
+    spec = [(0.35, {"type": "sentence", "text": "Late answer."}), (0.0, {"type": "final", "response": {"answer": "Late answer."}})]
+
+    async def run():
+        return [t async for t in speakable(_events(spec), filler_after_s=0.1, filler_text="One moment, please.", on_final=lambda r: None)]
+    assert asyncio.run(run()) == ["One moment, please.", "Late answer."]
+
+
+def test_speakable_falls_back_when_the_stream_breaks_or_ends_without_a_sentence():
+    import asyncio
+
+    from loan_advisory.agent.streaming import speakable
+
+    async def broken():
+        yield {"type": "sentence", "text": "First."}
+        raise ConnectionError("reset")
+
+    async def run(src):
+        return [t async for t in speakable(src, filler_after_s=5, filler_text="x", on_final=lambda r: None, failure_text="Sorry.")]
+    assert asyncio.run(run(broken())) == ["First.", "Sorry."]
+    assert asyncio.run(run(_events([(0.0, {"type": "final", "response": {"answer": "Whole answer."}})]))) == ["Whole answer."]
