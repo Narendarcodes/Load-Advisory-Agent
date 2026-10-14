@@ -1,0 +1,90 @@
+{
+ "total": 149,
+ "human": 66,
+ "llm_draft_reviewed": 83,
+ "abstain": 16,
+ "dev": 58,
+ "test": 91,
+ "by_category": {
+  "abstain_action": {
+   "dev": 0,
+   "test": 1
+  },
+  "abstain_guarantee": {
+   "dev": 1,
+   "test": 2
+  },
+  "abstain_injection": {
+   "dev": 0,
+   "test": 1
+  },
+  "abstain_invented": {
+   "dev": 2,
+   "test": 3
+  },
+  "abstain_other_lender": {
+   "dev": 2,
+   "test": 3
+  },
+  "abstain_out_of_scope": {
+   "dev": 0,
+   "test": 1
+  },
+  "adversarial_invented": {
+   "dev": 0,
+   "test": 1
+  },
+  "digital_lending": {
+   "dev": 5,
+   "test": 7
+  },
+  "eligibility": {
+   "dev": 6,
+   "test": 9
+  },
+  "fees": {
+   "dev": 7,
+   "test": 11
+  },
+  "fpc_conduct": {
+   "dev": 3,
+   "test": 5
+  },
+  "grievance": {
+   "dev": 11,
+   "test": 16
+  },
+  "historical": {
+   "dev": 1,
+   "test": 2
+  },
+  "interest_rate_policy": {
+   "dev": 3,
+   "test": 5
+  },
+  "kfs_terms": {
+   "dev": 6,
+   "test": 9
+  },
+  "kyc_privacy_terms": {
+   "dev": 4,
+   "test": 6
+  },
+  "lender_type": {
+   "dev": 2,
+   "test": 2
+  },
+  "loan_terms": {
+   "dev": 2,
+   "test": 2
+  },
+  "rejection_reapply": {
+   "dev": 3,
+   "test": 4
+  },
+  "version_current": {
+   "dev": 0,
+   "test": 1
+  }
+ }
+}

@@ -1,0 +1,10 @@
+# Reference-lender profile. Bajaj Finance Ltd is a PUBLIC REFERENCE LENDER used to build, evaluate and test the
+# policy RAG. There is NO partnership: every answer citing a BFL source must carry the relationship label below.
+profile_id: bajaj_finance
+lender_id: BFL
+legal_name: Bajaj Finance Limited
+entity_type: nbfc            # selects RBI texts with applies_to_entity in {nbfc, all}
+relationship: "public reference lender, not a partner"
+products: [personal_loan]
+# source types this profile may cite; lender_education (marketing/insight articles) is opt-in per query
+default_source_types: [regulator, regulator_faq, lender_policy, lender_terms, lender_web_page]

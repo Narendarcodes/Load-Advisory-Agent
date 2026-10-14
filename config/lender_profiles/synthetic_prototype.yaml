@@ -1,0 +1,9 @@
+# The team's synthetic-v1 prototype policy (what the ZEN decision engine runs) + lender-neutral RBI texts.
+# entity_type "any" admits bank and NBFC regulator texts (each chunk still carries its applies_to_entity label).
+profile_id: synthetic_prototype
+lender_id: SYNTHETIC
+legal_name: "Prototype lender (SYNTHETIC)"
+entity_type: any
+relationship: "team-authored synthetic prototype policy"
+products: [personal_loan]
+default_source_types: [regulator, regulator_faq, synthetic]

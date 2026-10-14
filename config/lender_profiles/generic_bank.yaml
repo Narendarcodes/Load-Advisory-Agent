@@ -1,0 +1,8 @@
+# Lender-neutral commercial-bank profile: RBI bank + common texts only, no lender documents.
+profile_id: generic_bank
+lender_id: null
+legal_name: null
+entity_type: bank
+relationship: null
+products: [personal_loan]
+default_source_types: [regulator, regulator_faq]
