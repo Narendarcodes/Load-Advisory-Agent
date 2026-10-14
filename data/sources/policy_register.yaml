@@ -1,257 +1,963 @@
-# Policy source register (Phase 4 governance). Metadata only: fetched raw text lives in
-# $LOAN_DATA_DIR/policy/ (not in git). Every item records authority, version and approval
-# state; nothing becomes "approved" automatically - a fetched change is a REVIEW EVENT.
+# Policy source register v2 (lender-profile aware). Metadata only: fetched raw text lives on the droplet
+# ($LOAN_POLICY_DIR, default /root/hx/loan/policy) and is NOT in git. Every item records authority, version and
+# approval state; nothing becomes "approved" automatically - a fetched change is a REVIEW EVENT.
 #
-# approval_status: approved (reviewed, current) | approved_historical (kept for audit /
-#   past decisions, excluded from current-policy answers) | pending_review | registered_not_ingested
-# licence: RBI website: "(c) Reserve Bank of India. All Rights Reserved" (rbi.org.in/Scripts/Disclaimer.aspx);
-#   used for non-commercial capstone research, not redistributed. Bank pages: (c) the bank.
-# retrieved_at / content_hash are filled by scripts/policy/fetch_sources.py into the manifest.
-reviewed_by: "Hark (automated research for Golla Narendar), 2026-10-14 - needs human sign-off"
+# approval_status: approved (reviewed, current) | approved_historical (kept for audit / past decisions, excluded
+#   from current-policy answers) | pending_review | registered_not_ingested
+# source_type: regulator | regulator_faq | lender_policy | lender_terms | lender_web_page | lender_education |
+#   synthetic | untrusted_test | statute
+# lender_id: null for regulator text; BFL = Bajaj Finance Ltd, the PUBLIC REFERENCE LENDER (not a partner);
+#   HDFC/ICICI = public comparison lenders (not partners); SYNTHETIC = team prototype policy.
+# applies_to_entity: [bank] | [nbfc] | [all] - which RBI entity type a regulator text governs. Lender profiles
+#   (config/lender_profiles/*.yaml) select documents by entity type + lender_id, so the design stays lender-neutral.
+# local_file: official PDF downloaded through a browser (rbidocs.rbi.org.in serves a bot challenge to scripts);
+#   source_url is still the official URL; raw sha256 is in data/sources/policy_manifest_v2.json.
+register_version: 2
+reviewed_by: Verified 2026-10-14 by Hark (automated) - needs human sign-off
 documents:
-  - document_id: RBI-DLD-2025
-    title: "Reserve Bank of India (Digital Lending) Directions, 2025"
-    publisher: Reserve Bank of India
-    authority: regulator
-    reference: "RBI/2025-26/36 DOR.STR.REC.19/21.07.001/2025-26"
-    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12848&Mode=0"
-    document_type: master_direction
-    jurisdiction: IN
-    product: [personal_loan, digital_lending]
-    publication_date: 2025-05-08
-    effective_from: 2025-05-08
-    effective_to: null
-    supersedes: [RBI-DL-GUIDELINES-2022]
-    approval_status: approved
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-KFS-2024
-    title: "Key Facts Statement (KFS) for Loans & Advances"
-    publisher: Reserve Bank of India
-    authority: regulator
-    reference: "RBI/2024-25/18 DOR.STR.REC.13/13.03.00/2024-25"
-    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12663&Mode=0"
-    document_type: circular
-    jurisdiction: IN
-    product: [personal_loan, retail_term_loan]
-    publication_date: 2024-04-15
-    effective_from: 2024-10-01
-    effective_to: null
-    supersedes: []
-    approval_status: approved
-    notes: "Consolidated into the 2025 Responsible Business Conduct Directions per later RBI consolidation (unverified at circular level) - kept as approved until the RBC text is ingested."
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-PENAL-2023
-    title: "Fair Lending Practice - Penal Charges in Loan Accounts"
-    publisher: Reserve Bank of India
-    authority: regulator
-    reference: "RBI/2023-24/53 DoR.MCS.REC.28/01.01.001/2023-24"
-    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12527&Mode=0"
-    document_type: circular
-    jurisdiction: IN
-    product: [personal_loan, all_loans]
-    publication_date: 2023-08-18
-    effective_from: 2024-01-01
-    effective_to: null
-    supersedes: []
-    approval_status: approved
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-CIC-CS-2023
-    title: "Strengthening of customer service rendered by Credit Information Companies and Credit Institutions"
-    publisher: Reserve Bank of India
-    authority: regulator
-    reference: "RBI/2023-24/73 DoR.FIN.REC.49/20.16.003/2023-24"
-    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12553&Mode=0"
-    document_type: circular
-    jurisdiction: IN
-    product: [credit_information]
-    publication_date: 2023-10-26
-    effective_from: 2024-04-26
-    effective_to: null
-    supersedes: []
-    approval_status: approved
-    notes: "Later consolidated into RBI (Credit Information Companies) Directions, 2025 (not ingested)."
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-CIC-COMP-2023
-    title: "Framework for compensation to customers for delayed updation/rectification of credit information"
-    publisher: Reserve Bank of India
-    authority: regulator
-    reference: "RBI/2023-24/72 DoR.FIN.REC.48/20.16.003/2023-24"
-    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12554&Mode=0"
-    document_type: circular
-    jurisdiction: IN
-    product: [credit_information]
-    publication_date: 2023-10-26
-    effective_from: 2024-04-26
-    effective_to: null
-    supersedes: []
-    approval_status: approved
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-IOS-2021
-    title: "Reserve Bank - Integrated Ombudsman Scheme, 2021 (notification)"
-    publisher: Reserve Bank of India
-    authority: regulator
-    reference: "CEPD.PRD.No.S873/13.01.001/2021-22"
-    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12192&Mode=0"
-    document_type: scheme
-    jurisdiction: IN
-    product: [grievance_redress]
-    publication_date: 2021-11-12
-    effective_from: 2021-11-12
-    effective_to: 2026-06-30
-    superseded_by: [RBI-IOS-2026-FAQ]
-    supersedes: []
-    approval_status: approved_historical
-    notes: "Replaced by RB-IOS 2026 from 2026-07-01 (per RBI FAQ); still governs complaints received before that date. Only the cover notification is HTML; the scheme text is a PDF (rbidocs, not fetchable)."
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-IOS-2026-FAQ
-    title: "FAQs - Reserve Bank - Integrated Ombudsman Scheme, 2026 (updated as on July 01, 2026)"
-    publisher: Reserve Bank of India
-    authority: regulator_consumer_education
-    source_url: "https://rbi.org.in/Scripts/FAQView.aspx?Id=153"
-    start_marker: "1. What is RB-IOS, 2026?"
-    end_marker: "Back to previous page"
-    document_type: faq
-    jurisdiction: IN
-    product: [grievance_redress]
-    publication_date: 2026-07-01
-    effective_from: 2026-07-01
-    effective_to: null
-    supersedes: [RBI-IOS-2021]
-    approval_status: approved
-    notes: "FAQ disclaimer: guidance only, the Scheme text governs. Scheme PDF (rbidocs) not fetchable by script."
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-FPC-2007
-    title: "Guidelines on Fair Practices Code for Lenders (reasons for rejection - all loan categories)"
-    publisher: Reserve Bank of India
-    authority: regulator
-    reference: "RBI/2006-2007/280 DBOD.No.Leg.BC.65/09.07.005/2006-07"
-    source_url: "https://www.rbi.org.in/Scripts/BS_CircularIndexDisplay.aspx?Id=3315"
-    document_type: circular
-    jurisdiction: IN
-    product: [all_loans]
-    publication_date: 2007-03-06
-    effective_from: 2007-03-06
-    effective_to: 2025-11-28
-    superseded_by: [RBI-RBC-CB-2025]
-    supersedes: []
-    approval_status: approved_historical
-    notes: "Requirement to convey main reasons for rejection in writing is carried into the 2025 RBC Directions (AIFI text verified; CB/NBFC text not ingested)."
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-MC-CS-2015
-    title: "Master Circular on Customer Service in Banks (July 1, 2015)"
-    publisher: Reserve Bank of India
-    authority: regulator
-    reference: "RBI/2015-16/59 DBR No.Leg.BC.21/09.07.006/2015-16"
-    source_url: "https://www.rbi.org.in/Scripts/BS_ViewMasCirculardetails.aspx?id=9862"
-    document_type: master_circular
-    jurisdiction: IN
-    product: [all_loans, customer_service]
-    publication_date: 2015-07-01
-    effective_from: 2015-07-01
-    effective_to: 2016-07-01
-    superseded_by: ["later master circulars / 2025 RBC Directions"]
-    supersedes: []
-    approval_status: approved_historical
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-RBC-CB-2025
-    title: "Reserve Bank of India (Commercial Banks - Responsible Business Conduct) Directions, 2025"
-    publisher: Reserve Bank of India
-    authority: regulator
-    reference: "RBI/DOR/2025-26/170 DOR.MCS.REC.No.89/01-01-032/2025-26"
-    source_url: "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=13140"
-    document_type: master_direction
-    jurisdiction: IN
-    product: [all_loans]
-    publication_date: 2025-11-28
-    effective_from: 2025-11-28
-    effective_to: null
-    supersedes: [RBI-FPC-2007]
-    approval_status: registered_not_ingested
-    notes: "Text only as PDF on rbidocs.rbi.org.in, which serves a JS bot challenge to scripted clients (2026-10-14). Needs manual download by the user."
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: RBI-RBC-NBFC-2025
-    title: "Reserve Bank of India (Non-Banking Financial Companies - Responsible Business Conduct) Directions, 2025"
-    publisher: Reserve Bank of India
-    authority: regulator
-    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12942&Mode=0"
-    document_type: master_direction
-    jurisdiction: IN
-    product: [all_loans]
-    publication_date: 2025-11-28
-    effective_from: 2025-11-28
-    effective_to: null
-    supersedes: []
-    approval_status: registered_not_ingested
-    notes: "PDF-only (rbidocs bot challenge). Applicable if the partner lender is an NBFC."
-    licence: "(c) RBI, all rights reserved; research use"
-  - document_id: HDFC-PL-ELIG
-    title: "HDFC Bank - Personal Loan Eligibility Criteria (public web page)"
-    publisher: HDFC Bank Ltd
-    authority: lender_public_page
-    source_url: "https://www.hdfcbank.com/personal/borrow/popular-loans/personal-loan/eligibility"
-    document_type: eligibility_page
-    jurisdiction: IN
-    product: [personal_loan]
-    publication_date: null
-    effective_from: null
-    effective_to: null
-    supersedes: []
-    approval_status: approved
-    notes: "Public marketing eligibility, NOT the bank's internal underwriting policy. Never attribute to our synthetic policy."
-    licence: "(c) HDFC Bank Ltd; research use, not redistributed"
-  - document_id: ICICI-PL-ELIG
-    title: "ICICI Bank - Personal Loan Eligibility (public web page)"
-    publisher: ICICI Bank Ltd
-    authority: lender_public_page
-    source_url: "https://www.icicibank.com/personal-banking/loans/personal-loan/eligibility"
-    document_type: eligibility_page
-    jurisdiction: IN
-    product: [personal_loan]
-    publication_date: null
-    effective_from: null
-    effective_to: null
-    supersedes: []
-    approval_status: approved
-    notes: "Public marketing eligibility, NOT internal underwriting policy."
-    licence: "(c) ICICI Bank Ltd; research use, not redistributed"
-  - document_id: SYN-POLICY-V1
-    title: "Prototype personal-loan eligibility policy synthetic-v1 (SYNTHETIC)"
-    publisher: Loan Rangers capstone team
-    authority: synthetic
-    source_url: "repo://data/evaluation/rag/synthetic_docs/SYN-POLICY-V1.md"
-    document_type: synthetic_policy
-    jurisdiction: prototype
-    product: [personal_loan]
-    publication_date: 2026-10-08
-    effective_from: 2026-10-08
-    effective_to: null
-    supersedes: []
-    approval_status: approved
-    notes: "Human-readable rendering of decision_engine/policies/personal_loan_synthetic_v1.json. Must always be cited as synthetic."
-    licence: "team-authored"
-  - document_id: SYN-INJECT-001
-    title: "Adversarial test page with embedded prompt injection (SYNTHETIC)"
-    publisher: Loan Rangers capstone team
-    authority: untrusted_test
-    source_url: "repo://data/evaluation/rag/synthetic_docs/SYN-INJECT-001.md"
-    document_type: adversarial_test
-    jurisdiction: none
-    product: [personal_loan]
-    publication_date: 2026-10-14
-    effective_from: null
-    effective_to: null
-    supersedes: []
-    approval_status: pending_review
-    notes: "Never approved: exists to test that unapproved/untrusted text is filtered and never treated as instructions."
-    licence: "team-authored"
-  # Registered references, not ingested (out of scope for the first corpus):
-  - document_id: IN-DPDP-2023
-    title: "Digital Personal Data Protection Act, 2023 and DPDP Rules, 2025"
-    publisher: Government of India (MeitY)
-    authority: statute
-    source_url: "https://www.meity.gov.in/data-protection-framework"
-    document_type: statute
-    jurisdiction: IN
-    product: [data_protection]
-    approval_status: registered_not_ingested
-    notes: "Commencement/applicability of specific provisions to the prototype is UNRESOLVED; needs legal review, not RAG."
+- document_id: RBI-DLD-2025
+  title: Reserve Bank of India (Digital Lending) Directions, 2025
+  publisher: Reserve Bank of India
+  authority: regulator
+  reference: RBI/2025-26/36 DOR.STR.REC.19/21.07.001/2025-26
+  source_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12848&Mode=0
+  document_type: master_direction
+  jurisdiction: IN
+  product:
+  - personal_loan
+  - digital_lending
+  publication_date: 2025-05-08
+  effective_from: 2025-05-08
+  effective_to: '2025-11-28'
+  supersedes:
+  - RBI-DL-GUIDELINES-2022
+  approval_status: approved_historical
+  licence: (c) RBI, all rights reserved; research use
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - all
+  source_type: regulator
+  superseded_by:
+  - RBI-NBFC-CF-2025
+  - RBI-RBC-NBFC-2025
+  - RBI-RBC-CB-2025
+  notes: 'WITHDRAWN: the RBI PDF linked from NotificationUser Id=12848 carries a ''Withdrawn'' watermark (seen in browser 2026-10-14). Digital-lending
+    rules for NBFCs now sit in RBI (NBFC - Credit Facilities) Directions 2025, Chapter III (RBI-NBFC-CF-2025), issued in the 2025-11-28 consolidation
+    (RBI press release prid=61705). Kept for historical questions only.'
+- document_id: RBI-KFS-2024
+  title: Key Facts Statement (KFS) for Loans & Advances
+  publisher: Reserve Bank of India
+  authority: regulator
+  reference: RBI/2024-25/18 DOR.STR.REC.13/13.03.00/2024-25
+  source_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12663&Mode=0
+  document_type: circular
+  jurisdiction: IN
+  product:
+  - personal_loan
+  - retail_term_loan
+  publication_date: 2024-04-15
+  effective_from: 2024-10-01
+  effective_to: '2025-11-28'
+  supersedes: []
+  approval_status: approved_historical
+  notes: 'Content now in RBC Directions 2025 (NBFC: Chapter III.B + Annex I; banks: equivalent chapter). The RBC repeal clause (NBFC para 106)
+    repeals the earlier conduct instructions per circular DOR.RRC.REC.302/33-01-010/2025-26; the circular-level repeal list itself was not opened
+    (inferred).'
+  licence: (c) RBI, all rights reserved; research use
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - all
+  source_type: regulator
+  superseded_by:
+  - RBI-RBC-NBFC-2025
+  - RBI-RBC-CB-2025
+- document_id: RBI-PENAL-2023
+  title: Fair Lending Practice - Penal Charges in Loan Accounts
+  publisher: Reserve Bank of India
+  authority: regulator
+  reference: RBI/2023-24/53 DoR.MCS.REC.28/01.01.001/2023-24
+  source_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12527&Mode=0
+  document_type: circular
+  jurisdiction: IN
+  product:
+  - personal_loan
+  - all_loans
+  publication_date: 2023-08-18
+  effective_from: 2024-01-01
+  effective_to: '2025-11-28'
+  supersedes: []
+  approval_status: approved_historical
+  licence: (c) RBI, all rights reserved; research use
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - all
+  source_type: regulator
+  superseded_by:
+  - RBI-RBC-NBFC-2025
+  - RBI-RBC-CB-2025
+  notes: Content now in RBC Directions 2025 (NBFC Chapter III.C). Repeal inferred from RBC para 106 + identical text; repeal list not opened.
+- document_id: RBI-CIC-CS-2023
+  title: Strengthening of customer service rendered by Credit Information Companies and Credit Institutions
+  publisher: Reserve Bank of India
+  authority: regulator
+  reference: RBI/2023-24/73 DoR.FIN.REC.49/20.16.003/2023-24
+  source_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12553&Mode=0
+  document_type: circular
+  jurisdiction: IN
+  product:
+  - credit_information
+  publication_date: 2023-10-26
+  effective_from: 2024-04-26
+  effective_to: null
+  supersedes: []
+  approval_status: approved
+  notes: 'Later consolidated into RBI (Credit Information Companies) Directions, 2025 (not ingested). UNRESOLVED (2026-10-14): may also have been
+    consolidated on 2025-11-28 into CIC Directions; not re-checked. Applies to CICs/credit institutions.'
+  licence: (c) RBI, all rights reserved; research use
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - all
+  source_type: regulator
+- document_id: RBI-CIC-COMP-2023
+  title: Framework for compensation to customers for delayed updation/rectification of credit information
+  publisher: Reserve Bank of India
+  authority: regulator
+  reference: RBI/2023-24/72 DoR.FIN.REC.48/20.16.003/2023-24
+  source_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12554&Mode=0
+  document_type: circular
+  jurisdiction: IN
+  product:
+  - credit_information
+  publication_date: 2023-10-26
+  effective_from: 2024-04-26
+  effective_to: null
+  supersedes: []
+  approval_status: approved
+  licence: (c) RBI, all rights reserved; research use
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - all
+  source_type: regulator
+  notes: ' UNRESOLVED (2026-10-14): may also have been consolidated on 2025-11-28 into CIC Directions; not re-checked. Applies to CICs/credit
+    institutions.'
+- document_id: RBI-IOS-2021
+  title: Reserve Bank - Integrated Ombudsman Scheme, 2021 (notification)
+  publisher: Reserve Bank of India
+  authority: regulator
+  reference: CEPD.PRD.No.S873/13.01.001/2021-22
+  source_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12192&Mode=0
+  document_type: scheme
+  jurisdiction: IN
+  product:
+  - grievance_redress
+  publication_date: 2021-11-12
+  effective_from: 2021-11-12
+  effective_to: 2026-06-30
+  superseded_by:
+  - RBI-IOS-2026-FAQ
+  supersedes: []
+  approval_status: approved_historical
+  notes: Replaced by RB-IOS 2026 from 2026-07-01 (per RBI FAQ); still governs complaints received before that date. Only the cover notification
+    is HTML; the scheme text is a PDF (rbidocs, not fetchable).
+  licence: (c) RBI, all rights reserved; research use
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - all
+  source_type: regulator
+- document_id: RBI-IOS-2026-FAQ
+  title: FAQs - Reserve Bank - Integrated Ombudsman Scheme, 2026 (updated as on July 01, 2026)
+  publisher: Reserve Bank of India
+  authority: regulator_consumer_education
+  source_url: https://rbi.org.in/Scripts/FAQView.aspx?Id=153
+  start_marker: 1. What is RB-IOS, 2026?
+  end_marker: Back to previous page
+  document_type: faq
+  jurisdiction: IN
+  product:
+  - grievance_redress
+  publication_date: 2026-07-01
+  effective_from: 2026-07-01
+  effective_to: null
+  supersedes:
+  - RBI-IOS-2021
+  approval_status: approved
+  notes: 'FAQ disclaimer: guidance only, the Scheme text governs. Scheme PDF (rbidocs) not fetchable by script.'
+  licence: (c) RBI, all rights reserved; research use
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - all
+  source_type: regulator_faq
+- document_id: RBI-FPC-2007
+  title: Guidelines on Fair Practices Code for Lenders (reasons for rejection - all loan categories)
+  publisher: Reserve Bank of India
+  authority: regulator
+  reference: RBI/2006-2007/280 DBOD.No.Leg.BC.65/09.07.005/2006-07
+  source_url: https://www.rbi.org.in/Scripts/BS_CircularIndexDisplay.aspx?Id=3315
+  document_type: circular
+  jurisdiction: IN
+  product:
+  - all_loans
+  publication_date: 2007-03-06
+  effective_from: 2007-03-06
+  effective_to: 2025-11-28
+  superseded_by:
+  - RBI-RBC-CB-2025
+  supersedes: []
+  approval_status: approved_historical
+  notes: 'Banks/FIs. Historical. Current bank text: RBI-RBC-CB-2025 para 331 (verified). NBFC rules have NO equivalent written-rejection-reasons
+    clause (verified in RBI-RBC-NBFC-2025 Chapter III.A, 2026-10-14).'
+  licence: (c) RBI, all rights reserved; research use
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - bank
+  source_type: regulator
+- document_id: RBI-MC-CS-2015
+  title: Master Circular on Customer Service in Banks (July 1, 2015)
+  publisher: Reserve Bank of India
+  authority: regulator
+  reference: RBI/2015-16/59 DBR No.Leg.BC.21/09.07.006/2015-16
+  source_url: https://www.rbi.org.in/Scripts/BS_ViewMasCirculardetails.aspx?id=9862
+  document_type: master_circular
+  jurisdiction: IN
+  product:
+  - all_loans
+  - customer_service
+  publication_date: 2015-07-01
+  effective_from: 2015-07-01
+  effective_to: 2016-07-01
+  superseded_by:
+  - later master circulars / 2025 RBC Directions
+  supersedes: []
+  approval_status: approved_historical
+  licence: (c) RBI, all rights reserved; research use
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - bank
+  source_type: regulator
+- document_id: RBI-RBC-CB-2025
+  title: Reserve Bank of India (Commercial Banks - Responsible Business Conduct) Directions, 2025
+  publisher: Reserve Bank of India
+  authority: regulator
+  reference: RBI/DOR/2025-26/170 DOR.MCS.REC.No.89/01-01-032/2025-26
+  source_url: https://rbidocs.rbi.org.in/rdocs/notification/PDFs/170MD.PDF
+  document_type: master_direction
+  jurisdiction: IN
+  product:
+  - all_loans
+  publication_date: 2025-11-28
+  effective_from: 2025-11-28
+  effective_to: null
+  supersedes:
+  - RBI-FPC-2007
+  approval_status: approved
+  notes: 'Banks. Para 331: convey in writing the main reason(s) for rejection for all categories of loans (verified). 161 pages; downloaded via
+    browser (rbidocs blocks scripts).'
+  licence: (c) Reserve Bank of India, all rights reserved (rbi.org.in/Scripts/Disclaimer.aspx); non-commercial research use, not redistributed
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - bank
+  source_type: regulator
+  local_file: RBI-RBC-CB-2025.pdf
+  fetch_method: browser_manual
+  landing_url: https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=13140
+  version: Updated as on October 1, 2026
+  para_digits: 3
+- document_id: RBI-RBC-NBFC-2025
+  title: Reserve Bank of India (Non-Banking Financial Companies - Responsible Business Conduct) Directions, 2025
+  publisher: Reserve Bank of India
+  authority: regulator
+  source_url: https://rbidocs.rbi.org.in/rdocs/notification/PDFs/362MD26CA543937BA439A97E1BCFC08CF5808.PDF
+  document_type: master_direction
+  jurisdiction: IN
+  product:
+  - all_loans
+  publication_date: 2025-11-28
+  effective_from: 2025-11-28
+  effective_to: null
+  supersedes: []
+  approval_status: approved
+  notes: 'NBFCs (applies to Bajaj Finance). Chapter III: FPC, KFS (+Annex I format), penal charges, floating-rate reset, pre-payment, document
+    release. No clause requiring written reasons for loan rejection (verified 2026-10-14).'
+  licence: (c) Reserve Bank of India, all rights reserved (rbi.org.in/Scripts/Disclaimer.aspx); non-commercial research use, not redistributed
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - nbfc
+  source_type: regulator
+  local_file: RBI-RBC-NBFC-2025.pdf
+  fetch_method: browser_manual
+  landing_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12942&Mode=0
+  reference: RBI/DOR/2025-26/362 DOR.MCS.REC.No.281/01-01-039/2025-26
+  version: Updated as on July 1, 2026
+  para_digits: 3
+- document_id: HDFC-PL-ELIG
+  title: HDFC Bank - Personal Loan Eligibility Criteria (public web page)
+  publisher: HDFC Bank Ltd
+  authority: lender_public_page
+  source_url: https://www.hdfcbank.com/personal/borrow/popular-loans/personal-loan/eligibility
+  document_type: eligibility_page
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  approval_status: approved
+  notes: Public marketing eligibility, NOT the bank's internal underwriting policy. Never attribute to our synthetic policy.
+  licence: (c) HDFC Bank Ltd; research use, not redistributed
+  lender_id: HDFC
+  lender_relationship: public comparison lender, not a partner
+  applies_to_entity:
+  - bank
+  source_type: lender_web_page
+- document_id: ICICI-PL-ELIG
+  title: ICICI Bank - Personal Loan Eligibility (public web page)
+  publisher: ICICI Bank Ltd
+  authority: lender_public_page
+  source_url: https://www.icicibank.com/personal-banking/loans/personal-loan/eligibility
+  document_type: eligibility_page
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  approval_status: approved
+  notes: Public marketing eligibility, NOT internal underwriting policy.
+  licence: (c) ICICI Bank Ltd; research use, not redistributed
+  lender_id: ICICI
+  lender_relationship: public comparison lender, not a partner
+  applies_to_entity:
+  - bank
+  source_type: lender_web_page
+- document_id: SYN-POLICY-V1
+  title: Prototype personal-loan eligibility policy synthetic-v1 (SYNTHETIC)
+  publisher: Loan Rangers capstone team
+  authority: synthetic
+  source_url: repo://data/evaluation/rag/synthetic_docs/SYN-POLICY-V1.md
+  document_type: synthetic_policy
+  jurisdiction: prototype
+  product:
+  - personal_loan
+  publication_date: 2026-10-08
+  effective_from: 2026-10-08
+  effective_to: null
+  supersedes: []
+  approval_status: approved
+  notes: Human-readable rendering of decision_engine/policies/personal_loan_synthetic_v1.json. Must always be cited as synthetic.
+  licence: team-authored
+  lender_id: SYNTHETIC
+  lender_relationship: team-authored synthetic prototype policy
+  applies_to_entity:
+  - all
+  source_type: synthetic
+- document_id: SYN-INJECT-001
+  title: Adversarial test page with embedded prompt injection (SYNTHETIC)
+  publisher: Loan Rangers capstone team
+  authority: untrusted_test
+  source_url: repo://data/evaluation/rag/synthetic_docs/SYN-INJECT-001.md
+  document_type: adversarial_test
+  jurisdiction: none
+  product:
+  - personal_loan
+  publication_date: 2026-10-14
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  approval_status: pending_review
+  notes: 'Never approved: exists to test that unapproved/untrusted text is filtered and never treated as instructions.'
+  licence: team-authored
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - all
+  source_type: untrusted_test
+- document_id: IN-DPDP-2023
+  title: Digital Personal Data Protection Act, 2023 and DPDP Rules, 2025
+  publisher: Government of India (MeitY)
+  authority: statute
+  source_url: https://www.meity.gov.in/data-protection-framework
+  document_type: statute
+  jurisdiction: IN
+  product:
+  - data_protection
+  approval_status: registered_not_ingested
+  notes: Commencement/applicability of specific provisions to the prototype is UNRESOLVED; needs legal review, not RAG.
+  lender_id: null
+  lender_relationship: null
+  applies_to_entity:
+  - all
+  source_type: statute
+- document_id: RBI-NBFC-CF-2025
+  title: Reserve Bank of India (Non-Banking Financial Companies - Credit Facilities) Directions, 2025 (updated as on July 15, 2026) - Chapters
+    I-III (Digital Lending)
+  publisher: Reserve Bank of India
+  authority: regulator
+  source_type: regulator
+  reference: RBI/DOR/2025-26/347 DOR.CRE.REC.No.266/07-01-008/2025-26
+  source_url: https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12957
+  document_type: master_direction
+  jurisdiction: IN
+  product:
+  - personal_loan
+  - digital_lending
+  publication_date: 2025-11-28
+  effective_from: 2025-11-28
+  effective_to: null
+  version: updated as on July 15, 2026
+  supersedes:
+  - RBI-DLD-2025
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: null
+  lender_relationship: null
+  para_digits: 3
+  end_marker: Chapter IV - Lending against Gold and Silver Collateral
+  licence: (c) Reserve Bank of India, all rights reserved (rbi.org.in/Scripts/Disclaimer.aspx); non-commercial research use, not redistributed
+  notes: Ingested up to Chapter IV (gold/microfinance/project finance excluded as out of personal-loan scope). HTML full text; scripted fetch
+    works.
+- document_id: RBI-IOS-2026
+  title: Reserve Bank - Integrated Ombudsman Scheme, 2026 (full scheme)
+  publisher: Reserve Bank of India
+  authority: regulator
+  source_type: regulator
+  reference: RB-IOS 2026 (press release 2026-01-16)
+  source_url: https://rbidocs.rbi.org.in/rdocs/content/pdfs/SCHEME16012026_A.pdf
+  local_file: RBI-IOS-2026.pdf
+  fetch_method: browser_manual
+  landing_url: https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=62052
+  document_type: scheme
+  jurisdiction: IN
+  product:
+  - all_loans
+  publication_date: 2026-01-16
+  effective_from: 2026-07-01
+  effective_to: null
+  supersedes:
+  - RBI-IOS-2021
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - all
+  lender_id: null
+  lender_relationship: null
+  licence: (c) Reserve Bank of India, all rights reserved (rbi.org.in/Scripts/Disclaimer.aspx); non-commercial research use, not redistributed
+  notes: Covers banks, NBFCs (incl. Bajaj Finance), PPI issuers, CICs. In force 2026-07-01.
+- document_id: RBI-FPC-NBFC-2015
+  title: Master Circular - Fair Practices Code (NBFCs), July 1, 2015
+  publisher: Reserve Bank of India
+  authority: regulator
+  source_type: regulator
+  reference: RBI/2015-16/16 DNBR (PD) CC.No.054/03.10.119/2015-16
+  source_url: https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=9823&Mode=0
+  document_type: master_circular
+  jurisdiction: IN
+  product:
+  - all_loans
+  publication_date: 2015-07-01
+  effective_from: 2015-07-01
+  effective_to: 2025-11-28
+  supersedes: []
+  superseded_by:
+  - RBI-RBC-NBFC-2025
+  approval_status: approved_historical
+  applies_to_entity:
+  - nbfc
+  lender_id: null
+  lender_relationship: null
+  licence: (c) Reserve Bank of India, all rights reserved (rbi.org.in/Scripts/Disclaimer.aspx); non-commercial research use, not redistributed
+  notes: Historical NBFC FPC (later carried into SBR 2023 MD, then RBC 2025).
+- document_id: BFL-PL-OVERVIEW
+  title: Bajaj Finance Ltd - Personal Loan overview page (eligibility, rates, fees, rejection FAQ)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_web_page
+  reference: null
+  source_url: https://www.bajajfinserv.in/personal-loan
+  document_type: product_page
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  html_root: body
+  version: as retrieved
+  notes: Includes FAQ 'Why was my personal loan application rejected' and the disclaimer 'sole and absolute discretion, without assigning any
+    reason'. Marketing page; values change without notice.
+- document_id: BFL-PL-ELIG-DOCS
+  title: Bajaj Finance Ltd - Personal Loan eligibility criteria and documents required
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_web_page
+  reference: null
+  source_url: https://www.bajajfinserv.in/personal-loan-eligibility-and-documents
+  document_type: eligibility_page
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  notes: Age 21-80, CIBIL 650+, nationality Indian, employer type, documents list. Public criteria only, not the internal scorecard.
+- document_id: BFL-PL-RATES-FEES
+  title: Bajaj Finance Ltd - Personal Loan interest rates, processing fees and charges
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_web_page
+  reference: null
+  source_url: https://www.bajajfinserv.in/personal-loan-processing-fees-and-interest-rates
+  document_type: fees_and_charges
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  notes: 'Rate 10%-30.5% p.a.; processing fee up to 4.13% incl. taxes (2026-10-14). CONFLICT: other Bajaj pages show 3.93% / 30%; see conflict
+    register.'
+- document_id: BFL-PL-SALARIED
+  title: Bajaj Finance Ltd - Personal loan for salaried individuals (minimum salary)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_web_page
+  reference: null
+  source_url: https://www.bajajfinserv.in/personal-loan-for-salaried-individuals
+  document_type: eligibility_page
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  notes: States minimum salary starting Rs 25,001/month depending on city.
+- document_id: BFL-FAQ-REJECTION
+  title: 'Bajaj Finance Ltd - Customer FAQ excerpt: how will I know the reason for my loan rejection'
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_web_page
+  reference: null
+  source_url: https://www.bajajfinserv.in/contact-us-faq-queries
+  document_type: faq
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  start_marker: What are the eligibility criteria to buy products at no-cost EMIs
+  end_marker: How will I find out the due date of my EMI
+  notes: 'Excerpt sits in the EMI Network Card / consumer-durable section of the FAQ, not a personal-loan policy. Only published statement found
+    on rejection communication: ''We will send you an SMS ... regarding your rejection''. No standalone reject-communication policy found (searched
+    2026-10-14).'
+- document_id: BFL-FPC-2026
+  title: Bajaj Finance Ltd - Fair Practice Code Ver 7.1 (January 2026)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_policy
+  reference: null
+  source_url: https://cms-assets.bajajfinserv.in/is/content/bajajfinance/fair-practice-code-ver-7-1-jan-2026-english?fmt=pdf&scl=1
+  document_type: fair_practices_code
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: 2026-01-01
+  effective_from: 2026-01-01
+  effective_to: null
+  supersedes:
+  - BFL-FPC-2023
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  version: Ver 7.1
+  notes: Board-approved FPC. Publication day not printed (month only). Also published as '...ver-7-jan-2026-english' (different bytes, same version
+    label). No clause on written reasons for loan rejection (verified).
+- document_id: BFL-FPC-2023
+  title: Bajaj Finance Ltd - Fair Practice Code Ver 6.0 (October 2023)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_policy
+  reference: null
+  source_url: https://cms-assets.bajajfinserv.in/is/content/bajajfinance/fair-practice-code-ver-6-0-englishpdf?fmt=pdf&scl=1
+  document_type: fair_practices_code
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: 2023-10-01
+  effective_from: 2023-10-01
+  effective_to: 2026-01-01
+  supersedes: []
+  superseded_by:
+  - BFL-FPC-2026
+  approval_status: approved_historical
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  version: Ver 6.0
+  notes: Historical version (superseded by Ver 7.1).
+- document_id: BFL-IRP-2026
+  title: Bajaj Finance Ltd - Interest Rate Policy (March 2026)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_policy
+  reference: null
+  source_url: https://cms-assets.bajajfinserv.in/is/content/bajajfinance/interest-rate-policy-march-2026-final?fmt=pdf&scl=1
+  document_type: interest_rate_policy
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: 2026-03-01
+  effective_from: 2026-03-01
+  effective_to: null
+  supersedes:
+  - BFL-IRP-2023
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  version: March 2026
+- document_id: BFL-IRP-2023
+  title: Bajaj Finance Ltd - Interest Rate Policy (April 2023)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_policy
+  reference: null
+  source_url: https://cms-assets.bajajfinserv.in/is/content/bajajfinance/interest-rate-policy-v1pdf?fmt=pdf&scl=1
+  document_type: interest_rate_policy
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: 2023-04-01
+  effective_from: 2023-04-01
+  effective_to: 2026-03-01
+  supersedes: []
+  superseded_by:
+  - BFL-IRP-2026
+  approval_status: approved_historical
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  version: April 2023
+- document_id: BFL-GRIEVANCE
+  title: Bajaj Finance Ltd - Grievance redressal and complaint escalation page
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_web_page
+  reference: null
+  source_url: https://www.bajajfinserv.in/grievance-redressal
+  document_type: grievance_redressal
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  notes: 'Levels: customer service -> Grievance Redressal Officer -> Principal Nodal Officer -> RBI Ombudsman after 30 days. Named officers change;
+    re-check before use.'
+- document_id: BFL-CITIZENS-CHARTER-2025
+  title: Bajaj Finance Ltd - Citizen's Charter Version 7.0 (May 2025)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_policy
+  reference: null
+  source_url: https://cms-assets.bajajfinserv.in/is/content/bajajfinance/citizens-charter-may-2025pdf?fmt=pdf&scl=1
+  document_type: citizens_charter
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: 2025-05-01
+  effective_from: 2025-05-01
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  version: Version 7.0
+  notes: A 'Version 8.0' URL appears in search results but returned HTTP 404 on 2026-10-14; 7.0 is the newest retrievable. Mentions RB-IOS 2021
+    (stale relative to RB-IOS 2026).
+- document_id: BFL-PRIVACY
+  title: Bajaj Finance Ltd - Privacy Policy (web page)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_policy
+  reference: null
+  source_url: https://www.bajajfinserv.in/privacy-policy
+  document_type: privacy_policy
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  notes: Data collection, consent (CKYC/Aadhaar eKYC/OKYC), sharing and retention. DPDP Act applicability not stated as verified here.
+- document_id: BFL-DL-PARTNERS
+  title: Bajaj Finance Ltd - Our LSPs and DLAs (digital lending disclosures)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_policy
+  reference: null
+  source_url: https://www.bajajfinserv.in/bajaj-finserv-partners
+  document_type: digital_lending_disclosure
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  notes: Digital lending products, LSP/DLA list, grievance path incl. 30-day RBI CMS escalation (mirrors RBI-NBFC-CF-2025 para 12).
+- document_id: BFL-PL-DETAILED-TNC
+  title: Bajaj Finance Ltd - Detailed Terms and Conditions of Personal/Unsecured Loan
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_terms
+  reference: null
+  source_url: https://www.bajajfinserv.in/content/dam/bajajfinserv/web/in/en/global/document/one-web/adp/compliance/detailed-tncs-applicable-for-personal-loan.pdf
+  document_type: loan_terms
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: 2019-06-21
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  version: registered No. HVL10/14523/2019 (21 June 2019); 'updated as on ____' left blank in the PDF
+  notes: 'MITC-like loan terms (definitions, fees, repayment, flexi variants). Update date blank in source -> currency unverified. No public KFS/MITC
+    sample found: Bajaj issues KFS/MITC per loan via the customer portal (bajajfinserv.in/importance-of-reading-mitc-kfs). The RBI KFS format
+    (RBC Annex I) is the reference template.'
+- document_id: BFL-APP-TNC-2023
+  title: Bajaj Finance Ltd - General loan application terms and conditions (8 June 2023)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_terms
+  reference: null
+  source_url: https://cms-assets.bajajfinserv.in/is/content/bajajfinance/general-loan-application-terms-clean-8-june-23pdf
+  document_type: application_terms
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: 2023-06-08
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  version: clean 8 June 23
+  notes: '''BFL at its sole discretion may reject or approve my application''; mentions an algorithmic multivariate scorecard for pricing. Currency
+    after 2023 unverified.'
+- document_id: BFL-KYC-TNC
+  title: Bajaj Finance Ltd - KYC terms and conditions (CKYC, Aadhaar e-KYC/OKYC, Video KYC)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_terms
+  reference: null
+  source_url: https://www.bajajfinserv.in/tnc-my-account-kyc
+  document_type: kyc_terms
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  notes: 'Customer-facing KYC consent terms. Includes: failed/mismatched Video KYC -> BFL may reject the application.'
+- document_id: BFL-KYC-PMLA-POLICY
+  title: Bajaj Finance Ltd - KYC & PMLA Policy (undated, staging asset path)
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_policy
+  reference: null
+  source_url: https://cms-assets.bajajfinserv.in/is/content/bajajfinancestage/kyc-and-pmla-policypdf?fmt=pdf&scl=1
+  document_type: kyc_policy
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: pending_review
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  notes: Hosted under a 'bajajfinancestage' path, undated, cites 2011-era RBI circulars; not linked from the live policies page. Not ingested
+    until a human confirms it is current. The current Group KYC Policy is listed in Bajaj Finserv's FY25 governance report but no public copy
+    was found.
+- document_id: BFL-INSIGHT-REJECTION
+  title: 'Bajaj Finance Ltd - Insights article: common personal loan rejection reasons'
+  publisher: Bajaj Finance Limited (NBFC, RBI-registered)
+  authority: lender
+  source_type: lender_education
+  reference: null
+  source_url: https://www.bajajfinserv.in/insights/4-reasons-for-personal-loan-rejection-and-how-to-avoid-them
+  document_type: education_article
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: approved
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: public reference lender, not a partner
+  licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
+    not redistributed
+  notes: Marketing/education content, not policy. Filterable via source_type=lender_education.
+- document_id: SYN-INJECT-002
+  title: Adversarial page impersonating Bajaj Finance with a guaranteed-approval claim (SYNTHETIC)
+  publisher: team (synthetic)
+  authority: untrusted_test
+  source_type: untrusted_test
+  reference: null
+  source_url: repo://data/evaluation/rag/synthetic_docs/SYN-INJECT-002.md
+  document_type: test_fixture
+  jurisdiction: IN
+  product:
+  - personal_loan
+  publication_date: null
+  effective_from: null
+  effective_to: null
+  supersedes: []
+  superseded_by: []
+  approval_status: pending_review
+  applies_to_entity:
+  - nbfc
+  lender_id: BFL
+  lender_relationship: NOT a Bajaj document - synthetic test fixture
+  licence: synthetic, team-authored
+  notes: Must never be served (pending_review). Tests that the approval filter beats lender-id matching.
