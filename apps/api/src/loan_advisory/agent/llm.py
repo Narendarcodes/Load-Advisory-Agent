@@ -132,8 +132,10 @@ class ChatLLM:
                 except (requests.RequestException, LLMError) as e:
                     last_err = e
                     rem = left()
-                    if yielded or (rem is not None and rem <= 1.5 * (attempt + 1)):
-                        raise LLMError(str(e))  # cannot un-say streamed text / no time left for a retry
+                    if rem is not None and rem <= 1.5 * (attempt + 1):
+                        raise LLMError(f"deadline exceeded ({type(e).__name__})")  # no time left for a retry
+                    if yielded:
+                        raise LLMError(str(e))  # cannot un-say streamed text
                     ttft = first_any = None
                     time.sleep(1.5 * (attempt + 1))
             else:
