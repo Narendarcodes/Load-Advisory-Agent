@@ -398,3 +398,15 @@ def test_rules_fallback_sends_an_unmatched_question_to_policy_not_other(tmp_path
     llm2 = SlowLLM(delay=0.6, intent="other")
     ag2 = agent_for(llm2, policy=FakePolicy(), tmp_path=tmp_path, settings=st)
     assert ask(ag2, "ok cool", channel="voice").intent in ("greeting", "other")
+
+
+def test_a_read_timeout_at_the_deadline_is_reported_as_deadline(monkeypatch):
+    from loan_advisory.agent import llm as L
+
+    def fake_post(url, json=None, stream=None, timeout=None):
+        raise L.requests.exceptions.ReadTimeout("read timed out")
+    monkeypatch.setattr(L.requests, "post", fake_post)
+    c = L.ChatLLM(base="http://x/v1")
+    with pytest.raises(LLMError, match="deadline"):
+        c.chat("s", "u", tag="compose_explain", deadline=time.perf_counter() + 0.3)
+    assert c.calls[-1]["error"] == "deadline"
