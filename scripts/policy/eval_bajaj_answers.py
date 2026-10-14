@@ -9,7 +9,9 @@ answer). This is an evaluation harness, not the agent: the LangGraph agent phase
 
 Metrics (answerable questions): answered rate, citation support (>=1 cited passage is a gold passage), citation
 precision (cited passages from a gold document / cited), strict citation correctness (support AND every cited passage
-from a gold document), judged answer correctness. Unanswerable questions: correct-abstention rate.
+from a gold document), judged answer correctness, and judged citation faithfulness (every claim in the answer is
+supported by the passages it cites - catches correct citations to equivalent text in a non-gold document, which the
+anchor-based strict metric counts as wrong). Unanswerable questions: correct-abstention rate.
 Also reports the effect of adding the dev-tuned retrieval-score abstention gate in front of the LLM.
 """
 import argparse
@@ -50,6 +52,15 @@ Response: {a}
 
 Does the response answer the question correctly and consistently with the reference facts (it contains the key fact and
 does not contradict them)? Extra correct detail is fine. Return JSON only: {{"correct": true|false, "why": "..."}}"""
+
+
+SUPPORT = """Cited passages:
+{passages}
+
+Answer: {a}
+
+Is every factual claim in the answer supported by the cited passages above (not by outside knowledge)?
+Return JSON only: {{"supported": true|false, "unsupported_claim": "..."}}"""
 
 
 def post(body, tries=8):
@@ -121,6 +132,10 @@ def main():
             ref = "\n".join(f"- {x}" for x in q["gold_anchors"]) + (f"\n- Reference answer: {q['answer']}" if q.get("answer") else "")
             j = chat_json(None, JUDGE.format(ref=ref, q=q["question"], a=row["answer"]), 600) or {}
             row["judge_correct"] = bool(j.get("correct")); row["judge_why"] = j.get("why", "")
+            if cited:  # citation faithfulness: do the cited passages themselves support the answer?
+                cp = "\n\n".join(f"[{c}]\n{chunks[c]['text']}" for c in cited)
+                sj = chat_json(None, SUPPORT.format(passages=cp, a=row["answer"]), 600) or {}
+                row["citation_supported"] = bool(sj.get("supported"))
         return row
 
     t = time.time()
@@ -141,6 +156,7 @@ def main():
                 "citation_precision_doc": m([len(r["cited_gold_doc"]) / len(r["cited"]) for r in answered if r["cited"]]),
                 "strict_citation_correct": m([not ab(r) and bool(r["cited_relevant"]) and len(r["cited_gold_doc"]) == len(r["cited"]) for r in ans]),
                 "answer_correct": m([not ab(r) and r.get("judge_correct", False) for r in ans]),
+                "citation_faithful_given_answered": m([r.get("citation_supported", False) for r in answered]),
                 "answer_correct_given_answered": m([r.get("judge_correct", False) for r in answered]),
                 "uncited_answers": sum(not r["cited"] for r in answered),
                 "correct_abstention_rate": m([ab(r) for r in neg]),

@@ -6,6 +6,19 @@ Date: 2026-10-14. Retrieval only: no answer generation, no agent. Labels: **veri
 Retrieval similarity **never** decides eligibility. It finds citable text; decisions stay with ZEN
 and the Decision Evidence record.
 
+> **Update 2026-10-14: register v2 (branch `feat/bajaj-policy-rag`).** See
+> [`bajaj_reference_lender.md`](bajaj_reference_lender.md).
+>
+> * **What v2 adds:** Bajaj Finance as the public reference lender (not a partner), lender-profile filters, and the
+>   ingested RBI RBC Directions 2025 for NBFCs and banks, NBFC Credit Facilities 2025 and RB-IOS 2026.
+> * **Status corrections, superseding the table below:**
+>   * `RBI-DLD-2025`: the PDF is watermarked "Withdrawn", now `approved_historical`.
+>   * `RBI-KFS-2024` and `RBI-PENAL-2023`: consolidated into RBC 2025, now `approved_historical`.
+>   * `RBI-RBC-CB-2025` and `RBI-RBC-NBFC-2025`: now `approved` and ingested from browser-downloaded official PDFs.
+> * **Weighted RRF plus a cross-encoder rerank** resolve the "hybrid < dense" result below. Hybrid + rerank reaches
+>   test MRR@10 0.843 vs 0.666 for dense on the bajaj_v1 benchmark.
+> * The phase-4 numbers in this file are kept as they were measured on 2026-10-14 against register v1.
+
 ## 1. Register (`data/sources/policy_register.yaml`)
 
 The register has 16 entries. Each records the document ID, title, publisher, authority type,
