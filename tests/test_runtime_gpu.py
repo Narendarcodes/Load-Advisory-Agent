@@ -91,3 +91,13 @@ def test_cpu_device_is_never_capped_or_wrapped(fakes, monkeypatch):
     tools.search("what is FOIR?")
     assert cuda.fractions == [] and cuda.empty_calls == 0
     assert isinstance(tools.retriever, FakeRetriever) and "search_and_release" not in tools.retriever.search.__qualname__
+
+
+def test_retriever_device_env_forces_cpu_without_vram_cap(fakes, monkeypatch):
+    """AGENT_RETRIEVER_DEVICE=cpu: an extra retriever (eval, test server) takes no VRAM on the shared GPU."""
+    cuda, pdir = fakes
+    monkeypatch.setenv("AGENT_GPU_FRACTION", "0.016")
+    monkeypatch.setenv("AGENT_RETRIEVER_DEVICE", "cpu")
+    tools, _ = runtime.load_policy_tools(policy_dir=pdir)
+    assert cuda.fractions == []
+    assert tools.retriever.search.__name__ != "search_and_release"

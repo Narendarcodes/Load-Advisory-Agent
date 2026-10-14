@@ -25,12 +25,17 @@ class LLMError(Exception):
     pass
 
 
+class _Deadline(Exception):
+    pass
+
+
 class ChatLLM:
-    def __init__(self, base: str | None = None, model: str | None = None, timeout: float = 120.0,
-                 reasoning_effort: str = "low"):
+    def __init__(self, base: str | None = None, model: str | None = None, timeout: float | None = None,
+                 reasoning_effort: str = "low", retries: int | None = None):
         self.base = (base or DEFAULT_BASE).rstrip("/")
+        self.retries = retries if retries is not None else int(os.environ.get("LLM_RETRIES", "3"))
         self.model = model or DEFAULT_MODEL
-        self.timeout = timeout
+        self.timeout = timeout if timeout is not None else float(os.environ.get("LLM_TIMEOUT_S", "120"))
         self.reasoning_effort = reasoning_effort
         self._local = threading.local()
 
@@ -41,78 +46,114 @@ class ChatLLM:
             self._local.calls = []
         return self._local.calls
 
-    def chat(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "") -> str:
+    supports_deadline = True  # the graph passes an absolute perf_counter() deadline to every call
+
+    def chat(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
+             deadline: float | None = None) -> str:
+        return "".join(self.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
+                                        deadline=deadline)).strip()
+
+    def chat_stream(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
+                    deadline: float | None = None):
+        """Yield content deltas as they arrive. Raises LLMError on failure or when `deadline` passes."""
         with obs.span(f"llm.{tag or 'chat'}", kind="LLM", **{"llm.model_name": self.model, "llm.provider": "vllm-self-hosted",
                                                               "llm.invocation_parameters": json.dumps({"max_tokens": max_tokens, "temperature": temperature,
                                                                                                        "reasoning_effort": self.reasoning_effort}),
                                                               "input.value": obs.content(user), "llm.system": obs.content(system)}) as sp:
-            out = self._chat(system, user, max_tokens, temperature, tag)
-            c = self.calls[-1]
-            obs.set_attrs(sp, **{"llm.token_count.prompt": c.get("prompt_tokens"), "llm.token_count.completion": c.get("completion_tokens"),
-                                 "llm.token_count.total": (c.get("prompt_tokens") or 0) + (c.get("completion_tokens") or 0),
-                                 "llm.ttft_ms": round(c["ttft_s"] * 1000, 1) if c.get("ttft_s") is not None else None,
-                                 "llm.latency_ms": round(c["total_s"] * 1000, 1), "output.value": obs.content(out)})
-            return out
+            parts = []
+            try:
+                for d in self._stream(system, user, max_tokens, temperature, tag, deadline):
+                    parts.append(d)
+                    yield d
+            finally:
+                c = self.calls[-1] if self.calls else {}
+                obs.set_attrs(sp, **{"llm.token_count.prompt": c.get("prompt_tokens"), "llm.token_count.completion": c.get("completion_tokens"),
+                                     "llm.token_count.total": (c.get("prompt_tokens") or 0) + (c.get("completion_tokens") or 0),
+                                     "llm.ttft_ms": round(c["ttft_s"] * 1000, 1) if c.get("ttft_s") is not None else None,
+                                     "llm.latency_ms": round(c.get("total_s", 0) * 1000, 1), "llm.error": c.get("error"),
+                                     "output.value": obs.content("".join(parts))})
 
-    def _chat(self, system: str, user: str, max_tokens: int, temperature: float, tag: str) -> str:
+    def _stream(self, system: str, user: str, max_tokens: int, temperature: float, tag: str, deadline: float | None):
         body = {"model": self.model, "messages": [{"role": "system", "content": system},
                                                   {"role": "user", "content": user}],
                 "max_tokens": max_tokens, "temperature": temperature, "stream": True,
                 "stream_options": {"include_usage": True},
                 "reasoning_effort": self.reasoning_effort}
         t0 = time.perf_counter()
-        ttft = None
-        first_any = None
-        parts: list[str] = []
+        ttft = first_any = None
         usage = {}
         last_err = None
-        for attempt in range(3):
-            try:
-                with requests.post(f"{self.base}/chat/completions", json=body, stream=True, timeout=self.timeout) as r:
-                    if r.status_code >= 400:
-                        raise LLMError(f"HTTP {r.status_code}: {r.text[:200]}")
-                    for line in r.iter_lines(decode_unicode=True):
-                        if not line or not line.startswith("data:"):
-                            continue
-                        data = line[5:].strip()
-                        if data == "[DONE]":
-                            break
-                        try:
-                            obj = json.loads(data)
-                        except ValueError:
-                            continue
-                        if obj.get("usage"):
-                            usage = obj["usage"]
-                        if not obj.get("choices"):
-                            continue
-                        delta = obj["choices"][0].get("delta", {})
-                        if first_any is None and (delta.get("reasoning") or delta.get("reasoning_content") or delta.get("content")):
-                            first_any = time.perf_counter() - t0
-                        c = delta.get("content")
-                        if c:
-                            if ttft is None:
-                                ttft = time.perf_counter() - t0
-                            parts.append(c)
-                break
-            except (requests.RequestException, LLMError) as e:
-                last_err = e
-                parts, ttft, first_any = [], None, None
-                time.sleep(1.5 * (attempt + 1))
-        else:
-            raise LLMError(str(last_err))
-        total = time.perf_counter() - t0
-        self.calls.append({"tag": tag, "ttft_s": round(ttft, 3) if ttft is not None else None,
-                           "first_token_any_s": round(first_any, 3) if first_any is not None else None,
-                           "total_s": round(total, 3), "prompt_tokens": usage.get("prompt_tokens"),
-                           "completion_tokens": usage.get("completion_tokens")})
-        with _STATS_LOCK:
-            STATS["calls"] += 1
-            STATS["prompt_tokens"] += usage.get("prompt_tokens") or 0
-            STATS["completion_tokens"] += usage.get("completion_tokens") or 0
-        return "".join(parts).strip()
+        yielded = False
+        rec = {"tag": tag}
 
-    def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "") -> dict:
-        txt = self.chat(system, user, max_tokens=max_tokens, tag=tag)
+        def left():
+            return None if deadline is None else deadline - time.perf_counter()
+
+        try:
+            for attempt in range(self.retries):
+                rem = left()
+                if rem is not None and rem <= 0.05:
+                    raise LLMError("deadline exceeded before the LLM answered")
+                read_to = self.timeout if rem is None else max(0.05, min(self.timeout, rem))
+                try:
+                    with requests.post(f"{self.base}/chat/completions", json=body, stream=True,
+                                       timeout=(min(5.0, read_to), read_to)) as r:
+                        if r.status_code >= 400:
+                            raise LLMError(f"HTTP {r.status_code}: {r.text[:200]}")
+                        for line in r.iter_lines(decode_unicode=True):
+                            rem = left()
+                            if rem is not None and rem <= 0:
+                                raise _Deadline()
+                            if not line or not line.startswith("data:"):
+                                continue
+                            data = line[5:].strip()
+                            if data == "[DONE]":
+                                break
+                            try:
+                                obj = json.loads(data)
+                            except ValueError:
+                                continue
+                            if obj.get("usage"):
+                                usage = obj["usage"]
+                            if not obj.get("choices"):
+                                continue
+                            delta = obj["choices"][0].get("delta", {})
+                            if first_any is None and (delta.get("reasoning") or delta.get("reasoning_content") or delta.get("content")):
+                                first_any = time.perf_counter() - t0
+                            c = delta.get("content")
+                            if c:
+                                if ttft is None:
+                                    ttft = time.perf_counter() - t0
+                                yielded = True
+                                yield c
+                    break
+                except _Deadline:
+                    raise LLMError("deadline exceeded while the LLM was answering")
+                except (requests.RequestException, LLMError) as e:
+                    last_err = e
+                    rem = left()
+                    if yielded or (rem is not None and rem <= 1.5 * (attempt + 1)):
+                        raise LLMError(str(e))  # cannot un-say streamed text / no time left for a retry
+                    ttft = first_any = None
+                    time.sleep(1.5 * (attempt + 1))
+            else:
+                raise LLMError(str(last_err))
+        except LLMError as e:
+            rec["error"] = "deadline" if "deadline" in str(e) else str(e)[:120]
+            raise
+        finally:
+            rec.update({"ttft_s": round(ttft, 3) if ttft is not None else None,
+                        "first_token_any_s": round(first_any, 3) if first_any is not None else None,
+                        "total_s": round(time.perf_counter() - t0, 3), "prompt_tokens": usage.get("prompt_tokens"),
+                        "completion_tokens": usage.get("completion_tokens")})
+            self.calls.append(rec)
+            with _STATS_LOCK:
+                STATS["calls"] += 1
+                STATS["prompt_tokens"] += usage.get("prompt_tokens") or 0
+                STATS["completion_tokens"] += usage.get("completion_tokens") or 0
+
+    def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "", deadline: float | None = None) -> dict:
+        txt = self.chat(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline)
         return parse_json(txt)
 
 
