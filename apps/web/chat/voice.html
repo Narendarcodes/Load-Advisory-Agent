@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loan Advisory Agent — voice demo (synthetic)</title>
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
+<style>
+  :root { --ink:#1d2433; --mute:#5b6577; --line:#e3e7ee; --bg:#f6f7fa; --accent:#1f5eff; --warn:#93370d; --warnbg:#fffaeb; --fail:#b42318; --pass:#067647; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Telugu", "Noto Sans Devanagari", sans-serif; color:var(--ink); background:var(--bg); }
+  header { display:flex; gap:12px; align-items:center; padding:14px 22px; background:#fff; border-bottom:1px solid var(--line); }
+  header h1 { font-size:17px; margin:0; }
+  .badge { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:3px 8px; border-radius:999px; background:var(--warnbg); color:var(--warn); border:1px solid #fedf89; }
+  main { display:grid; grid-template-columns:360px 1fr; gap:18px; padding:18px 22px; max-width:1200px; margin:0 auto; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card h2 { font-size:13px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.05em; color:var(--mute); }
+  label { display:block; font-size:13px; color:var(--mute); margin:10px 0 4px; }
+  select { width:100%; padding:9px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  button { font:inherit; border:0; border-radius:8px; padding:10px 16px; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; margin-top:12px; }
+  button.stop { background:#b42318; }
+  #orb { width:120px; height:120px; border-radius:50%; margin:10px auto; background:radial-gradient(circle at 35% 35%, #8fb0ff, #1f5eff); opacity:.35; transition:transform .12s, opacity .2s; }
+  #orb.on { opacity:1; } #state { text-align:center; color:var(--mute); font-size:13px; }
+  #log { display:flex; flex-direction:column; gap:10px; max-height:60vh; overflow-y:auto; }
+  .msg { padding:9px 12px; border-radius:10px; white-space:pre-wrap; max-width:90%; }
+  .u { align-self:flex-end; background:#1f5eff; color:#fff; } .a { align-self:flex-start; background:#f2f4f7; }
+  .meta { font-size:11px; color:var(--mute); margin-top:4px; } .cites { font-size:12px; margin-top:6px; color:#344054; }
+  table { width:100%; border-collapse:collapse; font-size:13px; } td { padding:4px; border-bottom:1px solid var(--line); }
+  .FAIL { color:var(--fail); font-weight:700; } .PASS { color:var(--pass); font-weight:700; }
+  .note { font-size:12px; color:var(--mute); }
+</style>
+</head>
+<body>
+<header><h1>Loan Advisory Agent — voice</h1><span class="badge">Synthetic demo · self-hosted LiveKit · explains, never decides</span>
+<span style="flex:1"></span><a href="/" style="font-size:13px">← Text chat</a></header>
+<main>
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <section class="card">
+      <h2>Start a voice session</h2>
+      <label for="acct">Synthetic applicant</label><select id="acct"></select>
+      <label for="lit">Loan familiarity</label>
+      <select id="lit"><option value="low">New to loans</option><option value="medium" selected>Know the basics</option><option value="high">Very familiar</option></select>
+      <label for="loc">Language</label>
+      <select id="loc"><option value="en">English</option><option value="hi">हिन्दी</option><option value="te">తెలుగు</option></select>
+      <button id="start">Start talking</button>
+      <div id="orb"></div><div id="state">not connected</div>
+      <p class="note">Speech is processed on the team's own server (LiveKit, IndicConformer / Whisper, gpt-oss-120b, svara-TTS). Demo accounts are synthetic.</p>
+    </section>
+    <section class="card" id="card"><h2>Decision card</h2><p class="note">Appears after the first answer.</p></section>
+  </div>
+  <section class="card"><h2>Conversation</h2><div id="log"></div></section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let token = null, room = null;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function api(p, b){ const r = await fetch(p, {method: b ? "POST" : "GET", headers: Object.assign({"Content-Type":"application/json"}, token ? {Authorization:"Bearer "+token} : {}), body: b ? JSON.stringify(b) : undefined});
+  const j = await r.json(); if(!r.ok) throw new Error(j.error || r.status); return j; }
+function add(cls, text, meta){ const d = document.createElement("div"); d.className = "msg " + cls; d.textContent = text;
+  if(meta){ const m = document.createElement("div"); m.className = "meta"; m.innerHTML = meta; d.appendChild(m); } $("#log").appendChild(d); $("#log").scrollTop = 1e9; return d; }
+function renderCard(c){ if(!c) return;
+  $("#card").innerHTML = `<h2>Decision card</h2><b id="vdecision">${esc(c.decision)}</b> <span class="note">${esc(c.application_ref)}</span>
+   <table>${c.rules.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.actual)}</td><td>${esc(r.threshold)}</td><td class="${esc(r.result)}">${esc(r.result)}</td></tr>`).join("")}</table>
+   <p class="note"><span class="badge">synthetic thresholds</span> ${esc(c.policy_label)}</p>`; }
+(async () => {
+  const {accounts} = await api("/api/demo-accounts");
+  $("#acct").innerHTML = accounts.map(a => `<option value="${esc(a.external_ref)}" data-lit="${esc(a.literacy)}">${esc(a.external_ref)} — ${esc(a.label)}</option>`).join("");
+  $("#acct").onchange = () => $("#lit").value = $("#acct").selectedOptions[0].dataset.lit || "medium"; $("#acct").onchange();
+})();
+$("#start").onclick = async () => {
+  if(room){ await room.disconnect(); room = null; $("#start").textContent = "Start talking"; $("#start").classList.remove("stop"); $("#state").textContent = "disconnected"; return; }
+  try {
+    token = (await api("/api/session", {external_ref: $("#acct").value})).token;
+    const lk = await api("/api/livekit-token", {literacy: $("#lit").value, locale: $("#loc").value});
+    const L = LivekitClient;
+    room = new L.Room({adaptiveStream: true});
+    room.on(L.RoomEvent.TrackSubscribed, (track) => { if(track.kind === "audio"){ const el = track.attach(); el.id = "agent-audio"; document.body.appendChild(el); } });
+    room.on(L.RoomEvent.ActiveSpeakersChanged, (sp) => {
+      const agent = sp.find(p => p.identity !== room.localParticipant.identity), me = sp.find(p => p.identity === room.localParticipant.identity);
+      $("#orb").classList.toggle("on", !!agent); $("#state").textContent = agent ? "assistant speaking" : me ? "listening to you…" : "connected — speak any time"; });
+    room.on(L.RoomEvent.DataReceived, (payload, participant, kind, topic) => {
+      if(topic !== "advisor") return; const r = JSON.parse(new TextDecoder().decode(payload));
+      if(r.transcript) add("u", r.transcript, "you (speech-to-text)");
+      const cites = (r.citations || []).map(c => `[${esc(c.label)}] ${esc(c.title)}${c.relationship ? " · " + esc(c.relationship) : ""}`).join("<br>");
+      const d = add("a", r.answer, `intent: ${esc(r.intent)} · action: ${esc(r.action)}${r.abstained ? " · abstained" : ""}`);
+      d.dataset.intent = r.intent || ""; if(cites){ const c = document.createElement("div"); c.className = "cites"; c.innerHTML = "<b>Sources</b><br>" + cites; d.appendChild(c); }
+      renderCard(r.decision_card); });
+    await room.connect(lk.url, lk.token);
+    await room.localParticipant.setMicrophoneEnabled(true);
+    window.__lkConnected = true;
+    $("#state").textContent = "connected — speak any time"; $("#start").textContent = "Stop"; $("#start").classList.add("stop");
+  } catch(e){ $("#state").textContent = "error: " + e.message; }
+};
+</script>
+</body>
+</html>
