@@ -96,8 +96,9 @@ def test_streamed_sentences_are_validated_and_the_full_answer_still_runs_validat
     ag = agent_for(llm, tmp_path=tmp_path)
     got = []
     r = ask(ag, "why was I rejected?", channel="voice", on_sentence=got.append)
-    assert got[:2] == ["Your recorded decision is REJECTED.", "Your credit score is 690 and the synthetic limit is 700."]
-    assert r.answer.startswith(" ".join(got[:2]))
+    assert got[0].startswith("Your application's recorded decision is REJECTED")  # deterministic English voice lead
+    assert got[1:3] == ["Your recorded decision is REJECTED.", "Your credit score is 690 and the synthetic limit is 700."]
+    assert r.answer.startswith(" ".join(got[:3]))
     assert "fallback_template" not in r.guard_flags
     assert r.timings.get("first_sentence_ms") is not None
     assert remainder(got, r.answer) == ""
@@ -118,7 +119,7 @@ def test_an_ungrounded_number_is_never_streamed(tmp_path):
     ag = agent_for(llm, tmp_path=tmp_path)
     got = []
     ask(ag, "why was I rejected?", channel="voice", on_sentence=got.append)
-    assert got[0] == "Your recorded decision is REJECTED." and not any("689" in g for g in got)
+    assert got[1] == "Your recorded decision is REJECTED." and not any("689" in g for g in got)
 
 
 def test_no_sink_means_no_streaming_behaviour_change(tmp_path):
@@ -321,8 +322,8 @@ def test_stream_endpoint_sends_sentences_then_the_final_response(tmp_path):
     finally:
         httpd.shutdown()
     kinds = [e["type"] for e in events]
-    assert kinds[:2] == ["sentence", "sentence"] and kinds[-1] == "final"
-    assert events[0]["text"] == "Your recorded decision is REJECTED."
+    assert kinds[:3] == ["sentence", "sentence", "sentence"] and kinds[-1] == "final"
+    assert events[1]["text"] == "Your recorded decision is REJECTED."
     assert events[-1]["response"]["intent"] == "explain"
 
 
@@ -410,3 +411,25 @@ def test_a_read_timeout_at_the_deadline_is_reported_as_deadline(monkeypatch):
     with pytest.raises(LLMError, match="deadline"):
         c.chat("s", "u", tag="compose_explain", deadline=time.perf_counter() + 0.3)
     assert c.calls[-1]["error"] == "deadline"
+
+
+def test_english_voice_explain_speaks_a_deterministic_lead_first_and_the_llm_continues(tmp_path):
+    llm = ScriptedLLM(intent="explain", compose="Your credit score is 690 and the synthetic limit is 700.")
+    ag = agent_for(llm, tmp_path=tmp_path)
+    got = []
+    r = ask(ag, "why was I rejected?", channel="voice", on_sentence=got.append)
+    assert got[0].startswith("Your application's recorded decision is REJECTED") and "synthetic" in got[0]
+    assert r.answer.startswith(got[0])
+    sys_prompt = next(s for t, s, _ in llm.prompts if t == "compose_explain")
+    assert "already heard" in sys_prompt.lower()
+    assert remainder(got, r.answer) == ""
+
+
+def test_no_lead_for_text_or_non_english_voice(tmp_path):
+    llm = ScriptedLLM(intent="explain", compose="Your credit score is 690 and the synthetic limit is 700.")
+    ag = agent_for(llm, tmp_path=tmp_path)
+    r = ask(ag, "why was I rejected?")
+    assert not r.answer.startswith("Your application's recorded decision")
+    got = []
+    ask(ag, "why was I rejected?", channel="voice", locale="hi", on_sentence=got.append, conv="c2")
+    assert not got[0].startswith("Your application's recorded decision")

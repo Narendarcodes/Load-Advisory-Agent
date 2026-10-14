@@ -93,6 +93,7 @@ class AgentState(TypedDict, total=False):
     response: dict | None
     deadline: float
     prefetched: dict | None
+    voice_lead: str | None
 
 
 class AdvisoryAgent:
@@ -185,6 +186,22 @@ class AdvisoryAgent:
         except Exception:  # a broken listener must never break the turn
             pass
 
+    def _voice_lead(self, s, req, intent):
+        """English voice only: one deterministic sentence built from the recorded evidence (never from the LLM)."""
+        if s.get("voice_lead"):
+            return s["voice_lead"]
+        if req.channel != "voice" or req.locale != "en" or intent not in ("explain", "improve") or not s.get("record"):
+            return None
+        reasons = F.reason_facts(s["record"])
+        if not reasons:
+            return None
+        names = [r["name"].lower() for r in reasons]
+        joined = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+        if intent == "explain":
+            return (f"Your application's recorded decision is {s['record']['decision']} under a synthetic prototype policy, "
+                    f"because of {len(names)} check{'s' if len(names) > 1 else ''}: {joined}.")
+        return f"Under the synthetic prototype policy, {len(names)} check{'s' if len(names) > 1 else ''} would need to change: {joined}."
+
     def _allowed(self, s) -> set:
         req, intent = self._req(s), s.get("intent")
         allowed = F.grounded_numbers(s.get("record"), extra=G.numbers_in(req.message))
@@ -202,7 +219,7 @@ class AdvisoryAgent:
     # ------------------------------------------------------------------ nodes
     def receive(self, s):
         t0 = time.perf_counter()
-        return {"t0": t0, "deadline": t0 + self.settings.deadline_for(self._req(s).channel), "prefetched": None,
+        return {"t0": t0, "deadline": t0 + self.settings.deadline_for(self._req(s).channel), "prefetched": None, "voice_lead": None,
                 "trace": [{"node": "receive", "t_ms": 0.0}], "status": None, "flags": [],
                 "intent": None, "wi_changes": None, "record": None, "what_if": None, "plan": None, "passages": [],
                 "retrieval": None, "draft": None, "abstained": False, "cited": [], "guard_flags": [], "attempts": 0,
@@ -344,7 +361,13 @@ class AdvisoryAgent:
             facts = self._facts(s)
             tmpl = {"explain": P.EXPLAIN, "improve": P.IMPROVE, "what_if": P.WHAT_IF}[intent]
             system = tmpl.format(style=style, lang=lang, voice=voice, facts=json.dumps(facts, ensure_ascii=False, indent=1)) + retry
-            if req.channel == "voice":
+            lead = self._voice_lead(s, req, intent) if (stream is not None or s.get("voice_lead")) else None
+            if lead:
+                s["voice_lead"] = lead
+                if stream is not None:
+                    self._emit(s, lead)  # deterministic, grounded first sentence: spoken while the LLM starts
+                system += P.VOICE_LEAD_CONTINUE.format(lead=lead)
+            elif req.channel == "voice":
                 system += P.VOICE_FIRST_SENTENCE
             kw = dict(max_tokens=1100, tag=f"compose_{intent}", **self._llm_kw(s))
             if gate is not None and hasattr(self.llm, "chat_stream"):
@@ -359,7 +382,10 @@ class AdvisoryAgent:
                     gate.push(txt)
             if gate is not None:
                 gate.close()
-            return {"draft": txt, "attempts": attempts, "action": "simulate" if intent == "what_if" else "answer"}
+            if lead:
+                txt = f"{lead} {txt}".strip()
+            return {"draft": txt, "attempts": attempts, "action": "simulate" if intent == "what_if" else "answer",
+                    "voice_lead": lead}
         except LLMError as e:
             self._ev(s, "compose", error=str(e)[:200])
             return {"draft": None, "attempts": 99, "guard_flags": ["deadline" if "deadline" in str(e) else "llm_error"]}
@@ -373,6 +399,8 @@ class AdvisoryAgent:
         mode = self.settings.citation_mode
         system = (P.POLICY_SPANS if mode in ("spans", "spans_verify") else P.POLICY).format(
             profile_desc=desc, style=style, lang=lang, voice=voice) + retry
+        if req.channel == "voice":
+            system += P.VOICE_FIRST_SENTENCE
         labels = [p["label"] for p in s["passages"]]
         kw = dict(max_tokens=1400 if mode.startswith("spans") else 1200, tag="compose_policy", **self._llm_kw(s))
         if gate is not None and hasattr(self.llm, "chat_stream"):
