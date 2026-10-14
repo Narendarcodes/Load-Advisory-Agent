@@ -74,6 +74,9 @@ def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = 
     if profile_name:
         profile = load_profile(profile_name)
     dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    frac = os.environ.get("AGENT_GPU_FRACTION")  # cap this process's VRAM on the shared GPU (e.g. 0.016 = ~3 GB on MI300X)
+    if frac and dev == "cuda":
+        torch.cuda.set_per_process_memory_fraction(float(frac))
     emb = SentenceTransformer(os.environ.get("EMBED_MODEL", "google/embeddinggemma-2"), device=dev,
                               model_kwargs={"torch_dtype": torch.bfloat16})
     qdir = Path(os.environ.get("AGENT_QDRANT_DIR", str(pdir / "qdrant_v2")))
@@ -85,6 +88,15 @@ def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = 
     reranker = CrossEncoderReranker(device=dev) if cfg.rerank_candidates else None
     retr = HybridRetriever(BM25Index(chunks), dense, lambda q: emb.encode(q, prompt_name="QuestionAnswering", normalize_embeddings=True),
                            reranker=reranker, chunks_by_id=by_id, config=cfg)
+    if dev == "cuda":
+        _search = retr.search
+
+        def search_and_release(*a, **kw):  # return cached blocks to the shared GPU after each query
+            try:
+                return _search(*a, **kw)
+            finally:
+                torch.cuda.empty_cache()
+        retr.search = search_and_release
     tools = PolicyTools(retr, by_id, profile, profile_filter(profile, mode), hfilter=profile_filter(profile, "historical"))
     tools.search("warm-up: how do I raise a grievance?")  # first query pays CUDA/kernel warm-up, not the applicant
     return tools, profile
