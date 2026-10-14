@@ -5,7 +5,8 @@
 #   livekit-server: self-hosted LiveKit 1.13 (dev keys generated locally, never committed) :7880 / rtc tcp 7881 / udp 50000-50200
 #   voice worker  : apps/voice/agent_worker.py inside hx-loan-agent (host network), drives the advisory graph via :8095
 # Prereqs: hx-loan-agent container running the chat server (see docs/agent/README.md), INDICCONF_DIR checkout.
-# Check `rocm-smi --showpids` first: budget for this stack is <= 12 GB extra VRAM (measured ~2.5 GB STT + ~6.6 GB TTS).
+# Check `rocm-smi --showpids` first: budget for this stack (STT + TTS) is <= 12 GB extra VRAM. The chat server's policy
+# retriever counts against the separate RAG budget (<= 6 GB); start it with AGENT_GPU_FRACTION=0.016 (~3 GB cap on MI300X).
 set -euo pipefail
 ROOT=${ROOT:-/root/hx/loan}
 REPO=${REPO:-$ROOT/repo-agent}
@@ -50,12 +51,14 @@ if ! docker ps --format '{{.Names}}' | grep -qx hx-loan-stt; then
 fi
 
 # --- TTS: vLLM (svara-tts-v1, fp8) on host network; GLOO/VLLM_HOST_IP pinned to loopback like vllm-leads
+#     KV cache is sized explicitly: on the shared GPU, utilization-based profiling sees other processes' memory move and
+#     fails ("No available memory for the cache blocks") or over-allocates; 768M KV ~ 7k tokens, enough for 4 x short TTS requests.
 if ! docker ps --format '{{.Names}}' | grep -qx hx-loan-tts; then
   docker rm -f hx-loan-tts >/dev/null 2>&1 || true
   docker run -d --name hx-loan-tts --restart unless-stopped --network host --device /dev/kfd --device /dev/dri --group-add video \
     --ipc=host -e GLOO_SOCKET_IFNAME=lo -e VLLM_HOST_IP=127.0.0.1 -v "$HFC":/root/.cache/huggingface -e HF_HOME=/root/.cache/huggingface \
     -v "$ROOT":"$ROOT" vllm/vllm-openai-rocm:v0.27.1 kenpath/svara-tts-v1 --served-model-name svara --host 127.0.0.1 --port 8792 \
-    --quantization fp8 --gpu-memory-utilization 0.03 --max-model-len 2048 --max-num-seqs 4
+    --quantization fp8 --gpu-memory-utilization 0.025 --kv-cache-memory-bytes ${TTS_KV_BYTES:-768M} --max-model-len 2048 --max-num-seqs 4
 fi
 for i in $(seq 1 120); do curl -fs 127.0.0.1:8792/v1/models >/dev/null && break; sleep 3; done
 docker exec hx-loan-tts bash -lc "pip list 2>/dev/null | grep -q '^snac ' || pip install -q snac; pkill -f tts_sidecar.py" || true
