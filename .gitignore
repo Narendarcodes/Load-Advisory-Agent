@@ -11,3 +11,5 @@ evidence_out/
 data/raw/
 data/normalised/
 *.parquet
+agent_out/
+tests/e2e/node_modules/

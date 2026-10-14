@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loan Advisory Agent — applicant chat (synthetic demo)</title>
+<style>
+  :root { --ink:#1d2433; --mute:#5b6577; --line:#e3e7ee; --bg:#f6f7fa; --card:#fff; --accent:#1f5eff;
+          --fail:#b42318; --failbg:#fef3f2; --pass:#067647; --passbg:#ecfdf3; --warn:#93370d; --warnbg:#fffaeb; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Telugu", "Noto Sans Devanagari", sans-serif;
+         color:var(--ink); background:var(--bg); }
+  header { display:flex; align-items:center; gap:12px; padding:14px 22px; background:var(--card); border-bottom:1px solid var(--line); }
+  header h1 { font-size:17px; margin:0; font-weight:650; }
+  .badge { font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:3px 8px; border-radius:999px; }
+  .badge.syn { background:var(--warnbg); color:var(--warn); border:1px solid #fedf89; }
+  .badge.dec-REJECTED { background:var(--failbg); color:var(--fail); }
+  .badge.dec-APPROVED { background:var(--passbg); color:var(--pass); }
+  .badge.dec-ERROR, .badge.dec-none { background:#f2f4f7; color:#344054; }
+  main { display:grid; grid-template-columns: 360px 1fr; gap:18px; padding:18px 22px; max-width:1280px; margin:0 auto; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card h2 { font-size:14px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.05em; color:var(--mute); }
+  label { display:block; font-size:13px; color:var(--mute); margin:10px 0 4px; }
+  select, input[type=text], textarea { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; }
+  button { font:inherit; border:0; border-radius:8px; padding:9px 14px; background:var(--accent); color:#fff; cursor:pointer; font-weight:600; }
+  button.ghost { background:#eef2ff; color:#1d3fbf; font-weight:500; padding:6px 10px; font-size:13px; }
+  button:disabled { opacity:.5; cursor:default; }
+  .side { display:flex; flex-direction:column; gap:18px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td, th { padding:6px 4px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  .r-FAIL { color:var(--fail); font-weight:700; } .r-PASS { color:var(--pass); font-weight:700; } .r-NOT_EVALUABLE { color:var(--mute); }
+  .note { font-size:12px; color:var(--mute); margin-top:8px; }
+  .chat { display:flex; flex-direction:column; min-height:72vh; }
+  #log { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding:4px 2px 12px; }
+  .msg { max-width:86%; padding:10px 13px; border-radius:12px; white-space:pre-wrap; }
+  .msg.user { align-self:flex-end; background:#1f5eff; color:#fff; border-bottom-right-radius:4px; }
+  .msg.bot { align-self:flex-start; background:#f2f4f7; border-bottom-left-radius:4px; }
+  .meta { font-size:11px; color:var(--mute); margin-top:6px; display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { background:#fff; border:1px solid var(--line); border-radius:6px; padding:1px 6px; }
+  .cites { margin-top:8px; font-size:12px; border-top:1px dashed #d0d5dd; padding-top:6px; }
+  .cites a { color:#1d3fbf; } .rel { color:var(--warn); font-weight:600; }
+  .plan ol { padding-left:20px; margin:6px 0; } .plan li { margin-bottom:6px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+  form.row { display:flex; gap:8px; } form.row input { flex:1; }
+  .empty { color:var(--mute); font-size:13px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Loan Advisory Agent</h1>
+  <span class="badge syn">Synthetic demo · explains, never decides</span>
+  <span style="flex:1"></span>
+  <a href="/voice" style="font-size:13px">Voice demo →</a>
+</header>
+<main>
+  <div class="side">
+    <section class="card" id="signin">
+      <h2>Demo sign-in</h2>
+      <label for="acct">Synthetic applicant</label>
+      <select id="acct"></select>
+      <label for="lit">How familiar are you with loans?</label>
+      <select id="lit">
+        <option value="low">New to loans — keep it simple</option>
+        <option value="medium" selected>I know the basics</option>
+        <option value="high">Very familiar — be precise</option>
+      </select>
+      <label for="loc">Answer language</label>
+      <select id="loc"><option value="en">English</option><option value="hi">हिन्दी (Hindi)</option><option value="te">తెలుగు (Telugu)</option></select>
+      <div style="margin-top:12px"><button id="go">Open my decision</button></div>
+      <p class="note">Demo accounts are synthetic records in a development Frappe Lending site. No real people.</p>
+    </section>
+    <section class="card" id="decision"><h2>Decision card</h2><p class="empty">Sign in to see your recorded decision.</p></section>
+    <section class="card plan" id="plan"><h2>Improvement plan</h2><p class="empty">Ask “What can I do to improve?”</p></section>
+  </div>
+  <section class="card chat">
+    <h2>Chat</h2>
+    <div id="log"><p class="empty">The assistant explains your recorded decision, runs what-ifs and answers policy questions with sources. It cannot approve, change or promise anything.</p></div>
+    <div class="chips" id="chips"></div>
+    <form class="row" id="form"><input id="msg" type="text" placeholder="Ask about your decision…" autocomplete="off" disabled><button id="send" disabled>Send</button></form>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let token = null, conv = null;
+const CHIPS = ["Why was my loan rejected?", "What can I do to improve before reapplying?", "What if my credit score was 720?",
+               "How do I raise a complaint with the lender?", "Will I definitely get approved if I reapply?"];
+function md(t){ // tiny, safe subset: escape first, then **bold**, *italic*
+  return esc(t).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/(^|\s)\*([^*\n]+)\*/g, "$1<i>$2</i>");
+}
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+async function api(path, body){
+  const r = await fetch(path, {method: body ? "POST" : "GET", headers: Object.assign({"Content-Type":"application/json"}, token ? {Authorization:"Bearer "+token} : {}),
+                               body: body ? JSON.stringify(body) : undefined});
+  const j = await r.json(); if(!r.ok) throw new Error(j.error || r.status); return j;
+}
+async function init(){
+  const {accounts} = await api("/api/demo-accounts");
+  $("#acct").innerHTML = accounts.map(a => `<option value="${esc(a.external_ref)}" data-lit="${esc(a.literacy)}">${esc(a.external_ref)} — ${esc(a.label)}</option>`).join("");
+  $("#acct").onchange = () => { const o = $("#acct").selectedOptions[0]; if (o) $("#lit").value = o.dataset.lit || "medium"; };
+  $("#acct").onchange();
+  $("#chips").innerHTML = CHIPS.map(c => `<button class="ghost" type="button" disabled>${esc(c)}</button>`).join("");
+  document.querySelectorAll("#chips button").forEach(b => b.onclick = () => send(b.textContent));
+}
+function renderCard(card){
+  const el = $("#decision");
+  if(!card){ el.innerHTML = `<h2>Decision card</h2><p class="empty">No recorded decision for this application yet.</p>`; return; }
+  const rows = card.rules.map(r => `<tr data-rule="${esc(r.rule_id)}"><td>${esc(r.name)}</td><td>${esc(r.actual)}</td><td>${esc(r.threshold)}</td><td class="r-${esc(r.result)}">${esc(r.result)}</td></tr>`).join("");
+  el.innerHTML = `<h2>Decision card</h2>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge dec-${esc(card.decision||'none')}" id="decision-badge">${esc(card.decision)}</span>
+    <span class="note" style="margin:0">${esc(card.application_ref)} · ${esc(card.lifecycle_state)}</span></div>
+    <table style="margin-top:10px"><tr><th>Check</th><th>Yours</th><th>Needed</th><th></th></tr>${rows}</table>
+    ${card.missing_fields && card.missing_fields.length ? `<p class="note">Missing: ${esc(card.missing_fields.join(", "))}</p>` : ""}
+    <p class="note"><span class="badge syn">Synthetic thresholds</span> Policy ${esc(card.policy_version)} — ${esc(card.policy_label)}.</p>`;
+}
+function renderPlan(plan){
+  if(!plan || !plan.length) return;
+  $("#plan").innerHTML = `<h2>Improvement plan</h2><ol>${plan.map(p => `<li data-rule="${esc(p.rule_id)}"><b>${esc(p.task)}</b><br><span class="note">${esc(p.general_guidance)} (${esc(p.guidance_source)})</span></li>`).join("")}</ol>
+    <p class="note">Targets are arithmetic on the synthetic thresholds, re-checked by the decision engine as a what-if. Not a guarantee — a lender decides on a new application.</p>`;
+}
+function bubble(role, text, resp){
+  const d = document.createElement("div"); d.className = "msg " + (role === "user" ? "user" : "bot");
+  if(role === "user") d.textContent = text; else d.innerHTML = md(text);
+  if(resp){
+    d.dataset.intent = resp.intent; d.dataset.action = resp.action;
+    const m = document.createElement("div"); m.className = "meta";
+    m.innerHTML = [`intent: ${resp.intent}`, `action: ${resp.action}`, resp.abstained ? "abstained" : null,
+                   resp.handoff_ref ? `handoff ${resp.handoff_ref}` : null, resp.what_if ? `what-if: ${resp.what_if.simulated_decision} (simulation)` : null,
+                   resp.timings && resp.timings.total_ms ? `${Math.round(resp.timings.total_ms)} ms` : null]
+                   .filter(Boolean).map(t => `<span class="tag">${esc(t)}</span>`).join("");
+    d.appendChild(m);
+    if(resp.citations && resp.citations.length){
+      const c = document.createElement("div"); c.className = "cites";
+      c.innerHTML = "<b>Sources</b><br>" + resp.citations.map(x => `[${esc(x.label)}] ${x.source_url ? `<a href="${esc(x.source_url)}" target="_blank" rel="noopener">${esc(x.title)}</a>` : esc(x.title)}${x.section ? " · " + esc(x.section) : ""}${x.page ? " · p." + esc(x.page) : ""}${x.relationship ? ` · <span class="rel">${esc(x.relationship)}</span>` : ""}${x.applies_to_entity ? " · applies to: " + esc(x.applies_to_entity.join("/")) : ""}`).join("<br>");
+      d.appendChild(c);
+    }
+  }
+  const log = $("#log"); if(log.querySelector(".empty")) log.innerHTML = "";
+  log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+}
+async function send(text){
+  text = (text || "").trim(); if(!text || !token) return;
+  $("#msg").value = ""; bubble("user", text);
+  const wait = bubble("bot", "…"); $("#send").disabled = true;
+  try {
+    const r = await api("/api/chat", {message: text, literacy: $("#lit").value, locale: $("#loc").value, channel: "text", conversation_id: conv});
+    wait.remove(); bubble("bot", r.answer, r);
+    if (r.decision_card) renderCard(r.decision_card);
+    renderPlan(r.improvement_plan);
+  } catch(e){ wait.textContent = "Sorry, something went wrong: " + e.message; }
+  $("#send").disabled = false; $("#msg").focus();
+}
+$("#go").onclick = async () => {
+  try {
+    const s = await api("/api/session", {external_ref: $("#acct").value});
+    token = s.token; conv = "conv-" + Math.random().toString(36).slice(2, 10);
+    const d = await api("/api/decision"); renderCard(d.decision_card);
+    $("#plan").innerHTML = `<h2>Improvement plan</h2><p class="empty">Ask “What can I do to improve?”</p>`;
+    $("#log").innerHTML = `<p class="empty">Signed in as ${esc(s.external_ref)}. Ask a question below.</p>`;
+    ["#msg", "#send"].forEach(x => $(x).disabled = false); document.querySelectorAll("#chips button").forEach(b => b.disabled = false);
+  } catch(e){ alert("Sign-in failed: " + e.message); }
+};
+$("#form").onsubmit = ev => { ev.preventDefault(); send($("#msg").value); };
+init();
+</script>
+</body>
+</html>
