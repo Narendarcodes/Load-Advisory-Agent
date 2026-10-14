@@ -1,0 +1,402 @@
+[
+ {
+  "monthly_income": 32000,
+  "monthly_obligations": 18500,
+  "credit_score": 690,
+  "employment_months": 8,
+  "loan_amount": 300000,
+  "loan_tenure_months": 36,
+  "applicant_id": "CUS-TEST-001",
+  "external_ref": "P1-PARITY-APP-TEST-005"
+ },
+ {
+  "applicant_id": "CUS-TEST-001",
+  "monthly_income": 60000,
+  "monthly_obligations": 15000,
+  "credit_score": 780,
+  "employment_months": 36,
+  "loan_amount": 300000,
+  "loan_tenure_months": 36,
+  "external_ref": "APP-TEST-001"
+ },
+ {
+  "applicant_id": "CUS-TEST-002",
+  "monthly_income": 32000,
+  "monthly_obligations": 18500,
+  "credit_score": 760,
+  "employment_months": 24,
+  "loan_amount": 300000,
+  "loan_tenure_months": 36,
+  "external_ref": "APP-TEST-002"
+ },
+ {
+  "applicant_id": "CUS-TEST-003",
+  "monthly_income": 55000,
+  "monthly_obligations": 10000,
+  "credit_score": 650,
+  "employment_months": 30,
+  "loan_amount": 300000,
+  "loan_tenure_months": 36,
+  "external_ref": "APP-TEST-003"
+ },
+ {
+  "applicant_id": "CUS-TEST-004",
+  "monthly_income": 50000,
+  "monthly_obligations": 12000,
+  "credit_score": 750,
+  "employment_months": 5,
+  "loan_amount": 300000,
+  "loan_tenure_months": 36,
+  "external_ref": "APP-TEST-004"
+ },
+ {
+  "applicant_id": "CUS-TEST-005",
+  "monthly_income": 32000,
+  "monthly_obligations": 18500,
+  "credit_score": 690,
+  "employment_months": 8,
+  "loan_amount": 300000,
+  "loan_tenure_months": 36,
+  "external_ref": "APP-TEST-005"
+ },
+ {
+  "applicant_id": "CUS-TEST-006",
+  "monthly_income": 25000,
+  "monthly_obligations": 11250,
+  "credit_score": 700,
+  "employment_months": 12,
+  "loan_amount": 200000,
+  "loan_tenure_months": 24,
+  "external_ref": "APP-TEST-006"
+ },
+ {
+  "applicant_id": "CUS-TEST-008",
+  "monthly_income": -5000,
+  "monthly_obligations": 10000,
+  "credit_score": 950,
+  "employment_months": -3,
+  "loan_amount": 250000,
+  "loan_tenure_months": 24,
+  "external_ref": "APP-TEST-008"
+ },
+ {
+  "applicant_id": "SYN-CUS-00000",
+  "monthly_income": 47000,
+  "monthly_obligations": 30456,
+  "credit_score": 689,
+  "employment_months": 8,
+  "loan_amount": 280000,
+  "loan_tenure_months": 48,
+  "external_ref": "SYN-APP-00000"
+ },
+ {
+  "applicant_id": "SYN-CUS-00001",
+  "monthly_income": 24000,
+  "monthly_obligations": 4296,
+  "credit_score": 780,
+  "employment_months": 20,
+  "loan_amount": 250000,
+  "loan_tenure_months": 12,
+  "external_ref": "SYN-APP-00001"
+ },
+ {
+  "applicant_id": "SYN-CUS-00002",
+  "monthly_income": 41000,
+  "monthly_obligations": 15662,
+  "credit_score": 769,
+  "employment_months": 66,
+  "loan_amount": 275000,
+  "loan_tenure_months": 24,
+  "external_ref": "SYN-APP-00002"
+ },
+ {
+  "applicant_id": "SYN-CUS-00003",
+  "monthly_income": 19500,
+  "monthly_obligations": 5733,
+  "credit_score": 689,
+  "employment_months": 143,
+  "loan_amount": 120000,
+  "loan_tenure_months": 24,
+  "external_ref": "SYN-APP-00003"
+ },
+ {
+  "applicant_id": "SYN-CUS-00004",
+  "monthly_income": 55000,
+  "monthly_obligations": 15400,
+  "credit_score": 798,
+  "employment_months": 28,
+  "loan_amount": 265000,
+  "loan_tenure_months": 36,
+  "external_ref": "SYN-APP-00004"
+ },
+ {
+  "applicant_id": "SYN-CUS-00005",
+  "monthly_income": 18500,
+  "monthly_obligations": 13098,
+  "credit_score": 509,
+  "employment_months": 4,
+  "loan_amount": 55000,
+  "loan_tenure_months": 18,
+  "external_ref": "SYN-APP-00005"
+ },
+ {
+  "applicant_id": "SYN-CUS-00006",
+  "monthly_income": 97500,
+  "monthly_obligations": 3315,
+  "credit_score": 784,
+  "employment_months": 7,
+  "loan_amount": 885000,
+  "loan_tenure_months": 12,
+  "external_ref": "SYN-APP-00006"
+ },
+ {
+  "applicant_id": "SYN-CUS-00007",
+  "monthly_income": 149000,
+  "monthly_obligations": 149,
+  "credit_score": 873,
+  "employment_months": 25,
+  "loan_amount": 1500000,
+  "loan_tenure_months": 18,
+  "external_ref": "SYN-APP-00007"
+ },
+ {
+  "applicant_id": "SYN-CUS-00008",
+  "monthly_income": 35000,
+  "monthly_obligations": 12810,
+  "credit_score": 480,
+  "employment_months": 30,
+  "loan_amount": 130000,
+  "loan_tenure_months": 24,
+  "external_ref": "SYN-APP-00008"
+ },
+ {
+  "applicant_id": "SYN-CUS-00009",
+  "monthly_income": 58000,
+  "monthly_obligations": 37062,
+  "credit_score": 691,
+  "employment_months": 30,
+  "loan_amount": 155000,
+  "loan_tenure_months": 12,
+  "external_ref": "SYN-APP-00009"
+ },
+ {
+  "applicant_id": "SYN-CUS-00010",
+  "monthly_income": 52000,
+  "monthly_obligations": 35516,
+  "credit_score": 567,
+  "employment_months": 54,
+  "loan_amount": 335000,
+  "loan_tenure_months": 60,
+  "external_ref": "SYN-APP-00010"
+ },
+ {
+  "applicant_id": "SYN-CUS-00011",
+  "monthly_income": 33500,
+  "monthly_obligations": 6600,
+  "credit_score": 860,
+  "employment_months": 6,
+  "loan_amount": 430000,
+  "loan_tenure_months": 36,
+  "external_ref": "SYN-APP-00011"
+ },
+ {
+  "applicant_id": "SYN-CUS-00013",
+  "monthly_income": 43500,
+  "monthly_obligations": 7221,
+  "credit_score": 808,
+  "employment_months": 105,
+  "loan_amount": 200000,
+  "loan_tenure_months": 18,
+  "external_ref": "SYN-APP-00013"
+ },
+ {
+  "applicant_id": "SYN-CUS-00019",
+  "monthly_income": 25500,
+  "monthly_obligations": 13592,
+  "credit_score": 633,
+  "employment_months": 148,
+  "loan_amount": 240000,
+  "loan_tenure_months": 12,
+  "external_ref": "SYN-APP-00019"
+ },
+ {
+  "applicant_id": "SYN-CUS-00030",
+  "monthly_income": 48000,
+  "monthly_obligations": 28272,
+  "credit_score": 545,
+  "employment_months": 6,
+  "loan_amount": 510000,
+  "loan_tenure_months": 48,
+  "external_ref": "SYN-APP-00030"
+ },
+ {
+  "applicant_id": "SYN-CUS-00033",
+  "monthly_income": 22500,
+  "monthly_obligations": 14648,
+  "credit_score": 601,
+  "employment_months": 67,
+  "loan_amount": 100000,
+  "loan_tenure_months": 24,
+  "external_ref": "SYN-APP-00033"
+ },
+ {
+  "applicant_id": "SYN-CUS-00043",
+  "monthly_income": 9500,
+  "monthly_obligations": 5833,
+  "credit_score": 695,
+  "employment_months": 148,
+  "loan_amount": 100000,
+  "loan_tenure_months": 48,
+  "external_ref": "SYN-APP-00043"
+ },
+ {
+  "applicant_id": "SYN-CUS-00060",
+  "monthly_income": 24000,
+  "monthly_obligations": 13128,
+  "credit_score": 559,
+  "employment_months": 3,
+  "loan_amount": 200000,
+  "loan_tenure_months": 12,
+  "external_ref": "SYN-APP-00060"
+ },
+ {
+  "applicant_id": "SYN-CUS-00089",
+  "monthly_income": 21500,
+  "monthly_obligations": 13094,
+  "credit_score": 658,
+  "employment_months": 4,
+  "loan_amount": 55000,
+  "loan_tenure_months": 12,
+  "external_ref": "SYN-APP-00089"
+ },
+ {
+  "applicant_id": "SYN-CUS-00195",
+  "monthly_income": 9500,
+  "monthly_obligations": 6802,
+  "credit_score": 507,
+  "employment_months": 9,
+  "loan_amount": 25000,
+  "loan_tenure_months": 12,
+  "external_ref": "SYN-APP-00195"
+ },
+ {
+  "applicant_id": "SYN-CUS-02400",
+  "monthly_income": 25000,
+  "monthly_obligations": 5000,
+  "credit_score": 760,
+  "employment_months": 30,
+  "loan_amount": 435000,
+  "loan_tenure_months": 36,
+  "external_ref": "SYN-APP-02400"
+ },
+ {
+  "applicant_id": "SYN-CUS-02401",
+  "monthly_income": 40000,
+  "monthly_obligations": 8000,
+  "credit_score": 760,
+  "employment_months": 30,
+  "loan_amount": 840000,
+  "loan_tenure_months": 12,
+  "external_ref": "SYN-APP-02401"
+ },
+ {
+  "applicant_id": "SYN-CUS-02402",
+  "monthly_income": 40000,
+  "monthly_obligations": 8000,
+  "credit_score": 700,
+  "employment_months": 30,
+  "loan_amount": 250000,
+  "loan_tenure_months": 60,
+  "external_ref": "SYN-APP-02402"
+ },
+ {
+  "applicant_id": "SYN-CUS-02403",
+  "monthly_income": 40000,
+  "monthly_obligations": 8000,
+  "credit_score": 760,
+  "employment_months": 12,
+  "loan_amount": 200000,
+  "loan_tenure_months": 48,
+  "external_ref": "SYN-APP-02403"
+ },
+ {
+  "applicant_id": "SYN-CUS-02404",
+  "monthly_income": 24999,
+  "monthly_obligations": 5000,
+  "credit_score": 760,
+  "employment_months": 30,
+  "loan_amount": 1055000,
+  "loan_tenure_months": 48,
+  "external_ref": "SYN-APP-02404"
+ },
+ {
+  "applicant_id": "SYN-CUS-02405",
+  "monthly_income": 40000,
+  "monthly_obligations": 18001,
+  "credit_score": 760,
+  "employment_months": 30,
+  "loan_amount": 360000,
+  "loan_tenure_months": 36,
+  "external_ref": "SYN-APP-02405"
+ },
+ {
+  "applicant_id": "SYN-CUS-02406",
+  "monthly_income": 40000,
+  "monthly_obligations": 8000,
+  "credit_score": 699,
+  "employment_months": 30,
+  "loan_amount": 430000,
+  "loan_tenure_months": 48,
+  "external_ref": "SYN-APP-02406"
+ },
+ {
+  "applicant_id": "SYN-CUS-02407",
+  "monthly_income": 40000,
+  "monthly_obligations": 8000,
+  "credit_score": 760,
+  "employment_months": 11,
+  "loan_amount": 230000,
+  "loan_tenure_months": 36,
+  "external_ref": "SYN-APP-02407"
+ },
+ {
+  "applicant_id": "SYN-CUS-02408",
+  "monthly_income": 40000,
+  "monthly_obligations": 8000,
+  "credit_score": null,
+  "employment_months": 30,
+  "loan_amount": 85000,
+  "loan_tenure_months": 24,
+  "external_ref": "SYN-APP-02408"
+ },
+ {
+  "applicant_id": "SYN-CUS-02409",
+  "monthly_income": null,
+  "monthly_obligations": 8000,
+  "credit_score": 760,
+  "employment_months": 30,
+  "loan_amount": 400000,
+  "loan_tenure_months": 18,
+  "external_ref": "SYN-APP-02409"
+ },
+ {
+  "applicant_id": "SYN-CUS-02410",
+  "monthly_income": 40000,
+  "monthly_obligations": 8000,
+  "credit_score": 760,
+  "employment_months": null,
+  "loan_amount": 1050000,
+  "loan_tenure_months": 60,
+  "external_ref": "SYN-APP-02410"
+ },
+ {
+  "applicant_id": "SYN-CUS-02411",
+  "monthly_income": 40000,
+  "monthly_obligations": null,
+  "credit_score": 760,
+  "employment_months": 30,
+  "loan_amount": 465000,
+  "loan_tenure_months": 24,
+  "external_ref": "SYN-APP-02411"
+ }
+]
