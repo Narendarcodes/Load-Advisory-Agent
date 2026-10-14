@@ -1,0 +1,12 @@
+# Policy-RAG runtime config. Choose the lender profile here (or env LENDER_PROFILE); nothing in rag/ hard-codes a lender.
+lender_profile: bajaj_finance
+mode: current               # current | historical
+fusion:                     # tuned on the DEV split only ("split" field of data/evaluation/rag/bajaj_v1/benchmark.jsonl); see docs/policy/bajaj_reference_lender.md
+  method: weighted_rrf
+  k: 10                     # dev grid: w_bm25 {0..1} x k {5..100}; best dev MRR@10 = 0.628
+  w_dense: 1.0
+  w_bm25: 0.5
+rerank:
+  enabled: true
+  model: BAAI/bge-reranker-v2-m3
+  candidates: 50            # dev grid {5,10,20,30,50}; 20-50 within 0.01 dev MRR
