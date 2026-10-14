@@ -1,0 +1,20 @@
+{
+  "_comment": "Versioned policy registry. Every (policy, JDM) pair is pinned by sha256 of its LF-normalised bytes. Editing a pinned file without registering a new version makes load_policy() fail closed. ALL versions here are SYNTHETIC prototype policies, not lender policy.",
+  "PERSONAL_LOAN": {
+    "active_version": "synthetic-v1",
+    "versions": {
+      "synthetic-v1": {
+        "policy_file": "personal_loan_synthetic_v1.json",
+        "jdm_file": "../decisions/personal_loan_v1.json",
+        "policy_sha256": "f28fd8af4ccbbf369e88df567b921a028e5226ce29b396e8c9bd22aac09716b7",
+        "jdm_sha256": "047836fbe7f54be9ce724b04644b4d813700b9eba26cc6aa7a8c65f180bfce2e",
+        "status": "active",
+        "synthetic": true,
+        "threshold_source": "Prototype assumption recorded in personal_loan_synthetic_v1.json (P0). NOT a VaaniLabs or lender policy.",
+        "effective_from": "2026-10-08",
+        "effective_to": null,
+        "supersedes": null
+      }
+    }
+  }
+}

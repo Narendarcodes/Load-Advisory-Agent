@@ -1,0 +1,76 @@
+# Public dataset registry for Phase 1 (dataset acquisition & audit).
+# Metadata only — raw data is NEVER committed. Download target on the
+# GPU droplet: /root/hx/loan/data/raw/<id>/ (override with LOAN_DATA_DIR).
+# status: downloadable | gated (needs user credential / rules acceptance) | excluded
+# licence_verified: what we actually saw on the source page on 2026-10-14.
+datasets:
+  - id: lc_zenodo_granting
+    title: "Lending Club loan dataset for granting models (Zenodo 10.5281/zenodo.11295916, v0.1)"
+    source_page: https://zenodo.org/records/11295916
+    files:
+      - url: https://zenodo.org/api/records/11295916/files/LC_loans_granting_model_dataset.csv/content
+        name: LC_loans_granting_model_dataset.csv
+        md5: b019384d6bc65bf2a3e839362e4ff502
+    licence: CC-BY-4.0
+    licence_verified: "Zenodo record metadata license.id=cc-by-4.0 (record lists Lending Club as a creator; upstream LC terms still apply — see audit)"
+    population: issued loans only (Fully Paid / Charged Off), 2007-2018, US
+    status: downloadable
+  - id: lc_kaggle_accepted
+    title: "All Lending Club loan data — accepted_2007_to_2018Q4 (CC0 mirror of Kaggle wordsforthewise/lending-club)"
+    source_page: https://www.kaggle.com/datasets/wordsforthewise/lending-club
+    files:
+      - url: https://huggingface.co/datasets/codesignal/lending-club-loan-accepted/resolve/main/accepted_2007_to_2018Q4.csv
+        name: accepted_2007_to_2018Q4.csv
+    licence: CC0-1.0 (as declared by Kaggle uploader and HF mirror)
+    licence_verified: "Kaggle page shows CC0; uploader notes LendingClub later added a ToS popup — provenance caveat"
+    population: issued loans incl. post-origination fields, US
+    status: downloadable
+  - id: lc_kaggle_rejected
+    title: "All Lending Club loan data — rejected_2007_to_2018Q4"
+    source_page: https://www.kaggle.com/datasets/wordsforthewise/lending-club
+    files:
+      - kaggle: wordsforthewise/lending-club
+        name: rejected_2007_to_2018Q4.csv.gz
+    licence: CC0-1.0 (as declared by Kaggle uploader)
+    licence_verified: "Kaggle page shows CC0; no public non-Kaggle mirror found (HF search 2026-10-14)"
+    population: declined applications, 9 fields, no reason codes, US
+    status: gated   # needs KAGGLE_USERNAME + KAGGLE_KEY on the droplet
+  - id: uci_german_credit
+    title: "Statlog (German Credit Data), UCI id 144"
+    source_page: https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data
+    files:
+      - url: https://archive.ics.uci.edu/static/public/144/statlog+german+credit+data.zip
+        name: statlog_german_credit_data.zip
+    licence: CC-BY-4.0
+    licence_verified: "UCI dataset page licence block (CC BY 4.0), DOI 10.24432/C5NC77"
+    population: 1,000 credit applicants, good/bad risk label, Germany 1994
+    status: downloadable
+  - id: uci_taiwan_default
+    title: "Default of Credit Card Clients (Taiwan), UCI id 350"
+    source_page: https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients
+    files:
+      - url: https://archive.ics.uci.edu/static/public/350/default+of+credit+card+clients.zip
+        name: default_of_credit_card_clients.zip
+    licence: CC-BY-4.0
+    licence_verified: "UCI dataset page licence block (CC BY 4.0)"
+    population: 30,000 existing credit-card clients, next-month default, Taiwan 2005
+    status: downloadable
+  - id: uci_credit_approval
+    title: "Credit Approval (Quinlan), UCI id 27"
+    source_page: https://archive.ics.uci.edu/dataset/27/credit+approval
+    files:
+      - url: https://archive.ics.uci.edu/static/public/27/credit+approval.zip
+        name: credit_approval.zip
+    licence: CC-BY-4.0
+    licence_verified: "UCI dataset page licence block (CC BY 4.0)"
+    population: 690 credit-card applications, +/- approval label, attributes anonymised
+    status: downloadable
+  - id: home_credit_default_risk
+    title: "Home Credit Default Risk (Kaggle competition)"
+    source_page: https://www.kaggle.com/competitions/home-credit-default-risk/data
+    files:
+      - kaggle_competition: home-credit-default-risk
+    licence: Kaggle competition rules (must be accepted by a logged-in user; not an open licence)
+    licence_verified: "NOT verified — rules page requires login. HF re-uploads labelled apache-2.0 are third-party relabels and are NOT used."
+    population: ~307k loan applications with repayment-difficulty TARGET, multi-table
+    status: gated

@@ -1,0 +1,8 @@
+requests>=2.31
+beautifulsoup4>=4.12
+pyyaml>=6
+rank-bm25>=0.2.2
+qdrant-client>=1.12
+# GPU container only (rocm:latest torch 2.11):
+transformers==5.19.0  # first release with embedding_gemma2
+sentence-transformers>=6.1
