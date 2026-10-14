@@ -33,11 +33,11 @@ from livekit.plugins import silero
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "api", "src"))
 from loan_advisory.agent import observability as obs  # noqa: E402  (OTel -> Phoenix; no-op unless AGENT_TRACING=1)
+from loan_advisory.agent.settings import VoiceSettings  # noqa: E402
+from loan_advisory.agent.streaming import speakable  # noqa: E402
 
-AGENT_HTTP = os.environ.get("AGENT_HTTP", "http://127.0.0.1:8095")
-STT_HTTP = os.environ.get("STT_HTTP", "http://127.0.0.1:8791")
-TTS_HTTP = os.environ.get("TTS_HTTP", "http://127.0.0.1:8793")
-TURN_LOG = os.environ.get("VOICE_TURN_LOG", "/root/hx/loan/voice/turns.jsonl")
+CFG = VoiceSettings.from_env()
+AGENT_HTTP, STT_HTTP, TTS_HTTP, TURN_LOG = CFG.agent_http, CFG.stt_http, CFG.tts_http, CFG.turn_log
 GREETING = {
     "en": "Hello. I can explain your loan decision, suggest what to work on, or answer policy questions. What would you like to know?",
     "hi": "नमस्ते। मैं आपके लोन फ़ैसले के कारण समझा सकता हूँ, सुधार के उपाय बता सकता हूँ, या नीति के सवालों का जवाब दे सकता हूँ। आप क्या जानना चाहेंगे?",
@@ -136,7 +136,7 @@ class SidecarSTT(stt.STT):
 
 
 class SvaraTTS(tts.TTS):
-    def __init__(self, language: str, turn: Turn, gender: str = "Female"):
+    def __init__(self, language: str, turn: Turn, gender: str = CFG.tts_gender):
         super().__init__(capabilities=tts.TTSCapabilities(streaming=False), sample_rate=24000, num_channels=1)
         self.language, self.turn, self.gender = language, turn, gender
         self._http: aiohttp.ClientSession | None = None
@@ -203,33 +203,68 @@ class AdvisorAgent(Agent):
             from opentelemetry.propagate import inject
             inject(headers, context=ctx)
         self._http = self._http or aiohttp.ClientSession()
-        try:
-            async with self._http.post(f"{AGENT_HTTP}/api/chat", headers=headers,
-                                       json={"message": msg or "hello", "literacy": self.literacy, "locale": self.locale,
-                                             "channel": "voice", "conversation_id": self.conv},
-                                       timeout=aiohttp.ClientTimeout(total=90)) as r:
-                resp = await r.json()
-        except Exception as e:  # never go silent: say we could not answer
-            resp = {"answer": "Sorry, I couldn't reach the advisory service just now.", "intent": "other", "error": str(e)[:200]}
+        body = {"message": msg or "hello", "literacy": self.literacy, "locale": self.locale, "channel": "voice",
+                "conversation_id": self.conv}
+        final: dict = {}
+
+        async def events():
+            """NDJSON events from the advisory server (sentence streaming), or one final event from /api/chat."""
+            path = "/api/chat/stream" if CFG.stream else "/api/chat"
+            async with self._http.post(f"{AGENT_HTTP}{path}", headers=headers, json=body,
+                                       timeout=aiohttp.ClientTimeout(total=CFG.http_timeout_s)) as r:
+                if not CFG.stream:
+                    yield {"type": "final", "response": await r.json()}
+                    return
+                async for raw in r.content:
+                    line = raw.decode("utf-8", "replace").strip()
+                    if line:
+                        yield json.loads(line)
+
+        def on_final(resp):
+            final.update(resp)
+
+        n = 0
+        async for text in speakable(events(), CFG.filler_after_s, CFG.filler.get(self.locale, CFG.filler["en"]), on_final,
+                                    failure_text=CFG.unreachable.get(self.locale, CFG.unreachable["en"])):
+            n += 1
+            if text == CFG.filler.get(self.locale):
+                self.turn.info["filler"] = True
+            else:
+                self.turn.mark("first_sentence")
+            yield text
         self.turn.mark("graph_done")
-        calls = (resp.get("timings") or {}).get("llm_calls") or []
+        resp = final or {"answer": "", "intent": "other", "error": "no final response"}
+        self._report(resp, msg, n)
+
+    def _report(self, resp, msg, n_chunks):
+        timings = resp.get("timings") or {}
+        calls = timings.get("llm_calls") or []
         comp = [c for c in calls if str(c.get("tag", "")).startswith("compose")]
         self.turn.info.update(intent=resp.get("intent"), action=resp.get("action"), locale=self.locale,
-                              graph_total_ms=(resp.get("timings") or {}).get("total_ms"),
+                              graph_total_ms=timings.get("total_ms"), graph_first_sentence_ms=timings.get("first_sentence_ms"),
+                              spoken_chunks=n_chunks,
                               llm_ttft_ms=round(comp[-1]["ttft_s"] * 1000, 1) if comp and comp[-1].get("ttft_s") else None,
                               classify_ms=round(calls[0]["total_s"] * 1000, 1) if calls and calls[0].get("tag") == "classify" else None,
                               guard_flags=resp.get("guard_flags"), answer_chars=len(resp.get("answer", "")))
-        try:
-            await self.room.local_participant.publish_data(json.dumps(
-                {k: resp.get(k) for k in ("answer", "intent", "action", "abstained", "citations", "decision_card", "improvement_plan",
-                                          "what_if", "handoff_ref")} | {"transcript": msg}, ensure_ascii=False).encode(), topic="advisor")
-        except Exception:
-            pass
-        yield resp.get("answer") or "Sorry, I don't have an answer for that."
+        task = asyncio.ensure_future(self.room.local_participant.publish_data(json.dumps(
+            {k: resp.get(k) for k in ("answer", "intent", "action", "abstained", "citations", "decision_card", "improvement_plan",
+                                      "what_if", "handoff_ref")} | {"transcript": msg}, ensure_ascii=False).encode(), topic="advisor"))
+        task.add_done_callback(lambda t: t.exception())  # best effort; never break the turn
+
+    async def tts_node(self, text, model_settings):
+        """Every chunk from llm_node is already a complete, guarded sentence: synthesize each one as soon as it
+        arrives (no extra sentence buffering by the default tokenizer)."""
+        tts_engine = self.session.tts
+        async for sentence in text:
+            if not sentence.strip():
+                continue
+            async with tts_engine.synthesize(sentence) as stream:
+                async for ev in stream:
+                    yield ev.frame
 
 
 def prewarm(proc: JobProcess):
-    proc.userdata["vad"] = silero.VAD.load()
+    proc.userdata["vad"] = silero.VAD.load(min_silence_duration=CFG.vad_min_silence_s)
 
 
 async def entrypoint(ctx: JobContext):
@@ -238,7 +273,8 @@ async def entrypoint(ctx: JobContext):
     meta = json.loads(participant.metadata or "{}")
     locale = meta.get("locale") if meta.get("locale") in ("en", "hi", "te") else "en"
     turn = Turn()
-    session = AgentSession(vad=ctx.proc.userdata["vad"], stt=SidecarSTT(locale, turn), tts=SvaraTTS(locale, turn), llm=GraphLLM())
+    session = AgentSession(vad=ctx.proc.userdata["vad"], stt=SidecarSTT(locale, turn), tts=SvaraTTS(locale, turn), llm=GraphLLM(),
+                           min_endpointing_delay=CFG.min_endpointing_s)
 
     @session.on("user_state_changed")
     def _u(ev):
@@ -260,4 +296,4 @@ async def entrypoint(ctx: JobContext):
 
 
 if __name__ == "__main__":
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, prewarm_fnc=prewarm))
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, prewarm_fnc=prewarm, port=int(os.environ.get("VOICE_WORKER_PORT", "8081"))))

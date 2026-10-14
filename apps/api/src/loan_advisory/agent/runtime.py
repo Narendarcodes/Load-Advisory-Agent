@@ -73,7 +73,7 @@ def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = 
     cfg, profile, mode = load_rag_config()
     if profile_name:
         profile = load_profile(profile_name)
-    dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    dev = device or os.environ.get("AGENT_RETRIEVER_DEVICE") or ("cuda" if torch.cuda.is_available() else "cpu")
     frac = os.environ.get("AGENT_GPU_FRACTION")  # cap this process's VRAM on the shared GPU (e.g. 0.016 = ~3 GB on MI300X)
     if frac and dev == "cuda":
         torch.cuda.set_per_process_memory_fraction(float(frac))
