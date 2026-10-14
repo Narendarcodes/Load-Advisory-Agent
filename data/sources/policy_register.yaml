@@ -1,0 +1,257 @@
+# Policy source register (Phase 4 governance). Metadata only: fetched raw text lives in
+# $LOAN_DATA_DIR/policy/ (not in git). Every item records authority, version and approval
+# state; nothing becomes "approved" automatically - a fetched change is a REVIEW EVENT.
+#
+# approval_status: approved (reviewed, current) | approved_historical (kept for audit /
+#   past decisions, excluded from current-policy answers) | pending_review | registered_not_ingested
+# licence: RBI website: "(c) Reserve Bank of India. All Rights Reserved" (rbi.org.in/Scripts/Disclaimer.aspx);
+#   used for non-commercial capstone research, not redistributed. Bank pages: (c) the bank.
+# retrieved_at / content_hash are filled by scripts/policy/fetch_sources.py into the manifest.
+reviewed_by: "Hark (automated research for Golla Narendar), 2026-10-14 - needs human sign-off"
+documents:
+  - document_id: RBI-DLD-2025
+    title: "Reserve Bank of India (Digital Lending) Directions, 2025"
+    publisher: Reserve Bank of India
+    authority: regulator
+    reference: "RBI/2025-26/36 DOR.STR.REC.19/21.07.001/2025-26"
+    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12848&Mode=0"
+    document_type: master_direction
+    jurisdiction: IN
+    product: [personal_loan, digital_lending]
+    publication_date: 2025-05-08
+    effective_from: 2025-05-08
+    effective_to: null
+    supersedes: [RBI-DL-GUIDELINES-2022]
+    approval_status: approved
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-KFS-2024
+    title: "Key Facts Statement (KFS) for Loans & Advances"
+    publisher: Reserve Bank of India
+    authority: regulator
+    reference: "RBI/2024-25/18 DOR.STR.REC.13/13.03.00/2024-25"
+    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12663&Mode=0"
+    document_type: circular
+    jurisdiction: IN
+    product: [personal_loan, retail_term_loan]
+    publication_date: 2024-04-15
+    effective_from: 2024-10-01
+    effective_to: null
+    supersedes: []
+    approval_status: approved
+    notes: "Consolidated into the 2025 Responsible Business Conduct Directions per later RBI consolidation (unverified at circular level) - kept as approved until the RBC text is ingested."
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-PENAL-2023
+    title: "Fair Lending Practice - Penal Charges in Loan Accounts"
+    publisher: Reserve Bank of India
+    authority: regulator
+    reference: "RBI/2023-24/53 DoR.MCS.REC.28/01.01.001/2023-24"
+    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12527&Mode=0"
+    document_type: circular
+    jurisdiction: IN
+    product: [personal_loan, all_loans]
+    publication_date: 2023-08-18
+    effective_from: 2024-01-01
+    effective_to: null
+    supersedes: []
+    approval_status: approved
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-CIC-CS-2023
+    title: "Strengthening of customer service rendered by Credit Information Companies and Credit Institutions"
+    publisher: Reserve Bank of India
+    authority: regulator
+    reference: "RBI/2023-24/73 DoR.FIN.REC.49/20.16.003/2023-24"
+    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12553&Mode=0"
+    document_type: circular
+    jurisdiction: IN
+    product: [credit_information]
+    publication_date: 2023-10-26
+    effective_from: 2024-04-26
+    effective_to: null
+    supersedes: []
+    approval_status: approved
+    notes: "Later consolidated into RBI (Credit Information Companies) Directions, 2025 (not ingested)."
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-CIC-COMP-2023
+    title: "Framework for compensation to customers for delayed updation/rectification of credit information"
+    publisher: Reserve Bank of India
+    authority: regulator
+    reference: "RBI/2023-24/72 DoR.FIN.REC.48/20.16.003/2023-24"
+    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12554&Mode=0"
+    document_type: circular
+    jurisdiction: IN
+    product: [credit_information]
+    publication_date: 2023-10-26
+    effective_from: 2024-04-26
+    effective_to: null
+    supersedes: []
+    approval_status: approved
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-IOS-2021
+    title: "Reserve Bank - Integrated Ombudsman Scheme, 2021 (notification)"
+    publisher: Reserve Bank of India
+    authority: regulator
+    reference: "CEPD.PRD.No.S873/13.01.001/2021-22"
+    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12192&Mode=0"
+    document_type: scheme
+    jurisdiction: IN
+    product: [grievance_redress]
+    publication_date: 2021-11-12
+    effective_from: 2021-11-12
+    effective_to: 2026-06-30
+    superseded_by: [RBI-IOS-2026-FAQ]
+    supersedes: []
+    approval_status: approved_historical
+    notes: "Replaced by RB-IOS 2026 from 2026-07-01 (per RBI FAQ); still governs complaints received before that date. Only the cover notification is HTML; the scheme text is a PDF (rbidocs, not fetchable)."
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-IOS-2026-FAQ
+    title: "FAQs - Reserve Bank - Integrated Ombudsman Scheme, 2026 (updated as on July 01, 2026)"
+    publisher: Reserve Bank of India
+    authority: regulator_consumer_education
+    source_url: "https://rbi.org.in/Scripts/FAQView.aspx?Id=153"
+    start_marker: "1. What is RB-IOS, 2026?"
+    end_marker: "Back to previous page"
+    document_type: faq
+    jurisdiction: IN
+    product: [grievance_redress]
+    publication_date: 2026-07-01
+    effective_from: 2026-07-01
+    effective_to: null
+    supersedes: [RBI-IOS-2021]
+    approval_status: approved
+    notes: "FAQ disclaimer: guidance only, the Scheme text governs. Scheme PDF (rbidocs) not fetchable by script."
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-FPC-2007
+    title: "Guidelines on Fair Practices Code for Lenders (reasons for rejection - all loan categories)"
+    publisher: Reserve Bank of India
+    authority: regulator
+    reference: "RBI/2006-2007/280 DBOD.No.Leg.BC.65/09.07.005/2006-07"
+    source_url: "https://www.rbi.org.in/Scripts/BS_CircularIndexDisplay.aspx?Id=3315"
+    document_type: circular
+    jurisdiction: IN
+    product: [all_loans]
+    publication_date: 2007-03-06
+    effective_from: 2007-03-06
+    effective_to: 2025-11-28
+    superseded_by: [RBI-RBC-CB-2025]
+    supersedes: []
+    approval_status: approved_historical
+    notes: "Requirement to convey main reasons for rejection in writing is carried into the 2025 RBC Directions (AIFI text verified; CB/NBFC text not ingested)."
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-MC-CS-2015
+    title: "Master Circular on Customer Service in Banks (July 1, 2015)"
+    publisher: Reserve Bank of India
+    authority: regulator
+    reference: "RBI/2015-16/59 DBR No.Leg.BC.21/09.07.006/2015-16"
+    source_url: "https://www.rbi.org.in/Scripts/BS_ViewMasCirculardetails.aspx?id=9862"
+    document_type: master_circular
+    jurisdiction: IN
+    product: [all_loans, customer_service]
+    publication_date: 2015-07-01
+    effective_from: 2015-07-01
+    effective_to: 2016-07-01
+    superseded_by: ["later master circulars / 2025 RBC Directions"]
+    supersedes: []
+    approval_status: approved_historical
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-RBC-CB-2025
+    title: "Reserve Bank of India (Commercial Banks - Responsible Business Conduct) Directions, 2025"
+    publisher: Reserve Bank of India
+    authority: regulator
+    reference: "RBI/DOR/2025-26/170 DOR.MCS.REC.No.89/01-01-032/2025-26"
+    source_url: "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=13140"
+    document_type: master_direction
+    jurisdiction: IN
+    product: [all_loans]
+    publication_date: 2025-11-28
+    effective_from: 2025-11-28
+    effective_to: null
+    supersedes: [RBI-FPC-2007]
+    approval_status: registered_not_ingested
+    notes: "Text only as PDF on rbidocs.rbi.org.in, which serves a JS bot challenge to scripted clients (2026-10-14). Needs manual download by the user."
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: RBI-RBC-NBFC-2025
+    title: "Reserve Bank of India (Non-Banking Financial Companies - Responsible Business Conduct) Directions, 2025"
+    publisher: Reserve Bank of India
+    authority: regulator
+    source_url: "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=12942&Mode=0"
+    document_type: master_direction
+    jurisdiction: IN
+    product: [all_loans]
+    publication_date: 2025-11-28
+    effective_from: 2025-11-28
+    effective_to: null
+    supersedes: []
+    approval_status: registered_not_ingested
+    notes: "PDF-only (rbidocs bot challenge). Applicable if the partner lender is an NBFC."
+    licence: "(c) RBI, all rights reserved; research use"
+  - document_id: HDFC-PL-ELIG
+    title: "HDFC Bank - Personal Loan Eligibility Criteria (public web page)"
+    publisher: HDFC Bank Ltd
+    authority: lender_public_page
+    source_url: "https://www.hdfcbank.com/personal/borrow/popular-loans/personal-loan/eligibility"
+    document_type: eligibility_page
+    jurisdiction: IN
+    product: [personal_loan]
+    publication_date: null
+    effective_from: null
+    effective_to: null
+    supersedes: []
+    approval_status: approved
+    notes: "Public marketing eligibility, NOT the bank's internal underwriting policy. Never attribute to our synthetic policy."
+    licence: "(c) HDFC Bank Ltd; research use, not redistributed"
+  - document_id: ICICI-PL-ELIG
+    title: "ICICI Bank - Personal Loan Eligibility (public web page)"
+    publisher: ICICI Bank Ltd
+    authority: lender_public_page
+    source_url: "https://www.icicibank.com/personal-banking/loans/personal-loan/eligibility"
+    document_type: eligibility_page
+    jurisdiction: IN
+    product: [personal_loan]
+    publication_date: null
+    effective_from: null
+    effective_to: null
+    supersedes: []
+    approval_status: approved
+    notes: "Public marketing eligibility, NOT internal underwriting policy."
+    licence: "(c) ICICI Bank Ltd; research use, not redistributed"
+  - document_id: SYN-POLICY-V1
+    title: "Prototype personal-loan eligibility policy synthetic-v1 (SYNTHETIC)"
+    publisher: Loan Rangers capstone team
+    authority: synthetic
+    source_url: "repo://data/evaluation/rag/synthetic_docs/SYN-POLICY-V1.md"
+    document_type: synthetic_policy
+    jurisdiction: prototype
+    product: [personal_loan]
+    publication_date: 2026-10-08
+    effective_from: 2026-10-08
+    effective_to: null
+    supersedes: []
+    approval_status: approved
+    notes: "Human-readable rendering of decision_engine/policies/personal_loan_synthetic_v1.json. Must always be cited as synthetic."
+    licence: "team-authored"
+  - document_id: SYN-INJECT-001
+    title: "Adversarial test page with embedded prompt injection (SYNTHETIC)"
+    publisher: Loan Rangers capstone team
+    authority: untrusted_test
+    source_url: "repo://data/evaluation/rag/synthetic_docs/SYN-INJECT-001.md"
+    document_type: adversarial_test
+    jurisdiction: none
+    product: [personal_loan]
+    publication_date: 2026-10-14
+    effective_from: null
+    effective_to: null
+    supersedes: []
+    approval_status: pending_review
+    notes: "Never approved: exists to test that unapproved/untrusted text is filtered and never treated as instructions."
+    licence: "team-authored"
+  # Registered references, not ingested (out of scope for the first corpus):
+  - document_id: IN-DPDP-2023
+    title: "Digital Personal Data Protection Act, 2023 and DPDP Rules, 2025"
+    publisher: Government of India (MeitY)
+    authority: statute
+    source_url: "https://www.meity.gov.in/data-protection-framework"
+    document_type: statute
+    jurisdiction: IN
+    product: [data_protection]
+    approval_status: registered_not_ingested
+    notes: "Commencement/applicability of specific provisions to the prototype is UNRESOLVED; needs legal review, not RAG."
