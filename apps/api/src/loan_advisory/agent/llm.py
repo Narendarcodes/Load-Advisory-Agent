@@ -11,8 +11,14 @@ import time
 
 import requests
 
+from loan_advisory.agent import observability as obs
+
 DEFAULT_BASE = os.environ.get("LLM_BASE", "http://127.0.0.1:8001/v1")
 DEFAULT_MODEL = os.environ.get("LLM_MODEL", "llm")
+
+
+STATS = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}  # process-wide counters (throughput reporting)
+_STATS_LOCK = threading.Lock()
 
 
 class LLMError(Exception):
@@ -36,14 +42,29 @@ class ChatLLM:
         return self._local.calls
 
     def chat(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "") -> str:
+        with obs.span(f"llm.{tag or 'chat'}", kind="LLM", **{"llm.model_name": self.model, "llm.provider": "vllm-self-hosted",
+                                                              "llm.invocation_parameters": json.dumps({"max_tokens": max_tokens, "temperature": temperature,
+                                                                                                       "reasoning_effort": self.reasoning_effort}),
+                                                              "input.value": obs.content(user), "llm.system": obs.content(system)}) as sp:
+            out = self._chat(system, user, max_tokens, temperature, tag)
+            c = self.calls[-1]
+            obs.set_attrs(sp, **{"llm.token_count.prompt": c.get("prompt_tokens"), "llm.token_count.completion": c.get("completion_tokens"),
+                                 "llm.token_count.total": (c.get("prompt_tokens") or 0) + (c.get("completion_tokens") or 0),
+                                 "llm.ttft_ms": round(c["ttft_s"] * 1000, 1) if c.get("ttft_s") is not None else None,
+                                 "llm.latency_ms": round(c["total_s"] * 1000, 1), "output.value": obs.content(out)})
+            return out
+
+    def _chat(self, system: str, user: str, max_tokens: int, temperature: float, tag: str) -> str:
         body = {"model": self.model, "messages": [{"role": "system", "content": system},
                                                   {"role": "user", "content": user}],
                 "max_tokens": max_tokens, "temperature": temperature, "stream": True,
+                "stream_options": {"include_usage": True},
                 "reasoning_effort": self.reasoning_effort}
         t0 = time.perf_counter()
         ttft = None
         first_any = None
         parts: list[str] = []
+        usage = {}
         last_err = None
         for attempt in range(3):
             try:
@@ -57,9 +78,14 @@ class ChatLLM:
                         if data == "[DONE]":
                             break
                         try:
-                            delta = json.loads(data)["choices"][0].get("delta", {})
-                        except (ValueError, KeyError, IndexError):
+                            obj = json.loads(data)
+                        except ValueError:
                             continue
+                        if obj.get("usage"):
+                            usage = obj["usage"]
+                        if not obj.get("choices"):
+                            continue
+                        delta = obj["choices"][0].get("delta", {})
                         if first_any is None and (delta.get("reasoning") or delta.get("reasoning_content") or delta.get("content")):
                             first_any = time.perf_counter() - t0
                         c = delta.get("content")
@@ -77,7 +103,12 @@ class ChatLLM:
         total = time.perf_counter() - t0
         self.calls.append({"tag": tag, "ttft_s": round(ttft, 3) if ttft is not None else None,
                            "first_token_any_s": round(first_any, 3) if first_any is not None else None,
-                           "total_s": round(total, 3)})
+                           "total_s": round(total, 3), "prompt_tokens": usage.get("prompt_tokens"),
+                           "completion_tokens": usage.get("completion_tokens")})
+        with _STATS_LOCK:
+            STATS["calls"] += 1
+            STATS["prompt_tokens"] += usage.get("prompt_tokens") or 0
+            STATS["completion_tokens"] += usage.get("completion_tokens") or 0
         return "".join(parts).strip()
 
     def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "") -> dict:

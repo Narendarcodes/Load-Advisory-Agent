@@ -18,7 +18,8 @@ _REQ = {
                  r"गारंटी|पक्का|गॅरंटी|గ్యారంటీ|ఖచ్చితంగా",
     "override": r"\b(approve|sanction)\s+(my|the|this)\s+(loan|application)\b|\bapprove\s+(me|it)\b|\bmark\b.{0,20}\bapproved\b|"
                 r"\b(reconsider|overturn|override|reverse|cancel|change|revoke|withdraw)\s+(the\s+|my\s+|this\s+)?(loan\s+|application\s+)?(decision|rejection|outcome)\b|"
-                r"\b(reconsider|overturn|reverse|re-?evaluate)\s+(my|the|this)\s+(loan|application)\b",
+                r"\b(reconsider|overturn|reverse|re-?evaluate)\s+(my|the|this)\s+(loan|application)\b|"
+                r"\b(change|turn|make|convert|update|switch)\b.{0,40}\b(to|as|into)\s+(approved|sanctioned|accepted)\b",
     "edit_record": r"\b(update|change|edit|modify|correct|set|increase|raise)\b.{0,30}\b(record|file|application data|my income in|my score in|the system)\b|"
                    r"\b(update|change|edit|set)\s+my\s+(income|salary|score|credit score|emi|obligations|tenure)\s+(to|in)\b",
     "auto_submit": r"\b(submit|file|send|re-?apply)\b.{0,25}\b(for me|on my behalf|automatically|a new application now)\b",

@@ -29,7 +29,9 @@ CLASSIFY = """Classify the applicant's latest message for a personal-loan adviso
 English, Hindi, Telugu or a mix. Labels:
 - explain: about THEIR OWN recorded loan decision: why it was rejected/approved, what a reason or term in it means, their status.
 - improve: what they can do / change / work on before reapplying, next steps, how to become eligible (without asking for a promise).
-- what_if: a hypothetical change to their own numbers ("what if my score was 720", "if I close one EMI of 5000").
+- what_if: a hypothetical change to their own numbers and whether the four checks would then be met ("what if my
+  score was 720", "if I close one EMI of 5000"). Questions about what rate, fee or amount a lender would offer
+  (even "if I earn X") are policy, not what_if.
 - policy: a general question about rules, regulations, lender policies, charges, documents, complaints/grievances,
   KFS, rights, RBI directions, or a specific lender's terms — including HOW or WHETHER a lender communicates
   rejection reasons, and market or cross-lender comparisons.

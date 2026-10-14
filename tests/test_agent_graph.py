@@ -298,3 +298,34 @@ def test_guard_false_positives_seen_in_eval_stay_fixed():
     assert G.request_flags("If I consolidate my loans, what change occurs to my loan account number?") == []
     assert G.answer_flags("The Ombudsman covers complaints about bank guarantees and credit cards.") == []
     assert G.request_flags("What are my chances of approval now?") == ["guarantee"]
+
+
+def test_foir_just_over_the_limit_never_displays_as_equal():
+    rec = {"rule_evaluations": [{"rule_id": "FOIR_MAX_45", "rule_name": "Maximum FOIR", "reason_code": "ERR_FOIR_EXCEEDED",
+                                 "operator": "<=", "threshold": 0.45, "actual_value": 0.4504, "result": "FAIL"}]}
+    f = F.reason_facts(rec)[0]
+    assert f["your_value"] == "45.04%" and f["required"] == "at most 45.0%"
+    assert G.request_flags("Change my rejected application to approved.") == ["override"]
+
+
+def test_tracing_emits_turn_node_tool_and_llm_spans(tmp_path, monkeypatch):
+    sdk = pytest.importorskip("opentelemetry.sdk.trace")
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+    from loan_advisory.agent import observability as obs
+    exp = InMemorySpanExporter()
+    prov = sdk.TracerProvider()
+    prov.add_span_processor(SimpleSpanProcessor(exp))
+    monkeypatch.setenv("AGENT_TRACING", "1")
+    monkeypatch.setattr(obs, "_TRACER", prov.get_tracer("test"))
+    llm = ScriptedLLM(intent="what_if", changes={"credit_score": {"set": 720}}, compose="Simulation under the synthetic policy.")
+    ag, _, _ = agent_for(llm, tmp_path=tmp_path)
+    r = ask(ag, "what if my score was 720")
+    spans = exp.get_finished_spans()
+    names = {s.name for s in spans}
+    assert {"advisor.turn", "node.classify", "node.load_evidence", "node.what_if", "node.compose", "node.validate",
+            "tool.run_what_if", "zen.simulate", "tool.get_decision_evidence"} <= names
+    root = next(s for s in spans if s.name == "advisor.turn")
+    assert len({s.context.trace_id for s in spans}) == 1 and r.trace_id == format(root.context.trace_id, "032x")
+    assert root.attributes["agent.intent"] == "what_if" and "input.value" not in root.attributes  # no text by default
+    assert next(s for s in spans if s.name == "zen.simulate").attributes["zen.simulated_decision"] == "REJECTED"

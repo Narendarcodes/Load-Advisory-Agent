@@ -48,8 +48,8 @@ def inr(x: float) -> str:
     return ("-" if n < 0 else "") + "₹" + s
 
 
-def pct(x: float) -> str:
-    return f"{float(x) * 100:.1f}%"
+def pct(x: float, digits: int = 1) -> str:
+    return f"{float(x) * 100:.{digits}f}%"
 
 
 def _display(rule_id: str, v):
@@ -69,9 +69,10 @@ def decision_card(record: dict) -> dict:
     pol = record.get("policy") or {}
     rules = []
     for e in record.get("rule_evaluations", []):
+        actual_disp, _ = _display_vs(e["rule_id"], e.get("actual_value"), e["threshold"])
         rules.append({"rule_id": e["rule_id"], "name": RULE_PLAIN.get(e["rule_id"], {}).get("name", e.get("rule_name")),
                       "reason_code": e["reason_code"], "result": e["result"],
-                      "actual": _display(e["rule_id"], e.get("actual_value")),
+                      "actual": actual_disp,
                       "threshold": ("≥ " if e["operator"] == ">=" else "≤ ") + _display(e["rule_id"], e["threshold"]),
                       "threshold_source": "synthetic" if pol.get("synthetic") else e.get("threshold_source")})
     return {"application_ref": record.get("application_ref"), "decision": record.get("decision"),
@@ -83,6 +84,14 @@ def decision_card(record: dict) -> dict:
             "missing_fields": (record.get("inputs") or {}).get("missing_fields", []), "flags": record.get("flags", [])}
 
 
+def _display_vs(rule_id, actual, threshold):
+    """Display actual and threshold with enough precision that a FAIL never looks equal (45.04% vs 45%)."""
+    a, t = _display(rule_id, actual), _display(rule_id, threshold)
+    if rule_id == "FOIR_MAX_45" and actual is not None and a == t and float(actual) != float(threshold):
+        a = pct(actual, 2)
+    return a, t
+
+
 def reason_facts(record: dict) -> list[dict]:
     """One fact per FAILED rule, in policy order. Passed rules are never reasons."""
     out = []
@@ -90,10 +99,11 @@ def reason_facts(record: dict) -> list[dict]:
         if e["result"] != "FAIL":
             continue
         rp = RULE_PLAIN.get(e["rule_id"], {})
+        yours, req = _display_vs(e["rule_id"], e["actual_value"], e["threshold"])
         out.append({"rule_id": e["rule_id"], "reason_code": e["reason_code"], "name": rp.get("name", e["rule_name"]),
                     "what_it_measures_simple": rp.get("low"), "what_it_measures_technical": rp.get("high"),
-                    "your_value": _display(e["rule_id"], e["actual_value"]),
-                    "required": ("at least " if e["operator"] == ">=" else "at most ") + _display(e["rule_id"], e["threshold"]),
+                    "your_value": yours,
+                    "required": ("at least " if e["operator"] == ">=" else "at most ") + req,
                     "threshold_is_synthetic": True})
     return out
 
@@ -159,7 +169,7 @@ def grounded_numbers(record: dict | None, extra: list | None = None) -> set[str]
         for form in (f, round(f), round(f, 1), round(f, 2)):
             nums.add(_norm(form))
         if 0 < f < 1.5:  # ratios also appear as percentages
-            for form in (f * 100, round(f * 100), round(f * 100, 1)):
+            for form in (f * 100, round(f * 100), round(f * 100, 1), round(f * 100, 2)):
                 nums.add(_norm(form))
 
     if record:

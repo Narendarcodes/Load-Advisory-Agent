@@ -13,6 +13,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
+from loan_advisory.agent import observability as obs
 from loan_advisory.agent.contracts import Citation, Session
 from loan_advisory.agent.facts import SCORED, counterfactual_targets
 from loan_advisory.application.lifecycle import simulate
@@ -42,7 +43,10 @@ class FrappeEvidenceSource:
 
     def latest(self, application_ref: str, doc: dict) -> dict | None:
         rid = doc.get("custom_latest_evidence")
-        return self.sink.get_record(rid) if rid else None
+        if not rid:
+            return None
+        with obs.span("frappe.get_loan_decision_evidence", kind="TOOL", **{"frappe.doctype": "Loan Decision Evidence", "frappe.record_id": rid}):
+            return self.sink.get_record(rid)
 
 
 class InMemoryEvidenceSource:
@@ -64,15 +68,19 @@ class DecisionTools:
     def _owned_doc(self, application_ref: str, session: Session) -> dict:
         if not session or not session.authenticated:
             raise NotAuthorized("no authenticated session")
-        doc = self.store.get(application_ref)  # UnknownApplication / FrappeUnavailable propagate
+        with obs.span("frappe.get_loan_application", kind="TOOL", **{"frappe.doctype": "Loan Application",
+                                                                    "store": type(self.store).__name__}):
+            doc = self.store.get(application_ref)  # UnknownApplication / FrappeUnavailable propagate
         owner = doc.get("applicant") or doc.get("applicant_id")
         if not owner or owner != session.applicant_ref:
             raise NotAuthorized("application does not belong to this applicant")
         return doc
 
+    @obs.tool("authorize")
     def authorize(self, application_ref: str, session: Session) -> None:
         self._owned_doc(application_ref, session)
 
+    @obs.tool("get_application_summary")
     def get_application_summary(self, application_ref: str, session: Session) -> dict:
         doc = self._owned_doc(application_ref, session)
         return {"application_ref": application_ref, "loan_amount": doc.get("loan_amount"),
@@ -80,10 +88,12 @@ class DecisionTools:
                 "product": doc.get("loan_product"), "status": doc.get("status"),
                 "lifecycle_state": doc.get("custom_lifecycle_state")}
 
+    @obs.tool("get_decision_evidence")
     def get_decision_evidence(self, application_ref: str, session: Session) -> dict | None:
         doc = self._owned_doc(application_ref, session)
         return self.evidence.latest(application_ref, doc)
 
+    @obs.tool("run_what_if")
     def run_what_if(self, application_ref: str, session: Session, changes: dict) -> dict:
         """Hypothetical re-evaluation through the unchanged ZEN path. Returns before/after per rule."""
         doc = self._owned_doc(application_ref, session)
@@ -102,8 +112,9 @@ class DecisionTools:
         if not clean:
             raise InvalidWhatIf("no hypothetical change given")
         before_vals = {k: doc.get(FIELD_TO_DOC[k], doc.get(k)) for k in SCORED}
-        with _ZEN_LOCK:
+        with obs.span("zen.simulate", kind="TOOL", **{"zen.engine": "zen-engine 2.1.2", "zen.fields": sorted(clean)}) as sp, _ZEN_LOCK:
             sim = simulate(application_ref, self.store, {FIELD_TO_DOC[k]: v for k, v in clean.items()})
+            obs.set_attrs(sp, **{"zen.simulated_decision": sim["decision"], "zen.policy_version": sim["policy"]["version"]})
         after_doc = self.store.get(application_ref)
         unchanged = all(after_doc.get(FIELD_TO_DOC[k], after_doc.get(k)) == before_vals[k] for k in SCORED)
         return {"changes": clean, "simulated_decision": sim["decision"], "is_simulation": True,
@@ -112,6 +123,7 @@ class DecisionTools:
                 "original_record_unchanged": unchanged,
                 "label": "hypothetical result under the synthetic prototype policy; not a decision and not a guarantee"}
 
+    @obs.tool("improvement_plan")
     def improvement_plan(self, application_ref: str, session: Session, record: dict) -> dict:
         targets = counterfactual_targets(record)
         steps = []
@@ -138,6 +150,7 @@ class PolicyTools:
         self.retriever, self.by_id, self.profile, self.rfilter, self.k = retriever, chunks_by_id, profile, rfilter, k
         self.hfilter = hfilter  # historical-mode filter (approved + approved_historical), used for temporal questions
 
+    @obs.tool("search_approved_policy")
     def search(self, query: str, historical: bool = False) -> tuple[list[dict], dict]:
         flt = self.hfilter if historical and self.hfilter is not None else self.rfilter
         with _RETRIEVER_LOCK:
@@ -149,6 +162,10 @@ class PolicyTools:
                              "citation": citation_for(f"P{i + 1}", c, self.profile).model_dump()})
         meta = {"latency_ms": round(res.get("latency_ms", 0.0), 1), "top_rerank_score": res.get("top_rerank_score"),
                 "mode": flt.mode}
+        obs.set_attrs(obs.current_span(),
+                      **{"retrieval.mode": flt.mode, "retrieval.lender_id": flt.lender_id, "retrieval.entity_type": flt.entity_type,
+                         "retrieval.k": self.k, "retrieval.latency_ms": meta["latency_ms"], "retrieval.top_rerank_score": meta["top_rerank_score"],
+                         "retrieval.document_ids": [p["citation"]["document_id"] for p in passages], "input.value": obs.content(query)})
         return passages, meta
 
 
@@ -168,6 +185,7 @@ class HandoffQueue:
     def __init__(self, path: str | None = None):
         self.path = Path(path or os.environ.get("AGENT_HANDOFF_LOG", "agent_out/handoffs.jsonl"))
 
+    @obs.tool("create_human_handoff")
     def create(self, category: str, refs: list[str], summary: str) -> str:
         ref = f"HO-{uuid.uuid4().hex[:10]}"
         self.path.parent.mkdir(parents=True, exist_ok=True)

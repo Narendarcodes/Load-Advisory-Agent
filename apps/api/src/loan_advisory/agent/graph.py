@@ -27,6 +27,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from loan_advisory.agent import facts as F
+from loan_advisory.agent import observability as obs
 from loan_advisory.agent import guards as G
 from loan_advisory.agent import prompts as P
 from loan_advisory.agent.contracts import AgentRequest, AgentResponse, Session
@@ -81,14 +82,45 @@ class AdvisoryAgent:
         self.tools, self.llm, self.policy, self.handoff = decision_tools, llm, policy_tools, handoff
         self.profile = profile or {}
         self.audit_path = Path(audit_path or os.environ.get("AGENT_AUDIT_LOG", "agent_out/turns.jsonl"))
+        self._trace_ctx: dict = {}  # request_id -> OTel context of the turn's root span (not stored in graph state)
         self.graph = self._build().compile(checkpointer=checkpointer or MemorySaver())
 
     # ------------------------------------------------------------------ public API
-    def run(self, request: AgentRequest, session: Session | None) -> AgentResponse:
+    def run(self, request: AgentRequest, session: Session | None, trace_context=None) -> AgentResponse:
         thread = f"{session.applicant_ref if session else 'anon'}::{request.conversation_id}"  # scoped per applicant
-        out = self.graph.invoke({"request": request.model_dump(), "session": session.model_dump() if session else None},
-                                config={"configurable": {"thread_id": thread}})
-        return AgentResponse(**out["response"])
+        sess_hash = hashlib.sha256(thread.encode()).hexdigest()[:16]
+        with obs.span("advisor.turn", kind="CHAIN", context=trace_context,
+                      **{"session.id": sess_hash, "channel": request.channel, "locale": request.locale,
+                         "literacy": request.literacy, "input.value": obs.content(request.message)}) as root:
+            if root is not None:
+                self._trace_ctx[request.request_id] = obs.current_context()
+            try:
+                out = self.graph.invoke({"request": request.model_dump(), "session": session.model_dump() if session else None},
+                                        config={"configurable": {"thread_id": thread}})
+            finally:
+                self._trace_ctx.pop(request.request_id, None)
+            resp = AgentResponse(**out["response"])
+            if root is not None:
+                resp.trace_id = format(root.get_span_context().trace_id, "032x")  # = Phoenix trace id
+                obs.set_attrs(root, **{"agent.intent": resp.intent, "agent.action": resp.action, "agent.abstained": resp.abstained,
+                                       "agent.guard_flags": resp.guard_flags, "agent.citations": [c.document_id for c in resp.citations],
+                                       "agent.evidence_refs": resp.evidence_refs, "agent.total_ms": resp.timings.get("total_ms"),
+                                       "output.value": obs.content(resp.answer)})
+            return resp
+
+    def _node(self, name, fn):
+        """Wrap a graph node in an OTel span parented to the turn's root span."""
+        def wrapped(s):
+            ctx = self._trace_ctx.get((s.get("request") or {}).get("request_id"))
+            with obs.span(f"node.{name}", kind="CHAIN", context=ctx, **{"graph.node": name}) as sp:
+                out = fn(s)
+                if sp is not None and isinstance(out, dict):
+                    obs.set_attrs(sp, **{f"graph.{k}": out[k] for k in ("status", "intent", "action", "attempts", "abstained") if k in out},
+                                  **({"graph.guard_flags": out["guard_flags"]} if out.get("guard_flags") else {}),
+                                  **({"graph.request_flags": out["flags"]} if out.get("flags") else {}))
+                return out
+        wrapped.__name__ = name
+        return wrapped
 
     # ------------------------------------------------------------------ helpers
     def _ev(self, s, node, **kw):
@@ -312,7 +344,8 @@ class AdvisoryAgent:
             txt, action = P.template("bad_what_if", why=s["what_if"]["error"]), "clarify"
         else:
             txt = P.template("greeting" if s.get("intent") == "greeting" else "other", req.locale)
-        return {"draft": txt, "action": action, "abstained": st in ("no_decision", "unavailable"),
+        declined = st in ("no_decision", "unavailable") or (st in (None, "ok") and s.get("intent") == "other")
+        return {"draft": txt, "action": action, "abstained": declined,
                 "trace": s["trace"], "plan": s.get("plan")}
 
     def finalize(self, s):
@@ -341,7 +374,7 @@ class AdvisoryAgent:
         timings = {"total_ms": round((time.perf_counter() - s["t0"]) * 1000, 1), "llm_calls": list(self.llm.calls[-6:]) if hasattr(self.llm, "calls") else []}
         if s.get("retrieval"):
             timings["retrieval_ms"] = s["retrieval"].get("latency_ms")
-        trace_id = str(uuid.uuid4())
+        trace_id = str(uuid.uuid4())  # replaced by the OTel trace id in run() when tracing is on
         wi = s.get("what_if")
         resp = AgentResponse(
             request_id=req.request_id, trace_id=trace_id, intent=intent if intent in ("explain", "improve", "what_if", "policy", "boundary", "greeting") else "other",
@@ -432,7 +465,7 @@ class AdvisoryAgent:
         g = StateGraph(AgentState)
         for name in ("receive", "authenticate", "classify", "load_evidence", "plan", "what_if", "retrieve_policy",
                      "compose", "validate", "boundary", "simple", "finalize"):
-            g.add_node(name, getattr(self, name))
+            g.add_node(name, self._node(name, getattr(self, name)))
         g.add_edge(START, "receive")
         g.add_edge("receive", "authenticate")
         g.add_conditional_edges("authenticate", lambda s: "simple" if s.get("status") in ("not_authorized", "unavailable") else "classify",
