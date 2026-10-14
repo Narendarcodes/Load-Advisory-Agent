@@ -398,7 +398,26 @@ class AdvisoryAgent:
             cited, dropped = verify_citations(ans, j, s["passages"], mode)
             if dropped:
                 self._ev(s, "verify_citations", kept=cited, dropped=dropped)
+        if not ab and mode == "llm_verify" and cited and self._left(s) >= self.settings.verify_min_left_s:
+            cited = self._llm_verify_citations(s, req, ans, cited)
         return {"draft": ans, "abstained": ab, "cited": cited, "attempts": attempts, "action": "answer"}
+
+    def _llm_verify_citations(self, s, req, ans, cited):
+        """Post-hoc citation verification by a focused LLM call: keep the passages that directly state the answer's
+        facts (may add an uncited passage that states them). Falls back to the model's own labels on any failure."""
+        labels = [p["label"] for p in s["passages"]]
+        ps = "\n\n".join(f"[{p['label']}] {p['citation']['title']} — {p['citation'].get('section') or ''}\n{p['text'][:1500]}"
+                          for p in s["passages"])
+        try:
+            j = self.llm.chat_json("You are a precise source checker. Output JSON only.",
+                                   P.VERIFY_CITATIONS.format(question=req.message, answer=ans, passages=ps),
+                                   max_tokens=500, tag="verify_citations", **self._llm_kw(s))
+            got = [c for c in (j.get("supporting") or []) if isinstance(c, str) and c in labels]
+        except (LLMError, AttributeError):
+            got = []
+        out = list(dict.fromkeys(got)) or cited
+        self._ev(s, "verify_citations", by="llm", claimed=cited, kept=out)
+        return out
 
     def validate(self, s):
         intent, draft = s["intent"], s.get("draft")

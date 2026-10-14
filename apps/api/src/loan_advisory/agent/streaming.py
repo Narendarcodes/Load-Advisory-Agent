@@ -156,3 +156,51 @@ class JSONFieldStreamer:
                 out.append(ch)
             self.pos += 1
         return "".join(out)
+
+
+async def speakable(events, filler_after_s: float, filler_text: str, on_final, failure_text: str = ""):
+    """Turn the NDJSON event stream of /api/chat/stream into text to speak (voice worker).
+
+    Yields every guarded sentence as it arrives; says `filler_text` once if nothing arrived within `filler_after_s`;
+    calls on_final(response) for the final event; if the stream breaks, yields `failure_text` (never goes silent);
+    if the final response arrives without any sentence (older server), yields its whole answer.
+    """
+    import asyncio
+    it = events.__aiter__()
+    said_any = filler_done = False
+    nxt = None
+    loop = asyncio.get_running_loop()
+    t_deadline = loop.time() + filler_after_s
+    while True:
+        if nxt is None:
+            nxt = asyncio.ensure_future(it.__anext__())
+        try:
+            timeout = None if (said_any or filler_done) else max(0.0, t_deadline - loop.time())
+            ev = await asyncio.wait_for(asyncio.shield(nxt), timeout=timeout)
+            nxt = None
+        except asyncio.TimeoutError:
+            filler_done = True
+            yield filler_text
+            continue
+        except StopAsyncIteration:
+            if not said_any and failure_text:
+                yield failure_text
+            return
+        except Exception:
+            if failure_text:
+                yield failure_text
+            return
+        kind = ev.get("type")
+        if kind == "sentence" and ev.get("text", "").strip():
+            said_any = True
+            yield ev["text"]
+        elif kind == "final":
+            resp = ev.get("response") or {}
+            on_final(resp)
+            if not said_any and resp.get("answer"):
+                yield resp["answer"]
+            return
+        elif kind == "error":
+            if failure_text:
+                yield failure_text
+            return
