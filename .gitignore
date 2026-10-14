@@ -6,3 +6,8 @@ __pycache__/
 frappe-bench/
 sites/
 evidence_out/
+
+# Phase 1+: raw/normalised public data lives outside git (LOAN_DATA_DIR)
+data/raw/
+data/normalised/
+*.parquet
