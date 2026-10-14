@@ -99,11 +99,26 @@ Rules:
 - Distinguish what a lender SAYS IT DOES (a practice, e.g. "we will send an SMS") from what it is REQUIRED to do.
   If asked whether someone "has to" / "must" do something, answer yes only if a passage states that obligation for
   that entity type; otherwise report what the passages say is done and that they do not show a requirement.
-- Cite every passage you rely on by its label (e.g. "P2"). Cite nothing if you abstain.
+- Cite every passage you rely on by its label (e.g. "P2"), and only those: do not cite a passage you did not use.
+  Cite nothing if you abstain.
 Style: {style}
 Language: write the answer in {lang}.
 {voice}
-Return JSON only: {{"abstain": true|false, "answer": "...", "citations": ["P1", ...]}}"""
+Return JSON only, with the keys in this order: {{"abstain": true|false, "citations": ["P1", ...], "answer": "..."}}"""
+
+POLICY_SPANS = POLICY.split("Return JSON only")[0].replace(
+    """- Cite every passage you rely on by its label (e.g. "P2"), and only those: do not cite a passage you did not use.
+  Cite nothing if you abstain.""",
+    """- Ground the answer in quotes BEFORE writing it: for each passage you rely on, copy ONE short span (8-40 words)
+  VERBATIM from that passage (exact words, no paraphrase, no ellipsis) that states the fact you use, with the
+  passage's label. Then write the answer using only what those quotes say. Do not quote passages you do not use.
+  If you abstain, give no quotes.""") + \
+    """Return JSON only, with the keys in this order:
+{{"abstain": true|false, "quotes": [{{"label": "P1", "quote": "<verbatim span>"}}, ...], "answer": "..."}}"""
+
+VOICE_FIRST_SENTENCE = ("\nFor speech: make the FIRST sentence short (at most 12 words) and complete on its own, so it can "
+                        "be spoken while you write the rest.")
+STREAM_BRIDGE = {"en": "To be precise:", "hi": "सही जानकारी यह है:", "te": "సరైన సమాచారం ఇది:"}
 
 RETRY = ("\n\nYour previous draft was rejected by an automatic check for: {flags}. Rewrite it so it fully follows the "
          "rules (no guarantees, no decisions, only numbers from the facts).")
@@ -150,6 +165,8 @@ TEMPLATES = {
                      "are no rejection reasons to explain."),
         "policy_abstain": ("I couldn't find this in the approved policy sources I can cite, so I won't guess. You could "
                            "ask the lender directly or raise it through its grievance channel."),
+        "policy_busy": ("The advisory service is busy right now, so I couldn't check the policy sources in time and I "
+                        "won't guess. Please ask again in a moment."),
         "bad_what_if": "I couldn't run that what-if: {why}. You can give a new monthly income, total EMIs, credit score or months in your job.",
     },
     "hi": {
@@ -164,6 +181,7 @@ TEMPLATES = {
         "greeting": "नमस्ते! मैं आपके लोन फ़ैसले के कारण समझा सकता हूँ, सुधार की योजना बता सकता हूँ, what-if चला सकता हूँ, या नीति के सवालों का स्रोत सहित जवाब दे सकता हूँ।",
         "other": "मैं आपके लोन फ़ैसले, what-if, सुधार योजना या पर्सनल लोन नीति के सवालों में मदद कर सकता हूँ।",
         "policy_abstain": "मुझे यह उन स्वीकृत नीति स्रोतों में नहीं मिला जिनका मैं हवाला दे सकता हूँ, इसलिए मैं अनुमान नहीं लगाऊँगा।",
+        "policy_busy": "सेवा अभी व्यस्त है, इसलिए मैं समय पर नीति स्रोत नहीं देख पाया और अनुमान नहीं लगाऊँगा। कृपया एक पल बाद फिर पूछें।",
     },
     "te": {
         "guarantee": ("లోన్ మంజూరు అవుతుందని నేను మాట ఇవ్వలేను, అంచనా కూడా చెప్పలేను. నిర్ణయం నేను తీసుకోను; కొత్త దరఖాస్తును "
@@ -177,6 +195,7 @@ TEMPLATES = {
         "greeting": "నమస్కారం! మీ లోన్ నిర్ణయానికి కారణాలు వివరించగలను, మెరుగుదల ప్రణాళిక చెప్పగలను, what-if చేయగలను, నియమాల ప్రశ్నలకు ఆధారాలతో జవాబివ్వగలను.",
         "other": "మీ లోన్ నిర్ణయం, what-if, మెరుగుదల ప్రణాళిక లేదా పర్సనల్ లోన్ నియమాల ప్రశ్నలలో సహాయం చేయగలను.",
         "policy_abstain": "నేను ఉదహరించగల ఆమోదిత నియమ పత్రాలలో ఇది కనిపించలేదు, కాబట్టి ఊహించి చెప్పను.",
+        "policy_busy": "సేవ ఇప్పుడు బిజీగా ఉంది, అందుకే సమయానికి నియమ పత్రాలు చూడలేకపోయాను; ఊహించి చెప్పను. దయచేసి ఒక్క క్షణం తర్వాత మళ్ళీ అడగండి.",
     },
 }
 

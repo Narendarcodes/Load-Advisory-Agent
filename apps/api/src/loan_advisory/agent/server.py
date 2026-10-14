@@ -9,6 +9,8 @@ Endpoints (JSON):
   POST /api/session           {external_ref} -> {token, ...}   (DEMO sign-in: synthetic accounts only)
   GET  /api/decision          Authorization: Bearer <token> -> decision card of the signed-in application
   POST /api/chat              {message, literacy, locale, channel, conversation_id} -> AgentResponse
+  POST /api/chat/stream       same body -> application/x-ndjson: {"type":"sentence","text":...} for every answer
+                              sentence as soon as it has passed the guards, then {"type":"final","response":AgentResponse}
   POST /api/livekit-token     {room, identity} -> LiveKit JWT (voice demo; only when LIVEKIT_* env is set)
 
 The session token is an HMAC over (applicant_ref, application_ref, expiry) issued by the server. The
@@ -83,17 +85,21 @@ class App:
         return 200, {"decision_card": decision_card(rec) if rec else None,
                      "summary": self.agent.tools.get_application_summary(claims["application_ref"], Session(applicant_ref=claims["applicant_ref"]))}
 
-    def chat(self, claims, body, headers=None):
-        req = AgentRequest(request_id=str(body.get("request_id") or uuid.uuid4()),
+    def _request(self, claims, body):
+        return AgentRequest(request_id=str(body.get("request_id") or uuid.uuid4()),
                            conversation_id=str(body.get("conversation_id") or claims["application_ref"]),
                            message=str(body.get("message") or "")[:4000] or "hello",
                            channel=body.get("channel") if body.get("channel") in ("text", "voice") else "text",
                            locale=body.get("locale") if body.get("locale") in ("en", "hi", "te") else "en",
                            literacy=body.get("literacy") if body.get("literacy") in ("low", "medium", "high") else "medium",
                            application_ref=claims["application_ref"])
+
+    def chat(self, claims, body, headers=None, on_sentence=None):
+        req = self._request(claims, body)
         from loan_advisory.agent import observability as obs
         resp = self.agent.run(req, Session(applicant_ref=claims["applicant_ref"]),
-                              trace_context=obs.extract_context(headers) if headers is not None else None)
+                              trace_context=obs.extract_context(headers) if headers is not None else None,
+                              **({"on_sentence": on_sentence} if on_sentence is not None else {}))
         return 200, resp.model_dump()
 
 
@@ -151,6 +157,31 @@ def make_handler(app: App):
                 return self._send(*app.decision(c)) if c else self._send(401, {"error": "sign in first"})
             return self._send(404, {"error": "not found"})
 
+        def _stream_chat(self, claims, body):
+            """NDJSON over a close-delimited HTTP/1.0 body: one line per guarded sentence, then the final response."""
+            lock = threading.Lock()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.close_connection = True
+
+            def line(obj):
+                with lock:
+                    try:
+                        self.wfile.write((json.dumps(obj, ensure_ascii=False, default=str) + "\n").encode())
+                        self.wfile.flush()
+                    except OSError:
+                        pass  # client went away; the turn still completes and is audited
+            try:
+                _, resp = app.chat(claims, body, self.headers, on_sentence=lambda t: line({"type": "sentence", "text": t}))
+                line({"type": "final", "response": resp})
+            except Exception as e:
+                sys.stderr.write(f"error {type(e).__name__}: {e}\n")
+                line({"type": "error", "error": "internal error"})
+
         def do_POST(self):
             path = self.path.split("?")[0]
             body = self._body()
@@ -164,6 +195,8 @@ def make_handler(app: App):
                     return self._send(401, {"error": "sign in first"})
                 if path == "/api/chat":
                     return self._send(*app.chat(c, body, self.headers))
+                if path == "/api/chat/stream":
+                    return self._stream_chat(c, body)
                 if path == "/api/livekit-token":
                     return self._send(*livekit_token(c, body))
             except Exception as e:  # never leak a stack trace to the client
