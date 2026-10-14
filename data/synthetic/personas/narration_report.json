@@ -1,0 +1,10 @@
+{
+ "rows": 2560,
+ "qc_passed": 2548,
+ "retried": 34,
+ "wall_s": 709,
+ "issue_counts": {
+  "mentions_policy_threshold": 2,
+  "unsupported_number": 10
+ }
+}
