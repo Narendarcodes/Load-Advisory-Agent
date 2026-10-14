@@ -7,6 +7,7 @@
 #   chat server   :${SIDE_PORT:-8096}  (own session secret, own audit/handoff logs, own Qdrant copy)
 #   LiveKit       :${SIDE_LK_PORT:-7890} (own dev keys, rtc tcp 7891, udp 50300-50400)
 #   voice worker  health :${SIDE_WORKER_PORT:-8082}, joins only the side LiveKit
+# (The worker is tracked by a pid file: 'exec -a' renaming breaks the LiveKit forkserver.)
 # Retriever: GPU with AGENT_GPU_FRACTION (default 0.016) unless SIDE_RETRIEVER_DEVICE=cpu. Remove the stack when done.
 set -euo pipefail
 ROOT=${LOAN_ROOT:-/root/hx/loan}
@@ -20,7 +21,7 @@ mkdir -p "$S" "$S/logs"
 
 down() {
   # bracketed first letters so pkill never matches the shell that runs it
-  docker exec "$C" bash -lc "pkill -f '[a]gent.server --port $PORT' ; pkill -f '[s]ide_worker_$WPORT'" || true
+  docker exec "$C" bash -lc "pkill -f '[a]gent.server --port $PORT' ; [ -f $S/worker.pid ] && { p=\$(cat $S/worker.pid); pkill -P \$p; kill \$p; rm -f $S/worker.pid; }" || true
   pkill -f "[l]ivekit-server --config $S/livekit.yaml" || true
   for i in $(seq 1 30); do pgrep -f "[l]ivekit-server --config $S/livekit.yaml" >/dev/null || break; sleep 1; done
   echo "side stack down"
@@ -63,7 +64,7 @@ EOF
   docker exec -d "$C" bash -lc "cd $REPO/apps/voice && set -a && . $S/lk.env && set +a && \
     export AGENT_HTTP=http://127.0.0.1:$PORT VOICE_TURN_LOG=$S/turns_voice.jsonl VOICE_WORKER_PORT=$WPORT AGENT_TRACING=0 \
       VOICE_MIN_ENDPOINTING_S=${VOICE_MIN_ENDPOINTING_S:-0.5} VOICE_VAD_MIN_SILENCE_S=${VOICE_VAD_MIN_SILENCE_S:-0.55} \
-      VOICE_STREAM=${VOICE_STREAM:-1} && exec -a side_worker_$WPORT python agent_worker.py start > $S/logs/worker.log 2>&1"
+      VOICE_STREAM=${VOICE_STREAM:-1} && echo \$\$ > $S/worker.pid && exec python agent_worker.py start > $S/logs/worker.log 2>&1"
   sleep 6
   echo "side stack up: chat :$PORT, livekit :$LKP, worker :$WPORT"
 }
