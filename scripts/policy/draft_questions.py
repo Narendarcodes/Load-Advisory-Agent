@@ -17,11 +17,12 @@ from pathlib import Path
 import requests
 
 BASE = os.environ.get("LLM_BASE", "http://127.0.0.1:8001/v1")
-DATA = Path(os.environ.get("LOAN_DATA_DIR", "/root/hx/loan/data")) / "policy"
+DATA = Path(os.environ.get("LOAN_POLICY_DIR") or Path(os.environ.get("LOAN_DATA_DIR", "/root/hx/loan/data")) / "policy")
 QUOTA = {"RBI-DLD-2025": 22, "RBI-PENAL-2023": 9, "RBI-KFS-2024": 7, "RBI-IOS-2021": 12, "RBI-CIC-CS-2023": 5,
          "RBI-CIC-COMP-2023": 5, "HDFC-PL-ELIG": 3, "ICICI-PL-ELIG": 4, "RBI-FPC-2007": 2, "RBI-MC-CS-2015": 4}
 PROMPT = (
-    "You write evaluation questions for a retrieval system over Indian lending regulations. "
+    "You write evaluation questions for a retrieval system over Indian lending regulations and one lender's public "
+    "personal-loan documents (Bajaj Finance, used as a public reference lender). "
     "Given ONE passage, write a question a loan applicant or advisor might ask whose answer is in this passage. "
     "Paraphrase: do not copy distinctive phrases from the passage into the question. "
     "Return JSON {\"question\":..., \"answer\": short factual answer, \"anchor\": an EXACT verbatim substring "
@@ -56,22 +57,27 @@ def draft(c):
     if norm(d["anchor"]) not in norm(c["text"]):
         return None
     return {"question": d["question"], "answer": d["answer"], "anchor": d["anchor"], "gold_chunks": [c["chunk_id"]],
+            "lender_id": c.get("lender_id"), "applies_to_entity": c.get("applies_to_entity"),
             "gold_docs": [c["document_id"]], "source_status": c["approval_status"]}
 
 
 def main():
     quota = QUOTA
-    if len(sys.argv) > 1:  # e.g. RBI-IOS-2026-FAQ:12
-        quota = {a.split(":")[0]: int(a.split(":")[1]) for a in sys.argv[1:]}
+    out_name = None
+    args = [a for a in sys.argv[1:] if not a.startswith("--out=")]
+    out_name = next((a[6:] for a in sys.argv[1:] if a.startswith("--out=")), None)
+    if args:  # e.g. RBI-IOS-2026-FAQ:12
+        quota = {a.split(":")[0]: int(a.split(":")[1]) for a in args}
     rng = random.Random(7)
     chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").open()]
     pick = []
     for did, n in quota.items():
-        pool = [c for c in chunks if c["document_id"] == did and len(c["text"].split()) >= 35]
+        pool = [c for c in chunks if c["document_id"] == did and len(c["text"].split()) >= 35
+                and c["approval_status"] == "approved"]
         pick += rng.sample(pool, min(len(pool), n + 3))  # oversample; some are dropped
     with ThreadPoolExecutor(128) as ex:
         out = [d for d in ex.map(draft, pick) if d]
-    name = "question_drafts.jsonl" if quota is QUOTA else f"question_drafts_{'_'.join(quota)}.jsonl"
+    name = out_name or ("question_drafts.jsonl" if quota is QUOTA else f"question_drafts_{'_'.join(quota)}.jsonl")
     (DATA / name).write_text("".join(json.dumps(d, ensure_ascii=False) + "\n" for d in out))
     print(len(pick), "sampled ->", len(out), "verified drafts")
 
