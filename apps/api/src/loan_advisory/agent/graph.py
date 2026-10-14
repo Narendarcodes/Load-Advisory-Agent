@@ -195,7 +195,7 @@ class AdvisoryAgent:
         reasons = F.reason_facts(s["record"])
         if not reasons:
             return None
-        names = [r["name"].lower() for r in reasons]
+        names = [r["name"] for r in reasons]
         joined = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
         if intent == "explain":
             return (f"Your application's recorded decision is {s['record']['decision']} under a synthetic prototype policy, "
