@@ -142,6 +142,8 @@ def make_handler(app: App):
                 return self._send(404, {"error": "not found"})
             if path == "/healthz":
                 return self._send(200, {"ok": True})
+            if path == "/favicon.ico":
+                return self._send(204, b"", "image/x-icon")
             if path == "/api/demo-accounts":
                 return self._send(200, {"accounts": app.demo, "note": "synthetic demo accounts; no real people"})
             if path == "/api/decision":
