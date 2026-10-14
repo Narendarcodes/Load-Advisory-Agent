@@ -128,6 +128,8 @@ Return JSON only: {{"supporting": ["P1", ...]}}"""
 
 VOICE_FIRST_SENTENCE = ("\nFor speech: make the FIRST sentence short (at most 12 words) and complete on its own, so it can "
                         "be spoken while you write the rest.")
+VOICE_LEAD_CONTINUE = ("\nFor speech: the applicant has ALREADY HEARD this first sentence: \"{lead}\" Do not repeat it or "
+                       "restate the decision; continue directly with the details, in at most 60 words.")
 STREAM_BRIDGE = {"en": "To be precise:", "hi": "सही जानकारी यह है:", "te": "సరైన సమాచారం ఇది:"}
 
 RETRY = ("\n\nYour previous draft was rejected by an automatic check for: {flags}. Rewrite it so it fully follows the "
