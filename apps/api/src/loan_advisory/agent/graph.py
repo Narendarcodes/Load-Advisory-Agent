@@ -62,6 +62,8 @@ _FAST = [
     ("policy", re.compile(r"\b(complain\w*|grievance|ombudsman|key fact statement|kfs)\b|शिकायत|ఫిర్యాదు", re.I)),
     ("what_if", re.compile(r"^\s*(what if|suppose)\b", re.I)),
 ]
+_QUESTION = re.compile(r"\?|^\s*(can|could|is|are|do|does|how|what|when|where|which|who|why|will|should|must)\b|"
+                       r"क्या|कैसे|कब|कौन|क्यों|ఎలా|ఏమి|ఎప్పుడు|ఎవరు|ఎందుకు", re.I)
 _FAST_NOT = re.compile(r"\b(rate|fee|fees|charges?|interest|offer|bajaj|bank|lender|nbfc|rbi)\b", re.I)
 
 
@@ -257,6 +259,8 @@ class AdvisoryAgent:
         if intent is None:
             by = "rules"
             intent = next((name for name, rx in _RULES if rx.search(req.message)), "other")
+            if intent == "other" and _QUESTION.search(req.message):
+                intent, by = "policy", "rules_question_default"  # cite-or-abstain path, never a guess
             changes = _regex_changes(req.message) if intent == "what_if" else None
         self._ev(s, "classify", intent=intent, by=by)
         return {"intent": intent, "wi_changes": changes, "prefetched": pre, "trace": s["trace"]}
@@ -403,8 +407,9 @@ class AdvisoryAgent:
         return {"draft": ans, "abstained": ab, "cited": cited, "attempts": attempts, "action": "answer"}
 
     def _llm_verify_citations(self, s, req, ans, cited):
-        """Post-hoc citation verification by a focused LLM call: keep the passages that directly state the answer's
-        facts (may add an uncited passage that states them). Falls back to the model's own labels on any failure."""
+        """Post-hoc citation verification by a focused LLM call: of the passages the answer cites, keep those the
+        verifier confirms directly state its facts. Never adds a passage; keeps the model's own labels when the
+        verifier confirms none of them or fails. (On dev, pruning beat replace/union: see the upgrade RESULTS.)"""
         labels = [p["label"] for p in s["passages"]]
         ps = "\n\n".join(f"[{p['label']}] {p['citation']['title']} — {p['citation'].get('section') or ''}\n{p['text'][:1500]}"
                           for p in s["passages"])
@@ -415,7 +420,7 @@ class AdvisoryAgent:
             got = [c for c in (j.get("supporting") or []) if isinstance(c, str) and c in labels]
         except (LLMError, AttributeError):
             got = []
-        out = list(dict.fromkeys(got)) or cited
+        out = [c for c in cited if c in got] or cited  # prune only: never adds a passage the answer did not cite (dev-tuned)
         self._ev(s, "verify_citations", by="llm", claimed=cited, kept=out)
         return out
 

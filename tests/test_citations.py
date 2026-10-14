@@ -85,3 +85,10 @@ def test_labels_mode_makes_no_verifier_call(tmp_path):
     r = ask(ag, "how do I complain?")
     assert [c.label for c in r.citations] == ["P1", "P3"]
     assert not any(t == "verify_citations" for t, _, _ in llm.prompts)
+
+
+def test_llm_verify_only_prunes_and_never_adds_an_uncited_passage(tmp_path):
+    pol = {"abstain": False, "citations": ["P1"], "answer": "Complaints go to the Grievance Redressal Officer within 30 days."}
+    llm = VerifyingLLM(["P3"], intent="policy", policy=pol)
+    ag = agent_for(llm, policy=FakePolicy(passages=PASSAGES), tmp_path=tmp_path, settings=S.AgentSettings(citation_mode="llm_verify"))
+    assert [c.label for c in ask(ag, "how do I complain?").citations] == ["P1"]

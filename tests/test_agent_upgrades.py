@@ -385,3 +385,16 @@ def test_speakable_falls_back_when_the_stream_breaks_or_ends_without_a_sentence(
         return [t async for t in speakable(src, filler_after_s=5, filler_text="x", on_final=lambda r: None, failure_text="Sorry.")]
     assert asyncio.run(run(broken())) == ["First.", "Sorry."]
     assert asyncio.run(run(_events([(0.0, {"type": "final", "response": {"answer": "Whole answer."}})]))) == ["Whole answer."]
+
+
+def test_rules_fallback_sends_an_unmatched_question_to_policy_not_other(tmp_path):
+    """When the busy LLM classifier misses its budget, an unrecognised QUESTION goes to the policy path (which cites
+    or abstains) instead of the generic 'other' reply."""
+    st = S.AgentSettings(voice_deadline_s=30, classify_budget_s=0.2, min_compose_s=0.1, fast_classify="off")
+    llm = SlowLLM(delay=0.6, intent="other", policy={"abstain": True, "citations": [], "answer": "Not in the sources."})
+    ag = agent_for(llm, policy=FakePolicy(), tmp_path=tmp_path, settings=st)
+    r = ask(ag, "Can a co-applicant's income be added to my application?", channel="voice")
+    assert r.intent == "policy"
+    llm2 = SlowLLM(delay=0.6, intent="other")
+    ag2 = agent_for(llm2, policy=FakePolicy(), tmp_path=tmp_path, settings=st)
+    assert ask(ag2, "ok cool", channel="voice").intent in ("greeting", "other")

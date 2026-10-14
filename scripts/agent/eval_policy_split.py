@@ -149,7 +149,7 @@ def cmd_run(a):
     by_question = {q["question"]: cache["questions"][q["qid"]] for q in qs}
     llm, judge = CapturingLLM(), ChatLLM()
     st = {} if AgentSettings is None else {"settings": AgentSettings(citation_mode=a.mode, text_deadline_s=600, voice_deadline_s=600,
-                                                                    fast_classify="off")}
+                                                                    classify_budget_s=120, fast_classify="off")}
     from loan_advisory.agent.runtime import build_offline_agent
     base, _, _ = build_offline_agent(llm=llm)
     out = Path(a.out)
