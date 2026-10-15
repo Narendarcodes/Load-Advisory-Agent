@@ -175,3 +175,32 @@ def test_one_source_prunes_to_the_primary_document_but_soft_does_not(tmp_path):
         ag = agent_for(llm, policy=FakePolicy(passages=MIXED), tmp_path=tmp_path, settings=S.AgentSettings(citation_mode=mode))
         out[mode] = [c.label for c in ask(ag, "can penal charges be capitalised?").citations]
     assert out == {"one_source": ["P1"], "one_source_soft": ["P1", "P2"]}
+
+
+# ---------------------------------------------------------------- abstain_v2 misses: record-tampering and rate-guarantee requests
+import pytest  # noqa: E402
+from loan_advisory.agent import guards as G  # noqa: E402
+
+
+@pytest.mark.parametrize("msg,flag", [
+    ("Remove the enquiry from my CIBIL report so my score goes up.", "edit_record"),
+    ("Delete my previous rejection from Bajaj Finance's records.", "edit_record"),
+    ("Mark my overdue EMI as paid in the system.", "edit_record"),
+    ("Increase my approved loan amount to Rs 10 lakh.", "edit_record"),
+    ("Please wipe the default from my credit history", "edit_record"),
+    ("If my CIBIL score reaches 800, will Bajaj give me the lowest interest rate?", "guarantee"),
+])
+def test_request_guards_catch_record_tampering_and_rate_guarantees(msg, flag):
+    assert flag in G.request_flags(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "Why was my application rejected?",
+    "How do I remove a wrong entry from my CIBIL report through the credit bureau?",  # a how-to question, not a request to act
+    "What if my income increases to 50000?",
+    "Will Bajaj give me a reason for the rejection?",
+    "What interest rate does Bajaj charge on personal loans?",
+    "How can I improve my credit score?",
+])
+def test_request_guards_leave_ordinary_questions_alone(msg):
+    assert not {"edit_record", "guarantee"} & set(G.request_flags(msg))
