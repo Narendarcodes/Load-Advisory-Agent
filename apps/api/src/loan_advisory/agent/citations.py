@@ -12,6 +12,8 @@ Modes (AGENT_CITATION_MODE):
                 cited passage (retrieval order). Cross-document corroborations (e.g. a lender code that restates an RBI
                 direction) are dropped, so a reader gets one primary source to check. No extra LLM call. Trade-off: an
                 answer that combines facts from two documents cites only the primary one (see feat/citation-accuracy).
+  one_source    the composer is asked to answer from ONE source document (prompts.ONE_SOURCE_RULE), then primary_source.
+  one_source_soft  the ONE_SOURCE_RULE prompt only; the model's labels are kept as given.
 """
 import os
 import re
@@ -124,7 +126,7 @@ def verify_citations(answer: str, j: dict, passages: list[dict], mode: str) -> t
             if hit and hit not in grounded:
                 grounded.append(hit)
         cand = grounded or claimed  # no span verified: keep what the model claimed (the full-answer guard still runs)
-    if mode == "primary_source" and len(cand) > 1:
+    if mode in ("primary_source", "one_source") and len(cand) > 1:
         rank = {p["label"]: i for i, p in enumerate(passages)}
         primary = by[min(cand, key=rank.get)]["citation"]["document_id"]
         cand = [L for L in cand if by[L]["citation"]["document_id"] == primary]

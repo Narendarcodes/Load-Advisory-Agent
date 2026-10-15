@@ -14,7 +14,7 @@ import os
 from dataclasses import dataclass, fields
 
 FAST_CLASSIFY = ("off", "voice", "all")
-CITATION_MODES = ("labels", "verify", "spans", "spans_verify", "llm_verify", "primary_source")
+CITATION_MODES = ("labels", "verify", "spans", "spans_verify", "llm_verify", "primary_source", "one_source", "one_source_soft")
 
 
 @dataclass(frozen=True)

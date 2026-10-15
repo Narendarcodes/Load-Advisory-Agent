@@ -146,3 +146,32 @@ def test_primary_source_is_a_valid_setting_and_runs_without_a_verifier_call(tmp_
     r = ask(ag, "can penal charges be capitalised?")
     assert [c.label for c in r.citations] == ["P2"]  # P2 outranks P3, so LENDER-FPC is the primary source
     assert not any(t == "verify_citations" for t, _, _ in llm.prompts)
+
+
+# ---------------------------------------------------------------- one_source: ask the composer for a single source document
+def test_one_source_modes_add_the_single_source_rule_to_the_policy_prompt(tmp_path):
+    for mode in ("one_source", "one_source_soft"):
+        pol = {"abstain": False, "citations": ["P1"], "answer": "Penal charges are not capitalised."}
+        llm = VerifyingLLM([], intent="policy", policy=pol)
+        ag = agent_for(llm, policy=FakePolicy(passages=MIXED), tmp_path=tmp_path, settings=S.AgentSettings(citation_mode=mode))
+        ask(ag, "can penal charges be capitalised?")
+        sys_prompts = [p for t, p, _ in llm.prompts if t == "compose_policy"]
+        assert sys_prompts and "ONE source document" in sys_prompts[0]
+
+
+def test_labels_mode_prompt_has_no_single_source_rule(tmp_path):
+    pol = {"abstain": False, "citations": ["P1"], "answer": "Penal charges are not capitalised."}
+    llm = VerifyingLLM([], intent="policy", policy=pol)
+    ag = agent_for(llm, policy=FakePolicy(passages=MIXED), tmp_path=tmp_path, settings=S.AgentSettings(citation_mode="labels"))
+    ask(ag, "can penal charges be capitalised?")
+    assert all("ONE source document" not in p for t, p, _ in llm.prompts if t == "compose_policy")
+
+
+def test_one_source_prunes_to_the_primary_document_but_soft_does_not(tmp_path):
+    pol = {"abstain": False, "citations": ["P1", "P2"], "answer": "Penal charges are not capitalised."}
+    out = {}
+    for mode in ("one_source", "one_source_soft"):
+        llm = VerifyingLLM([], intent="policy", policy=pol)
+        ag = agent_for(llm, policy=FakePolicy(passages=MIXED), tmp_path=tmp_path, settings=S.AgentSettings(citation_mode=mode))
+        out[mode] = [c.label for c in ask(ag, "can penal charges be capitalised?").citations]
+    assert out == {"one_source": ["P1"], "one_source_soft": ["P1", "P2"]}

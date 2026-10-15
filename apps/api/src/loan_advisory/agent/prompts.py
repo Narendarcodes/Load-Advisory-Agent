@@ -116,6 +116,11 @@ POLICY_SPANS = POLICY.split("Return JSON only")[0].replace(
     """Return JSON only, with the keys in this order:
 {{"abstain": true|false, "quotes": [{{"label": "P1", "quote": "<verbatim span>"}}, ...], "answer": "..."}}"""
 
+ONE_SOURCE_RULE = """
+- Sources: base the answer on ONE source document where possible: the document whose passages state the answer most
+  directly (passages of the same document share its title). Cite only passages from that document. Use and cite a second
+  document only if a fact the question needs is stated only there; do not cite a document that merely repeats it."""
+
 VERIFY_CITATIONS = """You check the sources of an answer to a personal-loan policy question.
 Question: {question}
 Answer: {answer}
