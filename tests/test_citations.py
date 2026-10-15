@@ -92,3 +92,30 @@ def test_llm_verify_only_prunes_and_never_adds_an_uncited_passage(tmp_path):
     llm = VerifyingLLM(["P3"], intent="policy", policy=pol)
     ag = agent_for(llm, policy=FakePolicy(passages=PASSAGES), tmp_path=tmp_path, settings=S.AgentSettings(citation_mode="llm_verify"))
     assert [c.label for c in ask(ag, "how do I complain?").citations] == ["P1"]
+
+
+# ---------------------------------------------------------------- feat/citation-accuracy: select_verified (pure)
+def test_select_verified_labels_prune_keeps_only_confirmed_cited_labels():
+    assert C.select_verified({"supporting": ["P1", "P9"]}, ["P1", "P3"], PASSAGES, kind="labels", policy="prune") == ["P1"]
+
+
+def test_select_verified_falls_back_to_cited_when_nothing_confirmed():
+    assert C.select_verified({"supporting": []}, ["P1", "P3"], PASSAGES, kind="labels", policy="prune") == ["P1", "P3"]
+    assert C.select_verified({}, ["P2"], PASSAGES, kind="quotes", policy="replace") == ["P2"]
+
+
+def test_select_verified_quotes_keep_only_passages_whose_quote_is_verbatim():
+    j = {"supporting": [{"label": "P1", "quote": "raised with the Grievance Redressal Officer, who will respond within 30 days"},
+                        {"label": "P3", "quote": "the ombudsman must answer every complaint within 30 days"}]}  # not in P3
+    assert C.select_verified(j, ["P1", "P3"], PASSAGES, kind="quotes", policy="prune") == ["P1"]
+
+
+def test_select_verified_quotes_reassign_a_mislabelled_quote():
+    j = {"supporting": [{"label": "P3", "quote": "Foreclosure charges of up to 4.72% apply on the outstanding principal"}]}
+    assert C.select_verified(j, ["P2", "P3"], PASSAGES, kind="quotes", policy="prune") == ["P2"]
+
+
+def test_select_verified_replace_may_use_an_uncited_but_verified_passage_prune_may_not():
+    j = {"supporting": [{"label": "P2", "quote": "Foreclosure charges of up to 4.72% apply on the outstanding principal"}]}
+    assert C.select_verified(j, ["P1"], PASSAGES, kind="quotes", policy="replace") == ["P2"]
+    assert C.select_verified(j, ["P1"], PASSAGES, kind="quotes", policy="prune") == ["P1"]
