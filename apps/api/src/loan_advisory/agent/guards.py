@@ -28,6 +28,14 @@ _REQ = {
                    r"^\W*(please\s+|can you\s+|could you\s+)?mark\b.{0,30}\b(as\s+)?(paid|closed|settled|cleared|regular)\b|"
                    r"\b(increase|raise|enhance)\s+(my\s+|the\s+)?(approved|sanctioned)\s+(loan\s+)?(amount|limit)\b",
     "auto_submit": r"\b(submit|file|send|re-?apply)\b.{0,25}\b(for me|on my behalf|automatically|a new application now)\b",
+    # requests to fake, inflate, hide or forge application information (question bank q.659)
+    "misrepresentation": r"\b(fake|forged?|forging|falsif\w*|fabricat\w*|counterfeit|doctor(ed)?)\b.{0,40}\b(salary|slip|payslip|income|statement|document|itr|form 16|bank|record|application|proof|score|report)|"
+                         r"\b(forge|falsify|fabricate)\b.{0,30}\b(my|a|the|some)\b|"
+                         r"\b(manipulat\w*|game|trick|cheat|fool)\b.{0,30}\b(application|system|lender|score|check|underwrit)|"
+                         r"\b(inflate|overstate|exaggerate|pad)\b.{0,30}\b(income|salary|earnings)|"
+                         r"\b(hide|conceal|not disclose|don'?t disclose|omit)\b.{0,30}\b(emi|emis|loan|loans|debt|obligation|default|liabilit)|"
+                         r"\blie\b.{0,30}\b(about|on)\b|"
+                         r"\b(edit|alter|tamper|modify|photoshop)\b.{0,20}\b(salary slip|payslip|pay slip|bank statement|statement|itr|form 16|document)",
     # information the agent never holds: who handled the file, internal grades/scores (abstain_v2 AB2-005, AB2-038)
     "not_available": r"\b(who|which|name of the)\b.{0,30}\b(officer|underwriter|employee|staff|person|executive|analyst|manager|banker)s?\b"
                      r".{0,40}\b(reject|declin|review|approv|decid|assess|process|handl|turn)\w*|"
