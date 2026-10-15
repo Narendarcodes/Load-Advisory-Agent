@@ -8,6 +8,10 @@ Modes (AGENT_CITATION_MODE):
                 span per passage it relies on. A span counts only if it is found in a passage; the citation goes to
                 the passage that actually contains the span (re-assigned if the model mislabelled it).
   spans_verify  spans, then the post-hoc verification above.
+  primary_source  labels, then keep only the cited passages from ONE source document: the document of the highest-ranked
+                cited passage (retrieval order). Cross-document corroborations (e.g. a lender code that restates an RBI
+                direction) are dropped, so a reader gets one primary source to check. No extra LLM call. Trade-off: an
+                answer that combines facts from two documents cites only the primary one (see feat/citation-accuracy).
 """
 import os
 import re
@@ -120,6 +124,10 @@ def verify_citations(answer: str, j: dict, passages: list[dict], mode: str) -> t
             if hit and hit not in grounded:
                 grounded.append(hit)
         cand = grounded or claimed  # no span verified: keep what the model claimed (the full-answer guard still runs)
+    if mode == "primary_source" and len(cand) > 1:
+        rank = {p["label"]: i for i, p in enumerate(passages)}
+        primary = by[min(cand, key=rank.get)]["citation"]["document_id"]
+        cand = [L for L in cand if by[L]["citation"]["document_id"] == primary]
     if mode in ("verify", "spans_verify") and len(cand) > 1 and _latin(answer):
         sc = {L: support(answer, by[L]["text"]) for L in cand}
         top = max(sc.values())

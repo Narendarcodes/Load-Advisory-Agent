@@ -426,7 +426,7 @@ class AdvisoryAgent:
         ab = bool(j.get("abstain"))
         ans = str(j.get("answer") or "").strip() or P.template("policy_abstain", req.locale)
         cited = [] if ab else _labels_of(j, mode)
-        if not ab and mode in ("verify", "spans", "spans_verify"):
+        if not ab and mode in ("verify", "spans", "spans_verify", "primary_source"):
             cited, dropped = verify_citations(ans, j, s["passages"], mode)
             if dropped:
                 self._ev(s, "verify_citations", kept=cited, dropped=dropped)

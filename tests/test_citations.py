@@ -119,3 +119,30 @@ def test_select_verified_replace_may_use_an_uncited_but_verified_passage_prune_m
     j = {"supporting": [{"label": "P2", "quote": "Foreclosure charges of up to 4.72% apply on the outstanding principal"}]}
     assert C.select_verified(j, ["P1"], PASSAGES, kind="quotes", policy="replace") == ["P2"]
     assert C.select_verified(j, ["P1"], PASSAGES, kind="quotes", policy="prune") == ["P1"]
+
+
+# ---------------------------------------------------------------- primary_source: one source document per answer
+MIXED = [P("P1", "Penal charges shall not be capitalised and no further interest is computed on them.", "RBI-DIR"),
+         P("P2", "Penal charges are not capitalised; no interest is charged on penal charges.", "LENDER-FPC"),
+         P("P3", "Penal charges must be disclosed in the key fact statement.", "RBI-DIR")]
+
+
+def test_primary_source_keeps_only_cited_passages_from_the_top_ranked_cited_document():
+    j = {"abstain": False, "citations": ["P2", "P1", "P3"], "answer": "No, penal charges are not capitalised."}
+    kept, dropped = C.verify_citations(j["answer"], j, MIXED, "primary_source")
+    assert kept == ["P1", "P3"] and dropped == ["P2"]  # P1 is ranked first, so its document (RBI-DIR) is the primary source
+
+
+def test_primary_source_single_citation_is_unchanged():
+    j = {"abstain": False, "citations": ["P2"], "answer": "x"}
+    assert C.verify_citations("x", j, MIXED, "primary_source") == (["P2"], [])
+
+
+def test_primary_source_is_a_valid_setting_and_runs_without_a_verifier_call(tmp_path):
+    assert S.AgentSettings(citation_mode="primary_source").citation_mode == "primary_source"
+    pol = {"abstain": False, "citations": ["P3", "P2"], "answer": "Penal charges are not capitalised."}
+    llm = VerifyingLLM(["P2"], intent="policy", policy=pol)
+    ag = agent_for(llm, policy=FakePolicy(passages=MIXED), tmp_path=tmp_path, settings=S.AgentSettings(citation_mode="primary_source"))
+    r = ask(ag, "can penal charges be capitalised?")
+    assert [c.label for c in r.citations] == ["P2"]  # P2 outranks P3, so LENDER-FPC is the primary source
+    assert not any(t == "verify_citations" for t, _, _ in llm.prompts)
