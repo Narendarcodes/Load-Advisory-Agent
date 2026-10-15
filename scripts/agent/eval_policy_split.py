@@ -53,8 +53,8 @@ Answer: {a}
 Is every factual claim in the answer supported by the cited passages (not outside knowledge)? Return JSON only: {{"supported": true|false}}"""
 
 
-def bench(split):
-    rows = [json.loads(l) for l in BENCH.open()]
+def bench(split, path=None):
+    rows = [json.loads(l) for l in Path(path or BENCH).open() if l.strip()]
     return [q for q in rows if split == "all" or q["split"] == split]
 
 
@@ -80,7 +80,7 @@ def cmd_retrieve(a):
         pr = load_profile(name)
         tools[name] = (PolicyTools(base.retriever, base.by_id, pr, profile_filter(pr, "current"), hfilter=profile_filter(pr, "historical")), pr)
     out = {"profiles": {k: v[1] for k, v in tools.items()}, "questions": {}}
-    qs = bench("all")
+    qs = bench("all", a.bench)
     for i, q in enumerate(qs):
         pt, _ = tools.get(q["profile"], tools["bajaj_finance"])
         ps, meta = pt.search(q["question"], historical=bool(TEMPORAL.search(q["question"])))
@@ -143,7 +143,7 @@ def summarise(rows):
 
 def cmd_run(a):
     cache = json.load(open(a.cache))
-    qs = bench(a.split)
+    qs = bench(a.split, a.bench)
     if a.limit:
         qs = qs[: a.limit]
     by_question = {q["question"]: cache["questions"][q["qid"]] for q in qs}
@@ -238,8 +238,10 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("retrieve")
     r.add_argument("--out", required=True)
+    r.add_argument("--bench", default=None, help="benchmark jsonl (default bajaj_v1); e.g. abstain_v2.jsonl")
     r2 = sub.add_parser("run")
-    r2.add_argument("--split", choices=("dev", "test"), required=True)
+    r2.add_argument("--split", choices=("dev", "test", "abstain_v2", "all"), required=True)
+    r2.add_argument("--bench", default=None)
     r2.add_argument("--mode", default="labels")
     r2.add_argument("--cache", required=True)
     r2.add_argument("--out", required=True)

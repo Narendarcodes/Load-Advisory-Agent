@@ -8,6 +8,12 @@ Modes (AGENT_CITATION_MODE):
                 span per passage it relies on. A span counts only if it is found in a passage; the citation goes to
                 the passage that actually contains the span (re-assigned if the model mislabelled it).
   spans_verify  spans, then the post-hoc verification above.
+  primary_source  labels, then keep only the cited passages from ONE source document: the document of the highest-ranked
+                cited passage (retrieval order). Cross-document corroborations (e.g. a lender code that restates an RBI
+                direction) are dropped, so a reader gets one primary source to check. No extra LLM call. Trade-off: an
+                answer that combines facts from two documents cites only the primary one (see feat/citation-accuracy).
+  one_source    the composer is asked to answer from ONE source document (prompts.ONE_SOURCE_RULE), then primary_source.
+  one_source_soft  the ONE_SOURCE_RULE prompt only; the model's labels are kept as given.
 """
 import os
 import re
@@ -120,9 +126,41 @@ def verify_citations(answer: str, j: dict, passages: list[dict], mode: str) -> t
             if hit and hit not in grounded:
                 grounded.append(hit)
         cand = grounded or claimed  # no span verified: keep what the model claimed (the full-answer guard still runs)
+    if mode in ("primary_source", "one_source") and len(cand) > 1:
+        rank = {p["label"]: i for i, p in enumerate(passages)}
+        primary = by[min(cand, key=rank.get)]["citation"]["document_id"]
+        cand = [L for L in cand if by[L]["citation"]["document_id"] == primary]
     if mode in ("verify", "spans_verify") and len(cand) > 1 and _latin(answer):
         sc = {L: support(answer, by[L]["text"]) for L in cand}
         top = max(sc.values())
         kept = [L for L in cand if sc[L] >= max(MIN_SUPPORT, REL_SUPPORT * top)] or [max(cand, key=sc.get)]
         cand = kept
     return cand, [c for c in claimed if c not in cand]
+
+
+def select_verified(j: dict, cited: list[str], passages: list[dict], kind: str = "labels", policy: str = "prune") -> list[str]:
+    """Turn a citation-verifier's output into the final citation labels.
+
+    kind    labels  j = {"supporting": ["P1", ...]}
+            quotes  j = {"supporting": [{"label": "P1", "quote": "<verbatim>"}, ...]}; a quote counts only if it is found
+                    (span_in) in a passage, and it is credited to the passage that contains it (re-assigned if mislabelled).
+    policy  prune   keep only labels the answer cited AND the verifier confirmed (never adds a passage)
+            replace use the verifier's confirmed labels, even ones the answer did not cite
+    Falls back to the answer's own labels when the verifier confirms nothing usable."""
+    by = {p["label"]: p for p in passages}
+    got: list[str] = []
+    for item in (j or {}).get("supporting") or []:
+        if kind == "quotes":
+            if not isinstance(item, dict) or not isinstance(item.get("quote"), str):
+                continue
+            lab = item.get("label")
+            order = ([lab] if lab in by else []) + [L for L in by if L != lab]
+            hit = next((L for L in order if span_in(item["quote"], by[L]["text"])), None)
+        else:
+            hit = item if isinstance(item, str) and item in by else None
+        if hit and hit not in got:
+            got.append(hit)
+    cited = [c for c in cited if c in by]
+    if policy == "replace":
+        return got or cited
+    return [c for c in cited if c in got] or cited
