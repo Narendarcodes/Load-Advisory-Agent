@@ -28,6 +28,14 @@ _REQ = {
                    r"^\W*(please\s+|can you\s+|could you\s+)?mark\b.{0,30}\b(as\s+)?(paid|closed|settled|cleared|regular)\b|"
                    r"\b(increase|raise|enhance)\s+(my\s+|the\s+)?(approved|sanctioned)\s+(loan\s+)?(amount|limit)\b",
     "auto_submit": r"\b(submit|file|send|re-?apply)\b.{0,25}\b(for me|on my behalf|automatically|a new application now)\b",
+    # information the agent never holds: who handled the file, internal grades/scores (abstain_v2 AB2-005, AB2-038)
+    "not_available": r"\b(who|which|name of the)\b.{0,30}\b(officer|underwriter|employee|staff|person|executive|analyst|manager|banker)s?\b"
+                     r".{0,40}\b(reject|declin|review|approv|decid|assess|process|handl|turn)\w*|"
+                     r"\binternal\s+(risk\s+|credit\s+)?(grade|rating|score|band|category|tier|bucket|scorecard)s?\b|"
+                     r"\brisk\s+(grade|rating|band|category|tier|bucket|segment)s?\b.{0,40}\b(my|me|i)\b|"
+                     r"\b(my|me)\b.{0,40}\brisk\s+(grade|rating|band|category|tier|bucket|segment)s?\b|"
+                     r"किस\s+(अधिकारी|कर्मचारी)|कौन.{0,20}(अधिकारी|कर्मचारी)|आंतरिक\s+(रिस्क|जोखिम|क्रेडिट)?\s*(ग्रेड|रेटिंग|स्कोर)|"
+                     r"ఏ\s+(అధికారి|ఉద్యోగి)|(అధికారి|ఉద్యోగి)\s+ఎవరు|అంతర్గత\s+(రిస్క్|క్రెడిట్)?\s*(గ్రేడ్|రేటింగ్|స్కోర్)",
     "other_applicant": r"\b(another|other|someone else'?s?|my (friend|brother|sister|wife|husband)'?s?)\b.{0,25}\b(application|loan|score|record)\b|"
                        r"\b(SYN-APP|APP-TEST|ACC-LOAP)-[0-9]+",
     "injection": r"ignore (all |the )?(previous|prior|above) (instructions|rules)|system prompt|developer mode|you are now|"

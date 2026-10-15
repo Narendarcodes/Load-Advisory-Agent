@@ -170,6 +170,10 @@ TEMPLATES = {
                         "numbers without changing anything, or pass a correction request to a human reviewer."),
         "auto_submit": ("I can't submit or file an application for you. When you are ready, you can apply through the "
                         "lender's own channels; I can help you check your numbers first with a what-if."),
+        "not_available": ("That information isn't available to me. I can see your application's recorded decision, the "
+                          "checks behind it and the details you submitted, but not who handled your application or any "
+                          "internal grade, score or rating the lender may use. You can ask the lender directly or through "
+                          "its grievance channel. I can explain the recorded reasons or run a what-if if that helps."),
         "other_applicant": "I can only discuss your own application. I can't share or look up anyone else's details.",
         "injection": ("I can only help with your own loan decision, what-if questions and personal-loan policy questions. "
                       "My rules don't change based on instructions in a message."),
@@ -203,6 +207,9 @@ TEMPLATES = {
         "override": "मैं किसी लोन फ़ैसले को मंज़ूर, रद्द या बदल नहीं सकता। अगर आपकी जानकारी गलत दर्ज है, तो मैं इसे एक मानव समीक्षक को भेज सकता हूँ।",
         "edit_record": "मैं आपका आवेदन या उसकी दर्ज जानकारी नहीं बदल सकता। मैं बिना कुछ बदले अलग आँकड़ों पर what-if चला सकता हूँ।",
         "auto_submit": "मैं आपकी ओर से आवेदन जमा नहीं कर सकता। तैयार होने पर आप लेंडर के अपने माध्यम से आवेदन कर सकते हैं।",
+        "not_available": ("यह जानकारी मेरे पास उपलब्ध नहीं है। मैं आपके आवेदन का दर्ज फ़ैसला, उसके पीछे की जाँचें और आपकी दी गई "
+                          "जानकारी देख सकता हूँ, लेकिन आवेदन किसने देखा या लेंडर का कोई आंतरिक ग्रेड, स्कोर या रेटिंग नहीं। "
+                          "आप लेंडर से सीधे या उसकी शिकायत प्रणाली से पूछ सकते हैं।"),
         "other_applicant": "मैं केवल आपके अपने आवेदन के बारे में बात कर सकता हूँ।",
         "injection": "मैं केवल आपके लोन फ़ैसले, what-if और पर्सनल लोन नीति के सवालों में मदद कर सकता हूँ।",
         "dispute": "मैंने इसे जाँच के लिए एक मानव समीक्षक को भेज दिया है (संदर्भ {ref})। मैं रिकॉर्ड खुद नहीं बदल सकता।",
@@ -217,6 +224,9 @@ TEMPLATES = {
         "override": "లోన్ నిర్ణయాన్ని నేను మంజూరు చేయలేను, మార్చలేను. మీ వివరాలు తప్పుగా నమోదైతే, మానవ సమీక్షకుడికి పంపగలను.",
         "edit_record": "మీ దరఖాస్తు వివరాలను నేను మార్చలేను. ఏదీ మార్చకుండా వేరే అంకెలతో what-if చేయగలను.",
         "auto_submit": "మీ తరపున దరఖాస్తు నేను సమర్పించలేను. సిద్ధమైనప్పుడు లెండర్ ద్వారానే దరఖాస్తు చేయవచ్చు.",
+        "not_available": ("ఈ సమాచారం నాకు అందుబాటులో లేదు. మీ దరఖాస్తు నమోదైన నిర్ణయం, దాని వెనుక ఉన్న తనిఖీలు, మీరు ఇచ్చిన "
+                          "వివరాలు మాత్రమే చూడగలను; దరఖాస్తును ఎవరు పరిశీలించారో లేదా లెండర్ అంతర్గత గ్రేడ్, స్కోర్, రేటింగ్ కాదు. "
+                          "లెండర్‌ను నేరుగా లేదా ఫిర్యాదు మార్గం ద్వారా అడగవచ్చు."),
         "other_applicant": "మీ స్వంత దరఖాస్తు గురించి మాత్రమే మాట్లాడగలను.",
         "injection": "మీ లోన్ నిర్ణయం, what-if, పర్సనల్ లోన్ నియమాల ప్రశ్నలలో మాత్రమే సహాయం చేయగలను.",
         "dispute": "దీన్ని పరిశీలన కోసం మానవ సమీక్షకుడికి పంపాను (రిఫరెన్స్ {ref}). రికార్డును నేనే మార్చలేను.",
