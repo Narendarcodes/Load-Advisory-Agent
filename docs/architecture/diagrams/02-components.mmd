@@ -1,0 +1,70 @@
+%% Components and how they connect (file paths are in this repo)
+flowchart TB
+    subgraph Clients
+        web["Chat UI<br/>apps/web/chat/index.html"]
+        vpage["Voice page<br/>apps/web/chat/voice.html (livekit-client)"]
+    end
+
+    subgraph API["Advisory server: loan_advisory.agent.server (stdlib, :8095)"]
+        ep["/api/session · /api/decision · /api/chat<br/>/api/chat/stream (NDJSON) · /api/livekit-token · /healthz"]
+        auth["HMAC session token<br/>(applicant_ref, application_ref, expiry)"]
+        settings["AgentSettings (env)<br/>deadlines · fast classify · AGENT_CITATION_MODE"]
+    end
+
+    subgraph Graph["LangGraph StateGraph: agent/graph.py"]
+        nodes["receive → authenticate → classify →<br/>load_evidence / plan / what_if / retrieve_policy →<br/>compose → validate → finalize<br/>(+ boundary, simple)"]
+        helpers["guards.py: request + answer flags<br/>streaming.py: SentenceGate per-sentence guard<br/>citations.py: labels | primary_source | llm_verify …<br/>facts.py: deterministic decision facts<br/>MemorySaver thread: applicant_ref::conversation_id"]
+    end
+
+    subgraph Tools["tools.py (least privilege, no write path)"]
+        t1["authorize · get_application_summary<br/>get_decision_evidence"]
+        t2["run_what_if · improvement_plan"]
+        t3["search_approved_policy"]
+        t4["create_human_handoff (JSONL)"]
+    end
+
+    subgraph Decision["Decision core (P0/P1/P3)"]
+        lc["application/lifecycle.py<br/>process_application · simulate"]
+        zen["ZEN Engine 2.1.2<br/>decision_engine/decisions/personal_loan_v1.json"]
+        reg["policy registry (sha256-pinned)<br/>synthetic-v1"]
+        fa["infrastructure/frappe_adapter.py<br/>evidence_store.py"]
+    end
+    frappe[("Frappe Lending (system of record)<br/>Loan Application · Loan Decision Evidence")]
+
+    subgraph RAG["rag/ retrieve.py (lender-profile filter before ranking)"]
+        bm25["BM25"]
+        dense["EmbeddingGemma 2 →<br/>Qdrant policy_chunks_v2"]
+        rrf["weighted RRF<br/>w_dense 1.0, w_bm25 0.5, k 10"]
+        rr["bge-reranker-v2-m3<br/>top 50 → top 5 (P1..P5)"]
+    end
+
+    llm["gpt-oss-120b on vLLM :8001<br/>called via llm.py ChatLLM (deadline-aware)"]
+    obs["Arize Phoenix :6006<br/>via observability.py (AGENT_TRACING=1)"]
+
+    subgraph Voice["Voice (apps/voice, infra/voice/up.sh)"]
+        lk["LiveKit server :7880"]
+        wk["agent_worker.py<br/>LiveKit Agents 1.8 · Silero VAD"]
+        stt["STT :8791<br/>IndicConformer-600M (hi/te, CPU)<br/>Whisper large-v3-turbo (en)"]
+        tts["TTS :8793 SNAC sidecar<br/>svara-tts-v1 on vLLM :8792"]
+    end
+
+    web --> ep
+    vpage <--> lk
+    lk <--> wk
+    wk --> stt
+    wk --> tts
+    wk -->|Bearer session token| ep
+    ep --> auth --> nodes
+    settings --> nodes
+    nodes --- helpers
+    nodes --> t1 & t2 & t3 & t4
+    nodes -->|"classify, compose"| llm
+    t1 --> fa --> frappe
+    t2 --> lc --> zen
+    reg --> zen
+    t3 --> bm25 & dense
+    bm25 --> rrf
+    dense --> rrf
+    rrf --> rr
+    helpers ~~~ obs
+    nodes -.->|"OTLP spans"| obs
