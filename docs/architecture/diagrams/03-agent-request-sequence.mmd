@@ -1,0 +1,58 @@
+%% One text turn through the advisory graph, including guard, abstain and fallback paths
+sequenceDiagram
+    autonumber
+    actor A as Applicant
+    participant S as Server :8095
+    participant G as LangGraph graph
+    participant T as tools.py
+    participant F as Frappe Lending
+    participant Z as ZEN (simulate)
+    participant R as Policy retriever
+    participant L as gpt-oss-120b
+
+    A->>S: POST /api/chat {message, locale, literacy}<br/>Authorization: Bearer token
+    S->>S: verify HMAC token → applicant_ref, application_ref
+    S->>G: invoke(thread = applicant_ref::conversation_id)
+    G->>T: authorize(application_ref, session)
+    T->>F: GET Loan Application
+    alt not owner / unknown ref / Frappe down
+        G->>G: simple template → finalize<br/>(same answer for unknown and not-owned)
+    end
+    G->>G: classify: deterministic request guards first
+    alt guard flag (injection, misrepresentation, other_applicant, dispute,<br/>override, edit_record, auto_submit, not_available, guarantee)
+        G->>G: boundary: fixed EN/HI/TE template, no LLM
+        opt dispute
+            G->>T: create_human_handoff (JSONL queue)
+        end
+        Note over G: not_available and guarantee set abstained = true.<br/>Boundary goes straight to finalize (no compose / validate)
+    else no flag
+        G->>L: intent classifier (JSON), or fast regex for voice<br/>(regex fallback if LLM is out of time)
+    end
+    alt explain / improve / what_if
+        G->>T: get_decision_evidence
+        T->>F: GET Loan Decision Evidence (record_json)
+        alt no decision / INFO_REQUESTED / MANUAL_REVIEW / APPROVED
+            G->>G: simple template → finalize
+        end
+        opt improve or what_if
+            G->>T: improvement_plan / run_what_if
+            T->>Z: decide(overrides) in memory
+            Z-->>T: simulated result (is_simulation, never persisted)
+        end
+    else policy
+        G->>T: search_approved_policy(query)
+        T->>R: profile filter → BM25 + dense → weighted RRF → rerank
+        R-->>G: top 5 passages P1..P5
+        Note over G: retriever failure → abstain
+    end
+    G->>L: compose: phrase only deterministic facts / cited passages
+    L-->>G: draft (policy: {abstain, answer, citations})
+    G->>G: validate: guarantee/decision language, NBFC written-reason claim,<br/>ungrounded numbers, citation labels
+    alt flagged and attempts < 2 and time left ≥ AGENT_MIN_COMPOSE_S
+        G->>L: one rewrite with the flags fed back
+    else still flagged or deadline reached
+        G->>G: deterministic template fallback
+    end
+    G->>G: finalize: AgentResponse, synthetic-policy label,<br/>audit row (ids, intent, flags, timings, no text or money values)
+    G-->>S: AgentResponse
+    S-->>A: answer + decision card + plan + citations
