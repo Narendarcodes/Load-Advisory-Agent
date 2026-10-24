@@ -64,9 +64,9 @@ def auroc(pos, neg):
 
 
 def main():
-    chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").open()]
+    chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").open(encoding="utf-8")]
     by_id = {c["chunk_id"]: c for c in chunks}
-    bench = [json.loads(l) for l in (ROOT / "data/evaluation/rag/benchmark_v1.jsonl").open()]
+    bench = [json.loads(l) for l in (ROOT / "data/evaluation/rag/benchmark_v1.jsonl").open(encoding="utf-8")]
     model, dev = load_model()
     t = time.time()
     vecs = model.encode([doc_string(c) for c in chunks], batch_size=32, normalize_embeddings=True, show_progress_bar=False)
@@ -99,7 +99,7 @@ def main():
             row["metrics"] = {k: metrics(v, rel, q["gold_docs"], by_id) for k, v in runs.items()}
         per_q.append(row)
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "per_question.jsonl").write_text("".join(json.dumps(r) + "\n" for r in per_q))
+    (OUT / "per_question.jsonl").write_text("".join(json.dumps(r) + "\n" for r in per_q), encoding="utf-8")
 
     def agg(rows, sysname):
         ms = [r["metrics"][sysname] for r in rows if "metrics" in r]
@@ -131,7 +131,7 @@ def main():
         report.setdefault("abstention", {})[name] = {"auroc_all": round(auroc(pos, neg), 3) if neg else None,
                                                      "threshold_from_dev": round(best, 4), "test_accuracy": round(acc(test, best), 3),
                                                      "n_pos": len(pos), "n_neg": len(neg)}
-    (OUT / "report.json").write_text(json.dumps(report, indent=1))
+    (OUT / "report.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
     print(json.dumps(report, indent=1))
 
 

@@ -24,7 +24,7 @@ a = ap.parse_args()
 base = Path(os.environ.get("LOAN_POLICY_DIR") or Path(os.environ.get("LOAN_DATA_DIR", "/root/hx/loan/data")) / "policy")
 res = fetch_all(base / "src", only=set(filter(None, a.only.split(","))) or None)
 chunks = build_chunks(base / "src")
-with (base / "chunks.jsonl").open("w") as f:
+with (base / "chunks.jsonl").open("w", encoding="utf-8") as f:
     for c in chunks:
         f.write(json.dumps(c, ensure_ascii=False) + "\n")
 print(json.dumps({k: (v.get("chars"), v.get("status"), v.get("error")) for k, v in res["manifest"].items()}, indent=1))
@@ -40,5 +40,5 @@ if a.export_manifest:
         row["approval_status"] = reg[did]["approval_status"]
         row["chunks"] = sum(c["document_id"] == did for c in chunks)
         per_doc[did] = row
-    Path(a.export_manifest).write_text(json.dumps({"note": "metadata only; texts stay on the droplet", "documents": per_doc}, indent=1) + "\n")
+    Path(a.export_manifest).write_text(json.dumps({"note": "metadata only; texts stay on the droplet", "documents": per_doc}, indent=1) + "\n", encoding="utf-8")
     print("exported", a.export_manifest)

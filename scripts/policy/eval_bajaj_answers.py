@@ -103,10 +103,10 @@ def main():
     ap.add_argument("--k", type=int, default=5)
     ap.add_argument("--workers", type=int, default=96)
     a = ap.parse_args()
-    chunks = {c["chunk_id"]: c for c in map(json.loads, (POLICY / "chunks.jsonl").open())}
-    bench = {q["qid"]: q for q in map(json.loads, BENCH.open())}
-    ranks = [json.loads(l) for l in open(a.rankings)]
-    profiles = {p.stem: yaml.safe_load(p.read_text()) for p in (ROOT / "config/lender_profiles").glob("*.yaml")}
+    chunks = {c["chunk_id"]: c for c in map(json.loads, (POLICY / "chunks.jsonl").open(encoding="utf-8"))}
+    bench = {q["qid"]: q for q in map(json.loads, BENCH.open(encoding="utf-8"))}
+    ranks = [json.loads(l) for l in open(a.rankings, encoding="utf-8")]
+    profiles = {p.stem: yaml.safe_load(p.read_text(encoding="utf-8")) for p in (ROOT / "config/lender_profiles").glob("*.yaml")}
     jobs = []
     for r in ranks:
         if r["split"] != "test":
@@ -145,7 +145,7 @@ def main():
     with ThreadPoolExecutor(a.workers) as ex:
         rows = list(ex.map(run, jobs))
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
-    (out / "answers.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
+    (out / "answers.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
 
     def summarise(rs, gate=False):
         ab = lambda r: r["abstain"] or (gate and r["retrieval_gate_abstain"])
@@ -172,7 +172,7 @@ def main():
               "llm_plus_retrieval_gate": {s: summarise([r for r in rows if r["system"] == s], gate=True) for s in systems},
               "by_origin_llm_only": {o: {s: summarise([r for r in rows if r["system"] == s and (r["origin"] == "human") == (o == "human")]) for s in systems}
                                      for o in ("human", "llm_draft_reviewed")}}
-    (out / "answer_report.json").write_text(json.dumps(report, indent=1) + "\n")
+    (out / "answer_report.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(report["llm_only"], indent=1))
 
 

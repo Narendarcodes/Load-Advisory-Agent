@@ -72,7 +72,7 @@ def main():
     if args:  # e.g. RBI-IOS-2026-FAQ:12
         quota = {a.split(":")[0]: int(a.split(":")[1]) for a in args}
     rng = random.Random(7)
-    chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").open()]
+    chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").open(encoding="utf-8")]
     pick = []
     for did, n in quota.items():
         pool = [c for c in chunks if c["document_id"] == did and len(c["text"].split()) >= 35
@@ -81,7 +81,7 @@ def main():
     with ThreadPoolExecutor(128) as ex:
         out = [d for d in ex.map(draft, pick) if d]
     name = out_name or ("question_drafts.jsonl" if quota is QUOTA else f"question_drafts_{'_'.join(quota)}.jsonl")
-    (DATA / name).write_text("".join(json.dumps(d, ensure_ascii=False) + "\n" for d in out))
+    (DATA / name).write_text("".join(json.dumps(d, ensure_ascii=False) + "\n" for d in out), encoding="utf-8")
     print(len(pick), "sampled ->", len(out), "verified drafts")
 
 

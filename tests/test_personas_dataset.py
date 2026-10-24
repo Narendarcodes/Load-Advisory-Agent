@@ -8,7 +8,7 @@ from loan_advisory.application.decision_orchestrator import decide
 
 ROOT = Path(__file__).resolve().parents[1]
 P = ROOT / "data" / "synthetic" / "personas" / "personas_v1.jsonl"
-ROWS = [json.loads(l) for l in P.open()] if P.exists() else []
+ROWS = [json.loads(l) for l in P.open(encoding="utf-8")] if P.exists() else []
 
 
 class _Store:
