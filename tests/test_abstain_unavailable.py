@@ -5,7 +5,7 @@ import pytest
 
 from loan_advisory.agent import guards as G
 from loan_advisory.agent import prompts as P
-from test_agent_graph import ScriptedLLM, agent_for, ask
+from tests.test_agent_graph import ScriptedLLM, agent_for, ask
 
 UNAVAILABLE = [
     "Who was the loan officer who rejected my application?",

@@ -198,7 +198,7 @@ def test_weighted_rrf_keeps_strong_dense_hit_that_equal_rrf_demotes():
 
 # ----------------------------------------------------------------------------- benchmark + retrieval regression
 def _bench():
-    return [json.loads(l) for l in BENCH.open()]
+    return [json.loads(l) for l in BENCH.open(encoding="utf-8")]
 
 
 def test_benchmark_size_mix_and_split_hygiene():

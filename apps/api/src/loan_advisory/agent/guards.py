@@ -15,18 +15,21 @@ _REQ = {
     "guarantee": r"\b(guarantee[ds]?|assure[ds]?|promise|definitely|for sure|surely|certainly|for certain)\b|100 ?%|"
                  r"\b(will|would|can|could)\s+(i|we|my\s+(loan|application))\s+(get|be|definitely)\s+(approv|sanction|the loan)|"
                  r"\b(chances?|odds|probability|likely|likelihood)\b.{0,30}\b(approv|sanction|get the loan)|"
-                 r"\bwill\b.{0,30}\bgive\s+me\s+(the\s+)?(lowest|best|lower|cheapest|minimum)\s+(interest\s+)?rate\b|"
+                 # a rate promise, not any mention of rates: "will I get the best rate", "can you get me the cheapest
+                 # rate", "will Bajaj give me the lowest interest rate". The subject must be the applicant, the agent
+                 # or a lender, so "which documents will give me the best rate" stays an ordinary question.
+                 r"\b(will|would|can|could|should)\s+(?:i|we|you|they|lenders?|banks?|nbfcs?|bajaj|hdfc|icici|sbi|"
+                 r"\w+\s+(?:finance|bank|nbfc|ltd\.?|limited)|the\s+(?:lender|bank|nbfc|company)|my\s+\w+)\s+"
+                 r"(?:get|give|offer|advise|provide|arrange|secure|find|quote|be\s+(?:offered|given|getting))\b"
+                 r"[^.?]{0,20}?\b(lowest|best|cheapest|minimum|lower)\s+(interest\s+|possible\s+)*(rate|roi|apr)\b|"
                  r"गारंटी|पक्का|गॅरंटी|గ్యారంటీ|ఖచ్చితంగా",
     "override": r"\b(approve|sanction)\s+(my|the|this)\s+(loan|application)\b|\bapprove\s+(me|it)\b|\bmark\b.{0,20}\bapproved\b|"
                 r"\b(reconsider|overturn|override|reverse|cancel|change|revoke|withdraw)\s+(the\s+|my\s+|this\s+)?(loan\s+|application\s+)?(decision|rejection|outcome)\b|"
                 r"\b(reconsider|overturn|reverse|re-?evaluate)\s+(my|the|this)\s+(loan|application)\b|"
                 r"\b(change|turn|make|convert|update|switch)\b.{0,40}\b(to|as|into)\s+(approved|sanctioned|accepted)\b",
+    # editing the applicant's own declared figures: "update my income to 60000 in the record"
     "edit_record": r"\b(update|change|edit|modify|correct|set|increase|raise)\b.{0,30}\b(record|file|application data|my income in|my score in|the system)\b|"
-                   r"\b(update|change|edit|set)\s+my\s+(income|salary|score|credit score|emi|obligations|tenure)\s+(to|in)\b|"
-                   # imperative record tampering (abstain_v2): "remove the enquiry from my CIBIL report", "mark my EMI as paid"
-                   r"^\W*(please\s+|can you\s+|could you\s+)?(remove|delete|erase|wipe|clear|drop)\b.{0,40}\b(enquir|inquir|rejection|record|default|history|report|dpd|overdue)|"
-                   r"^\W*(please\s+|can you\s+|could you\s+)?mark\b.{0,30}\b(as\s+)?(paid|closed|settled|cleared|regular)\b|"
-                   r"\b(increase|raise|enhance)\s+(my\s+|the\s+)?(approved|sanctioned)\s+(loan\s+)?(amount|limit)\b",
+                   r"\b(update|change|edit|set)\s+my\s+(income|salary|score|credit score|emi|obligations|tenure)\s+(to|in)\b",
     "auto_submit": r"\b(submit|file|send|re-?apply)\b.{0,25}\b(for me|on my behalf|automatically|a new application now)\b",
     # requests to fake, inflate, hide or forge application information (question bank q.659)
     "misrepresentation": r"\b(fake|forged?|forging|falsif\w*|fabricat\w*|counterfeit|doctor(ed)?)\b.{0,40}\b(salary|slip|payslip|income|statement|document|itr|form 16|bank|record|application|proof|score|report)|"
@@ -51,6 +54,57 @@ _REQ = {
 }
 REQ_PATTERNS = {k: re.compile(v, re.I) for k, v in _REQ.items()}
 
+# --- record tampering, kept out of the dict because framing decides the answer -------------------------------
+# "How do I raise my sanctioned limit?" / "How do I remove a wrong CIBIL entry?" are informational questions and PR
+# #9's own tests require them to pass; "Raise my sanctioned limit to 10 lakh" is a request to act on a record. A
+# how-to question is therefore exempt, but a request addressed to the agent ("can you increase ...") never is.
+_HOWTO = re.compile(
+    r"\b(?:how\s+(?:can|could|do|does|would|should|might)\s+(?:i|we|one)|how\s+to|"
+    r"what\s+(?:can|could|should|would|must)\s+(?:i|we)\s+do|"
+    r"what\s+(?:are\s+)?(?:the\s+)?(?:steps|ways|options)|is\s+it\s+possible\s+to|is\s+there\s+(?:a|any)\s+way)\b", re.I)
+# "What is the procedure to correct a wrong entry in my credit report?" asks about a process, so it must route as a policy
+# question rather than a dispute. Deliberately kept OUT of _HOWTO, because _HOWTO also exempts a message from the
+# record-tampering guard: "What is the method to set my CIBIL score to 800?" has to stay a refused tampering request.
+_PROCEDURE = re.compile(
+    r"\bwhat(?:'s|\s+is)\s+the\s+(?:correct\s+)?(?:procedure|process|way|method)\b", re.I)
+_ASK_AGENT_ACT = re.compile(
+    r"\b(?:can|could|would|will)\s+you\s+(?:please\s+)?"
+    r"(?:remove|delete|erase|wipe|clear|drop|mark|increase|raise|enhance|update|change|edit|modify|correct|set|fix)\b", re.I)
+_POLITE_OR_AGENT = (r"^\W*(?:(?:please|kindly|can you|could you|would you|will you|can i|may i|"
+                    r"i want to|i need to|i'?d like to)\s+)*")
+# official application / credit-record artefacts only; word ends so "recorded" is not read as "record"
+_TAMPER = re.compile(
+    _POLITE_OR_AGENT + r"(?:remove|delete|erase|wipe|clear|drop)\b[^.]{0,40}?"
+    r"\b(?:enquir(?:y|ies)|inquir(?:y|ies)|rejections?|defaults?|dpd|overdue|written[-\s]?off|settlements?|"
+    r"credit\s+report|cibil|credit\s+history|application\s+records?|records?)\b", re.I)
+_MARK_PAID = re.compile(
+    _POLITE_OR_AGENT + r"mark\b[^.]{0,30}?\b(?:as\s+)?(?:paid|closed|settled|cleared|regular)\b", re.I)
+# "increase my approved loan amount to 10 lakh": an instruction to set a sanctioned amount, not a how-to question
+_LIMIT = re.compile(r"\b(?:increase|raise|enhance)\s+(?:my\s+|the\s+)?(?:approved|sanctioned)\s+(?:loan\s+)?(?:amount|limit)\b", re.I)
+# "Update my CIBIL score to 800": the dict pattern above needs "my score", so a bureau qualifier ("my CIBIL score") slipped
+# through. Gated on framing, so "How can I increase my credit score to 800?" stays an improvement question.
+_SCORE_EDIT = re.compile(
+    r"\b(?:update|change|edit|modify|correct|set|increase|raise|fix)\s+my\s+"
+    r"(?:(?:cibil|credit|bureau|internal|risk|experian|crif)\s+)*(?:score|rating|report|history)\s+(?:to|as|in)\b"
+    r"|\b(?:update|change|edit|modify|correct|set|increase|raise|fix)\s+my\s+(?:(?:cibil|credit|bureau)\s+)?score\b", re.I)
+# deletion of things that are not application records (our own calls, chats, logs): a data request, not tampering
+_DELETE_NOT_RECORD = re.compile(
+    _POLITE_OR_AGENT + r"(?:remove|delete|erase|wipe|clear)\b[^.]{0,40}?"
+    r"\b(?:recordings?|recorded\s+(?:call|conversation|audio)|call\s+recordings?|audio|transcripts?|conversations?|"
+    r"chat(?:\s+(?:log|history))?|logs?|messages?)\b", re.I)
+
+
+def _is_directive(message: str) -> bool:
+    """True when the message asks for an action; False for a how-to/informational question."""
+    return _HOWTO.search(message) is None or _ASK_AGENT_ACT.search(message) is not None
+
+
+def is_informational_question(message: str) -> bool:
+    """True for a how-to/process question ("how do I ...", "what is the procedure to ...") that does not also ask the
+    agent to perform the change. Used to keep a policy question from being read as a claim about the user's record."""
+    return (_HOWTO.search(message) is not None or _PROCEDURE.search(message) is not None) \
+        and _ASK_AGENT_ACT.search(message) is None
+
 
 def request_flags(message: str, own_ref: str | None = None) -> list[str]:
     flags = []
@@ -62,6 +116,11 @@ def request_flags(message: str, own_ref: str | None = None) -> list[str]:
                 r"\b(another|other|someone|friend|brother|sister|wife|husband)\b", message, re.I):
             continue  # applicant naming their OWN reference is fine
         flags.append(k)
+    if "edit_record" not in flags and _is_directive(message) and (
+            _TAMPER.search(message) or _MARK_PAID.search(message) or _LIMIT.search(message) or _SCORE_EDIT.search(message)):
+        flags.append("edit_record")
+    if _DELETE_NOT_RECORD.search(message):
+        flags.append("data_deletion")  # the agent can never delete anything; route to a human data request
     return flags
 
 

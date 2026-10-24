@@ -54,7 +54,7 @@ Is every factual claim in the answer supported by the cited passages (not outsid
 
 
 def bench(split, path=None):
-    rows = [json.loads(l) for l in Path(path or BENCH).open() if l.strip()]
+    rows = [json.loads(l) for l in Path(path or BENCH).open(encoding="utf-8") if l.strip()]
     return [q for q in rows if split == "all" or q["split"] == split]
 
 
