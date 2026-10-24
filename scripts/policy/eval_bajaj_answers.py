@@ -30,6 +30,9 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 POLICY = Path(os.environ.get("LOAN_POLICY_DIR", "/root/hx/loan/policy"))
 BASE = os.environ.get("LLM_BASE", "http://127.0.0.1:8001/v1")
+MODEL = os.environ.get("LLM_MODEL", "llm")
+KEY = os.environ.get("LLM_API_KEY") or os.environ.get("GROQ_API_KEY")
+HEADERS = {"Authorization": f"Bearer {KEY}"} if KEY else {}
 BENCH = ROOT / "data/evaluation/rag/bajaj_v1/benchmark.jsonl"
 norm = lambda s: re.sub(r"\s+", " ", s).strip().lower()
 
@@ -67,7 +70,7 @@ def post(body, tries=8):
     delay = 2
     for _ in range(tries):
         try:
-            r = requests.post(f"{BASE}/chat/completions", json=body, timeout=300)
+            r = requests.post(f"{BASE}/chat/completions", json=body, headers=HEADERS, timeout=300)
             if r.status_code < 500:
                 return r.json()
         except requests.RequestException:
@@ -77,7 +80,7 @@ def post(body, tries=8):
 
 
 def chat_json(system, user, max_tokens=1200):
-    body = {"model": "llm", "reasoning_effort": "low", "max_tokens": max_tokens, "temperature": 0.0,
+    body = {"model": MODEL, "reasoning_effort": "low", "max_tokens": max_tokens, "temperature": 0.0,
             "response_format": {"type": "json_object"}, "messages": ([{"role": "system", "content": system}] if system else []) +
             [{"role": "user", "content": user}]}
     res = post(body)
