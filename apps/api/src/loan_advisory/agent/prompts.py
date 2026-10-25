@@ -202,6 +202,21 @@ TEMPLATES = {
                           "will decide."),
         "approved": ("Your application's recorded decision is APPROVED under the synthetic prototype policy, so there "
                      "are no rejection reasons to explain."),
+        "bureau_review": ("Your application has not been rejected. It is on hold under the synthetic prototype bureau "
+                          "because {reasons}. A human reviewer will check it; I can't predict their outcome. I can't cite "
+                          "an approved correction procedure, and changing a number in a what-if would not clear this hold "
+                          "— please use the lender's own channel or its grievance route if you think the recorded details "
+                          "are wrong."),
+        "bureau_info": ("Your application has not been rejected. It is on hold under the synthetic prototype bureau until "
+                        "these details are provided or corrected: {missing}. Once they are provided, the application is "
+                        "assessed again; I can't fill them in for you. I can't cite an approved correction procedure — "
+                        "please use the lender's own channel or its grievance route."),
+        "bureau_provider_retry": ("I couldn't get a bureau report from the synthetic prototype bureau ({code}), so your "
+                                  "application has no credit decision yet and I won't guess one. This looks temporary; "
+                                  "please try again shortly."),
+        "bureau_provider_manual": ("I couldn't get a bureau report from the synthetic prototype bureau ({code}), so your "
+                                   "application has no credit decision yet and I won't guess one. Retrying on its own "
+                                   "won't fix this; a human reviewer needs to look at it."),
         "policy_abstain": ("I couldn't find this in the approved policy sources I can cite, so I won't guess. You could "
                            "ask the lender directly or raise it through its grievance channel."),
         "policy_busy": ("The advisory service is busy right now, so I couldn't check the policy sources in time and I "
@@ -228,6 +243,18 @@ TEMPLATES = {
                           "डेटा नीति के अनुसार संभाले।"),
         "greeting": "नमस्ते! मैं आपके लोन फ़ैसले के कारण समझा सकता हूँ, सुधार की योजना बता सकता हूँ, what-if चला सकता हूँ, या नीति के सवालों का स्रोत सहित जवाब दे सकता हूँ।",
         "other": "मैं आपके लोन फ़ैसले, what-if, सुधार योजना या पर्सनल लोन नीति के सवालों में मदद कर सकता हूँ।",
+        "bureau_review": ("आपका आवेदन रिजेक्ट नहीं हुआ है। सिंथेटिक प्रोटोटाइप ब्यूरो के तहत यह इस कारण रोका गया है: {reasons}। "
+                          "एक मानव समीक्षक इसे देखेगा; मैं उनके नतीजे का अनुमान नहीं लगा सकता। मैं किसी स्वीकृत सुधार प्रक्रिया "
+                          "का हवाला नहीं दे सकता, और what-if में कोई अंक बदलने से यह रोक नहीं हटेगी — अगर दर्ज जानकारी गलत लगे "
+                          "तो लेंडर के अपने माध्यम या शिकायत मार्ग का उपयोग करें।"),
+        "bureau_info": ("आपका आवेदन रिजेक्ट नहीं हुआ है। सिंथेटिक प्रोटोटाइप ब्यूरो के तहत यह तब तक रोका गया है जब तक ये जानकारी "
+                        "दी या सुधारी नहीं जाती: {missing}। इसके बाद आवेदन फिर से जाँचा जाता है; मैं इसे भर नहीं सकता। मैं किसी "
+                        "स्वीकृत सुधार प्रक्रिया का हवाला नहीं दे सकता — कृपया लेंडर के अपने माध्यम या शिकायत मार्ग का उपयोग करें।"),
+        "bureau_provider_retry": ("मुझे सिंथेटिक प्रोटोटाइप ब्यूरो से रिपोर्ट नहीं मिली ({code}), इसलिए आपके आवेदन का क्रेडिट फ़ैसला "
+                                  "अभी नहीं है और मैं अनुमान नहीं लगाऊँगा। यह अस्थायी लगता है; कृपया थोड़ी देर बाद फिर कोशिश करें।"),
+        "bureau_provider_manual": ("मुझे सिंथेटिक प्रोटोटाइप ब्यूरो से रिपोर्ट नहीं मिली ({code}), इसलिए आपके आवेदन का क्रेडिट फ़ैसला "
+                                   "अभी नहीं है और मैं अनुमान नहीं लगाऊँगा। सिर्फ़ दोबारा कोशिश करने से यह ठीक नहीं होगा; एक मानव "
+                                   "समीक्षक को इसे देखना होगा।"),
         "policy_abstain": "मुझे यह उन स्वीकृत नीति स्रोतों में नहीं मिला जिनका मैं हवाला दे सकता हूँ, इसलिए मैं अनुमान नहीं लगाऊँगा।",
         "policy_busy": "सेवा अभी व्यस्त है, इसलिए मैं समय पर नीति स्रोत नहीं देख पाया और अनुमान नहीं लगाऊँगा। कृपया एक पल बाद फिर पूछें।",
     },
@@ -251,6 +278,18 @@ TEMPLATES = {
                           "తమ డేటా విధానం ప్రకారం నిర్వహిస్తుంది."),
         "greeting": "నమస్కారం! మీ లోన్ నిర్ణయానికి కారణాలు వివరించగలను, మెరుగుదల ప్రణాళిక చెప్పగలను, what-if చేయగలను, నియమాల ప్రశ్నలకు ఆధారాలతో జవాబివ్వగలను.",
         "other": "మీ లోన్ నిర్ణయం, what-if, మెరుగుదల ప్రణాళిక లేదా పర్సనల్ లోన్ నియమాల ప్రశ్నలలో సహాయం చేయగలను.",
+        "bureau_review": ("మీ దరఖాస్తు తిరస్కరించబడలేదు. సింథటిక్ ప్రోటోటైప్ బ్యూరో కింద ఇది ఈ కారణంతో నిలిపివేయబడింది: {reasons}. "
+                          "మానవ సమీక్షకుడు దీన్ని పరిశీలిస్తారు; వారి నిర్ణయాన్ని నేను ఊహించలేను. ఆమోదిత సవరణ ప్రక్రియను "
+                          "నేను ఉదహరించలేను; what-ifలో అంకె మార్చడం ఈ నిలిపివేతను తొలగించదు — నమోదైన వివరాలు తప్పని భావిస్తే "
+                          "లెండర్ సొంత మార్గాన్ని లేదా ఫిర్యాదు మార్గాన్ని ఉపయోగించండి."),
+        "bureau_info": ("మీ దరఖాస్తు తిరస్కరించబడలేదు. సింథటిక్ ప్రోటోటైప్ బ్యూరో కింద ఈ వివరాలు ఇచ్చే వరకు లేదా సరిచేసే వరకు "
+                        "ఇది నిలిపివేయబడింది: {missing}. తర్వాత దరఖాస్తు మళ్ళీ పరిశీలించబడుతుంది; నేను వాటిని నింపలేను. "
+                        "ఆమోదిత సవరణ ప్రక్రియను నేను ఉదహరించలేను — దయచేసి లెండర్ సొంత మార్గాన్ని లేదా ఫిర్యాదు మార్గాన్ని ఉపయోగించండి."),
+        "bureau_provider_retry": ("సింథటిక్ ప్రోటోటైప్ బ్యూరో నుండి నాకు రిపోర్ట్ రాలేదు ({code}), కాబట్టి మీ దరఖాస్తుకు ఇంకా "
+                                  "క్రెడిట్ నిర్ణయం లేదు; నేను ఊహించి చెప్పను. ఇది తాత్కాలికంగా ఉంది; దయచేసి కొద్దిసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి."),
+        "bureau_provider_manual": ("సింథటిక్ ప్రోటోటైప్ బ్యూరో నుండి నాకు రిపోర్ట్ రాలేదు ({code}), కాబట్టి మీ దరఖాస్తుకు ఇంకా "
+                                   "క్రెడిట్ నిర్ణయం లేదు; నేను ఊహించి చెప్పను. కేవలం మళ్ళీ ప్రయత్నించడం వల్ల ఇది సరికాదు; మానవ "
+                                   "సమీక్షకుడు దీన్ని చూడాలి."),
         "policy_abstain": "నేను ఉదహరించగల ఆమోదిత నియమ పత్రాలలో ఇది కనిపించలేదు, కాబట్టి ఊహించి చెప్పను.",
         "policy_busy": "సేవ ఇప్పుడు బిజీగా ఉంది, అందుకే సమయానికి నియమ పత్రాలు చూడలేకపోయాను; ఊహించి చెప్పను. దయచేసి ఒక్క క్షణం తర్వాత మళ్ళీ అడగండి.",
     },

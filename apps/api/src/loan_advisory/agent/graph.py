@@ -304,8 +304,15 @@ class AdvisoryAgent:
             return {"status": "not_authorized"}
         except FrappeUnavailable:
             return {"status": "unavailable"}
+        bf = F.bureau_facts(rec)
         if rec is None:
             st = "no_decision"
+        elif bf and bf["outcome_kind"] == "PROVIDER_FAILURE":
+            st = "bureau_provider_error"
+        elif bf and bf["outcome_kind"] == "DATA_QUALITY_HOLD":
+            st = "bureau_review"
+        elif bf and bf["outcome_kind"] == "EVALUATION_ERROR":
+            st = "manual_review"
         elif rec.get("lifecycle_state") == "INFO_REQUESTED" or rec.get("decision") == "ERROR" and rec.get("lifecycle_state") != "MANUAL_REVIEW":
             st = "info_requested"
         elif rec.get("lifecycle_state") == "MANUAL_REVIEW":
@@ -522,6 +529,22 @@ class AdvisoryAgent:
         elif st == "info_requested":
             missing = (rec.get("inputs") or {}).get("missing_fields") or ["details flagged as invalid"]
             txt, action = P.template("info_requested", missing=", ".join(m.replace("_", " ") for m in missing)), "clarify"
+        elif st == "bureau_review":
+            bf = F.bureau_facts(rec) or {}
+            if bf.get("info_requested"):
+                missing = bf.get("info_requested_fields") or ["details flagged as invalid"]
+                txt, action = P.template("bureau_info", req.locale,
+                                         missing=", ".join(m.replace("_", " ") for m in missing)), "clarify"
+            else:
+                reasons = "; ".join(bf.get("review_reasons_plain") or ["the bureau data could not be verified"])
+                txt, action = P.template("bureau_review", req.locale, reasons=reasons), "handoff"
+        elif st == "bureau_provider_error":
+            bf = F.bureau_facts(rec) or {}
+            pe = bf.get("provider_error") or {}
+            retryable = bool(pe.get("retryable"))
+            txt = P.template("bureau_provider_retry" if retryable else "bureau_provider_manual", req.locale,
+                             code=pe.get("code") or "BUREAU_ERROR")
+            action = "clarify" if retryable else "handoff"
         elif st == "manual_review":
             txt, action = P.template("manual_review", flags=", ".join(rec.get("flags") or ["flagged for review"])), "handoff"
         elif st == "approved":
@@ -530,7 +553,7 @@ class AdvisoryAgent:
             txt, action = P.template("bad_what_if", why=s["what_if"]["error"]), "clarify"
         else:
             txt = P.template("greeting" if s.get("intent") == "greeting" else "other", req.locale)
-        declined = st in ("no_decision", "unavailable") or (st in (None, "ok") and s.get("intent") == "other")
+        declined = st in ("no_decision", "unavailable", "bureau_provider_error") or (st in (None, "ok") and s.get("intent") == "other")
         return {"draft": txt, "action": action, "abstained": declined,
                 "trace": s["trace"], "plan": s.get("plan")}
 
@@ -564,7 +587,7 @@ class AdvisoryAgent:
             by_label = {p["label"]: p for p in s.get("passages") or []}
             cites = [by_label[c]["citation"] for c in s.get("cited") or [] if c in by_label]
         missing = []
-        if s.get("status") == "info_requested":
+        if s.get("status") in ("info_requested", "bureau_review"):
             missing = ((s.get("record") or {}).get("inputs") or {}).get("missing_fields") or []
         plan_steps = (s.get("plan") or {}).get("steps") or []
         timings = {"total_ms": round((time.perf_counter() - s["t0"]) * 1000, 1), "llm_calls": list(self.llm.calls[-6:]) if hasattr(self.llm, "calls") else []}
@@ -593,9 +616,13 @@ class AdvisoryAgent:
     # ------------------------------------------------------------------ facts / fallback / audit
     def _facts(self, s):
         rec = s["record"]
-        base = {"recorded_decision": rec["decision"], "application_ref": rec["application_ref"],
+        base = {"recorded_decision": rec["decision"], "recorded_outcome": rec.get("outcome") or rec["decision"],
+                "application_ref": rec["application_ref"],
                 "policy": F.SYNTHETIC_LABEL, "failed_rules_the_only_reasons": F.reason_facts(rec),
                 "passed_rules_not_reasons": F.passed_facts(rec)}
+        bf = F.bureau_facts(rec)
+        if bf:
+            base["bureau"] = bf
         if s["intent"] == "improve":
             p = s["plan"]
             base["tasks"] = [{k: v for k, v in t.items() if k in ("name", "rule_id", "task", "target_display", "gap_display", "general_guidance", "alt")}
@@ -626,6 +653,10 @@ class AdvisoryAgent:
                 lines.append(f"- {r['name']}: yours is {r['your_value']}; the policy needs {r['required']}.")
             if F.passed_facts(rec):
                 lines.append("The other checks were met.")
+            bf = F.bureau_facts(rec)
+            if bf and bf.get("score_source_plain"):
+                lines.append(f"The credit score used for this assessment came from {bf['score_source_plain']}; "
+                             "this is synthetic prototype data, not a real credit bureau report.")
             lines.append("I can show what would need to change, or answer questions.")
         elif intent == "improve":
             lines.append(f"Under the {F.SYNTHETIC_LABEL}:")
