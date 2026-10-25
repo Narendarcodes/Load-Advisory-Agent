@@ -14,10 +14,12 @@ reported distinctly from data-quality holds and credit decisions:
 """
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 
 from decision_engine.schemas.bureau import BureauScenario
+from loan_advisory.agent import observability as obs
 from loan_advisory.application.lifecycle import process_bureau_application
 from loan_advisory.infrastructure.bureau_client import BureauClient
 
@@ -85,20 +87,38 @@ def run_bureau_evaluation(
     """
     _validate(application_ref, scenario)
     client = bureau_client or BureauClient()
-    out = process_bureau_application(
-        application_ref, store, sink, client, scenario=scenario, now=now
-    )
-    rec = out.record
-    bureau = rec.get("bureau") or {}
-    provider_error = bureau.get("provider_error")
-    score = bureau.get("score") or {}
-    dq = bureau.get("data_quality") or {}
-    outcome = rec.get("outcome") or rec["decision"]
+    ref_hash = hashlib.sha256(application_ref.encode()).hexdigest()[:16]
+    with obs.span("bureau.evaluation", kind="CHAIN",
+                  **{"langfuse.trace.name": "bureau.evaluation",
+                     "langfuse.trace.tags": ["loan-advisory", "bureau", "synthetic"],
+                     "application.ref_hash": ref_hash, "bureau.scenario": scenario},
+                  **obs.lf_trace_meta(correlation_id=ref_hash, application_ref_hash=ref_hash)) as sp:
+        out = process_bureau_application(
+            application_ref, store, sink, client, scenario=scenario, now=now
+        )
+        rec = out.record
+        bureau = rec.get("bureau") or {}
+        provider_error = bureau.get("provider_error")
+        score = bureau.get("score") or {}
+        dq = bureau.get("data_quality") or {}
+        outcome = rec.get("outcome") or rec["decision"]
 
-    status, error = 200, None
-    if provider_error:
-        status = 503 if provider_error.get("retryable") else 422
-        error = provider_error.get("code")
+        status, error = 200, None
+        if provider_error:
+            status = 503 if provider_error.get("retryable") else 422
+            error = provider_error.get("code")
+        obs.set_attrs(sp, **{"bureau.outcome": outcome, "bureau.decision": rec["decision"],
+                             "bureau.lifecycle_state": out.to_state, "bureau.score_source": score.get("source"),
+                             "bureau.data_quality_category": dq.get("category"),
+                             "bureau.provider_error_code": (provider_error or {}).get("code"),
+                             "bureau.retryable": bool(provider_error and provider_error.get("retryable")),
+                             "bureau.flags": list(out.flags),
+                             "bureau.missing_fields": list(out.missing_information or [])},
+                      **obs.lf_meta(outcome=outcome, decision=rec["decision"], lifecycle_state=out.to_state,
+                                    score_source=score.get("source"), data_quality_category=dq.get("category"),
+                                    provider_error_code=(provider_error or {}).get("code"),
+                                    retryable=bool(provider_error and provider_error.get("retryable")),
+                                    flags=list(out.flags), missing_fields=list(out.missing_information or [])))
     return BureauRunResult(
         application_ref=application_ref,
         outcome=outcome,

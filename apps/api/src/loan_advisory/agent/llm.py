@@ -62,9 +62,12 @@ class ChatLLM:
     def chat_stream(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
                     deadline: float | None = None):
         """Yield content deltas as they arrive. Raises LLMError on failure or when `deadline` passes."""
+        params = {"max_tokens": max_tokens, "temperature": temperature, "reasoning_effort": self.reasoning_effort}
         with obs.span(f"llm.{tag or 'chat'}", kind="LLM", **{"llm.model_name": self.model, "llm.provider": "vllm-self-hosted",
-                                                              "llm.invocation_parameters": json.dumps({"max_tokens": max_tokens, "temperature": temperature,
-                                                                                                       "reasoning_effort": self.reasoning_effort}),
+                                                              "llm.invocation_parameters": json.dumps(params),
+                                                              "langfuse.observation.model.name": self.model,
+                                                              "langfuse.observation.model.parameters": json.dumps(params),
+                                                              "langfuse.observation.input": obs.lf_content(user),
                                                               "input.value": obs.content(user), "llm.system": obs.content(system)}) as sp:
             parts = []
             try:
@@ -73,10 +76,19 @@ class ChatLLM:
                     yield d
             finally:
                 c = self.calls[-1] if self.calls else {}
-                obs.set_attrs(sp, **{"llm.token_count.prompt": c.get("prompt_tokens"), "llm.token_count.completion": c.get("completion_tokens"),
-                                     "llm.token_count.total": (c.get("prompt_tokens") or 0) + (c.get("completion_tokens") or 0),
+                prompt_tokens, completion_tokens = c.get("prompt_tokens"), c.get("completion_tokens")
+                err = c.get("error")
+                category = None if not err else ("deadline" if err == "deadline" else "http" if str(err).startswith("HTTP") else "llm_error")
+                usage = None if prompt_tokens is None and completion_tokens is None else {
+                    "input": prompt_tokens or 0, "output": completion_tokens or 0,
+                    "total": (prompt_tokens or 0) + (completion_tokens or 0)}
+                obs.set_attrs(sp, **{"llm.token_count.prompt": prompt_tokens, "llm.token_count.completion": completion_tokens,
+                                     "llm.token_count.total": (prompt_tokens or 0) + (completion_tokens or 0),
                                      "llm.ttft_ms": round(c["ttft_s"] * 1000, 1) if c.get("ttft_s") is not None else None,
-                                     "llm.latency_ms": round(c.get("total_s", 0) * 1000, 1), "llm.error": c.get("error"),
+                                     "llm.latency_ms": round(c.get("total_s", 0) * 1000, 1), "llm.error": err,
+                                     "llm.error_category": category,
+                                     "langfuse.observation.usage_details": json.dumps(usage) if usage else None,
+                                     "langfuse.observation.output": obs.lf_content("".join(parts)),
                                      "output.value": obs.content("".join(parts))})
 
     def _stream(self, system: str, user: str, max_tokens: int, temperature: float, tag: str, deadline: float | None):
