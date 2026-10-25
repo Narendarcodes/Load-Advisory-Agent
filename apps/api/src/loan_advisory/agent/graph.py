@@ -70,6 +70,7 @@ _FAST_NOT = re.compile(r"\b(rate|fee|fees|charges?|interest|offer|bajaj|bank|len
 class AgentState(TypedDict, total=False):
     request: dict
     session: dict | None
+    turn_key: str | None  # unique per run(): keys the streaming sink and the trace context (never client-supplied)
     history: Annotated[list, operator.add]
     t0: float
     trace: list
@@ -101,10 +102,10 @@ class AdvisoryAgent:
                  checkpointer=None, settings: AgentSettings | None = None):
         self.tools, self.llm, self.policy, self.handoff = decision_tools, llm, policy_tools, handoff
         self.settings = settings or AgentSettings.from_env()
-        self._streams: dict = {}  # request_id -> {"emit", "spoken", "first_ms"} for sentence streaming (not graph state)
+        self._streams: dict = {}  # turn_key -> {"emit", "spoken", "first_ms"} for sentence streaming (not graph state)
         self.profile = profile or {}
         self.audit_path = Path(audit_path or os.environ.get("AGENT_AUDIT_LOG", "agent_out/turns.jsonl"))
-        self._trace_ctx: dict = {}  # request_id -> OTel context of the turn's root span (not stored in graph state)
+        self._trace_ctx: dict = {}  # turn_key -> OTel context of the turn's root span (not stored in graph state)
         self.graph = self._build().compile(checkpointer=checkpointer or MemorySaver())
 
     # ------------------------------------------------------------------ public API
@@ -116,16 +117,20 @@ class AdvisoryAgent:
         with obs.span("advisor.turn", kind="CHAIN", context=trace_context,
                       **{"session.id": sess_hash, "channel": request.channel, "locale": request.locale,
                          "literacy": request.literacy, "input.value": obs.content(request.message)}) as root:
+            # A client may repeat request_id (retries, double submits). Neither the streaming sink nor the trace context
+            # may be keyed by it, or one turn's sentences would be spoken into another turn's session.
+            turn_key = uuid.uuid4().hex
             if root is not None:
-                self._trace_ctx[request.request_id] = obs.current_context()
+                self._trace_ctx[turn_key] = obs.current_context()
             if on_sentence is not None:
-                self._streams[request.request_id] = {"emit": on_sentence, "spoken": [], "first_ms": None, "t0": time.perf_counter()}
+                self._streams[turn_key] = {"emit": on_sentence, "spoken": [], "first_ms": None, "t0": time.perf_counter()}
             try:
-                out = self.graph.invoke({"request": request.model_dump(), "session": session.model_dump() if session else None},
+                out = self.graph.invoke({"request": request.model_dump(), "session": session.model_dump() if session else None,
+                                         "turn_key": turn_key},
                                         config={"configurable": {"thread_id": thread}})
             finally:
-                self._trace_ctx.pop(request.request_id, None)
-                self._streams.pop(request.request_id, None)
+                self._trace_ctx.pop(turn_key, None)
+                self._streams.pop(turn_key, None)
             resp = AgentResponse(**out["response"])
             if root is not None:
                 resp.trace_id = format(root.get_span_context().trace_id, "032x")  # = Phoenix trace id
@@ -138,7 +143,7 @@ class AdvisoryAgent:
     def _node(self, name, fn):
         """Wrap a graph node in an OTel span parented to the turn's root span."""
         def wrapped(s):
-            ctx = self._trace_ctx.get((s.get("request") or {}).get("request_id"))
+            ctx = self._trace_ctx.get(s.get("turn_key"))
             with obs.span(f"node.{name}", kind="CHAIN", context=ctx, **{"graph.node": name}) as sp:
                 out = fn(s)
                 if sp is not None and isinstance(out, dict):
@@ -172,7 +177,7 @@ class AdvisoryAgent:
         return {"deadline": d} if d != float("inf") else {}
 
     def _stream(self, s):
-        return self._streams.get((s.get("request") or {}).get("request_id"))
+        return self._streams.get(s.get("turn_key"))
 
     def _emit(self, s, text: str):
         st = self._stream(s)
@@ -243,7 +248,11 @@ class AdvisoryAgent:
     def classify(self, s):
         req = self._req(s)
         flags = G.request_flags(req.message, req.application_ref)
-        if req.application_ref and DISPUTE.search(req.message) and not flags:
+        # A dispute is a claim about the applicant's own recorded data ("my income in the record is wrong"). A how-to or
+        # process question that merely mentions a wrong entry ("how do I remove a wrong CIBIL entry?") is a policy
+        # question and must not fabricate a handoff.
+        if req.application_ref and DISPUTE.search(req.message) and not flags \
+                and not G.is_informational_question(req.message):
             flags = ["dispute"]
         if flags:
             self._ev(s, "classify", intent="boundary", flags=flags, by="guard")
@@ -477,12 +486,13 @@ class AdvisoryAgent:
     def boundary(self, s):
         req, sess = self._req(s), self._session(s)
         flags = s["flags"]
-        key = next(k for k in ("injection", "misrepresentation", "other_applicant", "dispute", "override", "edit_record", "auto_submit", "not_available", "guarantee")
+        key = next(k for k in ("injection", "misrepresentation", "other_applicant", "dispute", "data_deletion", "override", "edit_record", "auto_submit", "not_available", "guarantee")
                    if k in flags)
         out = {"action": "refuse", "abstained": key in ("guarantee", "not_available")}
-        if key == "dispute":
-            ref = self.handoff.create("data_dispute", [req.application_ref], req.message) if self.handoff else None
-            out.update(action="handoff", handoff_ref=ref, draft=P.template("dispute", req.locale, ref=ref or "pending"))
+        if key in ("dispute", "data_deletion"):
+            category = "data_dispute" if key == "dispute" else "data_deletion"
+            ref = self.handoff.create(category, [req.application_ref], req.message) if self.handoff else None
+            out.update(action="handoff", handoff_ref=ref, draft=P.template(key, req.locale, ref=ref or "pending"))
         else:
             out["draft"] = P.template(key, req.locale)
         if key == "guarantee" and req.application_ref:

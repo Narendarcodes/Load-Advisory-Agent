@@ -85,6 +85,34 @@ maps them to `Citation` objects (document id, title, section, page, URL, approva
 relationship label). The GPU footprint was about 4.1–4.5 GB uncapped; with `AGENT_GPU_FRACTION=0.016` (allocator cap
 ~3 GB) and the CUDA cache released after each query it measures 3.74 GB in `rocm-smi --showpids` (Oct 14, 2026).
 
+## Streaming and per-turn deadlines (`streaming.py`, `settings.py`)
+Voice answers are spoken sentence by sentence (`POST /api/chat/stream`, NDJSON). The contract and its limits:
+* **Every sentence runs the answer guards before release** (`SentenceGate`): guarantee/decision language, NBFC
+  written-reason claims, ungrounded numbers, and — for policy — the citation check. The first sentence that fails stops
+  release for the rest of the turn, and the graph's full-answer `validate` still runs on the whole draft.
+* **Spoken audio cannot be recalled.** A sentence that passed the per-sentence check when it was released stays heard
+  even if a later sentence fails; the turn then ends with the rewritten or template answer.
+* **`remainder()` only speaks the delta.** If the final answer starts with what was already spoken, the unsaid tail is
+  spoken. If it diverged (rewrite, template fallback), the *whole* final answer is spoken after the bridge phrase
+  (`AGENT_STREAM_BRIDGE`, e.g. "To be precise:"). That can repeat information the user already heard; it is the
+  deliberate choice over guessing at a partial correction.
+* **Policy streaming needs the citations before the answer** in the model's JSON (`JSONFieldStreamer.head()`). If the
+  model emits `answer` first, the precheck cannot see the citations, the stream is not released, and the validated
+  final answer is spoken at the end. Latency only, never correctness.
+* **No retry after the first streamed token.** A mid-stream LLM failure falls back to the deterministic template; the
+  partial draft is not re-requested.
+* **Per-turn deadlines replace the old per-call limits** (voice 25 s, text 75 s by default, `AGENT_VOICE_DEADLINE_S` /
+  `AGENT_TEXT_DEADLINE_S`). A slow LLM that previously answered at 80–110 s now gets the template. They must stay
+  below the voice worker's `VOICE_HTTP_TIMEOUT_S` (40 s, enforced by a test), so the graph's deadline fires first.
+* **Fast classify is on for voice** (`AGENT_FAST_CLASSIFY=voice`): high-precision regex intents skip the LLM
+  classifier. `AGENT_FAST_CLASSIFY=off` restores LLM-only classification; `all` enables it for text too.
+* **Unmatched questions go to the policy path** when the LLM classifier is unavailable, so they cite or abstain instead
+  of getting the generic "other" reply.
+* **Deploy server and worker together.** The worker streams by default (`VOICE_STREAM=1`); against an older server that
+  returns a plain JSON body it speaks the "couldn't reach" apology instead of the answer.
+* The streaming sink and the OTel parent context are keyed **per turn**, not by the client-supplied `request_id`, so a
+  repeated id (retry, double submit) cannot route one turn's sentences into another turn's session.
+
 ## Observability
 `observability.py` uses the OpenTelemetry SDK plus an OTLP/HTTP exporter to self-hosted **Arize Phoenix**
 (`hx-loan-phoenix`, `127.0.0.1:6006`, SQLite in `/root/hx/loan/phoenix`, ~450 MB RAM, no GPU). It is enabled with

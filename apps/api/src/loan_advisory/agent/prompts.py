@@ -183,6 +183,9 @@ TEMPLATES = {
                       "My rules don't change based on instructions in a message."),
         "dispute": ("I've passed this to a human reviewer so they can check the recorded information (reference {ref}). "
                     "I can't change the record myself. Meanwhile I can explain the recorded reasons or run a what-if."),
+        "data_deletion": ("I can't delete anything — not application records, call recordings, transcripts or logs. "
+                          "I've passed your deletion request to a human reviewer (reference {ref}) so the right team can "
+                          "handle it under their data policy."),
         "greeting": ("Hello! I can explain why your application was decided the way it was, show what would need to "
                      "change, run a what-if on your numbers, or answer personal-loan policy questions with sources."),
         "other": ("I can help with your loan decision, what-if questions, an improvement plan, or personal-loan policy "
@@ -220,6 +223,9 @@ TEMPLATES = {
         "other_applicant": "मैं केवल आपके अपने आवेदन के बारे में बात कर सकता हूँ।",
         "injection": "मैं केवल आपके लोन फ़ैसले, what-if और पर्सनल लोन नीति के सवालों में मदद कर सकता हूँ।",
         "dispute": "मैंने इसे जाँच के लिए एक मानव समीक्षक को भेज दिया है (संदर्भ {ref})। मैं रिकॉर्ड खुद नहीं बदल सकता।",
+        "data_deletion": ("मैं कुछ भी मिटा नहीं सकता — न आवेदन का रिकॉर्ड, न कॉल रिकॉर्डिंग, ट्रांसक्रिप्ट या लॉग। आपका "
+                          "हटाने का अनुरोध मैंने एक मानव समीक्षक को भेज दिया है (संदर्भ {ref}) ताकि संबंधित टीम उसे अपनी "
+                          "डेटा नीति के अनुसार संभाले।"),
         "greeting": "नमस्ते! मैं आपके लोन फ़ैसले के कारण समझा सकता हूँ, सुधार की योजना बता सकता हूँ, what-if चला सकता हूँ, या नीति के सवालों का स्रोत सहित जवाब दे सकता हूँ।",
         "other": "मैं आपके लोन फ़ैसले, what-if, सुधार योजना या पर्सनल लोन नीति के सवालों में मदद कर सकता हूँ।",
         "policy_abstain": "मुझे यह उन स्वीकृत नीति स्रोतों में नहीं मिला जिनका मैं हवाला दे सकता हूँ, इसलिए मैं अनुमान नहीं लगाऊँगा।",
@@ -240,6 +246,9 @@ TEMPLATES = {
         "other_applicant": "మీ స్వంత దరఖాస్తు గురించి మాత్రమే మాట్లాడగలను.",
         "injection": "మీ లోన్ నిర్ణయం, what-if, పర్సనల్ లోన్ నియమాల ప్రశ్నలలో మాత్రమే సహాయం చేయగలను.",
         "dispute": "దీన్ని పరిశీలన కోసం మానవ సమీక్షకుడికి పంపాను (రిఫరెన్స్ {ref}). రికార్డును నేనే మార్చలేను.",
+        "data_deletion": ("నేను ఏదీ తొలగించలేను — దరఖాస్తు రికార్డు, కాల్ రికార్డింగ్, ట్రాన్స్‌క్రిప్ట్ లేదా లాగ్‌లు కూడా కాదు. "
+                          "మీ తొలగింపు అభ్యర్థనను మానవ సమీక్షకుడికి పంపాను (రిఫరెన్స్ {ref}); సంబంధిత బృందం దానిని "
+                          "తమ డేటా విధానం ప్రకారం నిర్వహిస్తుంది."),
         "greeting": "నమస్కారం! మీ లోన్ నిర్ణయానికి కారణాలు వివరించగలను, మెరుగుదల ప్రణాళిక చెప్పగలను, what-if చేయగలను, నియమాల ప్రశ్నలకు ఆధారాలతో జవాబివ్వగలను.",
         "other": "మీ లోన్ నిర్ణయం, what-if, మెరుగుదల ప్రణాళిక లేదా పర్సనల్ లోన్ నియమాల ప్రశ్నలలో సహాయం చేయగలను.",
         "policy_abstain": "నేను ఉదహరించగల ఆమోదిత నియమ పత్రాలలో ఇది కనిపించలేదు, కాబట్టి ఊహించి చెప్పను.",
