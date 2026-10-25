@@ -69,6 +69,7 @@ def test_provider_failures_record_no_credit_decision(replayed):
         assert rec["outcome"] == rec["decision"] == "ERROR"
         assert rec["bureau"]["data_quality"]["category"] == "PROVIDER_FAILURE"
         assert rec["bureau"]["provider_error"]["code"].startswith("BUREAU_")
+        assert rec["bureau"]["fetched"] is False and rec["bureau"]["score"] is None
         assert {e["result"] for e in rec["rule_evaluations"]} == {"NOT_EVALUABLE"}
         assert rec["failed_reason_codes"] == []
         assert out.to_state == "MANUAL_REVIEW" and "BUREAU_PROVIDER_ERROR" in out.flags
