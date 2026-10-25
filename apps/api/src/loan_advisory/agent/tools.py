@@ -56,6 +56,9 @@ class InMemoryEvidenceSource:
         self.sink = sink
 
     def latest(self, application_ref: str, doc: dict) -> dict | None:
+        rid = getattr(self.sink, "latest_ids", {}).get(application_ref)
+        if rid in self.sink.records:
+            return self.sink.records[rid]
         recs = [r for r in self.sink.records.values() if r["application_ref"] == application_ref and not r["is_simulation"]]
         return recs[-1] if recs else None
 

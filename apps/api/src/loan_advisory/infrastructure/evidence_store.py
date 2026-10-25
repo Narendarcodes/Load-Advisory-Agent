@@ -22,9 +22,13 @@ from loan_advisory.infrastructure.frappe_adapter import FrappeClient, FrappeUnav
 class InMemoryEvidenceSink:
     def __init__(self):
         self.records, self.status, self.traces = {}, {}, {}
+        self.latest_ids = {}  # application_ref -> record_id of the newest non-simulation run (Frappe: custom_latest_evidence)
 
     def persist(self, record, native_status, trace):
         self.records.setdefault(record["record_id"], record)
+        if not record.get("is_simulation"):
+            # Ids are deterministic, so a re-run can reproduce an older record; the pointer must still move to it.
+            self.latest_ids[record["application_ref"]] = record["record_id"]
         self.status[record["application_ref"]] = (record["lifecycle_state"], native_status)
         if record["trace_ref"]["sha256"]:
             self.traces[record["trace_ref"]["sha256"]] = stable_trace(trace)
