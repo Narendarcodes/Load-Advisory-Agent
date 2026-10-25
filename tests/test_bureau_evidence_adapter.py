@@ -150,3 +150,37 @@ def test_trace_is_written_as_utf8_alongside_the_record(frappe):
     path = tmp_path / "traces" / f"{rec['trace_ref']['sha256']}.json"
     assert path.exists()
     assert json.loads(path.read_text(encoding="utf-8"))["note"] == "₹ synthetic"
+
+
+def test_utf8_is_stored_literally_in_record_json(frappe):
+    sink, calls, _, _ = frappe
+    rec = dict(_bureau_record(_case("VALID_PASS", 0)))
+    rec["flags"] = ["UTF8_₹_राम_తెలుగు"]
+    rec["review"] = {"notes": "₹1,00,000 — हिन्दी पाठ / తెలుగు పాఠం", "reason_codes": [], "required": True}
+    sink.persist(rec, native_status="Approved", trace={})
+    post = next(p for m, _, p in calls if m == "POST")
+    assert "₹" in post["record_json"] and "हिन्दी" in post["record_json"] and "తెలుగు" in post["record_json"]
+    assert json.loads(post["record_json"])["flags"] == rec["flags"]
+
+
+def test_bureau_hold_over_legacy_inputs_gets_its_own_evidence_record(frappe):
+    """Live-Frappe validation found this: a hold over the same application/inputs as an earlier
+    plain credit decision used to reuse its record_id, and the idempotent sink then kept the stale
+    legacy record_json while the application pointed at it. Different evidence must mean a new id."""
+    sink, calls, stored, _ = frappe
+    case = _case("NO_HIT")
+    app = case["application"]["application_id"]
+    legacy = process_application(app, _Store(case), InMemoryEvidenceSink(), now=NOW).record
+    hold = _bureau_record(case)
+    assert hold["application_ref"] == legacy["application_ref"]
+    assert hold["inputs"]["input_sha256"] == legacy["inputs"]["input_sha256"]
+    assert hold["decision"] == "ERROR" and hold["outcome"] == "REVIEW"
+    assert hold["record_id"] != legacy["record_id"]
+
+    sink.persist(legacy, native_status="Open", trace={})
+    sink.persist(hold, native_status="Open", trace={})
+    assert sum(1 for m, _, _ in calls if m == "POST") == 2  # neither write replaced the other
+    assert stored[legacy["record_id"]]["bureau"] is None
+    back = sink.get_record(hold["record_id"])
+    assert back["outcome"] == "REVIEW"
+    assert back["bureau"]["data_quality"]["category"] == "DATA_QUALITY"

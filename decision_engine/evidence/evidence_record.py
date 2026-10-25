@@ -6,7 +6,10 @@ is generated here; reasons are the policy's own reason codes and descriptions.
 
 Determinism: record_id = uuid5(application_ref, input_sha256, policy_sha256, jdm_sha256,
 is_simulation) — the same inputs under the same policy version always yield the same id
-(and the same rule outcomes); evaluated_at is the only time-varying field.
+(and the same rule outcomes); evaluated_at is the only time-varying field. When the
+additive outcome/review/bureau blocks are present, a fingerprint of those blocks is
+appended: a bureau hold or provider failure over the same inputs is different evidence
+from a plain credit decision, and the idempotent sink must not keep the earlier record.
 
 The optional outcome/review/bureau blocks are additive within `decision-evidence/1`;
 credit rules and outcomes are still the policy's, never the bureau's.
@@ -58,8 +61,12 @@ def build_record(evidence: dict, policy_version, inputs: dict | None, *, applica
         })
     trace = stable_trace(evidence.get("zen_trace") or {})
     trace_bytes = json.dumps(trace, sort_keys=True).encode()
-    rec_id = str(uuid.uuid5(NS, "|".join([application_ref, input_sha, policy_version.policy_sha256,
-                                          policy_version.jdm_sha256, str(is_simulation)])))
+    rec_key = [application_ref, input_sha, policy_version.policy_sha256,
+               policy_version.jdm_sha256, str(is_simulation)]
+    if bureau is not None or review is not None:
+        rec_key.append("bureau=" + _sha({"outcome": outcome or evidence["decision"],
+                                         "review": review, "bureau": bureau}))
+    rec_id = str(uuid.uuid5(NS, "|".join(rec_key)))
     return {
         "schema": SCHEMA, "record_id": rec_id,
         "application_ref": application_ref, "applicant_ref": applicant_ref,
