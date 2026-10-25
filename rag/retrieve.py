@@ -19,6 +19,9 @@ from pathlib import Path
 
 from rank_bm25 import BM25Okapi
 
+from rag.index_meta import write_index_meta
+
+DOC_PREFIX = "title: {title} | text: {text}"
 ALLOWED = {"current": {"approved"}, "historical": {"approved", "approved_historical"},
            "unfiltered": {"approved", "approved_historical", "pending_review"}}  # unfiltered: eval only
 STOP = set("a an the of to in for on and or is are be by with as at from that this which what does do can i my me "
@@ -33,7 +36,7 @@ def tokens(text: str) -> list[str]:
 
 
 def doc_string(c: dict) -> str:
-    return f"title: {c['title']} | text: {c['text']}"
+    return DOC_PREFIX.format(title=c["title"], text=c["text"])
 
 
 # --------------------------------------------------------------------------- filters
@@ -65,11 +68,11 @@ class RetrievalFilter:
 def load_profile(name: str | None = None, profiles_dir: Path | None = None) -> dict:
     import os
     import yaml
-    name = name or os.environ.get("LENDER_PROFILE") or yaml.safe_load((ROOT / "config" / "rag.yaml").read_text())["lender_profile"]
+    name = name or os.environ.get("LENDER_PROFILE") or yaml.safe_load((ROOT / "config" / "rag.yaml").read_text(encoding="utf-8"))["lender_profile"]
     p = (profiles_dir or ROOT / "config" / "lender_profiles") / f"{name}.yaml"
     if not p.exists():
         raise FileNotFoundError(f"unknown lender profile {name!r} ({p})")
-    return yaml.safe_load(p.read_text())
+    return yaml.safe_load(p.read_text(encoding="utf-8"))
 
 
 def profile_filter(profile: dict | None, mode: str = "current", source_types=None, include_education=False) -> RetrievalFilter:
@@ -107,7 +110,7 @@ PAYLOAD_KEYS = ("chunk_id", "document_id", "approval_status", "effective_from", 
 class DenseIndex:
     """Qdrant collection (embedded/local mode by default; pass url= for a server)."""
 
-    def __init__(self, chunks, vectors, path=None, url=None, collection="policy_chunks_v2"):
+    def __init__(self, chunks, vectors, path=None, url=None, collection="policy_chunks_v2", meta=None):
         from qdrant_client import QdrantClient, models
         self.m = models
         self.client = QdrantClient(url=url) if url else QdrantClient(path=path) if path else QdrantClient(":memory:")
@@ -126,6 +129,8 @@ class DenseIndex:
             return p
         self.client.upsert(collection, points=[models.PointStruct(id=i, vector=list(map(float, v)), payload=payload(c))
                                                for i, (c, v) in enumerate(zip(chunks, vectors))])
+        if path is not None and meta is not None:
+            write_index_meta(path, meta, chunks, collection)
 
     def qdrant_filter(self, flt: RetrievalFilter):
         m = self.m
@@ -215,7 +220,7 @@ class HybridRetriever:
 def load_rag_config(path: Path | None = None) -> tuple[HybridConfig, dict, str]:
     """(HybridConfig, lender profile, mode) from config/rag.yaml (+ env LENDER_PROFILE override)."""
     import yaml
-    cfg = yaml.safe_load((path or ROOT / "config" / "rag.yaml").read_text())
+    cfg = yaml.safe_load((path or ROOT / "config" / "rag.yaml").read_text(encoding="utf-8"))
     f, r = cfg.get("fusion", {}), cfg.get("rerank", {})
     hc = HybridConfig(k=f.get("k", 60), w_dense=f.get("w_dense", 1.0), w_bm25=f.get("w_bm25", 1.0),
                       rerank_candidates=r.get("candidates", 0) if r.get("enabled") else 0)
