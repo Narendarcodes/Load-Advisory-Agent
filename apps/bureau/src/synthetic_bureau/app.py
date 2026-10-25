@@ -104,7 +104,22 @@ def create_app(*, seed: int = DEFAULT_SEED, as_of: date = DEFAULT_AS_OF, fixture
 app = create_app()
 
 
+def parse_args(argv=None):
+    """Only the port is configurable (the self-hosted LLM also defaults to :8001); the host stays loopback."""
+    import argparse
+
+    def port(value: str) -> int:
+        n = int(value)
+        if not 1 <= n <= 65535:
+            raise argparse.ArgumentTypeError(f"port out of range: {n}")
+        return n
+
+    ap = argparse.ArgumentParser(description="Synthetic credit bureau (local development only, 127.0.0.1)")
+    ap.add_argument("--port", type=port, default=DEFAULT_PORT)
+    return ap.parse_args(argv)
+
+
 if __name__ == "__main__":  # pragma: no cover - manual local run only
     import uvicorn
 
-    uvicorn.run(app, host=DEFAULT_HOST, port=DEFAULT_PORT)
+    uvicorn.run(app, host=DEFAULT_HOST, port=parse_args().port)
