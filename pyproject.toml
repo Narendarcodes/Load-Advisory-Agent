@@ -1,2 +1,2 @@
 [tool.pytest.ini_options]
-pythonpath = [".", "apps/api/src"]
+pythonpath = [".", "apps/api/src", "apps/bureau/src"]

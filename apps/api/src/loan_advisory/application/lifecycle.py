@@ -13,9 +13,23 @@ Rules stay in ZEN; this module only routes. The decision itself comes from the
 unchanged `decide()` orchestrator, and every evaluation produces a Decision Evidence
 record (decision_engine/evidence/evidence_record.py) handed to an EvidenceSink.
 What-if simulations are returned, never persisted, and never touch the source record.
+
+Bureau-backed runs add one step: a data-quality hold becomes outcome=REVIEW while
+`decision` keeps the legacy ERROR value (no Frappe schema change), and a provider
+failure becomes outcome=ERROR. The resolved score is what ZEN evaluates.
 """
 from dataclasses import dataclass, field
 
+from decision_engine.bureau.gates import (
+    DQ_MISSING_REQUIRED_FIELD,
+    GateIssue,
+    GateResult,
+    IssueSource,
+    evaluate_data_quality,
+    provider_failure,
+)
+from decision_engine.bureau.policy import load_gate_config
+from decision_engine.evidence.decision_evidence import bureau_outcome
 from decision_engine.evidence.evidence_record import SCORED_FIELDS, build_record
 from decision_engine.policies.registry import PolicyIntegrityError, load_policy
 from loan_advisory.application import decision_orchestrator
@@ -62,6 +76,24 @@ def _scored_inputs(doc: dict) -> dict:
     return out
 
 
+def _contradictory_obligations(inputs: dict) -> bool:
+    try:
+        return float(inputs["monthly_obligations"]) > float(inputs["monthly_income"])
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def _bureau_application(doc: dict, inputs: dict, applicant: str | None) -> dict:
+    """Application view the data-quality gate needs (scored fields plus loan terms)."""
+    return {
+        **inputs,
+        "applicant_id": applicant,
+        "loan_amount": doc.get("loan_amount"),
+        "loan_tenure_months": doc.get("repayment_periods", doc.get("loan_tenure_months")),
+        "credit_score_origin": doc.get("credit_score_origin"),
+    }
+
+
 def _active_policy():
     pv = load_policy("PERSONAL_LOAN")
     # decide() is pinned to the v1 files (P0 code is intentionally untouched). Fail closed
@@ -91,12 +123,9 @@ def process_application(application_ref: str, store, sink, current_state: str | 
         ev = decide(application_ref, store=store)
         if ev["decision"] in ("APPROVED", "REJECTED"):
             to = ev["decision"]
-            try:
-                if float(inputs["monthly_obligations"]) > float(inputs["monthly_income"]):
-                    flags.append("CONTRADICTION_OBLIGATIONS_EXCEED_INCOME")
-                    to = "MANUAL_REVIEW"  # implausible data: a human checks before any outcome is final
-            except (TypeError, ValueError):
-                pass
+            if _contradictory_obligations(inputs):
+                flags.append("CONTRADICTION_OBLIGATIONS_EXCEED_INCOME")
+                to = "MANUAL_REVIEW"  # implausible data: a human checks before any outcome is final
         elif "ValidationError" in (ev.get("error") or ""):
             to = "INFO_REQUESTED"  # invalid values must be corrected by the applicant/ops
             flags.append("INVALID_INPUT")
@@ -106,6 +135,84 @@ def process_application(application_ref: str, store, sink, current_state: str | 
     check_transition("UNDER_REVIEW", to)
     rec = build_record(ev, pv, inputs, application_ref=application_ref, applicant_ref=applicant,
                        lifecycle_state=to, missing_fields=missing, now=now)
+    rec["flags"] = flags
+    sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=ev.get("zen_trace") or {})
+    return Outcome(application_ref, current_state, to, rec, missing, flags)
+
+
+def process_bureau_application(application_ref: str, store, sink, bureau_client, *,
+                               scenario: str | None = None, current_state: str | None = None,
+                               now=None) -> Outcome:
+    """Run one application through the synthetic bureau gate, then ZEN.
+
+    Data-quality holds become outcome=REVIEW while `decision` stays the legacy
+    ERROR value, so the Frappe schema and its APPROVED/REJECTED/ERROR Select are
+    unchanged. Provider failures stay outcome=ERROR. Credit rules always run
+    through the unchanged `decide()` with the resolved score.
+    """
+    pv = _active_policy()
+    doc = store.get(application_ref)
+    current_state = current_state or doc.get("custom_lifecycle_state") or "SUBMITTED"
+    check_transition(current_state, "UNDER_REVIEW")
+    inputs = _scored_inputs(doc)
+    applicant = doc.get("applicant") or doc.get("applicant_id")
+    missing = [k for k, v in inputs.items() if v is None or v == ""]
+    flags = []
+    fetch_error = None
+    report = None
+
+    if applicant:
+        fetch = bureau_client.fetch_report(application_ref, applicant, scenario)
+        report = fetch.report
+        if report is None:
+            fetch_error = {"code": fetch.error_code, "message": fetch.message,
+                           "retryable": fetch.retryable, "correlation_id": fetch.correlation_id}
+            gate = provider_failure(fetch.error_code, fetch.message or "bureau lookup failed")
+        else:
+            gate = evaluate_data_quality(_bureau_application(doc, inputs, applicant), report,
+                                         config=load_gate_config(),
+                                         as_of=now.date() if now else None)
+    else:
+        gate = GateResult(
+            category="DATA_QUALITY",
+            issues=[GateIssue(code=DQ_MISSING_REQUIRED_FIELD,
+                              message="applicant_id is required before a bureau lookup",
+                              source=IssueSource.APPLICATION, field="applicant_id")],
+            missing_fields=["applicant_id"],
+        )
+    if gate.missing_fields:
+        missing = gate.missing_fields
+
+    blocks = bureau_outcome(gate, report, fetch_error=fetch_error)
+    evidence_inputs = inputs
+    if gate.category == "PROVIDER_FAILURE":
+        ev = {"decision": "ERROR", "rule_evaluations": [], "zen_trace": {},
+              "error": f"{fetch_error['code']}: {fetch_error['message']}"}
+        to = "MANUAL_REVIEW"
+        flags.append("BUREAU_PROVIDER_ERROR")
+    elif gate.review_required:
+        ev = {"decision": "ERROR", "rule_evaluations": [], "zen_trace": {},
+              "error": f"BUREAU_REVIEW: {', '.join(gate.reason_codes)}"}
+        to = "INFO_REQUESTED" if gate.info_requested else "MANUAL_REVIEW"
+        flags.append("BUREAU_REVIEW")
+    else:
+        evidence_inputs = {**inputs, "credit_score": gate.score.value}
+        ev = decide(application_ref, store=store,
+                    overrides={"custom_credit_score": gate.score.value})
+        if ev["decision"] in ("APPROVED", "REJECTED"):
+            to = ev["decision"]
+            if _contradictory_obligations(inputs):
+                flags.append("CONTRADICTION_OBLIGATIONS_EXCEED_INCOME")
+                to = "MANUAL_REVIEW"
+        else:
+            to = "MANUAL_REVIEW"
+            flags.append("ENGINE_ERROR")
+
+    check_transition("UNDER_REVIEW", to)
+    rec = build_record(ev, pv, evidence_inputs, application_ref=application_ref,
+                       applicant_ref=applicant, lifecycle_state=to, missing_fields=missing,
+                       now=now, outcome=blocks["outcome"], review=blocks["review"],
+                       bureau=blocks["bureau"])
     rec["flags"] = flags
     sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=ev.get("zen_trace") or {})
     return Outcome(application_ref, current_state, to, rec, missing, flags)
@@ -122,5 +229,5 @@ def simulate(application_ref: str, store, overrides: dict, now=None) -> dict:
     return rec
 
 
-__all__ = ["STATES", "TRANSITIONS", "IllegalTransition", "check_transition", "process_application", "simulate",
-           "Outcome", "UnknownApplication", "FrappeUnavailable"]
+__all__ = ["STATES", "TRANSITIONS", "IllegalTransition", "check_transition", "process_application",
+           "process_bureau_application", "simulate", "Outcome", "UnknownApplication", "FrappeUnavailable"]

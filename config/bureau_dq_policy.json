@@ -1,0 +1,26 @@
+{
+  "schema": "bureau-dq-policy/1",
+  "approved": false,
+  "active": {
+    "staleness": {
+      "enabled": false,
+      "max_age_days": null
+    },
+    "obligation_variance": {
+      "enabled": false,
+      "pct": null,
+      "abs_inr": null
+    }
+  },
+  "proposed": {
+    "staleness": {
+      "max_age_days": 90,
+      "note": "PROPOSED ONLY. Not approved. Must not affect outcomes."
+    },
+    "obligation_variance": {
+      "pct": 20,
+      "abs_inr": 2000,
+      "note": "PROPOSED ONLY. Not approved. Must not affect outcomes."
+    }
+  }
+}

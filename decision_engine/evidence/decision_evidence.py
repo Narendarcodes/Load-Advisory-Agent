@@ -35,3 +35,29 @@ def build_evidence(canonical, zen_result: dict, zen_trace: dict, policy_path) ->
         "rule_evaluations": evaluations,
         "zen_trace": zen_trace,
     }
+
+
+def bureau_outcome(gate, report=None, *, fetch_error: dict | None = None) -> dict:
+    """Additive evidence blocks for a bureau-backed evaluation.
+
+    ``outcome`` is REVIEW for a data-quality hold and ERROR for a provider
+    failure; None means "use the credit decision". ``decision`` stays ZEN's and
+    remains the legacy APPROVED/REJECTED/ERROR value.
+    """
+    review = {**gate.to_dict(), "provider_error": fetch_error} if gate.review_required else None
+    bureau = {
+        "fetched": report is not None,
+        "report_schema": report.schema_version if report else None,
+        "report_id": report.report_id if report else None,
+        "report_date": report.report_date.isoformat() if report else None,
+        "score": gate.score.to_dict() if gate.score else None,
+        "data_quality": gate.to_dict(),
+        "provider_error": fetch_error,
+    }
+    if gate.category == "PROVIDER_FAILURE":
+        outcome = "ERROR"
+    elif gate.review_required:
+        outcome = "REVIEW"
+    else:
+        outcome = None
+    return {"outcome": outcome, "review": review, "bureau": bureau}
