@@ -160,6 +160,7 @@ def test_improvement_plan_targets_are_zen_checked(tmp_path):
     assert all(s["rule_passes_after_change"] for s in r.improvement_plan)
     foir = next(s for s in r.improvement_plan if s["rule_id"] == "FOIR_MAX_45")
     assert foir["target_display"] == "₹14,400" and foir["gap_display"] == "₹4,100"  # 0.45 * 32,000 ; 18,500 - 14,400
+    assert all(s["guidance_source"] == "general financial guidance, not lender policy" for s in r.improvement_plan)
     assert store.get("APP-TEST-005")["custom_monthly_obligations"] == 18500
 
 

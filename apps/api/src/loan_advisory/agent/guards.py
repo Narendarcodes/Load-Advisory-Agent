@@ -15,13 +15,18 @@ _REQ = {
     "guarantee": r"\b(guarantee[ds]?|assure[ds]?|promise|definitely|for sure|surely|certainly|for certain)\b|100 ?%|"
                  r"\b(will|would|can|could)\s+(i|we|my\s+(loan|application))\s+(get|be|definitely)\s+(approv|sanction|the loan)|"
                  r"\b(chances?|odds|probability|likely|likelihood)\b.{0,30}\b(approv|sanction|get the loan)|"
+                 r"\bwill\b.{0,30}\bgive\s+me\s+(the\s+)?(lowest|best|lower|cheapest|minimum)\s+(interest\s+)?rate\b|"
                  r"गारंटी|पक्का|गॅरंटी|గ్యారంటీ|ఖచ్చితంగా",
     "override": r"\b(approve|sanction)\s+(my|the|this)\s+(loan|application)\b|\bapprove\s+(me|it)\b|\bmark\b.{0,20}\bapproved\b|"
                 r"\b(reconsider|overturn|override|reverse|cancel|change|revoke|withdraw)\s+(the\s+|my\s+|this\s+)?(loan\s+|application\s+)?(decision|rejection|outcome)\b|"
                 r"\b(reconsider|overturn|reverse|re-?evaluate)\s+(my|the|this)\s+(loan|application)\b|"
                 r"\b(change|turn|make|convert|update|switch)\b.{0,40}\b(to|as|into)\s+(approved|sanctioned|accepted)\b",
     "edit_record": r"\b(update|change|edit|modify|correct|set|increase|raise)\b.{0,30}\b(record|file|application data|my income in|my score in|the system)\b|"
-                   r"\b(update|change|edit|set)\s+my\s+(income|salary|score|credit score|emi|obligations|tenure)\s+(to|in)\b",
+                   r"\b(update|change|edit|set)\s+my\s+(income|salary|score|credit score|emi|obligations|tenure)\s+(to|in)\b|"
+                   # imperative record tampering (abstain_v2): "remove the enquiry from my CIBIL report", "mark my EMI as paid"
+                   r"^\W*(please\s+|can you\s+|could you\s+)?(remove|delete|erase|wipe|clear|drop)\b.{0,40}\b(enquir|inquir|rejection|record|default|history|report|dpd|overdue)|"
+                   r"^\W*(please\s+|can you\s+|could you\s+)?mark\b.{0,30}\b(as\s+)?(paid|closed|settled|cleared|regular)\b|"
+                   r"^\W*(please\s+|can you\s+|could you\s+|i want to\s+|i'd like to\s+)?(increase|raise|enhance)\s+(my\s+|the\s+)?(approved|sanctioned)\s+(loan\s+)?(amount|limit)\b",
     "auto_submit": r"\b(submit|file|send|re-?apply)\b.{0,25}\b(for me|on my behalf|automatically|a new application now)\b",
     "other_applicant": r"\b(another|other|someone else'?s?|my (friend|brother|sister|wife|husband)'?s?)\b.{0,25}\b(application|loan|score|record)\b|"
                        r"\b(SYN-APP|APP-TEST|ACC-LOAP)-[0-9]+",
