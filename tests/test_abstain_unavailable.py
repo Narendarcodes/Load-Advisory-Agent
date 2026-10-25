@@ -5,7 +5,7 @@ import pytest
 
 from loan_advisory.agent import guards as G
 from loan_advisory.agent import prompts as P
-from test_agent_graph import ScriptedLLM, agent_for, ask
+from tests.test_agent_graph import ScriptedLLM, agent_for, ask
 
 UNAVAILABLE = [
     "Who was the loan officer who rejected my application?",
@@ -16,6 +16,7 @@ UNAVAILABLE = [
     "Tell me my internal risk rating.",
     "Which employee declined my application?",
     "What risk category did the bank put me in?",
+    "Which officer approved my loan application?",
 ]
 ORDINARY = [
     "Why was my application rejected?",
@@ -28,6 +29,8 @@ ORDINARY = [
     "Which risk factors led to my rejection?",
     "What is the internal grievance redressal process?",
     "Should risk grades be shown to applicants?",
+    "Which manager should I contact about my rejected application?",
+    "Which officer should I speak to about my rejected loan?",
 ]
 
 
