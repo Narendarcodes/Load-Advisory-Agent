@@ -33,7 +33,7 @@ CHAPTER = re.compile(r"^(Chapter [IVXL]+)\b")
 
 
 def register():
-    return yaml.safe_load(REGISTER.read_text())["documents"]
+    return yaml.safe_load(REGISTER.read_text(encoding="utf-8"))["documents"]
 
 
 def _blocks_from_text(text: str) -> list[str]:
@@ -143,7 +143,7 @@ def _get(d, did, url, out_dir):
 def fetch_all(out_dir: Path, only: set | None = None) -> dict:
     out_dir.mkdir(parents=True, exist_ok=True)
     manifest_p = out_dir / "manifest.json"
-    prev = json.loads(manifest_p.read_text()) if manifest_p.exists() else {}
+    prev = json.loads(manifest_p.read_text(encoding="utf-8")) if manifest_p.exists() else {}
     manifest, events = {}, []
     for d in register():
         did, url = d["document_id"], d.get("source_url", "")
@@ -165,15 +165,15 @@ def fetch_all(out_dir: Path, only: set | None = None) -> dict:
         body = "\n".join(blocks)
         h = hashlib.sha256(body.encode()).hexdigest()
         (out_dir / f"{did}.raw").write_bytes(raw)
-        (out_dir / f"{did}.txt").write_text(body)
+        (out_dir / f"{did}.txt").write_text(body, encoding="utf-8")
         old = prev.get(did, {}).get("content_hash")
         if old and old != h:
             events.append({"document_id": did, "event": "CONTENT_CHANGED_REVIEW_REQUIRED", "old": old, "new": h})
         manifest[did] = {"status": "fetched", "content_hash": h, "raw_sha256": hashlib.sha256(raw).hexdigest(),
                          "raw_bytes": len(raw), "chars": len(body), "blocks": len(blocks),
                          "retrieved_at": datetime.now(timezone.utc).isoformat(), "url": url, **http}
-    manifest_p.write_text(json.dumps(manifest, indent=1))
-    (out_dir / "review_events.json").write_text(json.dumps(events, indent=1))
+    manifest_p.write_text(json.dumps(manifest, indent=1), encoding="utf-8")
+    (out_dir / "review_events.json").write_text(json.dumps(events, indent=1), encoding="utf-8")
     return {"manifest": manifest, "review_events": events}
 
 
@@ -232,9 +232,9 @@ def chunk_document(doc_meta: dict, body: str, max_words: int = 180) -> list[dict
 
 def build_chunks(src_dir: Path) -> list[dict]:
     reg = {d["document_id"]: d for d in register()}
-    man = json.loads((src_dir / "manifest.json").read_text())
+    man = json.loads((src_dir / "manifest.json").read_text(encoding="utf-8"))
     chunks = []
     for did, m in man.items():
         if m.get("status") == "fetched":
-            chunks += chunk_document(reg[did], (src_dir / f"{did}.txt").read_text())
+            chunks += chunk_document(reg[did], (src_dir / f"{did}.txt").read_text(encoding="utf-8"))
     return chunks

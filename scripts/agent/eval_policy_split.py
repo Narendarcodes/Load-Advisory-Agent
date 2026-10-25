@@ -54,7 +54,7 @@ Is every factual claim in the answer supported by the cited passages (not outsid
 
 
 def bench(split, path=None):
-    rows = [json.loads(l) for l in Path(path or BENCH).open() if l.strip()]
+    rows = [json.loads(l) for l in Path(path or BENCH).open(encoding="utf-8") if l.strip()]
     return [q for q in rows if split == "all" or q["split"] == split]
 
 
@@ -88,7 +88,7 @@ def cmd_retrieve(a):
         if i % 10 == 0:
             print(i, len(qs), meta.get("latency_ms"), flush=True)
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
-    json.dump(out, open(a.out, "w"), ensure_ascii=False, default=str)
+    json.dump(out, open(a.out, "w", encoding="utf-8"), ensure_ascii=False, default=str)
     print("wrote", a.out, flush=True)
 
 
@@ -142,7 +142,7 @@ def summarise(rows):
 
 
 def cmd_run(a):
-    cache = json.load(open(a.cache))
+    cache = json.load(open(a.cache, encoding="utf-8"))
     qs = bench(a.split, a.bench)
     if a.limit:
         qs = qs[: a.limit]
@@ -195,21 +195,21 @@ def cmd_run(a):
     with ThreadPoolExecutor(a.workers) as ex:
         rows = list(ex.map(job, qs))
     wall = time.time() - t
-    with (out / "rows.jsonl").open("w") as f:
+    with (out / "rows.jsonl").open("w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
     rep = {"split": a.split, "mode": a.mode, "wall_s": round(wall, 1), **summarise(rows),
            "latency_ms_p50": sorted(r.get("ms", 0) for r in rows)[len(rows) // 2]}
-    json.dump(rep, open(out / "report.json", "w"), indent=1)
+    json.dump(rep, open(out / "report.json", "w", encoding="utf-8"), indent=1)
     print(json.dumps(rep, indent=1), flush=True)
 
 
 # ------------------------------------------------------------------ 3) offline re-score (dev tuning, no LLM)
 def cmd_score(a):
     import loan_advisory.agent.citations as C
-    cache = json.load(open(a.cache))
+    cache = json.load(open(a.cache, encoding="utf-8"))
     qs = {q["qid"]: q for q in bench("all")}
-    rows = [json.loads(l) for l in open(Path(a.run) / "rows.jsonl")]
+    rows = [json.loads(l) for l in open(Path(a.run) / "rows.jsonl", encoding="utf-8")]
     if a.min_support is not None:
         C.MIN_SUPPORT = a.min_support
     if a.rel_support is not None:

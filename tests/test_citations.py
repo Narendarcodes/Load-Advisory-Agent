@@ -187,6 +187,8 @@ from loan_advisory.agent import guards as G  # noqa: E402
     ("Delete my previous rejection from Bajaj Finance's records.", "edit_record"),
     ("Mark my overdue EMI as paid in the system.", "edit_record"),
     ("Increase my approved loan amount to Rs 10 lakh.", "edit_record"),
+    ("Please increase my approved loan amount.", "edit_record"),
+    ("Can you raise my sanctioned limit?", "edit_record"),
     ("Please wipe the default from my credit history", "edit_record"),
     ("If my CIBIL score reaches 800, will Bajaj give me the lowest interest rate?", "guarantee"),
 ])
@@ -201,6 +203,100 @@ def test_request_guards_catch_record_tampering_and_rate_guarantees(msg, flag):
     "Will Bajaj give me a reason for the rejection?",
     "What interest rate does Bajaj charge on personal loans?",
     "How can I improve my credit score?",
+    "Can I increase my approved loan amount after some time?",
 ])
 def test_request_guards_leave_ordinary_questions_alone(msg):
     assert not {"edit_record", "guarantee"} & set(G.request_flags(msg))
+
+
+# ---------------------------------------------------------------- audit: conflicting sources, rank, provenance, synthetic
+CONFLICT = [P("P1", "The minimum credit score for a personal loan is 700.", "LENDER-A"),
+            P("P2", "Self-employed applicants need a minimum credit score of 650.", "LENDER-B")]
+
+
+def test_conflicting_sources_keep_only_the_citation_the_answer_follows():
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": "Self-employed applicants need a minimum credit score of 650."}
+    kept, dropped = C.verify_citations(j["answer"], j, CONFLICT, "verify")
+    assert kept == ["P2"] and dropped == ["P1"]
+
+
+def test_primary_source_never_promotes_an_uncited_top_ranked_passage():
+    j = {"abstain": False, "citations": ["P2"], "answer": "Self-employed applicants need a minimum credit score of 650."}
+    assert C.verify_citations(j["answer"], j, CONFLICT, "primary_source") == (["P2"], [])
+
+
+def meta(p, **kw):
+    return {**p, "citation": {**p["citation"], **kw}}
+
+
+def test_primary_source_keeps_both_sides_of_an_unacknowledged_numeric_conflict():
+    ps = [P("P1", "The minimum credit score for a personal loan is 700.", "RATES"),
+          P("P2", "The minimum credit score for a personal loan is 650.", "OPS")]
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": "The minimum credit score is 700."}
+    assert C.verify_citations(j["answer"], j, ps, "primary_source") == (["P1", "P2"], [])
+
+
+def test_primary_source_keeps_both_sides_of_a_polarity_conflict():
+    ps = [P("P1", "Penal charges shall not be capitalised.", "RBI"),
+          P("P2", "Penal charges may be capitalised at the lender's discretion.", "OPS")]
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": "Penal charges shall not be capitalised."}
+    assert C.verify_citations(j["answer"], j, ps, "primary_source") == (["P1", "P2"], [])
+
+
+def test_primary_source_keeps_a_version_pair_when_the_answer_contrasts_them():
+    ps = [meta(P("P1", "The processing fee is 2% of the sanctioned amount.", "V3"), approval_status="approved"),
+          meta(P("P2", "The processing fee is 3% of the sanctioned amount.", "V2"), approval_status="approved_historical")]
+    ans = "The fee changed from 3% to 2%; previously it was 3% and now it is 2%."
+    j = {"abstain": False, "citations": ["P2", "P1"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P2", "P1"], [])
+
+
+def test_primary_source_keeps_a_second_document_when_the_primary_only_partly_covers_a_claim():
+    ps = [P("P1", "Monthly income must be at least Rs 25,000.", "V1"),
+          P("P2", "Continuous employment must be at least 12 months.", "V1B")]
+    ans = "Monthly income must be at least Rs 25,000, and continuous employment must be at least 12 months."
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P1", "P2"], [])
+
+
+def test_primary_source_prefers_the_document_that_supports_the_answer_over_retrieval_rank():
+    ps = [P("P1", "Penal charges must be disclosed in the key fact statement.", "KFS"),
+          P("P2", "Penal charges shall not be capitalised.", "RBI")]
+    ans = "Penal charges shall not be capitalised."
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P2"], ["P1"])
+
+
+def test_primary_source_prefers_the_current_version_when_no_contrast_is_asked():
+    ps = [meta(P("P1", "The processing fee is 2% of the sanctioned amount.", "V3"), approval_status="approved"),
+          meta(P("P2", "The processing fee is 3% of the sanctioned amount.", "V2"), approval_status="approved_historical")]
+    ans = "The current processing fee is 2% of the sanctioned amount."
+    j = {"abstain": False, "citations": ["P2", "P1"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P1"], ["P2"])
+
+
+def test_primary_source_does_not_select_another_lenders_document():
+    ps = [meta(P("P1", "For a personal loan, monthly income must be at least Rs 40,000.", "OTHER"),
+               relationship="another lender, not the profile's own"),
+          meta(P("P2", "For a personal loan, monthly income must be at least Rs 25,000.", "OWN"),
+               relationship="public reference lender, not a partner")]
+    ans = "The reference lender requires a minimum monthly income of Rs 25,000."
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P2"], ["P1"])
+
+
+def test_citation_relationship_is_only_set_for_the_profiles_own_lender():
+    from loan_advisory.agent.tools import citation_for
+    own = {"chunk_id": "BFL#000", "document_id": "BFL-X", "title": "BFL policy", "lender_id": "BFL"}
+    reg = {"chunk_id": "RBI#000", "document_id": "RBI-X", "title": "RBI direction", "lender_id": "none"}
+    prof = {"lender_id": "BFL", "relationship": "public reference lender, not a partner"}
+    assert citation_for("P1", own, prof).relationship == "public reference lender, not a partner"
+    assert citation_for("P2", reg, prof).relationship is None
+
+
+def test_synthetic_policy_is_never_served_under_a_real_lender_profile():
+    from rag.retrieve import load_profile, profile_filter
+    chunk = {"approval_status": "approved", "lender_id": "SYNTHETIC", "source_type": "synthetic",
+             "applies_to_entity": ["all"]}
+    for name in ("bajaj_finance", "generic_bank", "generic_nbfc"):
+        assert not profile_filter(load_profile(name), "current").allows(chunk)

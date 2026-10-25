@@ -5,6 +5,7 @@ conventional workflow (process_application -> ZEN) first; the agent only reads t
 """
 import json
 import re
+from pathlib import Path
 
 import pytest
 
@@ -159,6 +160,7 @@ def test_improvement_plan_targets_are_zen_checked(tmp_path):
     assert all(s["rule_passes_after_change"] for s in r.improvement_plan)
     foir = next(s for s in r.improvement_plan if s["rule_id"] == "FOIR_MAX_45")
     assert foir["target_display"] == "₹14,400" and foir["gap_display"] == "₹4,100"  # 0.45 * 32,000 ; 18,500 - 14,400
+    assert all(s["guidance_source"] == "general financial guidance, not lender policy" for s in r.improvement_plan)
     assert store.get("APP-TEST-005")["custom_monthly_obligations"] == 18500
 
 
@@ -232,7 +234,8 @@ def test_boundary_requests_never_reach_the_llm(msg, kind, action, tmp_path):
 
 # ------------------------------------------------------------------ evidence states
 def test_info_requested_and_missing_decision_are_not_explained_as_rejections(tmp_path):
-    rows = [json.loads(l) for l in open(F.__file__.replace("apps/api/src/loan_advisory/agent/facts.py", "data/synthetic/personas/personas_v1.jsonl"))]
+    personas = Path(__file__).resolve().parents[1] / "data/synthetic/personas/personas_v1.jsonl"
+    rows = [json.loads(l) for l in open(personas, encoding="utf-8")]
     miss = next(r for r in rows if r["scenario"].startswith("missing"))
     store = PersonaStore(rows=[miss])
     ag, _, _ = build_offline_agent(store=store, llm=ScriptedLLM(intent="explain"))

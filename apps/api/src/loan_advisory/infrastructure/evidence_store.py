@@ -47,7 +47,7 @@ class FrappeEvidenceSink:
     def persist(self, record, native_status, trace):
         if record["trace_ref"]["sha256"]:
             self.trace_dir.mkdir(parents=True, exist_ok=True)
-            (self.trace_dir / f"{record['trace_ref']['sha256']}.json").write_text(json.dumps(stable_trace(trace), sort_keys=True))
+            (self.trace_dir / f"{record['trace_ref']['sha256']}.json").write_text(json.dumps(stable_trace(trace), sort_keys=True), encoding="utf-8")
         rid = record["record_id"]
         if self._req("GET", f"/api/resource/{self.DOCTYPE}/{rid}").status_code == 404:
             body = {

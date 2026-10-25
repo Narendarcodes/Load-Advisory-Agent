@@ -38,6 +38,12 @@ class ChatLLM:
         self.timeout = timeout if timeout is not None else float(os.environ.get("LLM_TIMEOUT_S", "120"))
         self.reasoning_effort = reasoning_effort
         self._local = threading.local()
+        # Same precedence as the policy eval scripts: LLM_API_KEY wins, GROQ_API_KEY is the fallback.
+        self._secret = (os.environ.get("LLM_API_KEY") or os.environ.get("GROQ_API_KEY") or "").strip()
+        self._headers = {"Authorization": f"Bearer {self._secret}"} if self._secret else {}
+
+    def _redact(self, text: str) -> str:
+        return text.replace(self._secret, "***") if self._secret else text
 
     @property
     def calls(self) -> list[dict]:
@@ -97,9 +103,12 @@ class ChatLLM:
                 read_to = self.timeout if rem is None else max(0.05, min(self.timeout, rem))
                 try:
                     with requests.post(f"{self.base}/chat/completions", json=body, stream=True,
-                                       timeout=(min(5.0, read_to), read_to)) as r:
+                                       timeout=(min(5.0, read_to), read_to), headers=self._headers) as r:
                         if r.status_code >= 400:
-                            raise LLMError(f"HTTP {r.status_code}: {r.text[:200]}")
+                            raise LLMError(f"HTTP {r.status_code}: {self._redact(r.text[:200])}")
+                        # OpenAI-compatible SSE is UTF-8; with no charset on text/event-stream requests falls back to
+                        # ISO-8859-1, which mangles the rupee sign and Indic text.
+                        r.encoding = "utf-8"
                         for line in r.iter_lines(decode_unicode=True):
                             rem = left()
                             if rem is not None and rem <= 0:

@@ -18,7 +18,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from rag.retrieve import BM25Index, DenseIndex, HybridRetriever, doc_string, rrf  # noqa: E402
+from rag.index_meta import index_identity  # noqa: E402
+from rag.retrieve import BM25Index, DenseIndex, DOC_PREFIX, HybridRetriever, doc_string, rrf  # noqa: E402
 
 DATA = Path(os.environ.get("LOAN_DATA_DIR", "/root/hx/loan/data")) / "policy"
 OUT = Path(os.environ.get("RAG_OUT", DATA / "eval"))
@@ -64,16 +65,19 @@ def auroc(pos, neg):
 
 
 def main():
-    chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").open()]
+    chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").open(encoding="utf-8")]
     by_id = {c["chunk_id"]: c for c in chunks}
-    bench = [json.loads(l) for l in (ROOT / "data/evaluation/rag/benchmark_v1.jsonl").open()]
+    bench = [json.loads(l) for l in (ROOT / "data/evaluation/rag/benchmark_v1.jsonl").open(encoding="utf-8")]
     model, dev = load_model()
     t = time.time()
     vecs = model.encode([doc_string(c) for c in chunks], batch_size=32, normalize_embeddings=True, show_progress_bar=False)
     index_s = time.time() - t
     import torch
     peak = torch.cuda.max_memory_allocated() / 2**30 if dev == "cuda" else 0.0
-    dense = DenseIndex(chunks, vecs, path=str(DATA / "qdrant"))
+    dense = DenseIndex(chunks, vecs, path=str(DATA / "qdrant"),
+                       meta=index_identity(embed_model=MODEL, dimension=model.get_sentence_embedding_dimension(),
+                                           doc_prefix=DOC_PREFIX, query_prompt="QuestionAnswering",
+                                           query_prompt_text=(getattr(model, "prompts", {}) or {}).get("QuestionAnswering")))
     bm25 = BM25Index(chunks)
     embed_q = lambda q: model.encode(q, prompt_name="QuestionAnswering", normalize_embeddings=True)
     hyb = HybridRetriever(bm25, dense, embed_q)
@@ -99,7 +103,7 @@ def main():
             row["metrics"] = {k: metrics(v, rel, q["gold_docs"], by_id) for k, v in runs.items()}
         per_q.append(row)
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "per_question.jsonl").write_text("".join(json.dumps(r) + "\n" for r in per_q))
+    (OUT / "per_question.jsonl").write_text("".join(json.dumps(r) + "\n" for r in per_q), encoding="utf-8")
 
     def agg(rows, sysname):
         ms = [r["metrics"][sysname] for r in rows if "metrics" in r]
@@ -131,7 +135,7 @@ def main():
         report.setdefault("abstention", {})[name] = {"auroc_all": round(auroc(pos, neg), 3) if neg else None,
                                                      "threshold_from_dev": round(best, 4), "test_accuracy": round(acc(test, best), 3),
                                                      "n_pos": len(pos), "n_neg": len(neg)}
-    (OUT / "report.json").write_text(json.dumps(report, indent=1))
+    (OUT / "report.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
     print(json.dumps(report, indent=1))
 
 
