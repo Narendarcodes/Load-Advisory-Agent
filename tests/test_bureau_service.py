@@ -105,8 +105,16 @@ def test_contract_violation_is_not_retryable(client):
 
 
 def test_reaching_a_non_local_host_is_refused():
-    with pytest.raises(ValueError):
-        BureauClient("http://bureau.example.com")
+    for url in (
+        "http://bureau.example.com",
+        "http://127.0.0.1.evil.example",
+        "http://localhost.evil.example",
+        "https://127.0.0.1:8001",
+    ):
+        with pytest.raises(ValueError):
+            BureauClient(url)
+    BureauClient("http://127.0.0.1:8001")
+    BureauClient("http://localhost:8001")
 
 
 def test_stale_scenario_returns_an_actually_stale_report(client):

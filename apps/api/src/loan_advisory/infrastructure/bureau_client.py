@@ -7,6 +7,7 @@ errors. The client never invents a score.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 import httpx
 from pydantic import ValidationError
@@ -14,6 +15,7 @@ from pydantic import ValidationError
 from decision_engine.schemas.bureau import BureauErrorResponse, BureauReport
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8001"
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost")
 DEFAULT_TIMEOUT_SECONDS = 5.0
 REPORTS_PATH = "/v1/bureau/reports"
 
@@ -46,7 +48,8 @@ class BureauClient:
         transport: httpx.BaseTransport | None = None,
         client: httpx.Client | None = None,
     ):
-        if not base_url.startswith("http://127.0.0.1") and not base_url.startswith("http://localhost"):
+        parsed = urlsplit(base_url)
+        if parsed.scheme != "http" or parsed.hostname not in LOOPBACK_HOSTS:
             raise ValueError("synthetic bureau must be reached on localhost")
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
