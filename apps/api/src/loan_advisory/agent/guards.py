@@ -32,7 +32,9 @@ _REQ = {
                    r"\b(update|change|edit|set)\s+my\s+(income|salary|score|credit score|emi|obligations|tenure)\s+(to|in)\b",
     "auto_submit": r"\b(submit|file|send|re-?apply)\b.{0,25}\b(for me|on my behalf|automatically|a new application now)\b",
     # requests to fake, inflate, hide or forge application information (question bank q.659)
-    "misrepresentation": r"\b(fake|forged?|forging|falsif\w*|fabricat\w*|counterfeit|doctor(ed)?)\b.{0,40}\b(salary|slip|payslip|income|statement|document|itr|form 16|bank|record|application|proof|score|report)|"
+    "misrepresentation": r"\b(fake|forged?|forging|falsif\w*|fabricat\w*|counterfeit)\b.{0,40}\b(salary|slip|payslip|income|statement|document|itr|form 16|bank|record|application|proof|score|report)|"
+                         # "doctor" as a verb needs its document object right after it: "I am a doctor with a salary..." is a job
+                         r"\bdoctor(?:ed)?\s+(?:the\s+|my\s+|a\s+|an\s+|some\s+)?(?:salary|pay\s?slip|payslip|income|statement|document|itr|form\s?16|bank|record|application|proof|score|report)\b|"
                          r"\b(forge|falsify|fabricate)\b.{0,30}\b(my|a|the|some)\b|"
                          r"\b(manipulat\w*|game|trick|cheat|fool)\b.{0,30}\b(application|system|lender|score|check|underwrit)|"
                          r"\b(inflate|overstate|exaggerate|pad)\b.{0,30}\b(income|salary|earnings)|"
@@ -41,6 +43,8 @@ _REQ = {
                          r"\b(edit|alter|tamper|modify|photoshop)\b.{0,20}\b(salary slip|payslip|pay slip|bank statement|statement|itr|form 16|document)",
     # information the agent never holds: who handled the file, internal grades/scores (abstain_v2 AB2-005, AB2-038)
     "not_available": r"\b(who|which|name of the)\b.{0,30}\b(officer|underwriter|employee|staff|person|executive|analyst|manager|banker)s?\b"
+                     # "which manager should I contact/speak to about my rejected loan?" is a contact-path question
+                     r"(?![^.!?]{0,40}\b(contact|speak|talk|reach|complain|grievance|escalat|email|call|write|approach)\w*\b)"
                      r".{0,40}\b(reject|declin|review|approv|decid|assess|process|handl|turn)\w*|"
                      r"\binternal\s+(risk\s+|credit\s+)?(grade|rating|score|band|category|tier|bucket|scorecard)s?\b|"
                      r"\brisk\s+(grade|rating|band|category|tier|bucket|segment)s?\b.{0,40}\b(my|me|i)\b|"
@@ -79,8 +83,12 @@ _TAMPER = re.compile(
     r"credit\s+report|cibil|credit\s+history|application\s+records?|records?)\b", re.I)
 _MARK_PAID = re.compile(
     _POLITE_OR_AGENT + r"mark\b[^.]{0,30}?\b(?:as\s+)?(?:paid|closed|settled|cleared|regular)\b", re.I)
-# "increase my approved loan amount to 10 lakh": an instruction to set a sanctioned amount, not a how-to question
-_LIMIT = re.compile(r"\b(?:increase|raise|enhance)\s+(?:my\s+|the\s+)?(?:approved|sanctioned)\s+(?:loan\s+)?(?:amount|limit)\b", re.I)
+# "increase my approved loan amount to 10 lakh": an instruction to set a sanctioned amount, not a how-to question.
+# Anchored like the other tampering matchers so an applicant's first-person question ("Can I increase my approved loan
+# amount after some time?") stays an ordinary question instead of being refused as record tampering.
+_LIMIT = re.compile(
+    r"^\W*(?:(?:please|kindly|can you|could you|would you|will you|i want to|i need to|i'?d like to)\s+)*"
+    r"(?:increase|raise|enhance)\s+(?:my\s+|the\s+)?(?:approved|sanctioned)\s+(?:loan\s+)?(?:amount|limit)\b", re.I)
 # "Update my CIBIL score to 800": the dict pattern above needs "my score", so a bureau qualifier ("my CIBIL score") slipped
 # through. Gated on framing, so "How can I increase my credit score to 800?" stays an improvement question.
 _SCORE_EDIT = re.compile(

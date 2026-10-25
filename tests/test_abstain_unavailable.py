@@ -16,6 +16,7 @@ UNAVAILABLE = [
     "Tell me my internal risk rating.",
     "Which employee declined my application?",
     "What risk category did the bank put me in?",
+    "Which officer approved my loan application?",
 ]
 ORDINARY = [
     "Why was my application rejected?",
@@ -28,6 +29,8 @@ ORDINARY = [
     "Which risk factors led to my rejection?",
     "What is the internal grievance redressal process?",
     "Should risk grades be shown to applicants?",
+    "Which manager should I contact about my rejected application?",
+    "Which officer should I speak to about my rejected loan?",
 ]
 
 
