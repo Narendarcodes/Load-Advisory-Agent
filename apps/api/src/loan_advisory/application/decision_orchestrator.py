@@ -29,7 +29,7 @@ def _zen_decision():
     global _engine, _decision
     if _decision is None:
         _engine = zen.ZenEngine()
-        _decision = _engine.create_decision((DECISIONS_DIR / "personal_loan_v1.json").read_text())
+        _decision = _engine.create_decision((DECISIONS_DIR / "personal_loan_v1.json").read_text(encoding="utf-8"))
     return _decision
 
 

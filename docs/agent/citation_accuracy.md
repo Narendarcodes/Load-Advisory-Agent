@@ -74,5 +74,5 @@ the information is unavailable.
 PYTHONPATH=.:apps/api/src python scripts/agent/eval_policy_split.py run --split test --mode primary_source --cache retrieval.json --out runs/x --judge
 PYTHONPATH=.:apps/api/src python scripts/agent/eval_policy_split.py retrieve --bench data/evaluation/rag/bajaj_v1/abstain_v2.jsonl --out retrieval_ab.json
 PYTHONPATH=.:apps/api/src python scripts/agent/eval_policy_split.py run --bench data/evaluation/rag/bajaj_v1/abstain_v2.jsonl --split abstain_v2 --mode labels --cache retrieval_ab.json --out runs/ab
-PYTHONPATH=.:apps/api/src python scripts/agent/eval_citation_verify.py --run runs/dev_labels --cache retrieval.json --variants v1,quote
+PYTHONPATH=.:apps/api/src python scripts/agent/eval_citation_verify.py --run runs/dev_labels --cache retrieval.json --variants v1,quote --out runs/verify_dev.json
 ```

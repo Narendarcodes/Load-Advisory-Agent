@@ -79,9 +79,9 @@ def main():
     ap.add_argument("--workers", type=int, default=24)
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
-    cache = json.load(open(a.cache))["questions"]
+    cache = json.load(open(a.cache, encoding="utf-8"))["questions"]
     qs = {q["qid"]: q for q in bench("all")}
-    rows = [json.loads(l) for l in open(Path(a.run) / "rows.jsonl")]
+    rows = [json.loads(l) for l in open(Path(a.run) / "rows.jsonl", encoding="utf-8")]
     asis = summarise(rows)
     report = {"run": a.run, "asis": {k: asis[k] for k in ("citation_support", "strict_citation_correct", "mean_citations_per_answer")},
               "samples": []}
@@ -95,8 +95,9 @@ def main():
             raw += [{"sample": i, "variant": v, "qid": r["qid"], "verifier": j} for r, j in outs if j is not None]
             print(i, json.dumps(res), flush=True)
         report["samples"].append(sample)
-    Path(a.out).write_text(json.dumps(report, indent=1))
-    Path(a.out).with_suffix(".raw.jsonl").write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in raw))
+    Path(a.out).write_text(json.dumps(report, indent=1), encoding="utf-8")
+    Path(a.out).with_suffix(".raw.jsonl").write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in raw),
+                                                     encoding="utf-8")
     print(json.dumps(report, indent=1))
 
 

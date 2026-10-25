@@ -204,3 +204,36 @@ def test_request_guards_catch_record_tampering_and_rate_guarantees(msg, flag):
 ])
 def test_request_guards_leave_ordinary_questions_alone(msg):
     assert not {"edit_record", "guarantee"} & set(G.request_flags(msg))
+
+
+# ---------------------------------------------------------------- audit: conflicting sources, rank, provenance, synthetic
+CONFLICT = [P("P1", "The minimum credit score for a personal loan is 700.", "LENDER-A"),
+            P("P2", "Self-employed applicants need a minimum credit score of 650.", "LENDER-B")]
+
+
+def test_conflicting_sources_keep_only_the_citation_the_answer_follows():
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": "Self-employed applicants need a minimum credit score of 650."}
+    kept, dropped = C.verify_citations(j["answer"], j, CONFLICT, "verify")
+    assert kept == ["P2"] and dropped == ["P1"]
+
+
+def test_primary_source_never_promotes_an_uncited_top_ranked_passage():
+    j = {"abstain": False, "citations": ["P2"], "answer": "Self-employed applicants need a minimum credit score of 650."}
+    assert C.verify_citations(j["answer"], j, CONFLICT, "primary_source") == (["P2"], [])
+
+
+def test_citation_relationship_is_only_set_for_the_profiles_own_lender():
+    from loan_advisory.agent.tools import citation_for
+    own = {"chunk_id": "BFL#000", "document_id": "BFL-X", "title": "BFL policy", "lender_id": "BFL"}
+    reg = {"chunk_id": "RBI#000", "document_id": "RBI-X", "title": "RBI direction", "lender_id": "none"}
+    prof = {"lender_id": "BFL", "relationship": "public reference lender, not a partner"}
+    assert citation_for("P1", own, prof).relationship == "public reference lender, not a partner"
+    assert citation_for("P2", reg, prof).relationship is None
+
+
+def test_synthetic_policy_is_never_served_under_a_real_lender_profile():
+    from rag.retrieve import load_profile, profile_filter
+    chunk = {"approval_status": "approved", "lender_id": "SYNTHETIC", "source_type": "synthetic",
+             "applies_to_entity": ["all"]}
+    for name in ("bajaj_finance", "generic_bank", "generic_nbfc"):
+        assert not profile_filter(load_profile(name), "current").allows(chunk)

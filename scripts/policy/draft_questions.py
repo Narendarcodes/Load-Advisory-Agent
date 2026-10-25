@@ -17,6 +17,9 @@ from pathlib import Path
 import requests
 
 BASE = os.environ.get("LLM_BASE", "http://127.0.0.1:8001/v1")
+MODEL = os.environ.get("LLM_MODEL", "llm")
+KEY = os.environ.get("LLM_API_KEY") or os.environ.get("GROQ_API_KEY")
+HEADERS = {"Authorization": f"Bearer {KEY}"} if KEY else {}
 DATA = Path(os.environ.get("LOAN_POLICY_DIR") or Path(os.environ.get("LOAN_DATA_DIR", "/root/hx/loan/data")) / "policy")
 QUOTA = {"RBI-DLD-2025": 22, "RBI-PENAL-2023": 9, "RBI-KFS-2024": 7, "RBI-IOS-2021": 12, "RBI-CIC-CS-2023": 5,
          "RBI-CIC-COMP-2023": 5, "HDFC-PL-ELIG": 3, "ICICI-PL-ELIG": 4, "RBI-FPC-2007": 2, "RBI-MC-CS-2015": 4}
@@ -35,7 +38,7 @@ def post(body):
     delay = 2
     while True:
         try:
-            r = requests.post(f"{BASE}/chat/completions", json=body, timeout=180)
+            r = requests.post(f"{BASE}/chat/completions", json=body, headers=HEADERS, timeout=180)
             if r.status_code < 500:
                 return r
         except requests.ConnectionError:
@@ -45,7 +48,7 @@ def post(body):
 
 def draft(c):
     p = PROMPT.replace("{title}", c["title"]).replace("{section}", c["section"]).replace("{text}", c["text"])
-    r = post({"model": "llm", "reasoning_effort": "low", "max_tokens": 900, "temperature": 0.4,
+    r = post({"model": MODEL, "reasoning_effort": "low", "max_tokens": 900, "temperature": 0.4,
               "response_format": {"type": "json_object"}, "messages": [{"role": "user", "content": p}]})
     try:
         d = json.loads(r.json()["choices"][0]["message"]["content"])
@@ -69,7 +72,7 @@ def main():
     if args:  # e.g. RBI-IOS-2026-FAQ:12
         quota = {a.split(":")[0]: int(a.split(":")[1]) for a in args}
     rng = random.Random(7)
-    chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").open()]
+    chunks = [json.loads(l) for l in (DATA / "chunks.jsonl").open(encoding="utf-8")]
     pick = []
     for did, n in quota.items():
         pool = [c for c in chunks if c["document_id"] == did and len(c["text"].split()) >= 35
@@ -78,7 +81,7 @@ def main():
     with ThreadPoolExecutor(128) as ex:
         out = [d for d in ex.map(draft, pick) if d]
     name = out_name or ("question_drafts.jsonl" if quota is QUOTA else f"question_drafts_{'_'.join(quota)}.jsonl")
-    (DATA / name).write_text("".join(json.dumps(d, ensure_ascii=False) + "\n" for d in out))
+    (DATA / name).write_text("".join(json.dumps(d, ensure_ascii=False) + "\n" for d in out), encoding="utf-8")
     print(len(pick), "sampled ->", len(out), "verified drafts")
 
 

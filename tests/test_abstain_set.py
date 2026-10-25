@@ -10,7 +10,7 @@ CATS = {"abstain_invented", "abstain_other_lender", "abstain_guarantee", "abstai
 
 
 def rows(p):
-    return [json.loads(l) for l in p.open() if l.strip()]
+    return [json.loads(l) for l in p.open(encoding="utf-8") if l.strip()]
 
 
 def test_abstain_set_is_large_well_formed_and_all_unanswerable():
