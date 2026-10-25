@@ -30,6 +30,9 @@ from loan_advisory.agent import facts as F
 from loan_advisory.agent import observability as obs
 from loan_advisory.agent import guards as G
 from loan_advisory.agent import prompts as P
+from loan_advisory.agent.settings import AgentSettings
+from loan_advisory.agent.streaming import JSONFieldStreamer, SentenceGate, remainder, split_sentences
+from loan_advisory.agent.citations import labels_of as _labels_of, verify_citations
 from loan_advisory.agent.contracts import AgentRequest, AgentResponse, Session
 from loan_advisory.agent.llm import LLMError
 from loan_advisory.agent.tools import (FrappeUnavailable, InvalidWhatIf, NotAuthorized, UnknownApplication)
@@ -48,6 +51,20 @@ _RULES = [  # regex fallback when the LLM classifier is unavailable
     ("explain", re.compile(r"why|reason|reject|declin|denied|turned down|explain|what happened|my decision|status|mean", re.I)),
     ("greeting", re.compile(r"^\s*(hi|hello|hey|namaste|namaskar|thanks|thank you|ok|okay)\b", re.I)),
 ]
+# High-precision intents that skip the LLM classifier (AGENT_FAST_CLASSIFY). Used only when exactly ONE matches;
+# anything ambiguous still goes to the LLM. English + Hindi + Telugu.
+_FAST = [
+    ("explain", re.compile(r"\bwhy\b.{0,40}\b(reject\w*|declin\w*|denied|turned down|refused|not approved)\b|"
+                           r"क्यों.{0,30}(रिजेक्ट|अस्वीकार|नामंज़ूर|नामंजूर|ख़ारिज|खारिज)|(रिजेक्ट|अस्वीकार|नामंज़ूर|नामंजूर|ख़ारिज|खारिज).{0,30}क्यों|"
+                           r"ఎందుకు.{0,30}(తిరస్కర|రిజెక్ట్)|(తిరస్కర|రిజెక్ట్).{0,30}ఎందుకు", re.I)),
+    ("improve", re.compile(r"\b(what (can|should) i do|how (can|do) i improve|improve (my|before|so)|before i re-?apply|"
+                           r"steps to improve)\b|सुधार|మెరుగుపర", re.I)),
+    ("policy", re.compile(r"\b(complain\w*|grievance|ombudsman|key fact statement|kfs)\b|शिकायत|ఫిర్యాదు", re.I)),
+    ("what_if", re.compile(r"^\s*(what if|suppose)\b", re.I)),
+]
+_QUESTION = re.compile(r"\?|^\s*(can|could|is|are|do|does|how|what|when|where|which|who|why|will|should|must)\b|"
+                       r"क्या|कैसे|कब|कौन|क्यों|ఎలా|ఏమి|ఎప్పుడు|ఎవరు|ఎందుకు", re.I)
+_FAST_NOT = re.compile(r"\b(rate|fee|fees|charges?|interest|offer|bajaj|bank|lender|nbfc|rbi)\b", re.I)
 
 
 class AgentState(TypedDict, total=False):
@@ -74,19 +91,26 @@ class AgentState(TypedDict, total=False):
     action: str | None
     handoff_ref: str | None
     response: dict | None
+    deadline: float
+    prefetched: dict | None
+    voice_lead: str | None
 
 
 class AdvisoryAgent:
     def __init__(self, decision_tools, llm, policy_tools=None, handoff=None, profile=None, audit_path=None,
-                 checkpointer=None):
+                 checkpointer=None, settings: AgentSettings | None = None):
         self.tools, self.llm, self.policy, self.handoff = decision_tools, llm, policy_tools, handoff
+        self.settings = settings or AgentSettings.from_env()
+        self._streams: dict = {}  # request_id -> {"emit", "spoken", "first_ms"} for sentence streaming (not graph state)
         self.profile = profile or {}
         self.audit_path = Path(audit_path or os.environ.get("AGENT_AUDIT_LOG", "agent_out/turns.jsonl"))
         self._trace_ctx: dict = {}  # request_id -> OTel context of the turn's root span (not stored in graph state)
         self.graph = self._build().compile(checkpointer=checkpointer or MemorySaver())
 
     # ------------------------------------------------------------------ public API
-    def run(self, request: AgentRequest, session: Session | None, trace_context=None) -> AgentResponse:
+    def run(self, request: AgentRequest, session: Session | None, trace_context=None, on_sentence=None) -> AgentResponse:
+        """Run one turn. `on_sentence(text)` (optional) receives the answer sentence by sentence as soon as each one
+        has passed the deterministic guards; together the sentences are exactly the final answer to speak."""
         thread = f"{session.applicant_ref if session else 'anon'}::{request.conversation_id}"  # scoped per applicant
         sess_hash = hashlib.sha256(thread.encode()).hexdigest()[:16]
         with obs.span("advisor.turn", kind="CHAIN", context=trace_context,
@@ -94,11 +118,14 @@ class AdvisoryAgent:
                          "literacy": request.literacy, "input.value": obs.content(request.message)}) as root:
             if root is not None:
                 self._trace_ctx[request.request_id] = obs.current_context()
+            if on_sentence is not None:
+                self._streams[request.request_id] = {"emit": on_sentence, "spoken": [], "first_ms": None, "t0": time.perf_counter()}
             try:
                 out = self.graph.invoke({"request": request.model_dump(), "session": session.model_dump() if session else None},
                                         config={"configurable": {"thread_id": thread}})
             finally:
                 self._trace_ctx.pop(request.request_id, None)
+                self._streams.pop(request.request_id, None)
             resp = AgentResponse(**out["response"])
             if root is not None:
                 resp.trace_id = format(root.get_span_context().trace_id, "032x")  # = Phoenix trace id
@@ -132,13 +159,68 @@ class AdvisoryAgent:
     def _session(self, s):
         return Session(**s["session"]) if s.get("session") else None
 
+    def _left(self, s) -> float:
+        return s.get("deadline", float("inf")) - time.perf_counter()
+
+    def _llm_kw(self, s, budget: float | None = None) -> dict:
+        """Deadline kwarg for LLM calls (absolute perf_counter time), when the client supports it."""
+        if not getattr(self.llm, "supports_deadline", False):
+            return {}
+        d = s.get("deadline", float("inf"))
+        if budget is not None:
+            d = min(d, time.perf_counter() + budget)
+        return {"deadline": d} if d != float("inf") else {}
+
+    def _stream(self, s):
+        return self._streams.get((s.get("request") or {}).get("request_id"))
+
+    def _emit(self, s, text: str):
+        st = self._stream(s)
+        if st is None or not text.strip():
+            return
+        st["spoken"].append(text)
+        if st["first_ms"] is None:
+            st["first_ms"] = round((time.perf_counter() - st["t0"]) * 1000, 1)
+        try:
+            st["emit"](text)
+        except Exception:  # a broken listener must never break the turn
+            pass
+
+    def _voice_lead(self, s, req, intent):
+        """English voice only: one deterministic sentence built from the recorded evidence (never from the LLM)."""
+        if s.get("voice_lead"):
+            return s["voice_lead"]
+        if req.channel != "voice" or req.locale != "en" or intent not in ("explain", "improve") or not s.get("record"):
+            return None
+        reasons = F.reason_facts(s["record"])
+        if not reasons:
+            return None
+        names = [r["name"] for r in reasons]
+        joined = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+        if intent == "explain":
+            return (f"Your application's recorded decision is {s['record']['decision']} under a synthetic prototype policy, "
+                    f"because of {len(names)} check{'s' if len(names) > 1 else ''}: {joined}.")
+        return f"Under the synthetic prototype policy, {len(names)} check{'s' if len(names) > 1 else ''} would need to change: {joined}."
+
+    def _allowed(self, s) -> set:
+        req, intent = self._req(s), s.get("intent")
+        allowed = F.grounded_numbers(s.get("record"), extra=G.numbers_in(req.message))
+        if intent == "what_if" and s.get("what_if") and "record" in s["what_if"]:
+            allowed |= F.grounded_numbers(s["what_if"]["record"], extra=list(s["what_if"]["changes"].values()))
+        if intent == "policy":
+            for p in s.get("passages") or []:
+                allowed |= set(G.numbers_in(p["text"] + " " + p["citation"]["title"] + " " + str(p["citation"].get("section"))))
+        return allowed
+
     def _style(self, req: AgentRequest):
         return (P.LITERACY_STYLE.get(req.literacy, P.LITERACY_STYLE["medium"]), P.LANG.get(req.locale, "English"),
                 P.VOICE if req.channel == "voice" else "")
 
     # ------------------------------------------------------------------ nodes
     def receive(self, s):
-        return {"t0": time.perf_counter(), "trace": [{"node": "receive", "t_ms": 0.0}], "status": None, "flags": [],
+        t0 = time.perf_counter()
+        return {"t0": t0, "deadline": t0 + self.settings.deadline_for(self._req(s).channel), "prefetched": None, "voice_lead": None,
+                "trace": [{"node": "receive", "t_ms": 0.0}], "status": None, "flags": [],
                 "intent": None, "wi_changes": None, "record": None, "what_if": None, "plan": None, "passages": [],
                 "retrieval": None, "draft": None, "abstained": False, "cited": [], "guard_flags": [], "attempts": 0,
                 "fallback_used": False, "action": None, "handoff_ref": None, "response": None}
@@ -166,10 +248,17 @@ class AdvisoryAgent:
         if flags:
             self._ev(s, "classify", intent="boundary", flags=flags, by="guard")
             return {"intent": "boundary", "flags": flags, "trace": s["trace"]}
-        values = {}
+        if self.settings.fast_classify_for(req.channel):
+            fast = _fast_intent(req.message)
+            if fast is not None:
+                intent, changes = fast
+                self._ev(s, "classify", intent=intent, by="fast")
+                return {"intent": intent, "wi_changes": changes, "trace": s["trace"]}
+        values, pre = {}, None
         if req.application_ref:
             try:
                 rec = self.tools.get_decision_evidence(req.application_ref, self._session(s))
+                pre = {"record": rec}
                 values = ((rec or {}).get("inputs") or {}).get("values") or {}
             except Exception:
                 values = {}
@@ -178,7 +267,8 @@ class AdvisoryAgent:
         try:
             j = self.llm.chat_json("You are a precise intent classifier. Output JSON only.",
                                    P.CLASSIFY.format(values=json.dumps(values), history=json.dumps(hist, ensure_ascii=False),
-                                                     message=req.message), max_tokens=400, tag="classify")
+                                                     message=req.message), max_tokens=400, tag="classify",
+                                   **self._llm_kw(s, self.settings.classify_budget_s))
             intent = j.get("intent") if j.get("intent") in INTENTS else None
             changes = j.get("what_if_changes") or None
         except (LLMError, AttributeError):
@@ -186,16 +276,19 @@ class AdvisoryAgent:
         if intent is None:
             by = "rules"
             intent = next((name for name, rx in _RULES if rx.search(req.message)), "other")
+            if intent == "other" and _QUESTION.search(req.message):
+                intent, by = "policy", "rules_question_default"  # cite-or-abstain path, never a guess
             changes = _regex_changes(req.message) if intent == "what_if" else None
         self._ev(s, "classify", intent=intent, by=by)
-        return {"intent": intent, "wi_changes": changes, "trace": s["trace"]}
+        return {"intent": intent, "wi_changes": changes, "prefetched": pre, "trace": s["trace"]}
 
     def load_evidence(self, s):
         req, sess = self._req(s), self._session(s)
         if not req.application_ref:
             return {"status": "no_app"}
         try:
-            rec = self.tools.get_decision_evidence(req.application_ref, sess)
+            pre = s.get("prefetched")  # fetched (authorized) by classify earlier in this same turn
+            rec = pre["record"] if pre else self.tools.get_decision_evidence(req.application_ref, sess)
         except NotAuthorized:
             return {"status": "not_authorized"}
         except UnknownApplication:
@@ -254,49 +347,130 @@ class AdvisoryAgent:
         style, lang, voice = self._style(req)
         retry = P.RETRY.format(flags=", ".join(s["guard_flags"])) if s.get("attempts") else ""
         attempts = s.get("attempts", 0) + 1
+        if intent == "policy" and not s["passages"]:
+            return {"draft": P.template("policy_abstain", req.locale), "abstained": True, "cited": [],
+                    "attempts": attempts, "action": "answer"}
+        if self._left(s) < self.settings.min_compose_s:  # per-turn deadline: no time for an LLM draft -> template
+            self._ev(s, "compose", skipped="deadline", left_s=round(self._left(s), 2))
+            return {"draft": None, "attempts": 99, "guard_flags": ["deadline"]}
+        stream = self._stream(s) if attempts == 1 else None  # only the first draft is streamed
+        gate = SentenceGate(self._allowed(s), lambda t: self._emit(s, t)) if stream is not None else None
         try:
             if intent == "policy":
-                if not s["passages"]:
-                    return {"draft": P.template("policy_abstain", req.locale), "abstained": True, "cited": [],
-                            "attempts": attempts, "action": "answer"}
-                prof = self.profile
-                desc = f"{prof.get('legal_name', 'lender-neutral')} ({prof.get('entity_type', 'any')}; {prof.get('relationship', '')})"
-                user = "\n\n".join(f"[{p['label']}]{' [historical]' if p['citation'].get('approval_status') == 'approved_historical' else ''} "
-                                   f"{p['citation']['title']} — {p['citation'].get('section') or ''}\n{p['text'][:1800]}"
-                                   for p in s["passages"]) + f"\n\nQuestion: {req.message}"
-                j = self.llm.chat_json(P.POLICY.format(profile_desc=desc, style=style, lang=lang, voice=voice) + retry,
-                                       user, max_tokens=1200, tag="compose_policy")
-                ab = bool(j.get("abstain"))
-                cited = [c for c in (j.get("citations") or []) if isinstance(c, str)]
-                ans = str(j.get("answer") or "").strip() or P.template("policy_abstain", req.locale)
-                return {"draft": ans, "abstained": ab, "cited": [] if ab else cited, "attempts": attempts, "action": "answer"}
+                return self._compose_policy(s, req, style, lang, voice, retry, attempts, gate)
             facts = self._facts(s)
             tmpl = {"explain": P.EXPLAIN, "improve": P.IMPROVE, "what_if": P.WHAT_IF}[intent]
-            txt = self.llm.chat(tmpl.format(style=style, lang=lang, voice=voice, facts=json.dumps(facts, ensure_ascii=False, indent=1)) + retry,
-                                req.message, max_tokens=1100, tag=f"compose_{intent}")
-            return {"draft": txt, "attempts": attempts, "action": "simulate" if intent == "what_if" else "answer"}
+            system = tmpl.format(style=style, lang=lang, voice=voice, facts=json.dumps(facts, ensure_ascii=False, indent=1)) + retry
+            lead = self._voice_lead(s, req, intent) if (stream is not None or s.get("voice_lead")) else None
+            if lead:
+                s["voice_lead"] = lead
+                if stream is not None:
+                    self._emit(s, lead)  # deterministic, grounded first sentence: spoken while the LLM starts
+                system += P.VOICE_LEAD_CONTINUE.format(lead=lead)
+            elif req.channel == "voice":
+                system += P.VOICE_FIRST_SENTENCE
+            kw = dict(max_tokens=1100, tag=f"compose_{intent}", **self._llm_kw(s))
+            if gate is not None and hasattr(self.llm, "chat_stream"):
+                parts = []
+                for d in self.llm.chat_stream(system, req.message, **kw):
+                    parts.append(d)
+                    gate.push(d)
+                txt = "".join(parts).strip()
+            else:
+                txt = self.llm.chat(system, req.message, **kw)
+                if gate is not None:
+                    gate.push(txt)
+            if gate is not None:
+                gate.close()
+            if lead:
+                txt = f"{lead} {txt}".strip()
+            return {"draft": txt, "attempts": attempts, "action": "simulate" if intent == "what_if" else "answer",
+                    "voice_lead": lead}
         except LLMError as e:
             self._ev(s, "compose", error=str(e)[:200])
-            return {"draft": None, "attempts": 99, "guard_flags": ["llm_error"]}
+            return {"draft": None, "attempts": 99, "guard_flags": ["deadline" if "deadline" in str(e) else "llm_error"]}
+
+    def _compose_policy(self, s, req, style, lang, voice, retry, attempts, gate):
+        prof = self.profile
+        desc = f"{prof.get('legal_name', 'lender-neutral')} ({prof.get('entity_type', 'any')}; {prof.get('relationship', '')})"
+        user = "\n\n".join(f"[{p['label']}]{' [historical]' if p['citation'].get('approval_status') == 'approved_historical' else ''} "
+                           f"{p['citation']['title']} — {p['citation'].get('section') or ''}\n{p['text'][:1800]}"
+                           for p in s["passages"]) + f"\n\nQuestion: {req.message}"
+        mode = self.settings.citation_mode
+        system = (P.POLICY_SPANS if mode in ("spans", "spans_verify") else P.POLICY).format(
+            profile_desc=desc, style=style, lang=lang, voice=voice) + retry
+        if req.channel == "voice":
+            system += P.VOICE_FIRST_SENTENCE
+        labels = [p["label"] for p in s["passages"]]
+        kw = dict(max_tokens=1400 if mode.startswith("spans") else 1200, tag="compose_policy", **self._llm_kw(s))
+        if gate is not None and hasattr(self.llm, "chat_stream"):
+            fs, parts = JSONFieldStreamer("answer"), []
+
+            def pre():
+                h = fs.head()
+                ab = bool(h.get("abstain"))
+                return G.citation_flags(_labels_of(h, mode), labels, ab) if not ab else []
+            gate.precheck = pre
+            for d in self.llm.chat_stream(system, user, **kw):
+                parts.append(d)
+                gate.push(fs.feed(d))
+            gate.close()
+            j = _parse_json("".join(parts))
+        else:
+            j = self.llm.chat_json(system, user, **kw)
+            if gate is not None:
+                ab0 = bool(j.get("abstain"))
+                gate.precheck = (lambda: G.citation_flags(_labels_of(j, mode), labels, ab0)) if not ab0 else None
+                gate.push(str(j.get("answer") or ""))
+                gate.close()
+        ab = bool(j.get("abstain"))
+        ans = str(j.get("answer") or "").strip() or P.template("policy_abstain", req.locale)
+        cited = [] if ab else _labels_of(j, mode)
+        if not ab and mode in ("verify", "spans", "spans_verify"):
+            cited, dropped = verify_citations(ans, j, s["passages"], mode)
+            if dropped:
+                self._ev(s, "verify_citations", kept=cited, dropped=dropped)
+        if not ab and mode == "llm_verify" and cited and self._left(s) >= self.settings.verify_min_left_s:
+            cited = self._llm_verify_citations(s, req, ans, cited)
+        return {"draft": ans, "abstained": ab, "cited": cited, "attempts": attempts, "action": "answer"}
+
+    def _llm_verify_citations(self, s, req, ans, cited):
+        """Post-hoc citation verification by a focused LLM call: of the passages the answer cites, keep those the
+        verifier confirms directly state its facts. Never adds a passage; keeps the model's own labels when the
+        verifier confirms none of them or fails. (On dev, pruning beat replace/union: see the upgrade RESULTS.)"""
+        labels = [p["label"] for p in s["passages"]]
+        ps = "\n\n".join(f"[{p['label']}] {p['citation']['title']} — {p['citation'].get('section') or ''}\n{p['text'][:1500]}"
+                          for p in s["passages"])
+        try:
+            j = self.llm.chat_json("You are a precise source checker. Output JSON only.",
+                                   P.VERIFY_CITATIONS.format(question=req.message, answer=ans, passages=ps),
+                                   max_tokens=500, tag="verify_citations", **self._llm_kw(s))
+            got = [c for c in (j.get("supporting") or []) if isinstance(c, str) and c in labels]
+        except (LLMError, AttributeError):
+            got = []
+        out = [c for c in cited if c in got] or cited  # prune only: never adds a passage the answer did not cite (dev-tuned)
+        self._ev(s, "verify_citations", by="llm", claimed=cited, kept=out)
+        return out
 
     def validate(self, s):
-        req, intent, draft = self._req(s), s["intent"], s.get("draft")
+        intent, draft = s["intent"], s.get("draft")
         if draft is None:
             return {"guard_flags": s.get("guard_flags") or ["llm_error"]}
         flags = G.answer_flags(draft)
-        allowed = F.grounded_numbers(s.get("record"), extra=G.numbers_in(req.message))
-        if intent == "what_if" and s.get("what_if"):
-            allowed |= F.grounded_numbers(s["what_if"]["record"], extra=list(s["what_if"]["changes"].values()))
         if intent == "policy":
-            for p in s.get("passages") or []:
-                allowed |= set(G.numbers_in(p["text"] + " " + p["citation"]["title"] + " " + str(p["citation"].get("section"))))
             flags += G.citation_flags(s.get("cited") or [], [p["label"] for p in s.get("passages") or []], s.get("abstained"))
             flags = [f for f in flags if not (f == "answer_without_citation" and not s.get("passages"))]
-        bad_nums = G.ungrounded_numbers(draft, allowed)
+        bad_nums = G.ungrounded_numbers(draft, self._allowed(s))
         if bad_nums:
             flags.append("ungrounded_numbers:" + ",".join(bad_nums[:5]))
         self._ev(s, "validate", flags=flags, attempt=s.get("attempts"))
         return {"guard_flags": flags, "trace": s["trace"]}
+
+    def _after_validate(self, s):
+        if s.get("guard_flags") and s.get("attempts", 0) < 2:
+            if self._left(s) >= self.settings.min_compose_s:
+                return "compose"
+        return "finalize"  # finalize marks "deadline" when a rewrite was skipped for lack of time
 
     def boundary(self, s):
         req, sess = self._req(s), self._session(s)
@@ -354,7 +528,10 @@ class AdvisoryAgent:
         gflags = list(s.get("guard_flags") or [])
         draft = s.get("draft")
         fallback = False
+        if draft is not None and gflags and s.get("attempts", 0) < 2 and "deadline" not in gflags:
+            gflags.append("deadline")  # a flagged draft was not rewritten because the turn ran out of time
         if intent in ("explain", "improve", "what_if", "policy") and s.get("status") in (None, "ok") and (draft is None or gflags):
+            s["guard_flags"] = gflags
             draft, fallback = self._fallback(s), True
             if intent == "policy":
                 s["abstained"], s["cited"] = True, []
@@ -362,6 +539,13 @@ class AdvisoryAgent:
                 and not re.search(P.SYNTHETIC_MARK, draft, re.I):
             draft = draft.rstrip() + "\n\n" + P.SYNTHETIC_NOTE.get(req.locale, P.SYNTHETIC_NOTE["en"])
             gflags.append("synthetic_label_appended")
+        st = self._stream(s)
+        if st is not None and draft:  # stream whatever has not been spoken yet (template, synthetic note, boundary text)
+            rest = remainder(st["spoken"], draft, P.STREAM_BRIDGE.get(req.locale, self.settings.stream_bridge) if req.locale != "en" else self.settings.stream_bridge)
+            if rest:
+                done, tail = split_sentences(rest + " ")
+                for snt in done + ([tail] if tail.strip() else []):
+                    self._emit(s, snt)
         card = F.decision_card(s["record"]) if s.get("record") else None
         cites = []
         if intent == "policy" and not s.get("abstained"):
@@ -374,6 +558,9 @@ class AdvisoryAgent:
         timings = {"total_ms": round((time.perf_counter() - s["t0"]) * 1000, 1), "llm_calls": list(self.llm.calls[-6:]) if hasattr(self.llm, "calls") else []}
         if s.get("retrieval"):
             timings["retrieval_ms"] = s["retrieval"].get("latency_ms")
+        if st is not None:
+            timings["first_sentence_ms"] = st["first_ms"]
+            timings["streamed_sentences"] = len(st["spoken"])
         trace_id = str(uuid.uuid4())  # replaced by the OTel trace id in run() when tracing is on
         wi = s.get("what_if")
         resp = AgentResponse(
@@ -417,7 +604,8 @@ class AdvisoryAgent:
     def _fallback(self, s):
         req, intent = self._req(s), s["intent"]
         if intent == "policy":
-            return P.template("policy_abstain", req.locale)
+            busy = "deadline" in (s.get("guard_flags") or []) or "llm_error" in (s.get("guard_flags") or [])
+            return P.template("policy_busy" if busy else "policy_abstain", req.locale)
         rec = s["record"]
         lines = []
         if intent == "explain":
@@ -476,8 +664,7 @@ class AdvisoryAgent:
         g.add_conditional_edges("what_if", lambda s: "simple" if s.get("status") == "bad_what_if" else "compose", ["simple", "compose"])
         g.add_edge("retrieve_policy", "compose")
         g.add_edge("compose", "validate")
-        g.add_conditional_edges("validate", lambda s: "compose" if s.get("guard_flags") and s.get("attempts", 0) < 2 else "finalize",
-                                ["compose", "finalize"])
+        g.add_conditional_edges("validate", self._after_validate, ["compose", "finalize"])
         g.add_edge("boundary", "finalize")
         g.add_edge("simple", "finalize")
         g.add_edge("finalize", END)
@@ -534,3 +721,24 @@ def _regex_changes(msg: str) -> dict | None:
         if m:
             out[field] = {"set": float(m.group(1).replace(",", ""))}
     return out or None
+
+
+def _parse_json(txt: str) -> dict:
+    from loan_advisory.agent.llm import parse_json
+    return parse_json(txt)
+
+
+def _fast_intent(msg: str):
+    """(intent, what_if_changes) when exactly one high-precision pattern matches; else None (ask the LLM)."""
+    hits = [name for name, rx in _FAST if rx.search(msg)]
+    if len(hits) != 1:
+        return None
+    intent = hits[0]
+    if intent == "what_if":
+        ch = _regex_changes(msg)
+        if not ch or _FAST_NOT.search(msg):
+            return None
+        return intent, ch
+    if intent in ("explain", "improve") and (re.search(r"\d", msg) or _FAST_NOT.search(msg)):
+        return None
+    return intent, None
