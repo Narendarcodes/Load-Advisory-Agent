@@ -20,7 +20,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from rag.retrieve import (BM25Index, CrossEncoderReranker, DenseIndex, RetrievalFilter,  # noqa: E402
+from rag.index_meta import index_identity  # noqa: E402
+from rag.retrieve import (BM25Index, CrossEncoderReranker, DenseIndex, DOC_PREFIX, RetrievalFilter,  # noqa: E402
                           doc_string, load_profile, profile_filter)
 
 POLICY = Path(os.environ.get("LOAN_POLICY_DIR", "/root/hx/loan/policy"))
@@ -44,7 +45,10 @@ def main():
     emb = SentenceTransformer(EMBED, device=dev, model_kwargs={"torch_dtype": torch.bfloat16})
     vecs = emb.encode([doc_string(c) for c in chunks], batch_size=32, normalize_embeddings=True, show_progress_bar=False)
     index_s = time.time() - t0
-    dense = DenseIndex(chunks, vecs, path=str(POLICY / "qdrant_v2"))
+    dense = DenseIndex(chunks, vecs, path=str(POLICY / "qdrant_v2"),
+                       meta=index_identity(embed_model=EMBED, dimension=emb.get_sentence_embedding_dimension(),
+                                           doc_prefix=DOC_PREFIX, query_prompt="QuestionAnswering",
+                                           query_prompt_text=(getattr(emb, "prompts", {}) or {}).get("QuestionAnswering")))
     bm25 = BM25Index(chunks)
     rr = CrossEncoderReranker(RERANK, device=dev)
     profiles, rows = {}, []

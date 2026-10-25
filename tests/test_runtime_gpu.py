@@ -42,7 +42,9 @@ def fakes(monkeypatch, tmp_path):
     st = types.SimpleNamespace(SentenceTransformer=lambda *a, **kw: types.SimpleNamespace(encode=lambda *a, **kw: [[0.0]]))
     flt = types.SimpleNamespace(mode="current", lender_id=None, entity_type=None)
     rr = types.SimpleNamespace(
-        BM25Index=lambda chunks: object(), DenseIndex=lambda chunks, vecs, path=None: object(),
+        BM25Index=lambda chunks: object(), DenseIndex=lambda chunks, vecs, path=None, meta=None: object(),
+        DOC_PREFIX="title: {title} | text: {text}",
+        doc_string=lambda c: f"title: {c['title']} | text: {c['text']}",
         CrossEncoderReranker=lambda device=None: object(), HybridRetriever=FakeRetriever,
         load_profile=lambda name: {}, profile_filter=lambda profile, mode="current": flt,
         load_rag_config=lambda: (types.SimpleNamespace(rerank_candidates=0), {}, "current"))
