@@ -477,9 +477,9 @@ class AdvisoryAgent:
     def boundary(self, s):
         req, sess = self._req(s), self._session(s)
         flags = s["flags"]
-        key = next(k for k in ("injection", "other_applicant", "dispute", "override", "edit_record", "auto_submit", "guarantee")
+        key = next(k for k in ("injection", "misrepresentation", "other_applicant", "dispute", "override", "edit_record", "auto_submit", "not_available", "guarantee")
                    if k in flags)
-        out = {"action": "refuse", "abstained": key in ("guarantee",)}
+        out = {"action": "refuse", "abstained": key in ("guarantee", "not_available")}
         if key == "dispute":
             ref = self.handoff.create("data_dispute", [req.application_ref], req.message) if self.handoff else None
             out.update(action="handoff", handoff_ref=ref, draft=P.template("dispute", req.locale, ref=ref or "pending"))
