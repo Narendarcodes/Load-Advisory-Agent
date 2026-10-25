@@ -82,7 +82,8 @@ k = 10, from `config/rag.yaml`), and the `bge-reranker-v2-m3` rerank of the top 
 applies the approval status, entity type (bank/nbfc), own-lender-only and source-type allow-list rules **before** ranking.
 The top 5 passages become `P1..P5`, labelled `[historical]` where that applies. The model must cite labels; the server
 maps them to `Citation` objects (document id, title, section, page, URL, approval status, applies-to entity,
-relationship label). The GPU footprint is about 4.1–4.5 GB.
+relationship label). The GPU footprint was about 4.1–4.5 GB uncapped; with `AGENT_GPU_FRACTION=0.016` (allocator cap
+~3 GB) and the CUDA cache released after each query it measures 3.74 GB in `rocm-smi --showpids` (Oct 14, 2026).
 
 ## Observability
 `observability.py` uses the OpenTelemetry SDK plus an OTLP/HTTP exporter to self-hosted **Arize Phoenix**
@@ -106,6 +107,8 @@ LiveKit Agents 1.8 worker:
   large-v3-turbo for en.
 * **Reply:** `llm_node`, which POSTs `/api/chat` with the session token from the LiveKit participant metadata. It is
   the same graph and the same authorization as text.
-* **TTS:** kenpath/svara-tts-v1 (Apache-2.0) on vLLM (fp8, 3% GPU) with a streaming SNAC sidecar.
+* **TTS:** kenpath/svara-tts-v1 (Apache-2.0) on vLLM (fp8, `--gpu-memory-utilization 0.025` plus an explicit
+  768 MB KV cache, because utilization-based profiling is unreliable on the shared GPU) with a streaming SNAC sidecar.
+  Measured Oct 14, 2026: STT 2.47 GB + TTS 6.87 GB + SNAC sidecar 1.08 GB = 10.4 GB, inside the 12 GB voice budget.
 
 The answer card (decision, citations) goes over the data channel.
