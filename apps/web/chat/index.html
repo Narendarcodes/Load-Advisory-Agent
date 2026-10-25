@@ -99,10 +99,17 @@ async function api(path, body){
 async function init(){
   const {accounts} = await api("/api/demo-accounts");
   $("#acct").innerHTML = accounts.map(a => `<option value="${esc(a.external_ref)}" data-lit="${esc(a.literacy)}">${esc(a.external_ref)} — ${esc(a.label)}</option>`).join("");
-  $("#acct").onchange = () => { const o = $("#acct").selectedOptions[0]; if (o) $("#lit").value = o.dataset.lit || "medium"; };
+  $("#acct").onchange = () => { const o = $("#acct").selectedOptions[0]; if (o) $("#lit").value = o.dataset.lit || "medium"; if (token) signOut(o ? o.value : ""); };
   $("#acct").onchange();
   $("#chips").innerHTML = CHIPS.map(c => `<button class="ghost" type="button" disabled>${esc(c)}</button>`).join("");
   document.querySelectorAll("#chips button").forEach(b => b.onclick = () => send(b.textContent));
+}
+function signOut(next){ // switching applicant must not keep answering about the previous file
+  token = null; conv = null;
+  ["#msg", "#send"].forEach(x => $(x).disabled = true); document.querySelectorAll("#chips button").forEach(b => b.disabled = true);
+  $("#decision").innerHTML = `<h2>Decision card</h2><p class="empty">Sign in to see your recorded decision.</p>`;
+  $("#plan").innerHTML = `<h2>Improvement plan</h2><p class="empty">Ask “What can I do to improve?”</p>`;
+  $("#log").innerHTML = `<p class="empty">Signed out. Click “Open my decision” to continue as ${esc(next)}.</p>`;
 }
 function renderCard(card){
   const el = $("#decision");
