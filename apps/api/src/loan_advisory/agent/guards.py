@@ -26,7 +26,7 @@ _REQ = {
                    # imperative record tampering (abstain_v2): "remove the enquiry from my CIBIL report", "mark my EMI as paid"
                    r"^\W*(please\s+|can you\s+|could you\s+)?(remove|delete|erase|wipe|clear|drop)\b.{0,40}\b(enquir|inquir|rejection|record|default|history|report|dpd|overdue)|"
                    r"^\W*(please\s+|can you\s+|could you\s+)?mark\b.{0,30}\b(as\s+)?(paid|closed|settled|cleared|regular)\b|"
-                   r"\b(increase|raise|enhance)\s+(my\s+|the\s+)?(approved|sanctioned)\s+(loan\s+)?(amount|limit)\b",
+                   r"^\W*(please\s+|can you\s+|could you\s+|i want to\s+|i'd like to\s+)?(increase|raise|enhance)\s+(my\s+|the\s+)?(approved|sanctioned)\s+(loan\s+)?(amount|limit)\b",
     "auto_submit": r"\b(submit|file|send|re-?apply)\b.{0,25}\b(for me|on my behalf|automatically|a new application now)\b",
     "other_applicant": r"\b(another|other|someone else'?s?|my (friend|brother|sister|wife|husband)'?s?)\b.{0,25}\b(application|loan|score|record)\b|"
                        r"\b(SYN-APP|APP-TEST|ACC-LOAP)-[0-9]+",

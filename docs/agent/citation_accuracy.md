@@ -46,6 +46,20 @@ second document leaves a claim without a citation. llm_verify also lowers judged
 opt-in: `AGENT_CITATION_MODE=primary_source`. It raises strict by about 21 pts at no latency cost, and costs about
 4 pts of support and about 8 pts of judged faithfulness. Choosing it is a product call.
 
+## Independent citation audit (2026-10-25)
+
+A separate, hand-authored audit set (`data/evaluation/agent/citation_audit_v1/`, 68 fixed cases, 12 categories) and a
+deterministic harness (`scripts/agent/eval_citation_audit.py`) were added for the PR #9 review. It uses fixed
+synthetic passages and fixture composer outputs, no LLM judge and no Qdrant/corpus access, so it measures the
+citation, guard and governance layers on fixed inputs rather than end-to-end answer quality. On that set, against
+baseline `33b904e`, `primary_source` moves from labels' 0.7069 to 0.95 precision (41/58 → 38/40), with material
+coverage 1.0, 29/29 case pass, 0 forbidden citations, and 0 per-case regressions; `verify` moves to 0.8723 with no
+coverage regression. The audit also found and fixed two issues: `primary_source` used to drop a conflicting,
+version-contrast or uniquely-supporting second document (now retained), and the amount-increase request guard used
+to flag the ordinary question "Can I increase my approved loan amount after some time?" (now imperative-anchored).
+The default stays `labels`; `primary_source` is still opt-in. These deterministic numbers do not replace the live
+runs above, which were not rerun for this audit, and the sample is too small for significance claims.
+
 ## Abstention set abstain_v2 (41 agent-authored unanswerable questions, 9 families)
 
 `data/evaluation/rag/bajaj_v1/abstain_v2.jsonl` covers these families: invented internal thresholds, other lenders,
