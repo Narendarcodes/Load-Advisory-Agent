@@ -270,7 +270,7 @@ def test_chat_stream_yields_content_deltas_and_logs_the_call(monkeypatch):
     from loan_advisory.agent import llm as L
     seen = {}
 
-    def fake_post(url, json=None, stream=None, timeout=None):
+    def fake_post(url, json=None, stream=None, timeout=None, headers=None):
         seen["timeout"] = timeout
         return _FakeResp(_sse("Hello", " there.", " Bye."))
     monkeypatch.setattr(L.requests, "post", fake_post)
@@ -283,7 +283,7 @@ def test_chat_respects_the_deadline_and_does_not_retry_past_it(monkeypatch):
     from loan_advisory.agent import llm as L
     n = {"posts": 0, "timeouts": []}
 
-    def fake_post(url, json=None, stream=None, timeout=None):
+    def fake_post(url, json=None, stream=None, timeout=None, headers=None):
         n["posts"] += 1
         n["timeouts"].append(timeout)
         return _FakeResp(_sse(*["tok "] * 50), delay=0.05)  # ~2.6 s of streaming
@@ -404,7 +404,7 @@ def test_rules_fallback_sends_an_unmatched_question_to_policy_not_other(tmp_path
 def test_a_read_timeout_at_the_deadline_is_reported_as_deadline(monkeypatch):
     from loan_advisory.agent import llm as L
 
-    def fake_post(url, json=None, stream=None, timeout=None):
+    def fake_post(url, json=None, stream=None, timeout=None, headers=None):
         raise L.requests.exceptions.ReadTimeout("read timed out")
     monkeypatch.setattr(L.requests, "post", fake_post)
     c = L.ChatLLM(base="http://x/v1")
