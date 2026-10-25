@@ -17,6 +17,7 @@
   .badge.dec-REJECTED { background:var(--failbg); color:var(--fail); }
   .badge.dec-APPROVED { background:var(--passbg); color:var(--pass); }
   .badge.dec-ERROR, .badge.dec-none { background:#f2f4f7; color:#344054; }
+  .badge.dec-REVIEW { background:var(--warnbg); color:var(--warn); border:1px solid #fedf89; }
   main { display:grid; grid-template-columns: 360px 1fr; gap:18px; padding:18px 22px; max-width:1280px; margin:0 auto; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
   .card h2 { font-size:14px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.05em; color:var(--mute); }
@@ -80,6 +81,7 @@
     <form class="row" id="form"><input id="msg" type="text" placeholder="Ask about your decision…" autocomplete="off" disabled><button id="send" disabled>Send</button></form>
   </section>
 </main>
+<script src="/static/outcome.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 let token = null, conv = null;
@@ -106,9 +108,11 @@ function renderCard(card){
   const el = $("#decision");
   if(!card){ el.innerHTML = `<h2>Decision card</h2><p class="empty">No recorded decision for this application yet.</p>`; return; }
   const rows = card.rules.map(r => `<tr data-rule="${esc(r.rule_id)}"><td>${esc(r.name)}</td><td>${esc(r.actual)}</td><td>${esc(r.threshold)}</td><td class="r-${esc(r.result)}">${esc(r.result)}</td></tr>`).join("");
+  const ov = outcomeView(card);
   el.innerHTML = `<h2>Decision card</h2>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge dec-${esc(card.decision||'none')}" id="decision-badge">${esc(card.decision)}</span>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge ${esc(ov.cls)}" id="decision-badge" data-decision="${esc(card.decision)}">${esc(ov.label)}</span>
     <span class="note" style="margin:0">${esc(card.application_ref)} · ${esc(card.lifecycle_state)}</span></div>
+    ${ov.note ? `<p class="note" id="outcome-note">${esc(ov.note)}</p>` : ""}
     <table style="margin-top:10px"><tr><th>Check</th><th>Yours</th><th>Needed</th><th></th></tr>${rows}</table>
     ${card.missing_fields && card.missing_fields.length ? `<p class="note">Missing: ${esc(card.missing_fields.join(", "))}</p>` : ""}
     <p class="note"><span class="badge syn">Synthetic thresholds</span> Policy ${esc(card.policy_version)} — ${esc(card.policy_label)}.</p>`;
