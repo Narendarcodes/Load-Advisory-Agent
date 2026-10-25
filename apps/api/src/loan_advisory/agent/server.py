@@ -11,6 +11,8 @@ Endpoints (JSON):
   POST /api/chat              {message, literacy, locale, channel, conversation_id} -> AgentResponse
   POST /api/chat/stream       same body -> application/x-ndjson: {"type":"sentence","text":...} for every answer
                               sentence as soon as it has passed the guards, then {"type":"final","response":AgentResponse}
+  POST /api/bureau/run        {scenario?} -> typed bureau evaluation result for the SIGNED-IN application
+                              (session required; scenario is a synthetic-provider test switch)
   POST /api/livekit-token     {room, identity} -> LiveKit JWT (voice demo; only when LIVEKIT_* env is set)
 
 The session token is an HMAC over (applicant_ref, application_ref, expiry) issued by the server. The
@@ -33,6 +35,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from decision_engine.paths import repo_root
 from loan_advisory.agent.contracts import AgentRequest, Session
 from loan_advisory.agent.facts import decision_card
+from loan_advisory.agent.tools import NotAuthorized
+from loan_advisory.application.bureau_intake import BureauInputError, run_bureau_evaluation
+from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
 
 WEB = repo_root() / "apps" / "web" / "chat"
 SECRET = os.environ.get("AGENT_SESSION_SECRET", "").encode() or secrets.token_bytes(32)
@@ -65,8 +70,9 @@ def verify(token: str) -> dict | None:
 
 
 class App:
-    def __init__(self, agent, resolve, demo=None):
+    def __init__(self, agent, resolve, demo=None, bureau_client=None):
         self.agent, self.resolve, self.demo = agent, resolve, demo or DEMO
+        self.bureau_client = bureau_client
         self.lock = threading.Lock()
 
     def session(self, body):
@@ -101,6 +107,35 @@ class App:
                               trace_context=obs.extract_context(headers) if headers is not None else None,
                               **({"on_sentence": on_sentence} if on_sentence is not None else {}))
         return 200, resp.model_dump()
+
+    def bureau_run(self, claims, body):
+        """Evaluate the signed-in application through the synthetic bureau gate.
+
+        The application ref comes only from the session token; the body may carry a
+        synthetic-provider scenario for tests/demos. Authorization is the same check
+        the evidence tools use, so an applicant can never run someone else's file.
+        """
+        ref = claims["application_ref"]
+        try:
+            self.agent.tools.authorize(ref, Session(applicant_ref=claims["applicant_ref"]))
+        except NotAuthorized:
+            return 403, {"error": "application does not belong to this applicant"}
+        except UnknownApplication:
+            return 404, {"error": "application not found"}
+        except FrappeUnavailable:
+            return 503, {"error": "system of record unavailable"}
+        scenario = body.get("scenario")
+        try:
+            res = run_bureau_evaluation(
+                ref, store=self.agent.tools.store, sink=self.agent.tools.evidence.sink,
+                bureau_client=self.bureau_client, scenario=str(scenario) if scenario else None)
+        except BureauInputError as e:
+            return 400, {"error": str(e)}
+        except UnknownApplication:
+            return 404, {"error": "application not found"}
+        except FrappeUnavailable:
+            return 503, {"error": "system of record unavailable"}
+        return res.status, {"result": res.to_dict()}
 
 
 def make_handler(app: App):
@@ -197,6 +232,8 @@ def make_handler(app: App):
                     return self._send(*app.chat(c, body, self.headers))
                 if path == "/api/chat/stream":
                     return self._stream_chat(c, body)
+                if path == "/api/bureau/run":
+                    return self._send(*app.bureau_run(c, body))
                 if path == "/api/livekit-token":
                     return self._send(*livekit_token(c, body))
             except Exception as e:  # never leak a stack trace to the client
