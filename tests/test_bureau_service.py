@@ -104,17 +104,33 @@ def test_contract_violation_is_not_retryable(client):
     assert result.retryable is False
 
 
-def test_reaching_a_non_local_host_is_refused():
-    for url in (
+@pytest.mark.parametrize(
+    "url",
+    [
         "http://bureau.example.com",
         "http://127.0.0.1.evil.example",
         "http://localhost.evil.example",
+        "http://127.0.0.1@evil.example",
         "https://127.0.0.1:8001",
-    ):
-        with pytest.raises(ValueError):
-            BureauClient(url)
-    BureauClient("http://127.0.0.1:8001")
-    BureauClient("http://localhost:8001")
+        "http://user:pass@127.0.0.1:8001",
+        "http://[::1]:8001",
+        "http://localhost.:8001",
+        "http://2130706433:8001",
+        "http://127.0.0.1:8001/bureau",
+        "http://127.0.0.1:8001/?x=1",
+        "http://127.0.0.1:99999",
+        "http://127.0.0.1:port",
+    ],
+)
+def test_unsupported_bureau_origins_fail_closed(url):
+    with pytest.raises(ValueError):
+        BureauClient(url)
+
+
+def test_plain_loopback_origins_are_accepted():
+    for url in ("http://127.0.0.1:8001", "http://localhost:8001",
+                "http://127.0.0.1", "http://LOCALHOST:9000", "http://127.0.0.1:8001/"):
+        BureauClient(url)
 
 
 def test_stale_scenario_returns_an_actually_stale_report(client):

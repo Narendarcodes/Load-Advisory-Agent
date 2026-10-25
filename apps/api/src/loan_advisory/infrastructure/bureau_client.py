@@ -17,6 +17,35 @@ from decision_engine.schemas.bureau import BureauErrorResponse, BureauReport
 DEFAULT_BASE_URL = "http://127.0.0.1:8001"
 LOOPBACK_HOSTS = ("127.0.0.1", "localhost")
 DEFAULT_TIMEOUT_SECONDS = 5.0
+
+
+def _validate_base_url(base_url: str) -> None:
+    """Allow only a plain-HTTP loopback origin for the synthetic service.
+
+    Policy: scheme ``http``, hostname exactly ``127.0.0.1`` or ``localhost``,
+    no URL credentials, no query or fragment, path empty or ``/``. Any port is
+    accepted (the service port is configurable). Everything else — HTTPS, IPv6
+    loopback, trailing-dot hosts, alternative numeric IPs, look-alike suffixes,
+    embedded credentials, or paths — fails closed. This is a client-side
+    allowlist, not a complete SSRF defence.
+    """
+    parsed = urlsplit(base_url)
+    try:
+        parsed.port  # noqa: B018 - raises ValueError for an invalid or out-of-range port
+    except ValueError as exc:
+        raise ValueError(f"synthetic bureau base URL has an invalid port: {exc}") from exc
+    if (
+        parsed.scheme != "http"
+        or parsed.hostname not in LOOPBACK_HOSTS
+        or parsed.username
+        or parsed.password
+        or parsed.query
+        or parsed.fragment
+        or parsed.path not in ("", "/")
+    ):
+        raise ValueError(
+            "synthetic bureau must be a plain-HTTP 127.0.0.1/localhost origin without credentials"
+        )
 REPORTS_PATH = "/v1/bureau/reports"
 
 STATUS_FALLBACK = {
@@ -48,9 +77,7 @@ class BureauClient:
         transport: httpx.BaseTransport | None = None,
         client: httpx.Client | None = None,
     ):
-        parsed = urlsplit(base_url)
-        if parsed.scheme != "http" or parsed.hostname not in LOOPBACK_HOSTS:
-            raise ValueError("synthetic bureau must be reached on localhost")
+        _validate_base_url(base_url)
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
         self._transport = transport

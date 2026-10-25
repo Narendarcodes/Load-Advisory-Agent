@@ -19,6 +19,17 @@ reached on any other host from the client side.
   them needs a reviewed edit of `config/bureau_dq_policy.json`; there are no
   environment overrides.
 
+## Client URL policy
+
+`BureauClient` allows only a plain-HTTP loopback origin: scheme `http`,
+hostname exactly `127.0.0.1` or `localhost`, no credentials, no query or
+fragment, and an empty or `/` path. Any port is accepted because the service
+port is configurable. HTTPS, IPv6 loopback (`[::1]`), trailing-dot hosts,
+alternative numeric IPs (`2130706433`), look-alike suffixes
+(`127.0.0.1.evil.example`), embedded credentials, and paths fail closed. This
+is a client-side allowlist for a development service, not a complete SSRF
+defence against proxy or DNS behaviour outside the process.
+
 ## REVIEW vs ERROR
 
 | Situation | evidence `outcome` | legacy `decision` | lifecycle state |
