@@ -101,6 +101,28 @@ def test_flush_swallows_a_dead_collector(monkeypatch):
     obs.reset()
 
 
+def test_flush_targets_the_provider_that_created_the_spans(monkeypatch):
+    """The global provider can be a different one (another library set it first, or reset() built a new one)."""
+    _clear(monkeypatch)
+    obs.reset()
+    calls = []
+
+    class _Provider:
+        def force_flush(self, timeout_millis=None):
+            calls.append(timeout_millis)
+
+    class _WrongProvider:
+        def force_flush(self, timeout_millis=None):
+            raise AssertionError("the global provider must not be flushed")
+
+    monkeypatch.setattr(obs, "_PROVIDER", _Provider())
+    import opentelemetry.trace as T
+    monkeypatch.setattr(T, "get_tracer_provider", lambda: _WrongProvider())
+    obs.flush(25)
+    assert calls == [25]
+    obs.reset()
+
+
 def test_unreachable_endpoint_does_not_break_a_turn(monkeypatch, tmp_path):
     pytest.importorskip("langfuse")
     _clear(monkeypatch)

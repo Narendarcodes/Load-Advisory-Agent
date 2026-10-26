@@ -20,6 +20,7 @@ completion tokens, TTFT, latency), and on the voice side one span per voice turn
 W3C `traceparent` is propagated from the voice worker to the chat server, so a voice turn and the graph run it
 triggered form one trace.
 """
+import atexit
 import contextlib
 import functools
 import json
@@ -31,7 +32,9 @@ from loan_advisory.agent import langfuse_config
 
 _TRACER = None
 _LANGFUSE = None
+_PROVIDER = None
 _LF_CONFIG = None
+_ATEXIT_REGISTERED = False
 _LOCK = threading.Lock()
 CONTENT = os.environ.get("AGENT_TRACE_CONTENT") == "1"
 _LOG = logging.getLogger(__name__)
@@ -58,9 +61,16 @@ def lf_config():
 
 def reset():
     """Drop cached config/client state (tests; a process sets the global tracer provider once)."""
-    global _TRACER, _LANGFUSE, _LF_CONFIG
+    global _TRACER, _LANGFUSE, _PROVIDER, _LF_CONFIG
     with _LOCK:
-        _TRACER = _LANGFUSE = _LF_CONFIG = None
+        _TRACER = _LANGFUSE = _PROVIDER = _LF_CONFIG = None
+
+
+def _register_exit_flush():
+    global _ATEXIT_REGISTERED
+    if not _ATEXIT_REGISTERED:
+        atexit.register(_flush_at_exit)
+        _ATEXIT_REGISTERED = True
 
 
 def _phoenix_enabled() -> bool:
@@ -78,7 +88,7 @@ def _langfuse_span_filter(span) -> bool:
 
 def tracer():
     """Lazily configure the exporters once per process; None when tracing is off/unavailable."""
-    global _TRACER, _LANGFUSE
+    global _TRACER, _LANGFUSE, _PROVIDER
     if _TRACER is not None:
         return _TRACER
     cfg = lf_config()
@@ -121,6 +131,8 @@ def tracer():
             if not phoenix and not lf_ok:
                 return None
             trace.set_tracer_provider(prov)
+            _PROVIDER = prov
+            _register_exit_flush()
             _TRACER = trace.get_tracer("loan_advisory.agent")
             return _TRACER
         except Exception as e:  # provider construction must never break an advisory request
@@ -267,14 +279,18 @@ def extract_context(headers) -> object | None:
     return extract({k.lower(): v for k, v in dict(headers).items()})
 
 
+def _flush_at_exit():
+    flush(2000)
+
+
 def flush(timeout_millis: int = 5000):
-    """Bounded flush; telemetry failures never surface to the caller."""
+    """Bounded flush of the provider that created our spans; telemetry failures never surface to the caller."""
     try:
-        if tracer() is None:
-            return
-        from opentelemetry import trace
-        p = trace.get_tracer_provider()
-        if hasattr(p, "force_flush"):
+        p = _PROVIDER
+        if p is None:
+            from opentelemetry import trace
+            p = trace.get_tracer_provider()
+        if p is not None and hasattr(p, "force_flush"):
             p.force_flush(timeout_millis)
     except Exception as e:  # a down collector must not break shutdown or a request
         _LOG.warning("trace flush failed (%s)", type(e).__name__)

@@ -117,7 +117,8 @@ The stack has five named volumes: `langfuse_postgres_data`, `langfuse_clickhouse
 `langfuse_minio_data`, `langfuse_redis_data`. Redis is a queue/cache and can be rebuilt; the authoritative data is
 Postgres (projects, users, datasets, keys), ClickHouse (traces/observations/scores/events) and MinIO (event blobs).
 
-Consistent filesystem backup (simplest and verified shape; stop writes first):
+Consistent filesystem backup (stop writes first; the procedure below has not yet been exercised as a restore drill
+in this repository — treat it as the intended procedure, not a verified one):
 
 ```bash
 STACK="--env-file infra/langfuse/.env -f infra/langfuse/docker-compose.yml"
