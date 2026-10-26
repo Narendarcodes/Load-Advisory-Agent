@@ -651,16 +651,16 @@ class AdvisoryAgent:
         rec = s["record"]
         lines = []
         if intent == "explain":
-            lines.append(f"Your application's recorded decision is {rec['decision']} under a {F.SYNTHETIC_LABEL}.")
+            fx = P.FALLBACK_EXPLAIN.get(req.locale, P.FALLBACK_EXPLAIN["en"])
+            lines.append(fx["head"].format(decision=rec["decision"], label=F.SYNTHETIC_LABEL))
             for r in F.reason_facts(rec):
-                lines.append(f"- {r['name']}: yours is {r['your_value']}; the policy needs {r['required']}.")
+                lines.append(fx["rule"].format(name=r["name"], your_value=r["your_value"], required=r["required"]))
             if F.passed_facts(rec):
-                lines.append("The other checks were met.")
+                lines.append(fx["passed"])
             bf = F.bureau_facts(rec)
             if bf and bf.get("score_source_plain"):
-                lines.append(f"The credit score used for this assessment came from {bf['score_source_plain']}; "
-                             "this is synthetic prototype data, not a real credit bureau report.")
-            lines.append("I can show what would need to change, or answer questions.")
+                lines.append(fx["bureau"].format(src=bf["score_source_plain"]))
+            lines.append(fx["offer"])
         elif intent == "improve":
             lines.append(f"Under the {F.SYNTHETIC_LABEL}:")
             for i, t in enumerate(s["plan"]["steps"], 1):

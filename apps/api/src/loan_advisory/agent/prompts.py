@@ -297,6 +297,27 @@ TEMPLATES = {
 }
 
 
+
+# Sentence frames for the deterministic explain fallback (used when the LLM draft is unusable). Only the frame is
+# localised; rule names, values and thresholds come from the recorded facts unchanged.
+FALLBACK_EXPLAIN = {
+    "en": {"head": "Your application's recorded decision is {decision} under a {label}.",
+           "rule": "- {name}: yours is {your_value}; the policy needs {required}.",
+           "passed": "The other checks were met.",
+           "bureau": "The credit score used for this assessment came from {src}; this is synthetic prototype data, not a real credit bureau report.",
+           "offer": "I can show what would need to change, or answer questions."},
+    "hi": {"head": "सिंथेटिक प्रोटोटाइप नीति के तहत आपके आवेदन का दर्ज निर्णय {decision} है।",
+           "rule": "- {name}: आपका {your_value} है; नीति के अनुसार {required} चाहिए।",
+           "passed": "बाकी जाँचें पूरी हुईं।",
+           "bureau": "इस आकलन में इस्तेमाल हुआ क्रेडिट स्कोर {src} से आया; यह सिंथेटिक प्रोटोटाइप डेटा है, असली क्रेडिट ब्यूरो रिपोर्ट नहीं।",
+           "offer": "मैं बता सकता हूँ कि क्या बदलना होगा, या आपके सवालों के जवाब दे सकता हूँ।"},
+    "te": {"head": "సింథటిక్ ప్రోటోటైప్ పాలసీ ప్రకారం మీ దరఖాస్తుకు నమోదైన నిర్ణయం: {decision}.",
+           "rule": "- {name}: మీది {your_value}; పాలసీకి {required} అవసరం.",
+           "passed": "మిగతా తనిఖీలు నెరవేరాయి.",
+           "bureau": "ఈ అంచనాకు ఉపయోగించిన క్రెడిట్ స్కోర్ {src} నుండి వచ్చింది; ఇది సింథటిక్ ప్రోటోటైప్ డేటా, నిజమైన క్రెడిట్ బ్యూరో రిపోర్ట్ కాదు.",
+           "offer": "ఏమి మారాలో చూపించగలను, లేదా మీ ప్రశ్నలకు సమాధానం ఇవ్వగలను."},
+}
+
 def template(key: str, locale: str = "en", **kw) -> str:
     t = TEMPLATES.get(locale, {}).get(key) or TEMPLATES["en"][key]
     return t.format(**kw) if kw else t
