@@ -6,7 +6,6 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from loan_advisory.agent.contracts import Session
 from loan_advisory.agent.server import App
 from loan_advisory.agent.tools import DecisionTools, InMemoryEvidenceSource
 from loan_advisory.application.bureau_intake import (

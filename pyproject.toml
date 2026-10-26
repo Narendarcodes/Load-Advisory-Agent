@@ -1,5 +1,8 @@
 [tool.pytest.ini_options]
 pythonpath = [".", "apps/api/src", "apps/bureau/src"]
+# Keep collection inside tests/: scripts/voice/voice_loop_test.py matches the
+# default *_test.py pattern but is a manual harness that needs livekit.
+testpaths = ["tests"]
 
 # Lint rules are pinned so results don't shift when ruff changes its defaults.
 # Deliberately correctness-only (imports, syntax, pyflakes); E7 style rules are

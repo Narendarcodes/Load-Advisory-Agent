@@ -21,7 +21,6 @@ import argparse
 import json
 import re
 import sys
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
