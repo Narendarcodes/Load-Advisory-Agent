@@ -1,0 +1,51 @@
+#!/bin/sh
+# Pre-commit: staged whitespace/conflict check, ruff lint on staged Python files
+# (safe fixes applied and re-staged), then the test suite.
+# Enable once per clone: git config core.hooksPath .githooks
+set -e
+
+git diff --cached --check
+
+PY=python
+command -v python >/dev/null 2>&1 || PY=python3
+
+if ! "$PY" -m ruff --version >/dev/null 2>&1; then
+  echo "pre-commit: ruff is not installed for $PY. Run: $PY -m pip install -r requirements.txt" >&2
+  exit 1
+fi
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+git diff --cached --name-only --diff-filter=ACMR -- '*.py' > "$tmp/staged"
+git diff --name-only -- '*.py' > "$tmp/unstaged"
+
+if [ -s "$tmp/staged" ]; then
+  # Only rewrite files whose worktree copy matches the index, so that unstaged
+  # work is never pulled into the commit by the re-stage below.
+  if [ -s "$tmp/unstaged" ]; then
+    grep -Fxv -f "$tmp/unstaged" "$tmp/staged" > "$tmp/fixable" || true
+    grep -Fx -f "$tmp/unstaged" "$tmp/staged" | while read -r f; do
+      [ -n "$f" ] && echo "pre-commit: $f has unstaged changes; auto-fix skipped for it." >&2
+    done
+  else
+    cp "$tmp/staged" "$tmp/fixable"
+  fi
+
+  if [ -s "$tmp/fixable" ]; then
+    # Non-fatal: safe fixes are applied and re-staged even if other errors remain,
+    # and the staged-blob check below is what decides whether the commit proceeds.
+    tr '\n' '\0' < "$tmp/fixable" | xargs -0 "$PY" -m ruff check --fix --quiet || true
+    tr '\n' '\0' < "$tmp/fixable" | xargs -0 git add --
+  fi
+
+  # Lint the staged blob, not the worktree file: unsaved edits must not fail this commit.
+  status=0
+  while read -r f; do
+    [ -n "$f" ] || continue
+    git show ":$f" | "$PY" -m ruff check --stdin-filename "$f" - || status=1
+  done < "$tmp/staged"
+  [ "$status" -eq 0 ] || exit 1
+fi
+
+"$PY" -m pytest tests/ -q
