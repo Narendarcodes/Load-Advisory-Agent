@@ -48,7 +48,8 @@ _RULES = [  # regex fallback when the LLM classifier is unavailable
     ("improve", re.compile(r"improv|what (can|should) i do|next step|re-?apply|\bfix\b|\bplan\b|become eligible|qualify next", re.I)),
     ("policy", re.compile(r"\b(rbi|policy|policies|fee|charges?|interest|kfs|key fact|grievance|complain|ombudsman|foreclos|"
                           r"prepay|penal|kyc|cooling|recovery|privacy|bajaj|nbfc|bank|written|documents?)\b", re.I)),
-    ("explain", re.compile(r"why|reason|reject|declin|denied|turned down|explain|what happened|my decision|status|mean", re.I)),
+    ("explain", re.compile(r"why|reason|reject|declin|denied|turned down|explain|what happened|my decision|status|mean|"
+                           r"\bmy\s+(recorded\s+)?(credit score|cibil score|monthly income|income|salary|emis?|foir|job tenure)\b", re.I)),
     ("greeting", re.compile(r"^\s*(hi|hello|hey|namaste|namaskar|thanks|thank you|ok|okay)\b", re.I)),
 ]
 # High-precision intents that skip the LLM classifier (AGENT_FAST_CLASSIFY). Used only when exactly ONE matches;
@@ -56,7 +57,9 @@ _RULES = [  # regex fallback when the LLM classifier is unavailable
 _FAST = [
     ("explain", re.compile(r"\bwhy\b.{0,40}\b(reject\w*|declin\w*|denied|turned down|refused|not approved)\b|"
                            r"क्यों.{0,30}(रिजेक्ट|अस्वीकार|नामंज़ूर|नामंजूर|ख़ारिज|खारिज)|(रिजेक्ट|अस्वीकार|नामंज़ूर|नामंजूर|ख़ारिज|खारिज).{0,30}क्यों|"
-                           r"ఎందుకు.{0,30}(తిరస్కర|రిజెక్ట్)|(తిరస్కర|రిజెక్ట్).{0,30}ఎందుకు", re.I)),
+                           r"ఎందుకు.{0,30}(తిరస్కర|రిజెక్ట్)|(తిరస్కర|రిజెక్ట్).{0,30}ఎందుకు|"
+                           r"\b(what(?:'s| is| was)|tell me|show me)\s+my\s+(recorded\s+)?(credit score|cibil score|"
+                           r"monthly income|income|salary|emis?|foir|job tenure)\b", re.I)),
     ("improve", re.compile(r"\b(what (can|should) i do|how (can|do) i improve|improve (my|before|so)|before i re-?apply|"
                            r"steps to improve)\b|सुधार|మెరుగుపర", re.I)),
     ("policy", re.compile(r"\b(complain\w*|grievance|ombudsman|key fact statement|kfs)\b|शिकायत|ఫిర్యాదు", re.I)),
@@ -648,16 +651,16 @@ class AdvisoryAgent:
         rec = s["record"]
         lines = []
         if intent == "explain":
-            lines.append(f"Your application's recorded decision is {rec['decision']} under a {F.SYNTHETIC_LABEL}.")
+            fx = P.FALLBACK_EXPLAIN.get(req.locale, P.FALLBACK_EXPLAIN["en"])
+            lines.append(fx["head"].format(decision=rec["decision"], label=F.SYNTHETIC_LABEL))
             for r in F.reason_facts(rec):
-                lines.append(f"- {r['name']}: yours is {r['your_value']}; the policy needs {r['required']}.")
+                lines.append(fx["rule"].format(name=r["name"], your_value=r["your_value"], required=r["required"]))
             if F.passed_facts(rec):
-                lines.append("The other checks were met.")
+                lines.append(fx["passed"])
             bf = F.bureau_facts(rec)
             if bf and bf.get("score_source_plain"):
-                lines.append(f"The credit score used for this assessment came from {bf['score_source_plain']}; "
-                             "this is synthetic prototype data, not a real credit bureau report.")
-            lines.append("I can show what would need to change, or answer questions.")
+                lines.append(fx["bureau"].format(src=bf["score_source_plain"]))
+            lines.append(fx["offer"])
         elif intent == "improve":
             lines.append(f"Under the {F.SYNTHETIC_LABEL}:")
             for i, t in enumerate(s["plan"]["steps"], 1):

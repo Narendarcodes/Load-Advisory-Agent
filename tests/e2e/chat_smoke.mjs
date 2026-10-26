@@ -70,6 +70,14 @@ r = await ask('What is the cheapest personal loan in India right now?')
 check('unanswerable policy question abstains', /abstained/.test(r.text) || r.action === 'refuse', r.action)
 await page.screenshot({ path: `${OUT}/08-abstain.png`, fullPage: true })
 
+// QA 2026-10-26 (D5): switching the applicant dropdown after sign-in signs out instead of answering about the old file
+const otherRef = await page.$eval('#acct', s => [...s.options].map(o => o.value).find(v => v !== s.value))
+await page.selectOption('#acct', otherRef)
+check('switching applicant signs out (chat disabled, card cleared)', await page.isDisabled('#msg') && (await page.locator('#decision-badge').count()) === 0)
+await page.click('#go')
+await page.waitForSelector('#decision-badge')
+check('signing in again shows the newly selected applicant', (await page.innerText('#decision .note')).includes(otherRef), otherRef)
+
 check('no browser console errors', consoleErrors.length === 0, consoleErrors.join(' | ').slice(0, 300))
 await ctx.close(); await browser.close()
 writeFileSync(`${OUT}/smoke_results.json`, JSON.stringify(results, null, 1))

@@ -12,7 +12,9 @@ Endpoints (JSON):
   POST /api/chat/stream       same body -> application/x-ndjson: {"type":"sentence","text":...} for every answer
                               sentence as soon as it has passed the guards, then {"type":"final","response":AgentResponse}
   POST /api/bureau/run        {scenario?} -> typed bureau evaluation result for the SIGNED-IN application
-                              (session required; scenario is a synthetic-provider test switch)
+                              (session required; scenario is a synthetic-provider test switch). The bureau origin
+                              defaults to http://127.0.0.1:8001; use --bureau-url / BUREAU_BASE_URL (loopback only)
+                              when the self-hosted LLM already listens there.
   POST /api/livekit-token     {room, identity} -> LiveKit JWT (voice demo; only when LIVEKIT_* env is set)
 
 The session token is an HMAC over (applicant_ref, application_ref, expiry) issued by the server. The
@@ -37,6 +39,7 @@ from loan_advisory.agent.contracts import AgentRequest, Session
 from loan_advisory.agent.facts import decision_card
 from loan_advisory.agent.tools import NotAuthorized
 from loan_advisory.application.bureau_intake import BureauInputError, run_bureau_evaluation
+from loan_advisory.infrastructure.bureau_client import BureauClient
 from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
 
 WEB = repo_root() / "apps" / "web" / "chat"
@@ -257,13 +260,27 @@ def livekit_token(claims, body):
     return 200, {"token": tok, "url": url, "room": room}
 
 
-def main(argv=None):
+def parse_args(argv=None, env=None):
+    env = os.environ if env is None else env
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8095)
     ap.add_argument("--offline", action="store_true", help="MockStore + in-memory evidence instead of live Frappe")
     ap.add_argument("--no-rag", action="store_true", help="do not load the GPU retriever (policy questions abstain)")
-    a = ap.parse_args(argv)
+    ap.add_argument("--bureau-url", default=env.get("BUREAU_BASE_URL") or None,
+                    help="loopback origin of the synthetic bureau (default http://127.0.0.1:8001; env BUREAU_BASE_URL). "
+                         "Set it when the self-hosted LLM already uses :8001.")
+    return ap.parse_args(argv)
+
+
+def bureau_client_from(args) -> BureauClient | None:
+    """None keeps App's default BureauClient(); a configured origin goes through the client's loopback guard."""
+    return BureauClient(base_url=args.bureau_url) if args.bureau_url else None
+
+
+def main(argv=None):
+    a = parse_args(argv)
+    bureau_client = bureau_client_from(a)  # fail fast on a non-loopback origin, before loading anything
     policy, profile = (None, None)
     if not a.no_rag:
         from loan_advisory.agent.runtime import load_policy_tools
@@ -273,11 +290,11 @@ def main(argv=None):
         agent, store, _ = build_offline_agent(policy_tools=policy, profile=profile)
         demo = [{"external_ref": k, "label": k, "literacy": "medium"} for k in store._apps]
         resolve = lambda ref: {"name": ref, "applicant": store.get(ref)["applicant"]} if ref in store._apps else None
-        app = App(agent, resolve, demo)
+        app = App(agent, resolve, demo, bureau_client=bureau_client)
     else:
         from loan_advisory.agent.runtime import build_live_agent, frappe_resolve
         agent, client = build_live_agent(policy_tools=policy, profile=profile)
-        app = App(agent, lambda ref: frappe_resolve(client, ref))
+        app = App(agent, lambda ref: frappe_resolve(client, ref), bureau_client=bureau_client)
     srv = ThreadingHTTPServer((a.host, a.port), make_handler(app))
     print(f"loan-advisory chat on http://{a.host}:{a.port}", file=sys.stderr, flush=True)
     srv.serve_forever()

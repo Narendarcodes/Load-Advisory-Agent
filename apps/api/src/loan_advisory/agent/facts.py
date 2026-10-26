@@ -143,12 +143,31 @@ def bureau_facts(record: dict | None) -> dict | None:
     }
 
 
+_RULE_INPUTS = {"MIN_MONTHLY_INCOME": ("monthly_income",), "FOIR_MAX_45": ("monthly_income", "monthly_obligations"),
+                "MIN_CREDIT_SCORE": ("credit_score",), "MIN_EMPLOYMENT_TENURE": ("employment_months",)}
+
+
+def _unchecked_display(rule_id: str, inputs: dict) -> str:
+    """'Yours' for a rule the engine did not evaluate: never a value it did not check, never 'not available'
+    for a value that is on file. 'missing' when a needed input is missing, 'not checked' when all are recorded."""
+    needed = _RULE_INPUTS.get(rule_id)
+    if not needed:
+        return "not available"
+    values, missing = inputs.get("values") or {}, set(inputs.get("missing_fields") or [])
+    if any(f in missing or values.get(f) is None for f in needed):
+        return "missing"
+    return "not checked"
+
+
 def decision_card(record: dict) -> dict:
     """UI/voice decision card: recorded outcome + per-rule table. Pure projection of the record."""
     pol = record.get("policy") or {}
     rules = []
+    inputs = record.get("inputs")
     for e in record.get("rule_evaluations", []):
         actual_disp, _ = _display_vs(e["rule_id"], e.get("actual_value"), e["threshold"])
+        if e.get("actual_value") is None and e.get("result") == "NOT_EVALUABLE" and inputs:
+            actual_disp = _unchecked_display(e["rule_id"], inputs)
         rules.append({"rule_id": e["rule_id"], "name": RULE_PLAIN.get(e["rule_id"], {}).get("name", e.get("rule_name")),
                       "reason_code": e["reason_code"], "result": e["result"],
                       "actual": actual_disp,

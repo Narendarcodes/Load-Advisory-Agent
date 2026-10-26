@@ -61,6 +61,15 @@ $env:PYTHONPATH=".;apps/api/src;apps/bureau/src"
 python -m synthetic_bureau.app          # http://127.0.0.1:8001, /docs for the schema
 ```
 
+The self-hosted LLM (`LLM_BASE`) also defaults to `127.0.0.1:8001`. When it runs on
+the same machine, start the bureau on another loopback port and point the chat
+server at it (loopback origins only; anything else is refused at startup):
+
+```powershell
+python -m synthetic_bureau.app --port 8011
+python -m loan_advisory.agent.server --offline --bureau-url http://127.0.0.1:8011   # or $env:BUREAU_BASE_URL
+```
+
 `POST /v1/bureau/reports` takes
 `{"application_id": "...", "applicant_id": "...", "scenario": null}`. With no
 scenario, a known fixture application returns its golden report; an unknown one

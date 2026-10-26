@@ -29,6 +29,7 @@
   table { width:100%; border-collapse:collapse; font-size:13px; } td { padding:4px; border-bottom:1px solid var(--line); }
   .FAIL { color:var(--fail); font-weight:700; } .PASS { color:var(--pass); font-weight:700; }
   .note { font-size:12px; color:var(--mute); }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 12px; } header { flex-wrap: wrap; padding: 12px; } }
 </style>
 </head>
 <body>
@@ -51,6 +52,7 @@
   </div>
   <section class="card"><h2>Conversation</h2><div id="log"></div></section>
 </main>
+<script src="/static/outcome.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 let token = null, room = null;
@@ -60,7 +62,8 @@ async function api(p, b){ const r = await fetch(p, {method: b ? "POST" : "GET", 
 function add(cls, text, meta){ const d = document.createElement("div"); d.className = "msg " + cls; d.textContent = text;
   if(meta){ const m = document.createElement("div"); m.className = "meta"; m.innerHTML = meta; d.appendChild(m); } $("#log").appendChild(d); $("#log").scrollTop = 1e9; return d; }
 function renderCard(c){ if(!c) return;
-  $("#card").innerHTML = `<h2>Decision card</h2><b id="vdecision">${esc(c.decision)}</b> <span class="note">${esc(c.application_ref)}</span>
+  const ov = outcomeView(c);
+  $("#card").innerHTML = `<h2>Decision card</h2><b id="vdecision" data-decision="${esc(c.decision)}">${esc(ov.label)}</b> <span class="note">${esc(c.application_ref)}</span>${ov.note ? `<p class="note">${esc(ov.note)}</p>` : ""}
    <table>${c.rules.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.actual)}</td><td>${esc(r.threshold)}</td><td class="${esc(r.result)}">${esc(r.result)}</td></tr>`).join("")}</table>
    <p class="note"><span class="badge">synthetic thresholds</span> ${esc(c.policy_label)}</p>`; }
 (async () => {
@@ -90,7 +93,7 @@ $("#start").onclick = async () => {
     await room.localParticipant.setMicrophoneEnabled(true);
     window.__lkConnected = true;
     $("#state").textContent = "connected — speak any time"; $("#start").textContent = "Stop"; $("#start").classList.add("stop");
-  } catch(e){ $("#state").textContent = "error: " + e.message; }
+  } catch(e){ if(room){ const r = room; room = null; try { await r.disconnect(); } catch(_){} } window.__lkConnected = false; $("#state").textContent = "error: " + e.message; }
 };
 </script>
 </body>
