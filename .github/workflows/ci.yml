@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: ruff + pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-rag.txt
+
+      - name: Install dependencies
+        # The GPU-only RAG extras (transformers, sentence-transformers in
+        # requirements-rag.txt) are deliberately omitted: they pull torch, and
+        # the retrieval code imports sentence-transformers lazily.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install beautifulsoup4 pyyaml rank-bm25 qdrant-client
+
+      - name: Lint
+        run: python -m ruff check .
+
+      - name: Tests
+        run: python -m pytest tests/ -q

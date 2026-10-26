@@ -12,7 +12,6 @@ import os
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 DATA = Path(os.environ.get("LOAN_DATA_DIR", "/root/hx/loan/data"))

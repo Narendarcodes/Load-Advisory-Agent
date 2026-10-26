@@ -19,7 +19,6 @@ import argparse
 import json
 import platform
 import re
-import sys
 import tempfile
 from pathlib import Path
 
