@@ -93,7 +93,7 @@ $("#start").onclick = async () => {
     await room.localParticipant.setMicrophoneEnabled(true);
     window.__lkConnected = true;
     $("#state").textContent = "connected — speak any time"; $("#start").textContent = "Stop"; $("#start").classList.add("stop");
-  } catch(e){ $("#state").textContent = "error: " + e.message; }
+  } catch(e){ if(room){ const r = room; room = null; try { await r.disconnect(); } catch(_){} } window.__lkConnected = false; $("#state").textContent = "error: " + e.message; }
 };
 </script>
 </body>
