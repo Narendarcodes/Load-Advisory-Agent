@@ -1,2 +1,8 @@
 [tool.pytest.ini_options]
 pythonpath = [".", "apps/api/src", "apps/bureau/src"]
+
+# Lint rules are pinned so results don't shift when ruff changes its defaults.
+# Deliberately correctness-only (imports, syntax, pyflakes); E7 style rules are
+# off because existing scripts use semicolons and lambda assignments.
+[tool.ruff.lint]
+select = ["E4", "E9", "F"]
