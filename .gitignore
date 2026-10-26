@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 .env
+infra/langfuse/.env
 *.log
 frappe-bench/
 sites/
@@ -12,6 +13,7 @@ data/raw/
 data/normalised/
 *.parquet
 agent_out/
+runs/
 tests/e2e/node_modules/
 
 # Only the 120-case synthetic bureau fixture is committed; generate 1,000 on demand

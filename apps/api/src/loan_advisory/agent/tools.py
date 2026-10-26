@@ -165,10 +165,15 @@ class PolicyTools:
                              "citation": citation_for(f"P{i + 1}", c, self.profile).model_dump()})
         meta = {"latency_ms": round(res.get("latency_ms", 0.0), 1), "top_rerank_score": res.get("top_rerank_score"),
                 "mode": flt.mode}
+        doc_ids, chunk_ids = [p["citation"]["document_id"] for p in passages], [p["chunk_id"] for p in passages]
         obs.set_attrs(obs.current_span(),
                       **{"retrieval.mode": flt.mode, "retrieval.lender_id": flt.lender_id, "retrieval.entity_type": flt.entity_type,
                          "retrieval.k": self.k, "retrieval.latency_ms": meta["latency_ms"], "retrieval.top_rerank_score": meta["top_rerank_score"],
-                         "retrieval.document_ids": [p["citation"]["document_id"] for p in passages], "input.value": obs.content(query)})
+                         "retrieval.document_ids": doc_ids, "retrieval.chunk_ids": chunk_ids, "input.value": obs.content(query),
+                         "langfuse.observation.type": "retriever", "langfuse.observation.input": obs.lf_content(query)},
+                      **obs.lf_meta(mode=flt.mode, k=self.k, count=len(passages), latency_ms=meta["latency_ms"],
+                                    top_rerank_score=meta["top_rerank_score"], document_ids=doc_ids, chunk_ids=chunk_ids,
+                                    historical=historical))
         return passages, meta
 
 

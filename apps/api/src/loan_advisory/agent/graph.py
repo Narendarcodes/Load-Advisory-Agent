@@ -117,9 +117,15 @@ class AdvisoryAgent:
         has passed the deterministic guards; together the sentences are exactly the final answer to speak."""
         thread = f"{session.applicant_ref if session else 'anon'}::{request.conversation_id}"  # scoped per applicant
         sess_hash = hashlib.sha256(thread.encode()).hexdigest()[:16]
+        corr_hash = hashlib.sha256(str(request.request_id).encode()).hexdigest()[:16]
         with obs.span("advisor.turn", kind="CHAIN", context=trace_context,
                       **{"session.id": sess_hash, "channel": request.channel, "locale": request.locale,
-                         "literacy": request.literacy, "input.value": obs.content(request.message)}) as root:
+                         "literacy": request.literacy, "input.value": obs.content(request.message),
+                         "langfuse.trace.name": "advisory.turn",
+                         "langfuse.trace.tags": ["loan-advisory", request.channel, request.locale],
+                         "langfuse.trace.metadata.correlation_id": json.dumps(corr_hash),
+                         "langfuse.trace.metadata.channel": json.dumps(request.channel),
+                         "langfuse.observation.input": obs.lf_content(request.message)}) as root:
             # A client may repeat request_id (retries, double submits). Neither the streaming sink nor the trace context
             # may be keyed by it, or one turn's sentences would be spoken into another turn's session.
             turn_key = uuid.uuid4().hex
@@ -140,7 +146,14 @@ class AdvisoryAgent:
                 obs.set_attrs(root, **{"agent.intent": resp.intent, "agent.action": resp.action, "agent.abstained": resp.abstained,
                                        "agent.guard_flags": resp.guard_flags, "agent.citations": [c.document_id for c in resp.citations],
                                        "agent.evidence_refs": resp.evidence_refs, "agent.total_ms": resp.timings.get("total_ms"),
-                                       "output.value": obs.content(resp.answer)})
+                                       "output.value": obs.content(resp.answer),
+                                       "langfuse.trace.tags": ["loan-advisory", request.channel, request.locale, resp.intent or "unknown"],
+                                       "langfuse.observation.output": obs.lf_content(resp.answer)},
+                              **obs.lf_meta(intent=resp.intent, action=resp.action, abstained=resp.abstained,
+                                            guard_flags=resp.guard_flags,
+                                            citation_document_ids=[c.document_id for c in resp.citations],
+                                            evidence_refs=resp.evidence_refs, total_ms=resp.timings.get("total_ms"),
+                                            outcome=("abstained" if resp.abstained else "answered")))
             return resp
 
     def _node(self, name, fn):
@@ -150,9 +163,16 @@ class AdvisoryAgent:
             with obs.span(f"node.{name}", kind="CHAIN", context=ctx, **{"graph.node": name}) as sp:
                 out = fn(s)
                 if sp is not None and isinstance(out, dict):
+                    lf = obs.lf_meta(node=name, status=out.get("status"), intent=out.get("intent"),
+                                     action=out.get("action"), abstained=out.get("abstained"),
+                                     guard_flags=out.get("guard_flags") or None, attempts=out.get("attempts"),
+                                     citation_labels=out.get("cited"),
+                                     retrieval_count=len(out["passages"]) if isinstance(out.get("passages"), list) else None,
+                                     retrieval_mode=(out.get("retrieval") or {}).get("mode") if isinstance(out.get("retrieval"), dict) else None,
+                                     retrieval_failed=bool((out.get("retrieval") or {}).get("error")) if isinstance(out.get("retrieval"), dict) else None)
                     obs.set_attrs(sp, **{f"graph.{k}": out[k] for k in ("status", "intent", "action", "attempts", "abstained") if k in out},
                                   **({"graph.guard_flags": out["guard_flags"]} if out.get("guard_flags") else {}),
-                                  **({"graph.request_flags": out["flags"]} if out.get("flags") else {}))
+                                  **({"graph.request_flags": out["flags"]} if out.get("flags") else {}), **lf)
                 return out
         wrapped.__name__ = name
         return wrapped
