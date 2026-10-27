@@ -1,4 +1,4 @@
-%% Offline data paths: datasets, synthetic personas, decisions and the policy corpus (text stays on the droplet)
+%% Offline data paths: datasets, synthetic personas, decisions, bureau fixtures and the policy corpus (text stays on the droplet)
 flowchart TB
     subgraph DS["Phase 1-2: datasets and personas"]
         dsy["data/sources/datasets.yaml<br/>(licence per source)"]
@@ -14,7 +14,7 @@ flowchart TB
     subgraph DEC["Phase 3: conventional decision workflow (no LLM)"]
         seed["infra/frappe/bootstrap/seed.sh<br/>idempotent, keyed by custom_external_ref"]
         prep["scripts/agent/prepare_demo.py"]
-        proc["lifecycle.process_application<br/>Frappe doc → pydantic schema → ZEN"]
+        proc["lifecycle.process_application<br/>· process_bureau_application (PR #17)<br/>Frappe doc → pydantic schema → ZEN"]
         ev[("Loan Decision Evidence<br/>decision-evidence/1: rule PASS/FAIL,<br/>policy + JDM + input hashes")]
         seed --> prep --> proc --> ev
     end
@@ -47,8 +47,16 @@ flowchart TB
         bd["data/evaluation/agent/boundary_v1.jsonl"]
     end
 
+    subgraph BUR["Synthetic bureau fixture (PR #17, development only)"]
+        bgen["scripts/data/generate_bureau_cases.py<br/>seed 20261024, 120 cases"]
+        bfix[("data/synthetic/bureau/cases_120.json<br/>application + report/scenario + expected")]
+        btest["tests/test_bureau_lifecycle.py<br/>replays all 120 cases"]
+        bgen --> bfix --> btest
+    end
+
     nar -.->|"personas feed eval_agent sets A1-A5"| EVAL
     bv1 -.->|evaluates| qd
+    btest -.->|"through process_bureau_application"| proc
     ev -->|agent reads, never writes| agent["Advisory graph"]
     qd --> agent
     bm --> agent

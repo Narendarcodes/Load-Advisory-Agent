@@ -1,7 +1,8 @@
 # Approach
 
-How the Loan Advisory Agent is built and why. Every number here comes from a PR description (#1–#10) or a committed
-report; the source is named next to it. Diagrams are in [docs/architecture/](docs/architecture/README.md).
+How the Loan Advisory Agent is built and why. Numbered evidence comes from PR descriptions or committed reports and is
+named next to each claim. Implementation history runs through PRs #1–#21 (#5 was closed with its commits already on
+`main`; #11/#12 are open docs-only PRs); diagrams are in [docs/architecture/](docs/architecture/README.md).
 
 ## 1. Problem statement
 
@@ -29,8 +30,8 @@ reapplications are hypotheses until measured with a lender.
 | **Lender-neutral by configuration** | The lender is a profile in `config/lender_profiles/` (`bajaj_finance`, `generic_bank`, `generic_nbfc`, `synthetic_prototype`). RBI texts are tagged by entity type, because the rules differ (below) |
 | **Data → conventional workflow → policy RAG → agent → voice** | Each layer is tested before the next consumes it; the agent never compensates for an untested decision core |
 | **One LangGraph graph, not multi-agent** | The task is a controlled workflow with a few tools; no evaluation showed a need for multiple agents |
-| **Standard-library HTTP server, plain `requests` to the LLM** | Handoff rule: no FastAPI, LiteLLM or Hermes. Fewer moving parts on a shared droplet |
-| **Self-hosted, free/open components** | Frappe Lending, ZEN, Qdrant, vLLM (gpt-oss-120b), LiveKit, IndicConformer, Whisper, svara-tts, Arize Phoenix |
+| **Standard-library advisory server, plain `requests` to the LLM** | Handoff rule: no FastAPI, LiteLLM or Hermes in the advisory server; it runs on `http.server`. The synthetic bureau (PR #17) is a separate local-only FastAPI service, not part of the advisory path. Fewer moving parts on a shared droplet |
+| **Self-hosted, free/open components** | Frappe Lending, ZEN, Qdrant, vLLM (gpt-oss-120b), LiveKit, IndicConformer, Whisper, svara-tts, Arize Phoenix, optional Langfuse |
 
 **Bank vs NBFC (PR #5).** RBI requires banks to give the main reasons for a rejection in writing (RBC Directions 2025 for
 commercial banks, para 331). The NBFC Fair Practices Code and Bajaj's own FPC have no such clause; Bajaj's FAQ says only
@@ -52,6 +53,22 @@ reasons.
   `record_id` and a trace hash.
 - What-if is `lifecycle.simulate`: overrides merged in memory, run through ZEN, returned as `is_simulation` and never
   persisted. Live tests confirm Frappe's `modified` timestamp is unchanged.
+
+**Bureau-backed runs (PR #17).** `POST /api/bureau/run` takes the application ref from the session token, calls a local
+synthetic bureau through `bureau_client.py` (FastAPI, loopback only, **not CIBIL/FICO**), checks the response in
+`decision_engine/bureau/gates.py`, resolves the credit score and sends the resolved inputs through the unchanged ZEN
+decision. Evidence gains `outcome`, `review` and `bureau` fields additively; the Frappe `decision` value stays
+`APPROVED`/`REJECTED`/`ERROR`. The distinction that matters:
+
+- A data-quality hold is evidence `outcome=REVIEW` with legacy `decision=ERROR`; the lifecycle is `MANUAL_REVIEW`, or
+  `INFO_REQUESTED` when data is missing/invalid.
+- A provider failure (timeout, 429, 503, malformed response) is evidence `outcome=ERROR`; `retryable` says whether a
+  retry can help, and the lifecycle is `MANUAL_REVIEW`.
+- A real credit outcome stays `APPROVED`/`REJECTED` from ZEN.
+
+The staleness and income/obligation-variance gates ship disabled and only change through a reviewed
+`config/bureau_dq_policy.json` edit. Flow and score precedence:
+[docs/architecture/synthetic-bureau.md](docs/architecture/synthetic-bureau.md).
 
 ## 4. Policy register and RAG (PR #4, PR #5)
 
@@ -120,6 +137,13 @@ compose → validate → (one rewrite) → finalize
   and timings, but no message text and no financial values.
 - **Deadlines (PR #8).** Per-turn deadline (voice 25 s, text 75 s). The LLM read timeout is the time left; when time
   runs out explain/improve/what-if fall back to the template and policy turns to a localized "busy, ask again" template.
+- **Bureau is not a graph node.** `/api/bureau/run` is a separate authenticated server entry point; the agent reads the
+  stored bureau-backed evidence like any other decision.
+- **Observability (PR #18).** One `TracerProvider` emits manual OTel spans for advisory turns and bureau evaluations.
+  Phoenix is the opt-in OTLP backend (`AGENT_TRACING=1`); self-hosted Langfuse is a second optional processor
+  (`LANGFUSE_ENABLED=1`, loopback only, Langfuse Cloud refused). Both are off by default, and message/answer text is
+  captured only with `AGENT_TRACE_CONTENT=1` (Phoenix) or `LANGFUSE_CAPTURE_CONTENT=1` (Langfuse). Telemetry cannot
+  change an answer, gate or decision.
 
 ## 6. Citation modes (PR #8, #9)
 
@@ -128,7 +152,8 @@ passage plus a passage from another document restating the same rule, 5 cited th
 passage, 2 cited only non-gold documents, 3 were retrieval misses and 3 abstained although the gold passage was
 retrieved. The main loss is over-citation across documents, not retrieval.
 
-TEST, 80 answerable + 11 unanswerable, 3 full runs per mode (`docs/agent/citation_accuracy.md`):
+PR #10-era live run, 80 answerable + 11 unanswerable, 3 full runs per mode, not re-run for this revision
+(`docs/agent/citation_accuracy.md`):
 
 | Mode | strict (mean) | support | judged faithful | judged correct | p50 | unanswerable |
 |---|---|---|---|---|---|---|
@@ -136,10 +161,21 @@ TEST, 80 answerable + 11 unanswerable, 3 full runs per mode (`docs/agent/citatio
 | `primary_source` | 0.800 | 0.800 | 0.819 | 0.883 | 7.1 s | 11/11 ×3 |
 | `llm_verify` | 0.671 | 0.763 | 0.870 | 0.90 | 9.1–11.6 s | 11/11 ×3 |
 
-`primary_source` keeps only the cited passages from the document of the top-ranked cited passage. Re-judging the same
-answers under each policy shows it lowers judged faithfulness in every case (dev −8 / −12 points, test −3 / −12 / −5),
-because an answer combining two documents loses one citation. So **`labels` stays the default and `primary_source` is
-the recommended opt-in** (`AGENT_CITATION_MODE=primary_source`). Choosing it is a product decision.
+`primary_source` keeps the cited passages from the best-supported source document (support, then currency, then
+retrieval rank). It keeps a second document when the cited sources conflict and the answer does not acknowledge it,
+when the answer contrasts versions, or when the second document uniquely supports part of an answer sentence the
+primary only partly covers. Re-judging the same answers shows it lowers judged faithfulness in every case (dev −8 / −12
+points, test −3 / −12 / −5), because a pure cross-document restatement still collapses to one citation. So **`labels`
+stays the default and `primary_source` is the recommended opt-in** (`AGENT_CITATION_MODE=primary_source`). Choosing it
+is a product decision.
+
+**Independent citation audit (2026-10-25).** A hand-authored, deterministic audit (`data/evaluation/agent/
+citation_audit_v1/`, 68 fixed cases, fixed composer outputs, no LLM judge and no corpus access) measures the citation,
+guard and governance layers rather than end-to-end answer quality. Against baseline `33b904e`, `primary_source` moves
+precision from labels' 0.7069 to 0.95 (41/58 → 38/40), with material coverage 1.0, 29/29 case pass, 0 forbidden
+citations and 0 per-case regressions; the sample is too small for significance claims. The audit also caught the
+second-document drop described above and an amount-increase guard false positive, both fixed. Source:
+`docs/agent/citation_accuracy.md`.
 
 ## 7. Voice pipeline and latency (PR #7, #8, #10)
 
@@ -192,8 +228,14 @@ against a 12 GB voice budget (PR #7). The retriever is capped separately with `A
   and include honest phrasings that must stay unflagged (e.g. the Grievance Redressal Officer, "my salary in the
   application is wrong"). New flags were checked against the 528 existing eval prompts and fire only on two items that
   already expected abstention.
-- **End to end.** pytest on the droplet with live Frappe (205 passed on PR #10), Playwright chat smoke (16/16), and an
-  automated voice loop with synthetic utterances measured on the client clock.
+- **Bureau replay (PR #17).** `tests/test_bureau_lifecycle.py` replays all 120 committed bureau cases through
+  `process_bureau_application`; the fixture's expected labels come from the unchanged `decide()` pipeline.
+- **CI and pre-commit (PR #20, #21).** GitHub Actions runs `python -m ruff check .` and `python -m pytest tests/ -q` on
+  pushes and PRs to `main`. The optional `.githooks/pre-commit` hook runs staged whitespace checks, ruff on staged
+  Python and the test suite.
+- **End to end.** The tree collects 527 tests; a 2026-10-27 local run without live Frappe/GPU/LLM gave **516 passed,
+  11 skipped**. Historical, not current: **205 passed** on the droplet with live Frappe on PR #10, Playwright chat
+  smoke 16/16 (PR #9), and an automated voice loop with synthetic utterances measured on the client clock.
 
 ## 9. Trade-offs
 
@@ -204,17 +246,22 @@ against a 12 GB voice budget (PR #7). The retriever is capped separately with `A
 | `labels` default citation mode | Higher support and judged faithfulness | Strict citation about 0.6 |
 | Sentence streaming behind guards | Voice first audio p50 down to about 2–4 s | More moving parts; a corrected answer needs a spoken bridge |
 | Synthetic policy and data | Safe, reproducible, no personal data | No external validity for real lender decisions |
+| Synthetic bureau + data-quality gates (PR #17) | Exercises bureau-shaped inputs, holds and provider failures without real bureau data | `synthetic-score-v1` is unvalidated and not real bureau behaviour; two gates ship disabled |
 | Same-model judge | Free and self-hosted | Self-judging bias; judge numbers are indicative only |
 | Shared GPU and shared LLM | No paid services | Latency rises under load; tight VRAM budgets |
 
 ## 10. What's next
 
 - Fix the `eval_agent.py` set B harness issue (about 30% answered vs 95% in `eval_policy_split.py` on the same split).
-- Deploy PRs #8–#10 to production `:8095`, which still runs PR #6/#7 code (owner's decision).
+- Confirm what the production `:8095` droplet runs; its state is not recorded in this repo and the last recorded
+  evidence is PR #10-era. Deploying the merged post-#10 work is the owner's decision.
 - Human review of `abstain_v2`, and more unanswerable questions to calibrate abstention.
 - Decide the default citation mode (`labels` vs `primary_source`).
 - Human sign-off on register v2 (two repeals are inferred) and on the currency of the older Bajaj terms documents.
 - Route the remaining abstain_v2 misses (co-applicant sanction guarantee; another bank's rules).
-- Pin the agent and voice dependencies in a requirements file.
+- Add a lockfile and pin or list the remaining stack (OpenTelemetry, LiveKit Agents, `sentence-transformers`,
+  `qdrant-client`, STT/TTS); `requirements.txt` now covers the decision core, advisory server, LangGraph and Langfuse.
+- If the synthetic bureau leaves development: validate `synthetic-score-v1`, review the disabled staleness/variance
+  gates, and replace the fixture with a contracted bureau integration.
 - Replace demo sign-in with real authentication and the JSONL handoff with a real escalation channel.
 - Validate against an authorised, anonymised lender dataset, if one becomes available.

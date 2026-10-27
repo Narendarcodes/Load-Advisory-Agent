@@ -1,16 +1,22 @@
 # Architecture
 
 Mermaid sources live in [`diagrams/`](diagrams/) next to their rendered SVG and PNG (re-render with
-`bash docs/architecture/diagrams/render.sh`). Every box and arrow is taken from the code on `feat/abstain-unavailable`
-(PR #10). Other docs here: [conventional-workflow.md](conventional-workflow.md) (Phase 3 decision workflow) and
-[repository-structure.md](repository-structure.md) (P1-era layout notes). Rationale is in [../../APPROACH.md](../../APPROACH.md).
+`bash docs/architecture/diagrams/render.sh`). The revised diagrams (01, 02, 05) were checked against `main` at
+`9a6e3f6` (2026-10-27), so they cover the bureau entry point (PR #17) and optional Langfuse export (PR #18) as well
+as the advisory agent; 03 and 04 keep their PR #10 scope. Other docs here:
+[synthetic-bureau.md](synthetic-bureau.md) (bureau flow, `REVIEW` vs `ERROR`, score precedence),
+[conventional-workflow.md](conventional-workflow.md) (Phase 3 decision workflow) and
+[repository-structure.md](repository-structure.md) (layout notes). Rationale is in
+[../../APPROACH.md](../../APPROACH.md), observability in [../observability/langfuse.md](../observability/langfuse.md).
 
 All applicant data and the four thresholds are synthetic (`synthetic-v1`). Bajaj Finance is a public reference lender,
-not a partner.
+not a partner. The synthetic bureau is a development-only FastAPI service, not CIBIL/FICO.
 
 ## 1. System context
 
-Who and what the agent talks to. Everything is self-hosted and bound to 127.0.0.1 on the droplet.
+Who and what the agent talks to. Everything is self-hosted and bound to 127.0.0.1 on the droplet. The advisory server
+is the Python standard library; the synthetic bureau is a separate FastAPI service. `/api/bureau/run` evaluates the
+signed-in application through that bureau and the data-quality gates, then the unchanged ZEN decision.
 
 ![System context](diagrams/01-system-context.png)
 
@@ -18,8 +24,9 @@ Source: [01-system-context.mmd](diagrams/01-system-context.mmd) · [SVG](diagram
 
 ## 2. Components
 
-The advisory server, the LangGraph graph and its helpers, the least-privilege tools, the decision core, the policy
-retriever (Qdrant + BM25 + reranker), Frappe, the gpt-oss LLM and the LiveKit voice stack (STT/TTS).
+The advisory server and its bureau entry point, the LangGraph graph and its helpers, the least-privilege tools, the
+decision core, the bureau data-quality gates, the policy retriever (Qdrant + BM25 + reranker), Frappe, the gpt-oss LLM,
+the optional Phoenix/Langfuse exporters and the LiveKit voice stack (STT/TTS).
 
 ![Components](diagrams/02-components.png)
 
@@ -45,7 +52,8 @@ Source: [04-voice-turn-sequence.mmd](diagrams/04-voice-turn-sequence.mmd) · [SV
 ## 5. Data and policy ingestion
 
 Offline paths: dataset audit and synthetic personas, the conventional decision workflow that writes Decision Evidence,
-and the policy register → fetch → chunks → Qdrant/BM25 index, plus the evaluation sets.
+the synthetic-bureau fixture generator and its 120-case replay, the policy register → fetch → chunks → Qdrant/BM25
+index, plus the evaluation sets.
 
 ![Data and policy ingestion](diagrams/05-data-policy-ingestion.png)
 

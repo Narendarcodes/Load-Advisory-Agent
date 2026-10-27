@@ -6,7 +6,7 @@ flowchart TB
     end
 
     subgraph API["Advisory server: loan_advisory.agent.server (stdlib, :8095)"]
-        ep["/api/session · /api/decision · /api/chat<br/>/api/chat/stream (NDJSON) · /api/livekit-token · /healthz"]
+        ep["/api/session · /api/decision · /api/chat<br/>/api/chat/stream (NDJSON) · /api/bureau/run<br/>/api/livekit-token · /healthz"]
         auth["HMAC session token<br/>(applicant_ref, application_ref, expiry)"]
         settings["AgentSettings (env)<br/>deadlines · fast classify · AGENT_CITATION_MODE"]
     end
@@ -23,13 +23,20 @@ flowchart TB
         t4["create_human_handoff (JSONL)"]
     end
 
-    subgraph Decision["Decision core (P0/P1/P3)"]
-        lc["application/lifecycle.py<br/>process_application · simulate"]
+    subgraph Decision["Decision core (P0/P1/P3, PR #17)"]
+        lc["application/lifecycle.py<br/>process_application · process_bureau_application · simulate"]
         zen["ZEN Engine 2.1.2<br/>decision_engine/decisions/personal_loan_v1.json"]
         reg["policy registry (sha256-pinned)<br/>synthetic-v1"]
         fa["infrastructure/frappe_adapter.py<br/>evidence_store.py"]
     end
     frappe[("Frappe Lending (system of record)<br/>Loan Application · Loan Decision Evidence")]
+
+    subgraph Bureau["Bureau entry point: application/bureau_intake.py (PR #17)"]
+        bi["run_bureau_evaluation<br/>application ref from the session token"]
+        bc["infrastructure/bureau_client.py<br/>loopback-only URL policy"]
+        gates["decision_engine/bureau/gates.py<br/>DQ gates · score precedence<br/>(REVIEW vs ERROR)"]
+    end
+    sb["Synthetic credit bureau (development only)<br/>apps/bureau · FastAPI 127.0.0.1:8001"]
 
     subgraph RAG["rag/ retrieve.py (lender-profile filter before ranking)"]
         bm25["BM25"]
@@ -39,7 +46,7 @@ flowchart TB
     end
 
     llm["gpt-oss-120b on vLLM :8001<br/>called via llm.py ChatLLM (deadline-aware)"]
-    obs["Arize Phoenix :6006<br/>via observability.py (AGENT_TRACING=1)"]
+    obs["observability.py: one TracerProvider<br/>Phoenix :6006 (AGENT_TRACING=1)<br/>Langfuse :3000 (LANGFUSE_ENABLED=1, optional)"]
 
     subgraph Voice["Voice (apps/voice, infra/voice/up.sh)"]
         lk["LiveKit server :7880"]
@@ -55,16 +62,21 @@ flowchart TB
     wk --> tts
     wk -->|Bearer session token| ep
     ep --> auth --> nodes
+    ep -->|"/api/bureau/run"| bi
     settings --> nodes
     nodes --- helpers
     nodes --> t1 & t2 & t3 & t4
     nodes -->|"classify, compose"| llm
     t1 --> fa --> frappe
     t2 --> lc --> zen
+    lc -->|"evidence, lifecycle"| fa
     reg --> zen
+    bi --> bc --> sb
+    bi --> gates --> lc
     t3 --> bm25 & dense
     bm25 --> rrf
     dense --> rrf
     rrf --> rr
     helpers ~~~ obs
     nodes -.->|"OTLP spans"| obs
+    bi -.->|"OTLP spans"| obs
