@@ -22,9 +22,13 @@ from loan_advisory.infrastructure.frappe_adapter import FrappeClient, FrappeUnav
 class InMemoryEvidenceSink:
     def __init__(self):
         self.records, self.status, self.traces = {}, {}, {}
+        self.latest_ids = {}  # application_ref -> record_id of the newest non-simulation run (Frappe: custom_latest_evidence)
 
     def persist(self, record, native_status, trace):
         self.records.setdefault(record["record_id"], record)
+        if not record.get("is_simulation"):
+            # Ids are deterministic, so a re-run can reproduce an older record; the pointer must still move to it.
+            self.latest_ids[record["application_ref"]] = record["record_id"]
         self.status[record["application_ref"]] = (record["lifecycle_state"], native_status)
         if record["trace_ref"]["sha256"]:
             self.traces[record["trace_ref"]["sha256"]] = stable_trace(trace)
@@ -47,7 +51,8 @@ class FrappeEvidenceSink:
     def persist(self, record, native_status, trace):
         if record["trace_ref"]["sha256"]:
             self.trace_dir.mkdir(parents=True, exist_ok=True)
-            (self.trace_dir / f"{record['trace_ref']['sha256']}.json").write_text(json.dumps(stable_trace(trace), sort_keys=True))
+            (self.trace_dir / f"{record['trace_ref']['sha256']}.json").write_text(
+                json.dumps(stable_trace(trace), sort_keys=True, ensure_ascii=False), encoding="utf-8")
         rid = record["record_id"]
         if self._req("GET", f"/api/resource/{self.DOCTYPE}/{rid}").status_code == 404:
             body = {
@@ -58,7 +63,8 @@ class FrappeEvidenceSink:
                 "engine": f"{record['engine']['name']} {record['engine']['version']}",
                 "evaluated_at": record["evaluated_at"][:19].replace("T", " "),
                 "trace_sha256": record["trace_ref"]["sha256"], "trace_store": str(self.trace_dir),
-                "is_simulation": int(record["is_simulation"]), "record_json": json.dumps(record, sort_keys=True),
+                "is_simulation": int(record["is_simulation"]),
+                "record_json": json.dumps(record, sort_keys=True, ensure_ascii=False),
             }
             r = self._req("POST", f"/api/resource/{self.DOCTYPE}", json=body)
             if not r.ok:

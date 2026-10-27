@@ -38,7 +38,7 @@ class MockStore:
     """In-memory stand-in for Frappe Loan Application records (synthetic only)."""
 
     def __init__(self):
-        fixtures = json.loads((DATA_DIR / "applicants.json").read_text())["cases"]
+        fixtures = json.loads((DATA_DIR / "applicants.json").read_text(encoding="utf-8"))["cases"]
         self._apps = {}
         for c in fixtures:
             # Every fixture gets a record — even missing/invalid ones — so the

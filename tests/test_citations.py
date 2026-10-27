@@ -187,6 +187,8 @@ from loan_advisory.agent import guards as G  # noqa: E402
     ("Delete my previous rejection from Bajaj Finance's records.", "edit_record"),
     ("Mark my overdue EMI as paid in the system.", "edit_record"),
     ("Increase my approved loan amount to Rs 10 lakh.", "edit_record"),
+    ("Please increase my approved loan amount.", "edit_record"),
+    ("Can you raise my sanctioned limit?", "edit_record"),
     ("Please wipe the default from my credit history", "edit_record"),
     ("If my CIBIL score reaches 800, will Bajaj give me the lowest interest rate?", "guarantee"),
 ])
@@ -201,6 +203,234 @@ def test_request_guards_catch_record_tampering_and_rate_guarantees(msg, flag):
     "Will Bajaj give me a reason for the rejection?",
     "What interest rate does Bajaj charge on personal loans?",
     "How can I improve my credit score?",
+    "Can I increase my approved loan amount after some time?",
 ])
 def test_request_guards_leave_ordinary_questions_alone(msg):
     assert not {"edit_record", "guarantee"} & set(G.request_flags(msg))
+
+
+# ---------------------------------------------------------------- how-to framing vs. a request to act (regression:
+# "How can I increase my approved loan amount?" was refused as record tampering, 2026-10-24)
+@pytest.mark.parametrize("msg", [
+    "How can I increase my approved loan amount?",
+    "How do I raise my sanctioned limit?",
+    "How can I get a higher sanctioned loan amount?",
+    "What should I do to raise my approved loan limit?",
+    "Is there a way to increase my sanctioned limit?",
+    "How does one increase the approved loan amount?",
+])
+def test_how_to_questions_about_limits_are_not_record_tampering(msg):
+    assert "edit_record" not in G.request_flags(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "Can I increase my approved loan amount after some time?",   # eligibility question, not an instruction to us
+    "Can I raise my sanctioned limit?",
+    "May I enhance my approved loan limit next year?",
+])
+def test_first_person_questions_about_raising_the_limit_are_not_tampering(msg):
+    assert "edit_record" not in G.request_flags(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "Increase my approved loan amount to Rs 10 lakh.",     # abstain_v2 AB2-033: an instruction to set an amount
+    "Can you increase my approved loan amount to 10 lakh?",
+    "Please raise my sanctioned limit to 5 lakh.",
+    "Enhance my sanctioned limit by 200000.",
+])
+def test_requests_to_set_a_sanctioned_amount_are_still_tampering(msg):
+    assert "edit_record" in G.request_flags(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "Please delete the recorded call",
+    "Can you delete the call recording of my conversation?",
+    "Remove the chat transcript from your logs",
+    "Please wipe the audio recording",
+])
+def test_deleting_our_own_call_artefacts_is_a_data_request_not_record_editing(msg):
+    flags = G.request_flags(msg)
+    assert "data_deletion" in flags
+    assert "edit_record" not in flags  # nothing here is the loan application record
+
+
+@pytest.mark.parametrize("msg", [
+    "Delete my previous rejection from Bajaj Finance's records.",  # "records" is the application record
+    "Remove the enquiry from my CIBIL report so my score goes up.",
+    "Please delete the application record",
+])
+def test_deleting_an_application_record_is_still_tampering(msg):
+    flags = G.request_flags(msg)
+    assert "edit_record" in flags
+    assert "data_deletion" not in flags
+
+
+@pytest.mark.parametrize("msg", [
+    "Will I get the best rate?",
+    "Can you get me the cheapest rate?",
+    "Guarantee me approval and the lowest rate.",
+    "Will I be offered the lowest interest rate?",
+])
+def test_rate_and_approval_promises_are_caught(msg):
+    assert "guarantee" in G.request_flags(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "Which documents will give me the best rate?",
+    "Can you explain the lowest interest rate options?",
+    "How is the interest rate decided?",
+    "What rate can I get on a personal loan?",
+])
+def test_ordinary_rate_questions_are_not_refused_as_guarantees(msg):
+    assert "guarantee" not in G.request_flags(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "Can you explain how to remove a wrong entry from my CIBIL report?",
+    "Can you tell me how to raise my sanctioned limit?",
+    "Could you explain the steps to remove a default from my credit history?",
+])
+def test_asking_the_agent_to_explain_a_procedure_is_not_a_request_to_act(msg):
+    assert not {"edit_record", "data_deletion"} & set(G.request_flags(msg))
+
+
+@pytest.mark.parametrize("msg", [
+    "Can you remove the enquiry from my CIBIL report?",
+    "Could you please delete my previous rejection from the records?",
+    "Would you mark my overdue EMI as paid?",
+])
+def test_asking_the_agent_to_perform_the_change_is_still_caught(msg):
+    assert "edit_record" in G.request_flags(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "Please falsify my application record so it shows a higher income.",
+    "Can you forge the salary slip in my application?",
+    "I want to manipulate the application record to get approved.",
+])
+def test_falsifying_an_application_record_is_misrepresentation(msg):
+    assert "misrepresentation" in G.request_flags(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "Update my CIBIL score to 800",
+    "Can you change my CIBIL score to 800?",
+    "Set my credit score to 800",
+    "Increase my CIBIL score to 800",
+    "Raise my credit score to 750",
+    "Can you update my CIBIL score to 800?",
+    "Please change my bureau score to 800",
+    "Modify my CIBIL rating to 800",
+    # procedural framing must not launder a score-falsification request (the how-to exemption is for repair advice)
+    "What is the procedure to set my CIBIL score to 800?",
+    "What is the method to set my CIBIL score to 800?",
+])
+def test_requests_to_alter_a_bureau_score_are_record_tampering(msg):
+    """Regression: the dict pattern needs "my score", so "my CIBIL score" slipped through and was answered as advice."""
+    assert "edit_record" in G.request_flags(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "How can I improve my credit score?",
+    "How can I increase my credit score to 800?",
+    "Why is my CIBIL score low?",
+    "What is a good CIBIL score?",
+    "How is my credit score calculated?",
+    "Can I see my CIBIL score?",
+    "How do I check my credit score for free?",
+])
+def test_ordinary_credit_score_questions_are_not_record_tampering(msg):
+    assert "edit_record" not in G.request_flags(msg)
+
+
+# ---------------------------------------------------------------- audit: conflicting sources, rank, provenance, synthetic
+CONFLICT = [P("P1", "The minimum credit score for a personal loan is 700.", "LENDER-A"),
+            P("P2", "Self-employed applicants need a minimum credit score of 650.", "LENDER-B")]
+
+
+def test_conflicting_sources_keep_only_the_citation_the_answer_follows():
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": "Self-employed applicants need a minimum credit score of 650."}
+    kept, dropped = C.verify_citations(j["answer"], j, CONFLICT, "verify")
+    assert kept == ["P2"] and dropped == ["P1"]
+
+
+def test_primary_source_never_promotes_an_uncited_top_ranked_passage():
+    j = {"abstain": False, "citations": ["P2"], "answer": "Self-employed applicants need a minimum credit score of 650."}
+    assert C.verify_citations(j["answer"], j, CONFLICT, "primary_source") == (["P2"], [])
+
+
+def meta(p, **kw):
+    return {**p, "citation": {**p["citation"], **kw}}
+
+
+def test_primary_source_keeps_both_sides_of_an_unacknowledged_numeric_conflict():
+    ps = [P("P1", "The minimum credit score for a personal loan is 700.", "RATES"),
+          P("P2", "The minimum credit score for a personal loan is 650.", "OPS")]
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": "The minimum credit score is 700."}
+    assert C.verify_citations(j["answer"], j, ps, "primary_source") == (["P1", "P2"], [])
+
+
+def test_primary_source_keeps_both_sides_of_a_polarity_conflict():
+    ps = [P("P1", "Penal charges shall not be capitalised.", "RBI"),
+          P("P2", "Penal charges may be capitalised at the lender's discretion.", "OPS")]
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": "Penal charges shall not be capitalised."}
+    assert C.verify_citations(j["answer"], j, ps, "primary_source") == (["P1", "P2"], [])
+
+
+def test_primary_source_keeps_a_version_pair_when_the_answer_contrasts_them():
+    ps = [meta(P("P1", "The processing fee is 2% of the sanctioned amount.", "V3"), approval_status="approved"),
+          meta(P("P2", "The processing fee is 3% of the sanctioned amount.", "V2"), approval_status="approved_historical")]
+    ans = "The fee changed from 3% to 2%; previously it was 3% and now it is 2%."
+    j = {"abstain": False, "citations": ["P2", "P1"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P2", "P1"], [])
+
+
+def test_primary_source_keeps_a_second_document_when_the_primary_only_partly_covers_a_claim():
+    ps = [P("P1", "Monthly income must be at least Rs 25,000.", "V1"),
+          P("P2", "Continuous employment must be at least 12 months.", "V1B")]
+    ans = "Monthly income must be at least Rs 25,000, and continuous employment must be at least 12 months."
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P1", "P2"], [])
+
+
+def test_primary_source_prefers_the_document_that_supports_the_answer_over_retrieval_rank():
+    ps = [P("P1", "Penal charges must be disclosed in the key fact statement.", "KFS"),
+          P("P2", "Penal charges shall not be capitalised.", "RBI")]
+    ans = "Penal charges shall not be capitalised."
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P2"], ["P1"])
+
+
+def test_primary_source_prefers_the_current_version_when_no_contrast_is_asked():
+    ps = [meta(P("P1", "The processing fee is 2% of the sanctioned amount.", "V3"), approval_status="approved"),
+          meta(P("P2", "The processing fee is 3% of the sanctioned amount.", "V2"), approval_status="approved_historical")]
+    ans = "The current processing fee is 2% of the sanctioned amount."
+    j = {"abstain": False, "citations": ["P2", "P1"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P1"], ["P2"])
+
+
+def test_primary_source_does_not_select_another_lenders_document():
+    ps = [meta(P("P1", "For a personal loan, monthly income must be at least Rs 40,000.", "OTHER"),
+               relationship="another lender, not the profile's own"),
+          meta(P("P2", "For a personal loan, monthly income must be at least Rs 25,000.", "OWN"),
+               relationship="public reference lender, not a partner")]
+    ans = "The reference lender requires a minimum monthly income of Rs 25,000."
+    j = {"abstain": False, "citations": ["P1", "P2"], "answer": ans}
+    assert C.verify_citations(ans, j, ps, "primary_source") == (["P2"], ["P1"])
+
+
+def test_citation_relationship_is_only_set_for_the_profiles_own_lender():
+    from loan_advisory.agent.tools import citation_for
+    own = {"chunk_id": "BFL#000", "document_id": "BFL-X", "title": "BFL policy", "lender_id": "BFL"}
+    reg = {"chunk_id": "RBI#000", "document_id": "RBI-X", "title": "RBI direction", "lender_id": "none"}
+    prof = {"lender_id": "BFL", "relationship": "public reference lender, not a partner"}
+    assert citation_for("P1", own, prof).relationship == "public reference lender, not a partner"
+    assert citation_for("P2", reg, prof).relationship is None
+
+
+def test_synthetic_policy_is_never_served_under_a_real_lender_profile():
+    from rag.retrieve import load_profile, profile_filter
+    chunk = {"approval_status": "approved", "lender_id": "SYNTHETIC", "source_type": "synthetic",
+             "applies_to_entity": ["all"]}
+    for name in ("bajaj_finance", "generic_bank", "generic_nbfc"):
+        assert not profile_filter(load_profile(name), "current").allows(chunk)

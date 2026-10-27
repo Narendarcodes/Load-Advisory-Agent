@@ -1,0 +1,134 @@
+{
+ "profile": "synthetic_prototype",
+ "mode": "current",
+ "lender": "SYNTHETIC",
+ "embed_model": "google/embeddinggemma-2",
+ "device": "cpu",
+ "query_prompt": "QuestionAnswering",
+ "prompt": "task: question answering | query: ",
+ "doc_string_used": "title: Prototype perso...",
+ "repo_docs_indexed": [
+  "SYN-POLICY-V1",
+  "SYN-INJECT-001",
+  "SYN-INJECT-002"
+ ],
+ "indexed_chunks": 10,
+ "served_chunks": 6,
+ "questions": 8,
+ "answerable": 7,
+ "r@1": 0.857,
+ "r@3": 1.0,
+ "r@5": 1.0,
+ "mrr@10": 0.905,
+ "coverage@5": 1.0,
+ "governance_leaks": 0,
+ "unanswerable_top1": {
+  "SYN-RJ-008": "SYN-POLICY-V1#000"
+ },
+ "per_question": [
+  {
+   "qid": "SYN-RJ-001",
+   "expect_evidence": true,
+   "first_expected_rank": 1,
+   "top5": [
+    "SYN-POLICY-V1#002",
+    "SYN-POLICY-V1#005",
+    "SYN-POLICY-V1#003",
+    "SYN-POLICY-V1#000",
+    "SYN-POLICY-V1#001"
+   ],
+   "leaked_pending": []
+  },
+  {
+   "qid": "SYN-RJ-002",
+   "expect_evidence": true,
+   "first_expected_rank": 1,
+   "top5": [
+    "SYN-POLICY-V1#003",
+    "SYN-POLICY-V1#000",
+    "SYN-POLICY-V1#001",
+    "SYN-POLICY-V1#002",
+    "SYN-POLICY-V1#004"
+   ],
+   "leaked_pending": []
+  },
+  {
+   "qid": "SYN-RJ-003",
+   "expect_evidence": true,
+   "first_expected_rank": 1,
+   "top5": [
+    "SYN-POLICY-V1#004",
+    "SYN-POLICY-V1#005",
+    "SYN-POLICY-V1#002",
+    "SYN-POLICY-V1#001",
+    "SYN-POLICY-V1#000"
+   ],
+   "leaked_pending": []
+  },
+  {
+   "qid": "SYN-RJ-004",
+   "expect_evidence": true,
+   "first_expected_rank": 1,
+   "top5": [
+    "SYN-POLICY-V1#001",
+    "SYN-POLICY-V1#002",
+    "SYN-POLICY-V1#003",
+    "SYN-POLICY-V1#005",
+    "SYN-POLICY-V1#004"
+   ],
+   "leaked_pending": []
+  },
+  {
+   "qid": "SYN-RJ-005",
+   "expect_evidence": true,
+   "first_expected_rank": 1,
+   "top5": [
+    "SYN-POLICY-V1#002",
+    "SYN-POLICY-V1#005",
+    "SYN-POLICY-V1#003",
+    "SYN-POLICY-V1#000",
+    "SYN-POLICY-V1#001"
+   ],
+   "leaked_pending": []
+  },
+  {
+   "qid": "SYN-RJ-006",
+   "expect_evidence": true,
+   "first_expected_rank": 1,
+   "top5": [
+    "SYN-POLICY-V1#005",
+    "SYN-POLICY-V1#003",
+    "SYN-POLICY-V1#002",
+    "SYN-POLICY-V1#000",
+    "SYN-POLICY-V1#004"
+   ],
+   "leaked_pending": []
+  },
+  {
+   "qid": "SYN-RJ-007",
+   "expect_evidence": true,
+   "first_expected_rank": 3,
+   "top5": [
+    "SYN-POLICY-V1#002",
+    "SYN-POLICY-V1#001",
+    "SYN-POLICY-V1#005",
+    "SYN-POLICY-V1#004",
+    "SYN-POLICY-V1#003"
+   ],
+   "leaked_pending": []
+  },
+  {
+   "qid": "SYN-RJ-008",
+   "expect_evidence": false,
+   "first_expected_rank": null,
+   "top5": [
+    "SYN-POLICY-V1#000",
+    "SYN-POLICY-V1#001",
+    "SYN-POLICY-V1#003",
+    "SYN-POLICY-V1#002",
+    "SYN-POLICY-V1#004"
+   ],
+   "leaked_pending": []
+  }
+ ]
+}

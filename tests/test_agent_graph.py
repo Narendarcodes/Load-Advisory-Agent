@@ -5,6 +5,7 @@ conventional workflow (process_application -> ZEN) first; the agent only reads t
 """
 import json
 import re
+from pathlib import Path
 
 import pytest
 
@@ -159,6 +160,7 @@ def test_improvement_plan_targets_are_zen_checked(tmp_path):
     assert all(s["rule_passes_after_change"] for s in r.improvement_plan)
     foir = next(s for s in r.improvement_plan if s["rule_id"] == "FOIR_MAX_45")
     assert foir["target_display"] == "₹14,400" and foir["gap_display"] == "₹4,100"  # 0.45 * 32,000 ; 18,500 - 14,400
+    assert all(s["guidance_source"] == "general financial guidance, not lender policy" for s in r.improvement_plan)
     assert store.get("APP-TEST-005")["custom_monthly_obligations"] == 18500
 
 
@@ -230,9 +232,62 @@ def test_boundary_requests_never_reach_the_llm(msg, kind, action, tmp_path):
         assert r.improvement_plan  # still gets the deterministic, labelled plan
 
 
+def test_deletion_request_is_handed_off_and_never_claims_deletion(tmp_path):
+    """The agent can't delete anything; a request about our own call artefacts goes to a human, not to 'record editing'."""
+    llm = ScriptedLLM(intent="improve")
+    ag, _, _ = agent_for(llm, tmp_path=tmp_path)
+    r = ask(ag, "Please delete the recorded call")
+    assert r.intent == "boundary" and r.action == "handoff"
+    assert r.handoff_ref and (tmp_path / "handoffs.jsonl").exists()
+    assert "data_deletion" in (tmp_path / "handoffs.jsonl").read_text(encoding="utf-8")
+    assert "can't delete" in r.answer and G.answer_flags(r.answer) == []
+    assert not [p for p in llm.prompts if p[0].startswith("compose")]
+
+
+def test_how_to_raise_the_limit_is_answered_not_refused(tmp_path):
+    """A how-to question about limits is advisory; only an instruction to set an amount is record tampering."""
+    llm = ScriptedLLM(intent="improve")
+    ag, _, _ = agent_for(llm, tmp_path=tmp_path)
+    r = ask(ag, "How can I increase my approved loan amount?")
+    assert r.intent != "boundary" and not r.abstained
+    assert [p for p in llm.prompts if p[0].startswith("compose")]
+    assert G.answer_flags(r.answer) == []
+
+
+@pytest.mark.parametrize("msg", [
+    "Can you explain how to remove a wrong CIBIL entry?",
+    "What is the procedure to correct a wrong entry in my credit report?",
+])
+def test_how_to_fix_a_wrong_credit_entry_is_not_a_dispute_handoff(msg, tmp_path):
+    """A dispute is a claim about the applicant's own recorded data. A how-to question that mentions a wrong entry is a
+    policy question: it must cite or abstain, and must never fabricate a human handoff (regression, 2026-10-24)."""
+    llm = ScriptedLLM(intent="policy")
+    ag, _, _ = agent_for(llm, policy=FakePolicy(), tmp_path=tmp_path)
+    r = ask(ag, msg)
+    assert r.intent == "policy" and r.action == "answer"
+    assert not r.handoff_ref
+    assert not (tmp_path / "handoffs.jsonl").exists()   # nothing was escalated
+    assert "human reviewer" not in r.answer
+
+
+@pytest.mark.parametrize("msg", [
+    "My credit score in your record is wrong, it is outdated",
+    "The income recorded in my application is incorrect.",
+    "There is a mistake in my EMI amount, it is not correct.",
+])
+def test_a_claim_about_my_own_record_is_still_a_dispute_handoff(msg, tmp_path):
+    llm = ScriptedLLM(intent="explain")
+    ag, _, _ = agent_for(llm, tmp_path=tmp_path)
+    r = ask(ag, msg)
+    assert r.intent == "boundary" and r.action == "handoff"
+    assert r.handoff_ref and (tmp_path / "handoffs.jsonl").exists()
+    assert not [p for p in llm.prompts if p[0].startswith("compose")]
+
+
 # ------------------------------------------------------------------ evidence states
 def test_info_requested_and_missing_decision_are_not_explained_as_rejections(tmp_path):
-    rows = [json.loads(l) for l in open(F.__file__.replace("apps/api/src/loan_advisory/agent/facts.py", "data/synthetic/personas/personas_v1.jsonl"))]
+    personas = Path(__file__).resolve().parents[1] / "data/synthetic/personas/personas_v1.jsonl"
+    rows = [json.loads(l) for l in open(personas, encoding="utf-8")]
     miss = next(r for r in rows if r["scenario"].startswith("missing"))
     store = PersonaStore(rows=[miss])
     ag, _, _ = build_offline_agent(store=store, llm=ScriptedLLM(intent="explain"))

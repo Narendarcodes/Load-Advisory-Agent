@@ -6,6 +6,7 @@ import time
 
 import pytest
 
+from loan_advisory.agent import guards as G
 from loan_advisory.agent import settings as S
 from loan_advisory.agent.contracts import AgentRequest, Session
 from loan_advisory.agent.llm import LLMError
@@ -88,6 +89,112 @@ def test_remainder_speaks_only_what_was_not_already_spoken():
     # the final answer diverged (e.g. deterministic fallback): say the whole final answer after a short bridge
     r = remainder(["Your score is 689."], "Your application's recorded decision is REJECTED.", bridge="To be precise:")
     assert r == "To be precise: Your application's recorded decision is REJECTED."
+
+
+def test_remainder_repeats_rather_than_dropping_text_when_the_prefix_diverges():
+    """Documented trade-off: spoken audio cannot be recalled, so a diverging final answer is repeated after the bridge
+    instead of being guessed at. The regression this guards is text LOSS, not the repetition."""
+    final = "Your credit score is 689. The limit is 700."
+    r = remainder(["Your score is 689."], final, bridge="To be precise:")
+    assert r.startswith("To be precise:") and final in r
+
+
+# ------------------------------------------------------------------ one sink per turn, not per client-supplied id
+class BarrierLLM(ScriptedLLM):
+    """Both turns sit inside compose at once, so both streaming sinks are registered simultaneously."""
+
+    def __init__(self, barrier):
+        super().__init__(intent="explain")
+        self.barrier = barrier
+
+    def chat(self, system, user, max_tokens=900, temperature=0.0, tag="", deadline=None):
+        if tag.startswith("compose"):
+            self.barrier.wait(timeout=20)
+            return f"Your recorded decision is REJECTED. You asked: {user}."
+        return super().chat(system, user, max_tokens, temperature, tag)
+
+
+def test_turns_sharing_a_client_request_id_never_share_a_streaming_sink(tmp_path):
+    """request_id comes from the request body (server.py), so a double submit repeats it. Keying the sink by it would
+    speak one turn's sentences into the other turn's session."""
+    import concurrent.futures
+
+    ag = agent_for(BarrierLLM(threading.Barrier(2)), tmp_path=tmp_path)
+    got = {"a": [], "b": []}
+    with concurrent.futures.ThreadPoolExecutor(2) as ex:
+        fa = ex.submit(ask, ag, "Why was my loan application rejected?", rid="same-id", conv="c1",
+                       channel="voice", on_sentence=got["a"].append)
+        fb = ex.submit(ask, ag, "Why was my application declined?", rid="same-id", conv="c2",
+                       channel="voice", on_sentence=got["b"].append)
+        ra, rb = fa.result(), fb.result()
+    a, b = " ".join(got["a"]), " ".join(got["b"])
+    assert "loan application rejected" in a and "declined" not in a
+    assert "declined" in b and "loan application rejected" not in b
+    assert ra.request_id == rb.request_id == "same-id"
+    assert ra.answer != rb.answer
+
+
+# ------------------------------------------------------------------ policy JSON key order
+class JSONStreamLLM(ScriptedLLM):
+    """Streams the raw JSON object in small deltas, like ChatLLM does for compose_policy."""
+
+    def __init__(self, payload, **kw):
+        super().__init__(**kw)
+        self.payload = json.dumps(payload)
+
+    def chat_stream(self, system, user, max_tokens=900, temperature=0.0, tag="", deadline=None):
+        for i in range(0, len(self.payload), 7):
+            yield self.payload[i:i + 7]
+
+    def chat_json(self, system, user, max_tokens=900, tag="", deadline=None):
+        return json.loads(self.payload)
+
+
+@pytest.mark.parametrize("answer_first", [False, True])
+def test_policy_streaming_needs_citations_before_the_answer_but_never_loses_the_final_text(tmp_path, answer_first):
+    body = {"abstain": False, "citations": ["P1"], "answer": "Complaints go to the Grievance Redressal Officer within 30 days. That is the first step."}
+    pol = {"abstain": body["abstain"], "answer": body["answer"]} if answer_first else body
+    if answer_first:
+        pol["citations"] = body["citations"]  # citations AFTER the answer: the precheck cannot see them yet
+    llm = JSONStreamLLM(pol, intent="policy")
+    ag = agent_for(llm, policy=FakePolicy(), tmp_path=tmp_path)
+    got = []
+    r = ask(ag, "how do I complain?", channel="voice", on_sentence=got.append)
+    assert [c.label for c in r.citations] == ["P1"]          # the final answer keeps its citation either way
+    assert "Grievance Redressal Officer" in r.answer
+    if answer_first:
+        assert got and "Grievance Redressal Officer" in " ".join(got)  # spoken once, at the end: latency only
+    else:
+        assert got[0].startswith("Complaints go to")                   # streamed as it arrived
+
+
+# ------------------------------------------------------------------ an LLM that dies mid-stream
+class BreakingStreamLLM(ScriptedLLM):
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.streams = 0
+
+    def chat_stream(self, system, user, max_tokens=900, temperature=0.0, tag="", deadline=None):
+        self.streams += 1
+        yield "Your recorded decision is REJECTED. "
+        raise LLMError("connection reset")
+
+
+def test_a_failure_after_the_first_spoken_sentence_falls_back_without_retrying(tmp_path):
+    """Documented limitation: audio that was already spoken cannot be recalled, and the fallback template restates the
+    decision after the bridge. The safety properties are that the turn is never left unfinished, no retry is attempted
+    after the first token, and no guard-violating text is spoken."""
+    llm = BreakingStreamLLM(intent="explain")
+    ag = agent_for(llm, tmp_path=tmp_path)
+    got = []
+    r = ask(ag, "why was I rejected?", channel="voice", on_sentence=got.append)
+    assert llm.streams == 1                                  # no second streaming attempt after partial output
+    assert {"llm_error", "fallback_template"} <= set(r.guard_flags)
+    spoken = " ".join(got)
+    assert "REJECTED" in spoken                              # what was spoken stays spoken
+    for snt in split_sentences(r.answer)[0]:
+        assert snt in spoken                                 # the fallback answer was spoken in full
+    assert G.answer_flags(r.answer) == []
 
 
 # ------------------------------------------------------------------ graph: streaming behind the guard
@@ -270,7 +377,7 @@ def test_chat_stream_yields_content_deltas_and_logs_the_call(monkeypatch):
     from loan_advisory.agent import llm as L
     seen = {}
 
-    def fake_post(url, json=None, stream=None, timeout=None):
+    def fake_post(url, json=None, stream=None, timeout=None, headers=None):
         seen["timeout"] = timeout
         return _FakeResp(_sse("Hello", " there.", " Bye."))
     monkeypatch.setattr(L.requests, "post", fake_post)
@@ -283,7 +390,7 @@ def test_chat_respects_the_deadline_and_does_not_retry_past_it(monkeypatch):
     from loan_advisory.agent import llm as L
     n = {"posts": 0, "timeouts": []}
 
-    def fake_post(url, json=None, stream=None, timeout=None):
+    def fake_post(url, json=None, stream=None, timeout=None, headers=None):
         n["posts"] += 1
         n["timeouts"].append(timeout)
         return _FakeResp(_sse(*["tok "] * 50), delay=0.05)  # ~2.6 s of streaming
@@ -404,7 +511,7 @@ def test_rules_fallback_sends_an_unmatched_question_to_policy_not_other(tmp_path
 def test_a_read_timeout_at_the_deadline_is_reported_as_deadline(monkeypatch):
     from loan_advisory.agent import llm as L
 
-    def fake_post(url, json=None, stream=None, timeout=None):
+    def fake_post(url, json=None, stream=None, timeout=None, headers=None):
         raise L.requests.exceptions.ReadTimeout("read timed out")
     monkeypatch.setattr(L.requests, "post", fake_post)
     c = L.ChatLLM(base="http://x/v1")

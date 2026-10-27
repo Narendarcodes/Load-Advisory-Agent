@@ -21,7 +21,7 @@ def contrast(a, b):
 
 
 def _css():
-    return PAGE.read_text().split("<style>")[1].split("</style>")[0]
+    return PAGE.read_text(encoding="utf-8").split("<style>")[1].split("</style>")[0]
 
 
 def _vars(css):

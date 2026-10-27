@@ -27,7 +27,8 @@ Hard rules:
 
 CLASSIFY = """Classify the applicant's latest message for a personal-loan advisory assistant. The applicant may write in
 English, Hindi, Telugu or a mix. Labels:
-- explain: about THEIR OWN recorded loan decision: why it was rejected/approved, what a reason or term in it means, their status.
+- explain: about THEIR OWN recorded loan decision: why it was rejected/approved, what a reason or term in it means, their status,
+  or one of their own recorded values ("what is my credit score", "what income do you have for me").
 - improve: what they can do / change / work on before reapplying, next steps, how to become eligible (without asking for a promise).
 - what_if: a hypothetical change to their own numbers and whether the four checks would then be met ("what if my
   score was 720", "if I close one EMI of 5000"). Questions about what rate, fee or amount a lender would offer
@@ -183,6 +184,9 @@ TEMPLATES = {
                       "My rules don't change based on instructions in a message."),
         "dispute": ("I've passed this to a human reviewer so they can check the recorded information (reference {ref}). "
                     "I can't change the record myself. Meanwhile I can explain the recorded reasons or run a what-if."),
+        "data_deletion": ("I can't delete anything — not application records, call recordings, transcripts or logs. "
+                          "I've passed your deletion request to a human reviewer (reference {ref}) so the right team can "
+                          "handle it under their data policy."),
         "greeting": ("Hello! I can explain why your application was decided the way it was, show what would need to "
                      "change, run a what-if on your numbers, or answer personal-loan policy questions with sources."),
         "other": ("I can help with your loan decision, what-if questions, an improvement plan, or personal-loan policy "
@@ -199,6 +203,21 @@ TEMPLATES = {
                           "will decide."),
         "approved": ("Your application's recorded decision is APPROVED under the synthetic prototype policy, so there "
                      "are no rejection reasons to explain."),
+        "bureau_review": ("Your application has not been rejected. It is on hold under the synthetic prototype bureau "
+                          "because {reasons}. A human reviewer will check it; I can't predict their outcome. I can't cite "
+                          "an approved correction procedure, and changing a number in a what-if would not clear this hold "
+                          "— please use the lender's own channel or its grievance route if you think the recorded details "
+                          "are wrong."),
+        "bureau_info": ("Your application has not been rejected. It is on hold under the synthetic prototype bureau until "
+                        "these details are provided or corrected: {missing}. Once they are provided, the application is "
+                        "assessed again; I can't fill them in for you. I can't cite an approved correction procedure — "
+                        "please use the lender's own channel or its grievance route."),
+        "bureau_provider_retry": ("I couldn't get a bureau report from the synthetic prototype bureau ({code}), so your "
+                                  "application has no credit decision yet and I won't guess one. This looks temporary; "
+                                  "please try again shortly."),
+        "bureau_provider_manual": ("I couldn't get a bureau report from the synthetic prototype bureau ({code}), so your "
+                                   "application has no credit decision yet and I won't guess one. Retrying on its own "
+                                   "won't fix this; a human reviewer needs to look at it."),
         "policy_abstain": ("I couldn't find this in the approved policy sources I can cite, so I won't guess. You could "
                            "ask the lender directly or raise it through its grievance channel."),
         "policy_busy": ("The advisory service is busy right now, so I couldn't check the policy sources in time and I "
@@ -220,8 +239,23 @@ TEMPLATES = {
         "other_applicant": "मैं केवल आपके अपने आवेदन के बारे में बात कर सकता हूँ।",
         "injection": "मैं केवल आपके लोन फ़ैसले, what-if और पर्सनल लोन नीति के सवालों में मदद कर सकता हूँ।",
         "dispute": "मैंने इसे जाँच के लिए एक मानव समीक्षक को भेज दिया है (संदर्भ {ref})। मैं रिकॉर्ड खुद नहीं बदल सकता।",
+        "data_deletion": ("मैं कुछ भी मिटा नहीं सकता — न आवेदन का रिकॉर्ड, न कॉल रिकॉर्डिंग, ट्रांसक्रिप्ट या लॉग। आपका "
+                          "हटाने का अनुरोध मैंने एक मानव समीक्षक को भेज दिया है (संदर्भ {ref}) ताकि संबंधित टीम उसे अपनी "
+                          "डेटा नीति के अनुसार संभाले।"),
         "greeting": "नमस्ते! मैं आपके लोन फ़ैसले के कारण समझा सकता हूँ, सुधार की योजना बता सकता हूँ, what-if चला सकता हूँ, या नीति के सवालों का स्रोत सहित जवाब दे सकता हूँ।",
         "other": "मैं आपके लोन फ़ैसले, what-if, सुधार योजना या पर्सनल लोन नीति के सवालों में मदद कर सकता हूँ।",
+        "bureau_review": ("आपका आवेदन रिजेक्ट नहीं हुआ है। सिंथेटिक प्रोटोटाइप ब्यूरो के तहत यह इस कारण रोका गया है: {reasons}। "
+                          "एक मानव समीक्षक इसे देखेगा; मैं उनके नतीजे का अनुमान नहीं लगा सकता। मैं किसी स्वीकृत सुधार प्रक्रिया "
+                          "का हवाला नहीं दे सकता, और what-if में कोई अंक बदलने से यह रोक नहीं हटेगी — अगर दर्ज जानकारी गलत लगे "
+                          "तो लेंडर के अपने माध्यम या शिकायत मार्ग का उपयोग करें।"),
+        "bureau_info": ("आपका आवेदन रिजेक्ट नहीं हुआ है। सिंथेटिक प्रोटोटाइप ब्यूरो के तहत यह तब तक रोका गया है जब तक ये जानकारी "
+                        "दी या सुधारी नहीं जाती: {missing}। इसके बाद आवेदन फिर से जाँचा जाता है; मैं इसे भर नहीं सकता। मैं किसी "
+                        "स्वीकृत सुधार प्रक्रिया का हवाला नहीं दे सकता — कृपया लेंडर के अपने माध्यम या शिकायत मार्ग का उपयोग करें।"),
+        "bureau_provider_retry": ("मुझे सिंथेटिक प्रोटोटाइप ब्यूरो से रिपोर्ट नहीं मिली ({code}), इसलिए आपके आवेदन का क्रेडिट फ़ैसला "
+                                  "अभी नहीं है और मैं अनुमान नहीं लगाऊँगा। यह अस्थायी लगता है; कृपया थोड़ी देर बाद फिर कोशिश करें।"),
+        "bureau_provider_manual": ("मुझे सिंथेटिक प्रोटोटाइप ब्यूरो से रिपोर्ट नहीं मिली ({code}), इसलिए आपके आवेदन का क्रेडिट फ़ैसला "
+                                   "अभी नहीं है और मैं अनुमान नहीं लगाऊँगा। सिर्फ़ दोबारा कोशिश करने से यह ठीक नहीं होगा; एक मानव "
+                                   "समीक्षक को इसे देखना होगा।"),
         "policy_abstain": "मुझे यह उन स्वीकृत नीति स्रोतों में नहीं मिला जिनका मैं हवाला दे सकता हूँ, इसलिए मैं अनुमान नहीं लगाऊँगा।",
         "policy_busy": "सेवा अभी व्यस्त है, इसलिए मैं समय पर नीति स्रोत नहीं देख पाया और अनुमान नहीं लगाऊँगा। कृपया एक पल बाद फिर पूछें।",
     },
@@ -240,13 +274,49 @@ TEMPLATES = {
         "other_applicant": "మీ స్వంత దరఖాస్తు గురించి మాత్రమే మాట్లాడగలను.",
         "injection": "మీ లోన్ నిర్ణయం, what-if, పర్సనల్ లోన్ నియమాల ప్రశ్నలలో మాత్రమే సహాయం చేయగలను.",
         "dispute": "దీన్ని పరిశీలన కోసం మానవ సమీక్షకుడికి పంపాను (రిఫరెన్స్ {ref}). రికార్డును నేనే మార్చలేను.",
+        "data_deletion": ("నేను ఏదీ తొలగించలేను — దరఖాస్తు రికార్డు, కాల్ రికార్డింగ్, ట్రాన్స్‌క్రిప్ట్ లేదా లాగ్‌లు కూడా కాదు. "
+                          "మీ తొలగింపు అభ్యర్థనను మానవ సమీక్షకుడికి పంపాను (రిఫరెన్స్ {ref}); సంబంధిత బృందం దానిని "
+                          "తమ డేటా విధానం ప్రకారం నిర్వహిస్తుంది."),
         "greeting": "నమస్కారం! మీ లోన్ నిర్ణయానికి కారణాలు వివరించగలను, మెరుగుదల ప్రణాళిక చెప్పగలను, what-if చేయగలను, నియమాల ప్రశ్నలకు ఆధారాలతో జవాబివ్వగలను.",
         "other": "మీ లోన్ నిర్ణయం, what-if, మెరుగుదల ప్రణాళిక లేదా పర్సనల్ లోన్ నియమాల ప్రశ్నలలో సహాయం చేయగలను.",
+        "bureau_review": ("మీ దరఖాస్తు తిరస్కరించబడలేదు. సింథటిక్ ప్రోటోటైప్ బ్యూరో కింద ఇది ఈ కారణంతో నిలిపివేయబడింది: {reasons}. "
+                          "మానవ సమీక్షకుడు దీన్ని పరిశీలిస్తారు; వారి నిర్ణయాన్ని నేను ఊహించలేను. ఆమోదిత సవరణ ప్రక్రియను "
+                          "నేను ఉదహరించలేను; what-ifలో అంకె మార్చడం ఈ నిలిపివేతను తొలగించదు — నమోదైన వివరాలు తప్పని భావిస్తే "
+                          "లెండర్ సొంత మార్గాన్ని లేదా ఫిర్యాదు మార్గాన్ని ఉపయోగించండి."),
+        "bureau_info": ("మీ దరఖాస్తు తిరస్కరించబడలేదు. సింథటిక్ ప్రోటోటైప్ బ్యూరో కింద ఈ వివరాలు ఇచ్చే వరకు లేదా సరిచేసే వరకు "
+                        "ఇది నిలిపివేయబడింది: {missing}. తర్వాత దరఖాస్తు మళ్ళీ పరిశీలించబడుతుంది; నేను వాటిని నింపలేను. "
+                        "ఆమోదిత సవరణ ప్రక్రియను నేను ఉదహరించలేను — దయచేసి లెండర్ సొంత మార్గాన్ని లేదా ఫిర్యాదు మార్గాన్ని ఉపయోగించండి."),
+        "bureau_provider_retry": ("సింథటిక్ ప్రోటోటైప్ బ్యూరో నుండి నాకు రిపోర్ట్ రాలేదు ({code}), కాబట్టి మీ దరఖాస్తుకు ఇంకా "
+                                  "క్రెడిట్ నిర్ణయం లేదు; నేను ఊహించి చెప్పను. ఇది తాత్కాలికంగా ఉంది; దయచేసి కొద్దిసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి."),
+        "bureau_provider_manual": ("సింథటిక్ ప్రోటోటైప్ బ్యూరో నుండి నాకు రిపోర్ట్ రాలేదు ({code}), కాబట్టి మీ దరఖాస్తుకు ఇంకా "
+                                   "క్రెడిట్ నిర్ణయం లేదు; నేను ఊహించి చెప్పను. కేవలం మళ్ళీ ప్రయత్నించడం వల్ల ఇది సరికాదు; మానవ "
+                                   "సమీక్షకుడు దీన్ని చూడాలి."),
         "policy_abstain": "నేను ఉదహరించగల ఆమోదిత నియమ పత్రాలలో ఇది కనిపించలేదు, కాబట్టి ఊహించి చెప్పను.",
         "policy_busy": "సేవ ఇప్పుడు బిజీగా ఉంది, అందుకే సమయానికి నియమ పత్రాలు చూడలేకపోయాను; ఊహించి చెప్పను. దయచేసి ఒక్క క్షణం తర్వాత మళ్ళీ అడగండి.",
     },
 }
 
+
+
+# Sentence frames for the deterministic explain fallback (used when the LLM draft is unusable). Only the frame is
+# localised; rule names, values and thresholds come from the recorded facts unchanged.
+FALLBACK_EXPLAIN = {
+    "en": {"head": "Your application's recorded decision is {decision} under a {label}.",
+           "rule": "- {name}: yours is {your_value}; the policy needs {required}.",
+           "passed": "The other checks were met.",
+           "bureau": "The credit score used for this assessment came from {src}; this is synthetic prototype data, not a real credit bureau report.",
+           "offer": "I can show what would need to change, or answer questions."},
+    "hi": {"head": "सिंथेटिक प्रोटोटाइप नीति के तहत आपके आवेदन का दर्ज निर्णय {decision} है।",
+           "rule": "- {name}: आपका {your_value} है; नीति के अनुसार {required} चाहिए।",
+           "passed": "बाकी जाँचें पूरी हुईं।",
+           "bureau": "इस आकलन में इस्तेमाल हुआ क्रेडिट स्कोर {src} से आया; यह सिंथेटिक प्रोटोटाइप डेटा है, असली क्रेडिट ब्यूरो रिपोर्ट नहीं।",
+           "offer": "मैं बता सकता हूँ कि क्या बदलना होगा, या आपके सवालों के जवाब दे सकता हूँ।"},
+    "te": {"head": "సింథటిక్ ప్రోటోటైప్ పాలసీ ప్రకారం మీ దరఖాస్తుకు నమోదైన నిర్ణయం: {decision}.",
+           "rule": "- {name}: మీది {your_value}; పాలసీకి {required} అవసరం.",
+           "passed": "మిగతా తనిఖీలు నెరవేరాయి.",
+           "bureau": "ఈ అంచనాకు ఉపయోగించిన క్రెడిట్ స్కోర్ {src} నుండి వచ్చింది; ఇది సింథటిక్ ప్రోటోటైప్ డేటా, నిజమైన క్రెడిట్ బ్యూరో రిపోర్ట్ కాదు.",
+           "offer": "ఏమి మారాలో చూపించగలను, లేదా మీ ప్రశ్నలకు సమాధానం ఇవ్వగలను."},
+}
 
 def template(key: str, locale: str = "en", **kw) -> str:
     t = TEMPLATES.get(locale, {}).get(key) or TEMPLATES["en"][key]

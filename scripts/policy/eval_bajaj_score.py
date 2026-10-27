@@ -117,7 +117,7 @@ def permitted(cid, row, meta, profiles):
 def load_runs(d: Path):
     """runs.jsonl/meta.json, or their .gz copies committed under data/evaluation/rag/bajaj_v1/results/."""
     import gzip
-    op = lambda n: gzip.open(d / f"{n}.gz", "rt") if (d / f"{n}.gz").exists() and not (d / n).exists() else open(d / n)
+    op = lambda n: gzip.open(d / f"{n}.gz", "rt", encoding="utf-8") if (d / f"{n}.gz").exists() and not (d / n).exists() else open(d / n, encoding="utf-8")
     with op("runs.jsonl") as f:
         runs = [json.loads(l) for l in f]
     with op("meta.json") as f:
@@ -134,7 +134,7 @@ def main():
     import yaml
     runs, meta_all = load_runs(Path(a.runs))
     meta = meta_all["chunk_meta"]
-    profiles = {p.stem: yaml.safe_load(p.read_text()) for p in Path(a.profiles).glob("*.yaml")}
+    profiles = {p.stem: yaml.safe_load(p.read_text(encoding="utf-8")) for p in Path(a.profiles).glob("*.yaml")}
     dev = [r for r in runs if r["split"] == "dev"]
     test = [r for r in runs if r["split"] == "test"]
     dev_ans = [r for r in dev if not r["expect_abstain"]]
@@ -218,8 +218,8 @@ def main():
         "misses_test_hybrid_rerank@10": [r["qid"] for r in test_ans if not set(ranks[r["qid"]]["hybrid_rerank"]) & set(r["relevant"])],
     }
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
-    (out / "report.json").write_text(json.dumps(report, indent=1) + "\n")
-    with (out / "rankings.jsonl").open("w") as f:
+    (out / "report.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    with (out / "rankings.jsonl").open("w", encoding="utf-8") as f:
         for r in runs:
             f.write(json.dumps({"qid": r["qid"], "split": r["split"], "ranks": ranks[r["qid"]],
                                 "top_scores": {s: scores[s][r["qid"]] for s in SYSTEMS},

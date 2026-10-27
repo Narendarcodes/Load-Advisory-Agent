@@ -20,7 +20,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from rag.retrieve import (BM25Index, CrossEncoderReranker, DenseIndex, RetrievalFilter,  # noqa: E402
+from rag.index_meta import index_identity  # noqa: E402
+from rag.retrieve import (BM25Index, CrossEncoderReranker, DenseIndex, DOC_PREFIX, RetrievalFilter,  # noqa: E402
                           doc_string, load_profile, profile_filter)
 
 POLICY = Path(os.environ.get("LOAN_POLICY_DIR", "/root/hx/loan/policy"))
@@ -37,14 +38,17 @@ def main():
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     if dev == "cuda":
         torch.cuda.set_per_process_memory_fraction(min(1.0, 6 * 2**30 / torch.cuda.get_device_properties(0).total_memory))
-    chunks = [json.loads(l) for l in (POLICY / "chunks.jsonl").open()]
+    chunks = [json.loads(l) for l in (POLICY / "chunks.jsonl").open(encoding="utf-8")]
     by_id = {c["chunk_id"]: c for c in chunks}
-    bench = [json.loads(l) for l in BENCH.open()]
+    bench = [json.loads(l) for l in BENCH.open(encoding="utf-8")]
     t0 = time.time()
     emb = SentenceTransformer(EMBED, device=dev, model_kwargs={"torch_dtype": torch.bfloat16})
     vecs = emb.encode([doc_string(c) for c in chunks], batch_size=32, normalize_embeddings=True, show_progress_bar=False)
     index_s = time.time() - t0
-    dense = DenseIndex(chunks, vecs, path=str(POLICY / "qdrant_v2"))
+    dense = DenseIndex(chunks, vecs, path=str(POLICY / "qdrant_v2"),
+                       meta=index_identity(embed_model=EMBED, dimension=emb.get_sentence_embedding_dimension(),
+                                           doc_prefix=DOC_PREFIX, query_prompt="QuestionAnswering",
+                                           query_prompt_text=(getattr(emb, "prompts", {}) or {}).get("QuestionAnswering")))
     bm25 = BM25Index(chunks)
     rr = CrossEncoderReranker(RERANK, device=dev)
     profiles, rows = {}, []
@@ -79,8 +83,8 @@ def main():
             "chunk_meta": {c["chunk_id"]: {"doc": c["document_id"], "status": c["approval_status"], "lender": c.get("lender_id"),
                                            "entity": c.get("applies_to_entity"), "source_type": c.get("source_type")} for c in chunks}}
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "runs.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
-    (OUT / "meta.json").write_text(json.dumps(meta))
+    (OUT / "runs.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    (OUT / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
     print(json.dumps({k: v for k, v in meta.items() if k != "chunk_meta"}, indent=1))
 
 

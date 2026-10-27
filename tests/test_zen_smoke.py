@@ -1,5 +1,4 @@
 """ZEN smoke: import, load, evaluate, structured output, trace, perf."""
-import json
 from pathlib import Path
 
 import zen

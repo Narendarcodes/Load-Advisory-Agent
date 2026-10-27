@@ -10,8 +10,11 @@ Refactored after P1 (see Git history: P0 → Discovery → Status → P1 → ref
   Depends on infrastructure + decision_engine.
 - `apps/api/src/loan_advisory/infrastructure/` — Frappe boundary: REST client,
   mock store, explicit field mapping. Only place that knows Frappe shapes.
+- `apps/bureau/src/synthetic_bureau/` — local-only synthetic bureau service
+  (FastAPI, `127.0.0.1` only) and deterministic case generator. Never real data.
 - `decision_engine/` — ZEN boundary: `policies/`, `decisions/` (JDM),
-  `schemas/` (canonical pydantic contract), `evidence/`, `paths.py` (root helper).
+  `schemas/` (canonical pydantic contract), `evidence/`, `bureau/` (data-quality
+  gates + score precedence), `paths.py` (root helper).
   No Frappe imports allowed here.
 - `data/` — `synthetic/` (dev/test fixtures + provenance note in docs);
   `evaluation/` reserved for evaluation-only data. Never mixed.

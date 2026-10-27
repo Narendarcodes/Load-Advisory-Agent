@@ -48,7 +48,8 @@ _RULES = [  # regex fallback when the LLM classifier is unavailable
     ("improve", re.compile(r"improv|what (can|should) i do|next step|re-?apply|\bfix\b|\bplan\b|become eligible|qualify next", re.I)),
     ("policy", re.compile(r"\b(rbi|policy|policies|fee|charges?|interest|kfs|key fact|grievance|complain|ombudsman|foreclos|"
                           r"prepay|penal|kyc|cooling|recovery|privacy|bajaj|nbfc|bank|written|documents?)\b", re.I)),
-    ("explain", re.compile(r"why|reason|reject|declin|denied|turned down|explain|what happened|my decision|status|mean", re.I)),
+    ("explain", re.compile(r"why|reason|reject|declin|denied|turned down|explain|what happened|my decision|status|mean|"
+                           r"\bmy\s+(recorded\s+)?(credit score|cibil score|monthly income|income|salary|emis?|foir|job tenure)\b", re.I)),
     ("greeting", re.compile(r"^\s*(hi|hello|hey|namaste|namaskar|thanks|thank you|ok|okay)\b", re.I)),
 ]
 # High-precision intents that skip the LLM classifier (AGENT_FAST_CLASSIFY). Used only when exactly ONE matches;
@@ -56,7 +57,9 @@ _RULES = [  # regex fallback when the LLM classifier is unavailable
 _FAST = [
     ("explain", re.compile(r"\bwhy\b.{0,40}\b(reject\w*|declin\w*|denied|turned down|refused|not approved)\b|"
                            r"क्यों.{0,30}(रिजेक्ट|अस्वीकार|नामंज़ूर|नामंजूर|ख़ारिज|खारिज)|(रिजेक्ट|अस्वीकार|नामंज़ूर|नामंजूर|ख़ारिज|खारिज).{0,30}क्यों|"
-                           r"ఎందుకు.{0,30}(తిరస్కర|రిజెక్ట్)|(తిరస్కర|రిజెక్ట్).{0,30}ఎందుకు", re.I)),
+                           r"ఎందుకు.{0,30}(తిరస్కర|రిజెక్ట్)|(తిరస్కర|రిజెక్ట్).{0,30}ఎందుకు|"
+                           r"\b(what(?:'s| is| was)|tell me|show me)\s+my\s+(recorded\s+)?(credit score|cibil score|"
+                           r"monthly income|income|salary|emis?|foir|job tenure)\b", re.I)),
     ("improve", re.compile(r"\b(what (can|should) i do|how (can|do) i improve|improve (my|before|so)|before i re-?apply|"
                            r"steps to improve)\b|सुधार|మెరుగుపర", re.I)),
     ("policy", re.compile(r"\b(complain\w*|grievance|ombudsman|key fact statement|kfs)\b|शिकायत|ఫిర్యాదు", re.I)),
@@ -70,6 +73,7 @@ _FAST_NOT = re.compile(r"\b(rate|fee|fees|charges?|interest|offer|bajaj|bank|len
 class AgentState(TypedDict, total=False):
     request: dict
     session: dict | None
+    turn_key: str | None  # unique per run(): keys the streaming sink and the trace context (never client-supplied)
     history: Annotated[list, operator.add]
     t0: float
     trace: list
@@ -101,10 +105,10 @@ class AdvisoryAgent:
                  checkpointer=None, settings: AgentSettings | None = None):
         self.tools, self.llm, self.policy, self.handoff = decision_tools, llm, policy_tools, handoff
         self.settings = settings or AgentSettings.from_env()
-        self._streams: dict = {}  # request_id -> {"emit", "spoken", "first_ms"} for sentence streaming (not graph state)
+        self._streams: dict = {}  # turn_key -> {"emit", "spoken", "first_ms"} for sentence streaming (not graph state)
         self.profile = profile or {}
         self.audit_path = Path(audit_path or os.environ.get("AGENT_AUDIT_LOG", "agent_out/turns.jsonl"))
-        self._trace_ctx: dict = {}  # request_id -> OTel context of the turn's root span (not stored in graph state)
+        self._trace_ctx: dict = {}  # turn_key -> OTel context of the turn's root span (not stored in graph state)
         self.graph = self._build().compile(checkpointer=checkpointer or MemorySaver())
 
     # ------------------------------------------------------------------ public API
@@ -113,38 +117,62 @@ class AdvisoryAgent:
         has passed the deterministic guards; together the sentences are exactly the final answer to speak."""
         thread = f"{session.applicant_ref if session else 'anon'}::{request.conversation_id}"  # scoped per applicant
         sess_hash = hashlib.sha256(thread.encode()).hexdigest()[:16]
+        corr_hash = hashlib.sha256(str(request.request_id).encode()).hexdigest()[:16]
         with obs.span("advisor.turn", kind="CHAIN", context=trace_context,
                       **{"session.id": sess_hash, "channel": request.channel, "locale": request.locale,
-                         "literacy": request.literacy, "input.value": obs.content(request.message)}) as root:
+                         "literacy": request.literacy, "input.value": obs.content(request.message),
+                         "langfuse.trace.name": "advisory.turn",
+                         "langfuse.trace.tags": ["loan-advisory", request.channel, request.locale],
+                         "langfuse.trace.metadata.correlation_id": json.dumps(corr_hash),
+                         "langfuse.trace.metadata.channel": json.dumps(request.channel),
+                         "langfuse.observation.input": obs.lf_content(request.message)}) as root:
+            # A client may repeat request_id (retries, double submits). Neither the streaming sink nor the trace context
+            # may be keyed by it, or one turn's sentences would be spoken into another turn's session.
+            turn_key = uuid.uuid4().hex
             if root is not None:
-                self._trace_ctx[request.request_id] = obs.current_context()
+                self._trace_ctx[turn_key] = obs.current_context()
             if on_sentence is not None:
-                self._streams[request.request_id] = {"emit": on_sentence, "spoken": [], "first_ms": None, "t0": time.perf_counter()}
+                self._streams[turn_key] = {"emit": on_sentence, "spoken": [], "first_ms": None, "t0": time.perf_counter()}
             try:
-                out = self.graph.invoke({"request": request.model_dump(), "session": session.model_dump() if session else None},
+                out = self.graph.invoke({"request": request.model_dump(), "session": session.model_dump() if session else None,
+                                         "turn_key": turn_key},
                                         config={"configurable": {"thread_id": thread}})
             finally:
-                self._trace_ctx.pop(request.request_id, None)
-                self._streams.pop(request.request_id, None)
+                self._trace_ctx.pop(turn_key, None)
+                self._streams.pop(turn_key, None)
             resp = AgentResponse(**out["response"])
             if root is not None:
                 resp.trace_id = format(root.get_span_context().trace_id, "032x")  # = Phoenix trace id
                 obs.set_attrs(root, **{"agent.intent": resp.intent, "agent.action": resp.action, "agent.abstained": resp.abstained,
                                        "agent.guard_flags": resp.guard_flags, "agent.citations": [c.document_id for c in resp.citations],
                                        "agent.evidence_refs": resp.evidence_refs, "agent.total_ms": resp.timings.get("total_ms"),
-                                       "output.value": obs.content(resp.answer)})
+                                       "output.value": obs.content(resp.answer),
+                                       "langfuse.trace.tags": ["loan-advisory", request.channel, request.locale, resp.intent or "unknown"],
+                                       "langfuse.observation.output": obs.lf_content(resp.answer)},
+                              **obs.lf_meta(intent=resp.intent, action=resp.action, abstained=resp.abstained,
+                                            guard_flags=resp.guard_flags,
+                                            citation_document_ids=[c.document_id for c in resp.citations],
+                                            evidence_refs=resp.evidence_refs, total_ms=resp.timings.get("total_ms"),
+                                            outcome=("abstained" if resp.abstained else "answered")))
             return resp
 
     def _node(self, name, fn):
         """Wrap a graph node in an OTel span parented to the turn's root span."""
         def wrapped(s):
-            ctx = self._trace_ctx.get((s.get("request") or {}).get("request_id"))
+            ctx = self._trace_ctx.get(s.get("turn_key"))
             with obs.span(f"node.{name}", kind="CHAIN", context=ctx, **{"graph.node": name}) as sp:
                 out = fn(s)
                 if sp is not None and isinstance(out, dict):
+                    lf = obs.lf_meta(node=name, status=out.get("status"), intent=out.get("intent"),
+                                     action=out.get("action"), abstained=out.get("abstained"),
+                                     guard_flags=out.get("guard_flags") or None, attempts=out.get("attempts"),
+                                     citation_labels=out.get("cited"),
+                                     retrieval_count=len(out["passages"]) if isinstance(out.get("passages"), list) else None,
+                                     retrieval_mode=(out.get("retrieval") or {}).get("mode") if isinstance(out.get("retrieval"), dict) else None,
+                                     retrieval_failed=bool((out.get("retrieval") or {}).get("error")) if isinstance(out.get("retrieval"), dict) else None)
                     obs.set_attrs(sp, **{f"graph.{k}": out[k] for k in ("status", "intent", "action", "attempts", "abstained") if k in out},
                                   **({"graph.guard_flags": out["guard_flags"]} if out.get("guard_flags") else {}),
-                                  **({"graph.request_flags": out["flags"]} if out.get("flags") else {}))
+                                  **({"graph.request_flags": out["flags"]} if out.get("flags") else {}), **lf)
                 return out
         wrapped.__name__ = name
         return wrapped
@@ -172,7 +200,7 @@ class AdvisoryAgent:
         return {"deadline": d} if d != float("inf") else {}
 
     def _stream(self, s):
-        return self._streams.get((s.get("request") or {}).get("request_id"))
+        return self._streams.get(s.get("turn_key"))
 
     def _emit(self, s, text: str):
         st = self._stream(s)
@@ -243,7 +271,11 @@ class AdvisoryAgent:
     def classify(self, s):
         req = self._req(s)
         flags = G.request_flags(req.message, req.application_ref)
-        if req.application_ref and DISPUTE.search(req.message) and not flags:
+        # A dispute is a claim about the applicant's own recorded data ("my income in the record is wrong"). A how-to or
+        # process question that merely mentions a wrong entry ("how do I remove a wrong CIBIL entry?") is a policy
+        # question and must not fabricate a handoff.
+        if req.application_ref and DISPUTE.search(req.message) and not flags \
+                and not G.is_informational_question(req.message):
             flags = ["dispute"]
         if flags:
             self._ev(s, "classify", intent="boundary", flags=flags, by="guard")
@@ -295,8 +327,15 @@ class AdvisoryAgent:
             return {"status": "not_authorized"}
         except FrappeUnavailable:
             return {"status": "unavailable"}
+        bf = F.bureau_facts(rec)
         if rec is None:
             st = "no_decision"
+        elif bf and bf["outcome_kind"] == "PROVIDER_FAILURE":
+            st = "bureau_provider_error"
+        elif bf and bf["outcome_kind"] == "DATA_QUALITY_HOLD":
+            st = "bureau_review"
+        elif bf and bf["outcome_kind"] == "EVALUATION_ERROR":
+            st = "manual_review"
         elif rec.get("lifecycle_state") == "INFO_REQUESTED" or rec.get("decision") == "ERROR" and rec.get("lifecycle_state") != "MANUAL_REVIEW":
             st = "info_requested"
         elif rec.get("lifecycle_state") == "MANUAL_REVIEW":
@@ -477,12 +516,13 @@ class AdvisoryAgent:
     def boundary(self, s):
         req, sess = self._req(s), self._session(s)
         flags = s["flags"]
-        key = next(k for k in ("injection", "misrepresentation", "other_applicant", "dispute", "override", "edit_record", "auto_submit", "not_available", "guarantee")
+        key = next(k for k in ("injection", "misrepresentation", "other_applicant", "dispute", "data_deletion", "override", "edit_record", "auto_submit", "not_available", "guarantee")
                    if k in flags)
         out = {"action": "refuse", "abstained": key in ("guarantee", "not_available")}
-        if key == "dispute":
-            ref = self.handoff.create("data_dispute", [req.application_ref], req.message) if self.handoff else None
-            out.update(action="handoff", handoff_ref=ref, draft=P.template("dispute", req.locale, ref=ref or "pending"))
+        if key in ("dispute", "data_deletion"):
+            category = "data_dispute" if key == "dispute" else "data_deletion"
+            ref = self.handoff.create(category, [req.application_ref], req.message) if self.handoff else None
+            out.update(action="handoff", handoff_ref=ref, draft=P.template(key, req.locale, ref=ref or "pending"))
         else:
             out["draft"] = P.template(key, req.locale)
         if key == "guarantee" and req.application_ref:
@@ -512,6 +552,22 @@ class AdvisoryAgent:
         elif st == "info_requested":
             missing = (rec.get("inputs") or {}).get("missing_fields") or ["details flagged as invalid"]
             txt, action = P.template("info_requested", missing=", ".join(m.replace("_", " ") for m in missing)), "clarify"
+        elif st == "bureau_review":
+            bf = F.bureau_facts(rec) or {}
+            if bf.get("info_requested"):
+                missing = bf.get("info_requested_fields") or ["details flagged as invalid"]
+                txt, action = P.template("bureau_info", req.locale,
+                                         missing=", ".join(m.replace("_", " ") for m in missing)), "clarify"
+            else:
+                reasons = "; ".join(bf.get("review_reasons_plain") or ["the bureau data could not be verified"])
+                txt, action = P.template("bureau_review", req.locale, reasons=reasons), "handoff"
+        elif st == "bureau_provider_error":
+            bf = F.bureau_facts(rec) or {}
+            pe = bf.get("provider_error") or {}
+            retryable = bool(pe.get("retryable"))
+            txt = P.template("bureau_provider_retry" if retryable else "bureau_provider_manual", req.locale,
+                             code=pe.get("code") or "BUREAU_ERROR")
+            action = "clarify" if retryable else "handoff"
         elif st == "manual_review":
             txt, action = P.template("manual_review", flags=", ".join(rec.get("flags") or ["flagged for review"])), "handoff"
         elif st == "approved":
@@ -520,7 +576,7 @@ class AdvisoryAgent:
             txt, action = P.template("bad_what_if", why=s["what_if"]["error"]), "clarify"
         else:
             txt = P.template("greeting" if s.get("intent") == "greeting" else "other", req.locale)
-        declined = st in ("no_decision", "unavailable") or (st in (None, "ok") and s.get("intent") == "other")
+        declined = st in ("no_decision", "unavailable", "bureau_provider_error") or (st in (None, "ok") and s.get("intent") == "other")
         return {"draft": txt, "action": action, "abstained": declined,
                 "trace": s["trace"], "plan": s.get("plan")}
 
@@ -554,7 +610,7 @@ class AdvisoryAgent:
             by_label = {p["label"]: p for p in s.get("passages") or []}
             cites = [by_label[c]["citation"] for c in s.get("cited") or [] if c in by_label]
         missing = []
-        if s.get("status") == "info_requested":
+        if s.get("status") in ("info_requested", "bureau_review"):
             missing = ((s.get("record") or {}).get("inputs") or {}).get("missing_fields") or []
         plan_steps = (s.get("plan") or {}).get("steps") or []
         timings = {"total_ms": round((time.perf_counter() - s["t0"]) * 1000, 1), "llm_calls": list(self.llm.calls[-6:]) if hasattr(self.llm, "calls") else []}
@@ -583,9 +639,13 @@ class AdvisoryAgent:
     # ------------------------------------------------------------------ facts / fallback / audit
     def _facts(self, s):
         rec = s["record"]
-        base = {"recorded_decision": rec["decision"], "application_ref": rec["application_ref"],
+        base = {"recorded_decision": rec["decision"], "recorded_outcome": rec.get("outcome") or rec["decision"],
+                "application_ref": rec["application_ref"],
                 "policy": F.SYNTHETIC_LABEL, "failed_rules_the_only_reasons": F.reason_facts(rec),
                 "passed_rules_not_reasons": F.passed_facts(rec)}
+        bf = F.bureau_facts(rec)
+        if bf:
+            base["bureau"] = bf
         if s["intent"] == "improve":
             p = s["plan"]
             base["tasks"] = [{k: v for k, v in t.items() if k in ("name", "rule_id", "task", "target_display", "gap_display", "general_guidance", "alt")}
@@ -611,12 +671,16 @@ class AdvisoryAgent:
         rec = s["record"]
         lines = []
         if intent == "explain":
-            lines.append(f"Your application's recorded decision is {rec['decision']} under a {F.SYNTHETIC_LABEL}.")
+            fx = P.FALLBACK_EXPLAIN.get(req.locale, P.FALLBACK_EXPLAIN["en"])
+            lines.append(fx["head"].format(decision=rec["decision"], label=F.SYNTHETIC_LABEL))
             for r in F.reason_facts(rec):
-                lines.append(f"- {r['name']}: yours is {r['your_value']}; the policy needs {r['required']}.")
+                lines.append(fx["rule"].format(name=r["name"], your_value=r["your_value"], required=r["required"]))
             if F.passed_facts(rec):
-                lines.append("The other checks were met.")
-            lines.append("I can show what would need to change, or answer questions.")
+                lines.append(fx["passed"])
+            bf = F.bureau_facts(rec)
+            if bf and bf.get("score_source_plain"):
+                lines.append(fx["bureau"].format(src=bf["score_source_plain"]))
+            lines.append(fx["offer"])
         elif intent == "improve":
             lines.append(f"Under the {F.SYNTHETIC_LABEL}:")
             for i, t in enumerate(s["plan"]["steps"], 1):
