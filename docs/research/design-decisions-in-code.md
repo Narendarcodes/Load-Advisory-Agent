@@ -58,8 +58,10 @@ What triggers a handoff in the built system (`graph.py` `boundary`, `simple`):
 - **What is shown back to the applicant:** their own recorded decision, the rule checks behind it and the values they submitted
   (`not_available` template wording). Not shown: who handled the file, internal grades/scores (`not_available` guard).
 - **Logs:** tracing is off by default; when on, spans carry ids, intents, flags, token counts and timings only. Message and answer
-  text are recorded only with `AGENT_TRACE_CONTENT=1` ("PII minimisation") (`observability.py`). The audit log and handoff queue do
-  store message text.
+  text are recorded only with an explicit content flag: `AGENT_TRACE_CONTENT=1` for Phoenix and `LANGFUSE_CAPTURE_CONTENT=1` for the
+  optional Langfuse exporter; the flags are independent and both default off. Langfuse masks `input.value`, `output.value`,
+  `llm.system` and `llm.error` at export (`observability.py`, `langfuse_config.py`, `docs/observability/langfuse.md`). The audit log
+  and handoff queue do store message text.
 - **Retention period, anonymisation policy, consent capture:** not set by the project. RBI's Digital Lending Directions, 2025
   require lenders to have and disclose a data-storage policy covering how long data can be stored (see
   `docs/research/regulation-and-design-references.md`). Who must decide: the lender deploying it (and VaaniLabs as its provider).
