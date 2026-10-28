@@ -34,7 +34,7 @@ def traced(monkeypatch):
     monkeypatch.setattr(obs, "_TRACER", provider.get_tracer("loan_advisory.agent"))
     monkeypatch.setattr(obs, "_LF_CONFIG", LangfuseConfig(enabled=True, public_key="pk-lf-test",
                                                           secret_key="sk-lf-test"))
-    monkeypatch.setattr(obs, "CONTENT", False)
+    monkeypatch.delenv("AGENT_TRACE_CONTENT", raising=False)
     yield SimpleNamespace(exported=exporter.get_finished_spans, exporter=exporter)
     obs.reset()
 
@@ -226,7 +226,7 @@ def test_generation_failure_exports_a_category_and_masks_the_provider_body(trace
 def test_generation_text_is_opt_in_and_still_masked_for_langfuse(traced, monkeypatch):
     monkeypatch.setattr(obs, "_LF_CONFIG", LangfuseConfig(enabled=True, public_key="pk", secret_key="sk",
                                                           capture_content=True))
-    monkeypatch.setattr(obs, "CONTENT", True)  # Phoenix-style free text also on, to exercise the export mask
+    monkeypatch.setenv("AGENT_TRACE_CONTENT", "1")  # Phoenix-style free text also on, to exercise the export mask
     _install(monkeypatch, _sse())
     L.ChatLLM(base="http://127.0.0.1:9/v1").chat("SYSTEM SECRET", "USER SECRET")
     sp = next(s for s in traced.exported() if s.name == "llm.chat")

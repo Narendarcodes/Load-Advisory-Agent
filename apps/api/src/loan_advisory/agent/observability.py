@@ -36,7 +36,6 @@ _PROVIDER = None
 _LF_CONFIG = None
 _ATEXIT_REGISTERED = False
 _LOCK = threading.Lock()
-CONTENT = os.environ.get("AGENT_TRACE_CONTENT") == "1"
 _LOG = logging.getLogger(__name__)
 
 # OpenInference kind -> Langfuse observation type (Langfuse defaults unknown OTel spans to "span").
@@ -230,9 +229,14 @@ def set_attrs(sp, **attrs):
             _LOG.warning("dropped span attributes (%s)", type(e).__name__)
 
 
+def content_enabled() -> bool:
+    """Read at call time so a process that sets AGENT_TRACE_CONTENT later is not stuck with the import-time value."""
+    return os.environ.get("AGENT_TRACE_CONTENT") == "1"
+
+
 def content(text: str | None) -> str | None:
     """Only export free text when AGENT_TRACE_CONTENT=1."""
-    return (text or "")[:4000] if CONTENT else None
+    return (text or "")[:4000] if content_enabled() else None
 
 
 def tool(name: str):
