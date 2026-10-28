@@ -16,6 +16,12 @@ Refactored after P1 (see Git history: P0 → Discovery → Status → P1 → ref
   `schemas/` (canonical pydantic contract), `evidence/`, `bureau/` (data-quality
   gates + score precedence), `paths.py` (root helper).
   No Frappe imports allowed here.
+- `apps/api/src/loan_advisory/agent/` — advisory agent: graph, guards, tools,
+  state paths, HTTP server, observability. Consumes Decision Evidence only.
+- `rag/` — policy retrieval: corpus assembly, hybrid Qdrant + BM25 retrieval,
+  rerank, index provenance metadata.
+- `apps/voice/agent_worker.py` — LiveKit voice worker (STT/TTS around the same graph).
+- `apps/web/chat/` — static chat client served by the API.
 - `data/` — `synthetic/` (dev/test fixtures + provenance note in docs);
   `evaluation/` reserved for evaluation-only data. Never mixed.
 - `infra/frappe/` — deployment/config only (compose file, apps.json).
@@ -31,12 +37,15 @@ Refactored after P1 (see Git history: P0 → Discovery → Status → P1 → ref
 - Frappe-specific code → `infrastructure/`. ZEN-specific → `decision_engine/`.
 - Domain contract = `decision_engine/schemas/` (no separate `domain/` until the
   agent needs its own models — not created yet).
-- Future agent (`agent/`, `prompts/`, `evaluation/`) consumes Decision Evidence
+- Future agent work (`prompts/`, `evaluation/`) consumes Decision Evidence
   only — never MariaDB, never Frappe docs, never raw ZEN internals.
 - Rules live in ZEN models, never in prompts.
 
-## Future placement
+## Unapproved future placement (planning only — do not implement)
 
-Agent graph/tools → `agent/`; prompt pack → `prompts/` (versions included);
-eval datasets/runners/results → `evaluation/`; custom Frappe app →
-`apps/frappe_app/`; CI → `.github/workflows/`; observability → `infra/`.
+Nothing in this section exists or is approved. The authoritative roadmap is unresolved; see
+[hardening-baseline.md](hardening-baseline.md).
+
+Prompt pack → `prompts/` (versions included); eval datasets/runners/results → `evaluation/`;
+custom Frappe app → `apps/frappe_app/`; observability deployment → `infra/`.
+The agent itself is already at `apps/api/src/loan_advisory/agent/`, not a future `agent/` root.

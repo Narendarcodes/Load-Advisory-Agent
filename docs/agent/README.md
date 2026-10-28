@@ -45,7 +45,7 @@ boundary → finalize;  simple → finalize;  finalize → END
 | `validate` | Checks for guarantee or decision language (negation-aware), NBFC written-reason claims, ungrounded numbers (every number must come from the record, thresholds, ZEN targets, the message or the cited passages), and citation labels that must be valid, present and absent on abstention | – |
 | `boundary` | Fixed templates (en/hi/te). A dispute files a human handoff (`create_human_handoff`). A guarantee request still gets the labelled ZEN improvement plan | – |
 | `simple` | Templates for greeting/other/auth/unavailable/no-decision/missing-info/manual-review/approved/bad what-if | – |
-| `finalize` | Builds `AgentResponse` (decision card, plan, what-if, citations, evidence_refs, guard flags, timings). Falls back to a template if a draft failed twice, appends the synthetic label if it is missing, and writes the audit row (`persist_turn`): ids, intent, flags, timings, with **no message text and no financial values** | – |
+| `finalize` | Builds `AgentResponse` (decision card, plan, what-if, citations, evidence_refs, guard flags, timings). Falls back to a template if a draft failed twice, appends the synthetic label if it is missing, and writes the audit row (`persist_turn`): ids, intent, flags, timings, with **no message text**. The row also stores the raw `trace` events, and the what-if node puts `changes` and the simulated result in that trace, so hypothetical financial values do reach audit rows — a known residual tracked for P5 | – |
 
 Memory: a LangGraph `MemorySaver` thread keyed `applicant_ref::conversation_id`, so one applicant cannot read another
 applicant's thread. Conversation memory is never treated as loan data. The authoritative state stays in Frappe.
@@ -60,7 +60,7 @@ applicant's thread. Conversation memory is never treated as loan data. The autho
 | `run_what_if(ref, session, changes)` | `lifecycle.simulate` → `decide(overrides=…)` → ZEN `evaluate` with the trace on. Fields are limited to the 4 scored ones with schema ranges | **no** (it asserts the record is unchanged) |
 | `improvement_plan(ref, session, record)` | `facts.counterfactual_targets` + `run_what_if` for each target and for all targets combined | no |
 | `search_approved_policy(query, historical)` | `HybridRetriever.search` with `RetrievalFilter` from the lender profile | no |
-| `create_human_handoff(category, refs, summary)` | Appends to a local JSONL queue (prototype; there is no real escalation channel yet) | queue only |
+| `create_human_handoff(category, refs, message, request_id=None)` | `HandoffQueue.create`: hashes `message` (sha256 + character count, P0d) and appends to a local JSONL queue (prototype; there is no real escalation channel yet) | queue only |
 
 There is no generic Frappe, SQL or web tool, and no decision or record write path. The ZEN decision object is
 shared, so calls to it are serialised by a lock.

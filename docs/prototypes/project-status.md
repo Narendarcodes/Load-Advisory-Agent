@@ -1,5 +1,14 @@
 # Project Status (verified 2026-10-08, HEAD `21f500a`)
 
+> **SUPERSEDED — historical snapshot, do not use as current status.**
+> This file records the repository as it stood on 2026-10-08 at `21f500a`, before the advisory agent,
+> RAG, voice, and P0 hardening landed. For the verified baseline see
+> [../architecture/hardening-baseline.md](../architecture/hardening-baseline.md).
+>
+> **Phase numbering caveat:** the "P1" below means *replace the mock Frappe source with a live instance*.
+> That is not the P1 used by later planning (packaging) or by the audit-derived provisional plan
+> (documentation truth-up). The authoritative roadmap is unresolved — see the baseline document.
+
 ## A. Current status
 
 | Component | Status | Version | Evidence | Commit / file |
