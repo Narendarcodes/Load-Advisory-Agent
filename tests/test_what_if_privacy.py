@@ -1,5 +1,6 @@
 """Invalid what-if input values must never reach persisted audit rows, traces, answers or logs."""
 import json
+import traceback
 
 import pytest
 
@@ -42,3 +43,45 @@ def test_unreadable_delta_value_is_not_persisted(tmp_path):
     assert SENTINEL not in raw
     event = [e for e in json.loads(raw.strip().splitlines()[-1])["events"] if e["node"] == "run_what_if"][-1]
     assert "monthly_income" in event["error"]
+
+
+def test_unknown_field_key_is_not_echoed_or_persisted(tmp_path):
+    key = f"ssn_{SENTINEL}"
+    llm = ScriptedLLM(intent="what_if", changes={key: {"set": 1}})
+    ag, _, _ = agent_for(llm, tmp_path=tmp_path)
+    r = ask(ag, "what if something about my record changed?")
+
+    assert r.action == "clarify"
+    raw = ag.audit_path.read_text(encoding="utf-8")
+    assert SENTINEL not in raw and SENTINEL not in r.answer
+    event = [e for e in json.loads(raw.strip().splitlines()[-1])["events"] if e["node"] == "run_what_if"][-1]
+    assert "unsupported what-if field" in event["error"] and "credit_score" in event["error"]
+
+
+def test_unknown_field_key_is_not_echoed_by_the_tool():
+    ag, _, _ = agent_for(ScriptedLLM())
+    with pytest.raises(InvalidWhatIf) as e:
+        ag.tools.run_what_if("APP-TEST-005", Session(applicant_ref="CUS-TEST-005"), {f"ssn_{SENTINEL}": 1})
+    assert "unsupported what-if field" in str(e.value) and SENTINEL not in str(e.value)
+
+
+def test_unknown_field_key_is_not_echoed_by_the_graph():
+    from loan_advisory.agent.graph import _absolute_changes
+    with pytest.raises(InvalidWhatIf) as e:
+        _absolute_changes({f"ssn_{SENTINEL}": 1}, {})
+    assert SENTINEL not in str(e.value)
+
+
+def test_unreadable_tool_value_does_not_chain_the_raw_input():
+    ag, _, _ = agent_for(ScriptedLLM())
+    with pytest.raises(InvalidWhatIf) as e:
+        ag.tools.run_what_if("APP-TEST-005", Session(applicant_ref="CUS-TEST-005"), {"credit_score": SENTINEL + "x"})
+    assert SENTINEL not in "".join(traceback.format_exception(e.value))
+
+
+def test_unreadable_delta_does_not_chain_the_raw_input():
+    from loan_advisory.agent.graph import _absolute_changes
+    with pytest.raises(InvalidWhatIf) as e:
+        _absolute_changes({"monthly_income": {"delta": SENTINEL + "x"}}, {"monthly_income": 50000})
+    assert SENTINEL not in "".join(traceback.format_exception(e.value))
+    assert e.value.__suppress_context__
