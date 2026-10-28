@@ -521,7 +521,7 @@ class AdvisoryAgent:
         out = {"action": "refuse", "abstained": key in ("guarantee", "not_available")}
         if key in ("dispute", "data_deletion"):
             category = "data_dispute" if key == "dispute" else "data_deletion"
-            ref = self.handoff.create(category, [req.application_ref], req.message) if self.handoff else None
+            ref = self.handoff.create(category, [req.application_ref], req.message, req.request_id) if self.handoff else None
             out.update(action="handoff", handoff_ref=ref, draft=P.template(key, req.locale, ref=ref or "pending"))
         else:
             out["draft"] = P.template(key, req.locale)

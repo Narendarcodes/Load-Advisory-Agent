@@ -20,10 +20,11 @@ Nothing below is a statement about VaaniLabs, any lender or real applicants.
   `boundary`; `tools.py` `HandoffQueue`.) The same handling applies to salary, employment and credit fields: the pattern is about the
   claim of an error, not the field.
 - **Can the agent initiate a correction request?** Yes, in the sense above: it files a handoff record (category `data_dispute`,
-  application ref, the applicant's message, timestamp) to a queue (`AGENT_HANDOFF_LOG`, default `agent_out/handoffs.jsonl`). It does
-  not change data or promise an outcome.
-- **Should the agent collect evidence for a correction request?** Not built. The handoff stores only the applicant's message (first
-  500 characters). It does not ask for documents. Who must confirm what evidence a reviewer needs: a partner lender.
+  application ref, request id, message hash and length, timestamp; never the message text) to a queue (`AGENT_HANDOFF_LOG`, default
+  `agent_out/handoffs.jsonl`). It does not change data or promise an outcome.
+- **Should the agent collect evidence for a correction request?** Not built. The handoff keeps only a SHA-256 and the length of the
+  applicant's message, so a reviewer can check a quoted message without the log holding it. It does not ask for documents. Who must
+  confirm what evidence a reviewer needs: a partner lender.
 - **Credit-report errors:** the improvement text for a low credit score tells the applicant they can dispute errors with the credit
   bureau (`facts.py`, `MIN_CREDIT_SCORE`). RBI's CIC customer-service and compensation circulars are in the policy register
   (`RBI-CIC-CS-2023`, `RBI-CIC-COMP-2023`).
@@ -42,9 +43,9 @@ What triggers a handoff in the built system (`graph.py` `boundary`, `simple`):
   (`HO-xxxxxxxxxx`). The API response has `action="handoff"` and `handoff_ref` (`contracts.py` `AgentResponse`).
 - **Does the system explain why it escalated?** Yes, in the template (a reported data error, the system being unreachable, or manual
   review with its flags).
-- **Is the evidence package transferred?** Partly. The handoff record holds the category, the application ref and the applicant's
-  message. The reviewer can reopen the decision evidence from the application ref, and each turn's audit log (`AGENT_AUDIT_LOG`) holds
-  the trace. There is no reviewer UI and no live transfer of the conversation.
+- **Is the evidence package transferred?** Partly. The handoff record holds the category, the application ref, the request id and a
+  hash/length of the applicant's message — not the message itself. The reviewer can reopen the decision evidence from the application
+  ref, and each turn's audit log (`AGENT_AUDIT_LOG`) holds the trace. There is no reviewer UI and no live transfer of the conversation.
 - **Not built:** escalation on fraud signals (misrepresentation requests are refused, not escalated), on repeated failed explanations,
   or on applicant distress; a human continuing the same conversation. Who must decide these for a deployment: VaaniLabs and a partner
   lender.
