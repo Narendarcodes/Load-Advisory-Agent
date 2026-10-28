@@ -335,12 +335,137 @@ def parse_args(argv=None, env=None):
     ap.add_argument("--bureau-url", default=env.get("BUREAU_BASE_URL") or None,
                     help="loopback origin of the synthetic bureau (default http://127.0.0.1:8001; env BUREAU_BASE_URL). "
                          "Set it when the self-hosted LLM already uses :8001.")
+    ap.add_argument("--max-inflight", type=_positive_int, default=8,
+                    help="concurrent requests the server admits; extra requests get 503 + Retry-After (default 8)")
     return ap.parse_args(argv)
 
 
 def bureau_client_from(args) -> BureauClient | None:
     """None keeps App's default BureauClient(); a configured origin goes through the client's loopback guard."""
     return BureauClient(base_url=args.bureau_url) if args.bureau_url else None
+
+
+class Admission:
+    """Bounded number of requests in flight; a request beyond the cap is refused, not queued."""
+
+    def __init__(self, limit: int):
+        if limit < 1:
+            raise ValueError("max_inflight must be at least 1")
+        self.limit = limit
+        self._lock = threading.Lock()
+        self._in_flight = 0
+
+    @property
+    def in_flight(self) -> int:
+        with self._lock:
+            return self._in_flight
+
+    def acquire(self) -> "AdmissionSlot | None":
+        with self._lock:
+            if self._in_flight >= self.limit:
+                return None
+            self._in_flight += 1
+        return AdmissionSlot(self)
+
+    def _release(self) -> None:
+        with self._lock:
+            self._in_flight -= 1
+
+
+class AdmissionSlot:
+    """One admitted request. release() is idempotent: failure paths and shutdown both run it."""
+
+    def __init__(self, admission: Admission):
+        self._admission = admission
+        self._lock = threading.Lock()
+        self._released = False
+
+    def release(self) -> bool:
+        with self._lock:
+            if self._released:
+                return False
+            self._released = True
+        self._admission._release()
+        return True
+
+
+class BoundedServer(ThreadingHTTPServer):
+    """Thread-per-request server with a hard in-flight cap: extra requests get an immediate 503, not another thread."""
+
+    daemon_threads = True
+
+    def __init__(self, addr, handler, max_inflight=8, refusal_lane=16):
+        super().__init__(addr, handler)
+        self.admission = Admission(max_inflight)
+        self._refusals = threading.BoundedSemaphore(refusal_lane)
+
+    def process_request(self, request, client_address):
+        slot = self.admission.acquire()
+        if slot is not None:
+            try:
+                self._start_worker(request, client_address, slot)
+            except BaseException:  # start() failed: socketserver closes the socket, so only free the slot here
+                slot.release()
+                raise
+            return
+        if not self._refusals.acquire(blocking=False):
+            return self.shutdown_request(request)  # refusal lane saturated too: shed the connection, never queue
+        try:
+            threading.Thread(target=self._refuse_overloaded, args=(request,), daemon=True).start()
+        except BaseException:
+            self._refusals.release()
+            self.shutdown_request(request)
+            raise
+
+    def _start_worker(self, request, client_address, slot):
+        threading.Thread(target=self._serve, args=(request, client_address, slot), daemon=True).start()
+
+    def _serve(self, request, client_address, slot):
+        try:
+            try:
+                self.finish_request(request, client_address)
+            except Exception:
+                self.handle_error(request, client_address)
+            finally:
+                self.shutdown_request(request)
+        finally:
+            slot.release()  # once, after the socket is closed, and also when handle_error itself fails
+
+    def _refuse_overloaded(self, request):
+        body = b'{"error": "server busy; retry shortly"}'
+        head = (b"HTTP/1.1 503 Service Unavailable\r\nContent-Type: application/json; charset=utf-8\r\n"
+                b"Retry-After: 1\r\nContent-Length: " + str(len(body)).encode() + b"\r\nConnection: close\r\n\r\n")
+        try:
+            # Drain the request before replying: closing on unread data resets the 503 (seen on Windows). Bounded by
+            # time and bytes so a huge body cannot pin a refusal thread.
+            # shortcut: a body over 1 MiB is not fully drained, so its 503 may reset; raise the cap if clients grow
+            drained, deadline = 0, time.monotonic() + 0.5
+            while drained < 1 << 20:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                request.settimeout(remaining)
+                try:
+                    chunk = request.recv(65536)
+                except OSError:  # timeout: the request stopped arriving, so stop waiting for more of it
+                    break
+                if not chunk:
+                    break
+                drained += len(chunk)
+            request.settimeout(0.5)
+            request.sendall(head + body)
+        except OSError:
+            pass  # client already gone
+        finally:
+            self._refusals.release()
+            self.shutdown_request(request)
+
+
+def _positive_int(text) -> int:
+    n = int(text)
+    if n < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return n
 
 
 def main(argv=None):
@@ -361,7 +486,7 @@ def main(argv=None):
         from loan_advisory.agent.runtime import build_live_agent, frappe_resolve
         agent, client = build_live_agent(policy_tools=policy, profile=profile)
         app = App(agent, lambda ref: frappe_resolve(client, ref), bureau_client=bureau_client)
-    srv = ThreadingHTTPServer((a.host, a.port), make_handler(app))
+    srv = BoundedServer((a.host, a.port), make_handler(app), max_inflight=a.max_inflight)
     print(f"loan-advisory chat on http://{a.host}:{a.port}", file=sys.stderr, flush=True)
     srv.serve_forever()
 
