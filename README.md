@@ -76,6 +76,7 @@ PYTHONPATH=.:apps/api/src python scripts/agent/prepare_demo.py
 
 # chat server + web UI on http://127.0.0.1:8095
 #   --dev-ephemeral-secret   local demo only: no AGENT_SESSION_SECRET needed, tokens die on restart
+#   --max-inflight 8         concurrent requests admitted; extra requests get 503 + Retry-After
 PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095 --dev-ephemeral-secret
 #   --offline   MockStore + in-memory evidence instead of live Frappe
 #   --no-rag    do not load the GPU retriever (policy questions abstain)
