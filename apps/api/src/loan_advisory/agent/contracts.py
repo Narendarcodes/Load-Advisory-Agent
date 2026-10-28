@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 Literacy = Literal["low", "medium", "high"]
+LOCALES = ("en", "hi", "te")           # answer language; one source of truth for request and token validation
 Action = Literal["answer", "clarify", "simulate", "handoff", "refuse"]
 Intent = Literal["explain", "improve", "what_if", "policy", "boundary", "greeting", "other"]
 

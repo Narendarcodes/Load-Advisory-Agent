@@ -406,11 +406,13 @@ def test_chat_respects_the_deadline_and_does_not_retry_past_it(monkeypatch):
 
 
 # ------------------------------------------------------------------ server: NDJSON stream endpoint
-def test_stream_endpoint_sends_sentences_then_the_final_response(tmp_path):
+def test_stream_endpoint_sends_sentences_then_the_final_response(tmp_path, monkeypatch):
     import urllib.request
     from http.server import ThreadingHTTPServer
 
     from loan_advisory.agent import server as srv
+    monkeypatch.setenv("AGENT_SESSION_SECRET", "test-secret")
+    srv.configure_secret()
     llm = ScriptedLLM(intent="explain", compose="Your recorded decision is REJECTED. Your credit score is 690.")
     ag = agent_for(llm, tmp_path=tmp_path)
     store_refs = {"APP-TEST-005": {"name": "APP-TEST-005", "applicant": "CUS-TEST-005"}}

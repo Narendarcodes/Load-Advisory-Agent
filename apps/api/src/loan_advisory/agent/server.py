@@ -33,9 +33,10 @@ import threading
 import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import get_args
 
 from decision_engine.paths import repo_root
-from loan_advisory.agent.contracts import AgentRequest, Session
+from loan_advisory.agent.contracts import LOCALES, AgentRequest, Literacy, Session
 from loan_advisory.agent.facts import decision_card
 from loan_advisory.agent.tools import NotAuthorized
 from loan_advisory.application.bureau_intake import BureauInputError, run_bureau_evaluation
@@ -43,7 +44,6 @@ from loan_advisory.infrastructure.bureau_client import BureauClient
 from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
 
 WEB = repo_root() / "apps" / "web" / "chat"
-SECRET = os.environ.get("AGENT_SESSION_SECRET", "").encode() or secrets.token_bytes(32)
 DEMO = [  # external refs seeded by infra/frappe/bootstrap/seed.sh (synthetic)
     {"external_ref": "SYN-APP-00000", "label": "Persona 00000 · salaried govt · 3 failed checks", "literacy": "low"},
     {"external_ref": "APP-TEST-005", "label": "Fixture 005 · FOIR + score + tenure", "literacy": "medium"},
@@ -55,21 +55,75 @@ DEMO = [  # external refs seeded by infra/frappe/bootstrap/seed.sh (synthetic)
 ]
 
 
+ISSUER = "loan-advisory"
+AUDIENCE = "loan-advisory-chat"
+LITERACIES = get_args(Literacy)   # canonical set from the request contract, never a second copy
+TOKEN_SKEW_S = 60
+_SECRET: bytes | None = None  # resolved once by configure_secret(); None means "not configured yet"
+AUTH_ERRORS = {"missing": "sign in first", "expired": "session expired; sign in again",
+               "malformed": "malformed session token", "invalid": "invalid session token"}
+
+
+def configure_secret(dev_ephemeral: bool = False, env=None, stream=None) -> str:
+    """Resolve the HMAC key once at startup. Fails closed: no secret, no service."""
+    global _SECRET
+    env = os.environ if env is None else env
+    raw = (env.get("AGENT_SESSION_SECRET") or "").strip()
+    if raw:
+        _SECRET = raw.encode()
+        return "env"
+    if dev_ephemeral:
+        _SECRET = secrets.token_bytes(32)
+        (stream or sys.stderr).write(
+            "WARNING: --dev-ephemeral-secret: AGENT_SESSION_SECRET is unset, so session tokens are signed with a "
+            "random in-memory key. They stop working on restart, and this mode must never be used in production.\n")
+        return "dev-ephemeral"
+    raise SystemExit(
+        "AGENT_SESSION_SECRET is not set. Provide a long random value (for example `openssl rand -hex 32`) in the "
+        "environment, or pass --dev-ephemeral-secret for local development only.")
+
+
+def _key() -> bytes:
+    global _SECRET
+    if _SECRET is None:
+        raw = (os.environ.get("AGENT_SESSION_SECRET") or "").strip()
+        if not raw:  # never a random fallback: an unconfigured server must not sign
+            raise RuntimeError("AGENT_SESSION_SECRET is not configured; call configure_secret() at startup")
+        _SECRET = raw.encode()
+    return _SECRET
+
+
 def sign(payload: dict) -> str:
-    raw = base64.urlsafe_b64encode(json.dumps(payload, sort_keys=True).encode()).decode()
-    sig = hmac.new(SECRET, raw.encode(), hashlib.sha256).hexdigest()
+    claims = {"iss": ISSUER, "aud": AUDIENCE, "iat": int(time.time()), **payload}
+    raw = base64.urlsafe_b64encode(json.dumps(claims, sort_keys=True).encode()).decode()
+    sig = hmac.new(_key(), raw.encode(), hashlib.sha256).hexdigest()
     return f"{raw}.{sig}"
 
 
-def verify(token: str) -> dict | None:
+def verify_token(token: str) -> tuple[dict | None, str]:
+    """(claims, "ok") or (None, reason) with reason in AUTH_ERRORS, so the HTTP layer can say *why* it refused."""
     try:
         raw, sig = token.rsplit(".", 1)
-    except ValueError:
-        return None
-    if not hmac.compare_digest(sig, hmac.new(SECRET, raw.encode(), hashlib.sha256).hexdigest()):
-        return None
-    p = json.loads(base64.urlsafe_b64decode(raw))
-    return p if p.get("exp", 0) > time.time() else None
+        sig = sig.encode("ascii")  # a real digest is ASCII hex; other text is malformed, not a wrong digest
+        payload = json.loads(base64.urlsafe_b64decode(raw))
+    except ValueError:  # bad base64 (binascii.Error), non-ASCII signature (UnicodeEncodeError), bad UTF-8 or JSON
+        return None, "missing" if not token else "malformed"
+    if not isinstance(payload, dict):
+        return None, "malformed"
+    if not hmac.compare_digest(sig, hmac.new(_key(), raw.encode(), hashlib.sha256).hexdigest().encode()):
+        return None, "invalid"
+    if payload.get("iss") != ISSUER or payload.get("aud") != AUDIENCE:
+        return None, "invalid"
+    now, iat, exp = time.time(), payload.get("iat"), payload.get("exp")
+    if not isinstance(iat, (int, float)) or not isinstance(exp, (int, float)) or iat > now + TOKEN_SKEW_S:
+        return None, "invalid"  # unsigned/legacy claim set, or a token minted in the future
+    if exp <= now:
+        return None, "expired"
+    return payload, "ok"
+
+
+def verify(token: str) -> dict | None:
+    return verify_token(token)[0]
 
 
 class App:
@@ -99,7 +153,7 @@ class App:
                            conversation_id=str(body.get("conversation_id") or claims["application_ref"]),
                            message=str(body.get("message") or "")[:4000] or "hello",
                            channel=body.get("channel") if body.get("channel") in ("text", "voice") else "text",
-                           locale=body.get("locale") if body.get("locale") in ("en", "hi", "te") else "en",
+                           locale=body.get("locale") if body.get("locale") in LOCALES else "en",
                            literacy=body.get("literacy") if body.get("literacy") in ("low", "medium", "high") else "medium",
                            application_ref=claims["application_ref"])
 
@@ -160,7 +214,8 @@ def make_handler(app: App):
 
         def _claims(self):
             auth = self.headers.get("Authorization", "")
-            return verify(auth[7:]) if auth.startswith("Bearer ") else None
+            claims, reason = verify_token(auth[7:] if auth.startswith("Bearer ") else "")
+            return claims, (None if claims else AUTH_ERRORS.get(reason, "sign in first"))
 
         def _body(self):
             n = int(self.headers.get("Content-Length") or 0)
@@ -191,8 +246,8 @@ def make_handler(app: App):
             if path == "/api/demo-accounts":
                 return self._send(200, {"accounts": app.demo, "note": "synthetic demo accounts; no real people"})
             if path == "/api/decision":
-                c = self._claims()
-                return self._send(*app.decision(c)) if c else self._send(401, {"error": "sign in first"})
+                c, err = self._claims()
+                return self._send(*app.decision(c)) if c else self._send(401, {"error": err})
             return self._send(404, {"error": "not found"})
 
         def _stream_chat(self, claims, body):
@@ -228,9 +283,9 @@ def make_handler(app: App):
             try:
                 if path == "/api/session":
                     return self._send(*app.session(body))
-                c = self._claims()
+                c, err = self._claims()
                 if not c:
-                    return self._send(401, {"error": "sign in first"})
+                    return self._send(401, {"error": err})
                 if path == "/api/chat":
                     return self._send(*app.chat(c, body, self.headers))
                 if path == "/api/chat/stream":
@@ -248,13 +303,20 @@ def make_handler(app: App):
 
 
 def livekit_token(claims, body):
+    if not isinstance(body, dict):
+        return 400, {"error": "body must be a JSON object"}
+    literacy, locale = body.get("literacy", "medium"), body.get("locale", "en")
+    if literacy not in LITERACIES:
+        return 400, {"error": f"unsupported literacy; expected one of {list(LITERACIES)}"}
+    if locale not in LOCALES:
+        return 400, {"error": f"unsupported locale; expected one of {list(LOCALES)}"}
     key, sec, url = (os.environ.get(k) for k in ("LIVEKIT_API_KEY", "LIVEKIT_API_SECRET", "LIVEKIT_URL"))
     if not (key and sec and url):
         return 503, {"error": "voice not configured"}
     from livekit import api  # optional dependency (voice phase)
     room = f"loan-{hashlib.sha256(claims['application_ref'].encode()).hexdigest()[:10]}-{uuid.uuid4().hex[:6]}"
     meta = json.dumps({"session_token": sign({k: claims[k] for k in ("applicant_ref", "application_ref", "external_ref")} | {"exp": time.time() + 3600}),
-                       "literacy": body.get("literacy", "medium"), "locale": body.get("locale", "en")})
+                       "literacy": literacy, "locale": locale})
     tok = (api.AccessToken(key, sec).with_identity(f"applicant-{uuid.uuid4().hex[:8]}").with_name("Applicant")
            .with_metadata(meta).with_grants(api.VideoGrants(room_join=True, room=room)).to_jwt())
     return 200, {"token": tok, "url": url, "room": room}
@@ -267,6 +329,9 @@ def parse_args(argv=None, env=None):
     ap.add_argument("--port", type=int, default=8095)
     ap.add_argument("--offline", action="store_true", help="MockStore + in-memory evidence instead of live Frappe")
     ap.add_argument("--no-rag", action="store_true", help="do not load the GPU retriever (policy questions abstain)")
+    ap.add_argument("--dev-ephemeral-secret", action="store_true",
+                    help="local development only: when AGENT_SESSION_SECRET is unset, sign sessions with a random "
+                         "in-memory key (tokens stop working on restart; never use in production)")
     ap.add_argument("--bureau-url", default=env.get("BUREAU_BASE_URL") or None,
                     help="loopback origin of the synthetic bureau (default http://127.0.0.1:8001; env BUREAU_BASE_URL). "
                          "Set it when the self-hosted LLM already uses :8001.")
@@ -280,6 +345,7 @@ def bureau_client_from(args) -> BureauClient | None:
 
 def main(argv=None):
     a = parse_args(argv)
+    configure_secret(a.dev_ephemeral_secret)  # fail closed before loading a model or opening a port
     bureau_client = bureau_client_from(a)  # fail fast on a non-loopback origin, before loading anything
     policy, profile = (None, None)
     if not a.no_rag:

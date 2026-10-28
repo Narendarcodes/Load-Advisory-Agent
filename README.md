@@ -75,7 +75,8 @@ STT/TTS stack are still installed outside a requirements file; see [Known gaps](
 PYTHONPATH=.:apps/api/src python scripts/agent/prepare_demo.py
 
 # chat server + web UI on http://127.0.0.1:8095
-PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095
+#   --dev-ephemeral-secret   local demo only: no AGENT_SESSION_SECRET needed, tokens die on restart
+PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095 --dev-ephemeral-secret
 #   --offline   MockStore + in-memory evidence instead of live Frappe
 #   --no-rag    do not load the GPU retriever (policy questions abstain)
 ```
@@ -91,14 +92,18 @@ same default port, so run the bureau elsewhere and point the server at it:
 
 ```bash
 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m synthetic_bureau.app --port 8011
-PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --offline --bureau-url http://127.0.0.1:8011
+PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --offline --bureau-url http://127.0.0.1:8011 --dev-ephemeral-secret
 ```
 
 The bureau is **not CIBIL/FICO and not a real bureau**; every field is synthetic. Flow, `REVIEW` vs `ERROR` and score
 precedence: [docs/architecture/synthetic-bureau.md](docs/architecture/synthetic-bureau.md).
 
-The session token is an HMAC over (applicant_ref, application_ref, expiry). Application and applicant come from the
-token, never from the chat body. Real authentication (OTP / lender SSO) is not implemented.
+The session token is an HMAC over (applicant_ref, application_ref, expiry) plus `iss`, `aud` and `iat` claims. The
+key comes from `AGENT_SESSION_SECRET`, which is required: without it the server exits with an actionable error.
+`--dev-ephemeral-secret` is the explicit local-demo escape hatch (random key, warning, tokens invalid after restart).
+Tokens minted before this claim set are rejected (the longest lifetime is 4 hours, so one re-sign-in per client).
+Application and applicant come from the token, never from the chat body. Real authentication (OTP / lender SSO) is
+not implemented.
 
 ### 4. Voice
 
@@ -128,7 +133,7 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 | `EMBED_MODEL` | `google/embeddinggemma-2` | Dense embedder |
 | `LENDER_PROFILE` | `bajaj_finance` (from `config/rag.yaml`) | Lender profile for retrieval filters |
 | `AGENT_RETRIEVER_DEVICE`, `AGENT_GPU_FRACTION` | auto, unset | Retriever device; VRAM cap on the shared GPU (e.g. `0.016` ≈ 3 GB on MI300X) |
-| `AGENT_SESSION_SECRET` | random per start | HMAC key for session tokens |
+| `AGENT_SESSION_SECRET` | **required** | HMAC key for session tokens; startup fails without it (`--dev-ephemeral-secret` for local demos only) |
 | `AGENT_VOICE_DEADLINE_S`, `AGENT_TEXT_DEADLINE_S` | `25`, `75` | Per-turn deadline; a template answers when time runs out |
 | `AGENT_CLASSIFY_BUDGET_S`, `AGENT_MIN_COMPOSE_S` | `6`, `4` | Classifier budget; minimum time left to start or retry a compose |
 | `AGENT_FAST_CLASSIFY` | `voice` | `off` / `voice` / `all`: high-precision regex intents skip the LLM classifier |
