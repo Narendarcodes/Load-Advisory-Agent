@@ -137,9 +137,11 @@ def test_unrecoverable_install_failure_preserves_both_trees(tmp_path, monkeypatc
     real_replace = os.replace
 
     def replace(src, dst):
-        if ".new-" in str(src):
+        # Qdrant's local-mode metadata write also calls os.replace inside the staging dir; only the
+        # directory swap into the target is the failure we are injecting.
+        if Path(dst) == target and ".new-" in str(src):
             raise OSError("install failed")
-        if ".old-" in str(src):
+        if Path(dst) == target and ".old-" in str(src):
             raise OSError("restore failed")
         return real_replace(src, dst)
 
