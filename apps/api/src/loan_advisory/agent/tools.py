@@ -5,6 +5,7 @@ Every applicant-specific tool re-checks authorization server-side against the sy
 There is no generic Frappe/SQL/web tool and no write path: decisions are only READ from the stored
 Decision Evidence; what-if goes through lifecycle.simulate (in memory, never persisted).
 """
+import hashlib
 import json
 import threading
 import time
@@ -194,11 +195,13 @@ class HandoffQueue:
                             legacy="agent_out/handoffs.jsonl")
 
     @obs.tool("create_human_handoff")
-    def create(self, category: str, refs: list[str], summary: str) -> str:
+    def create(self, category: str, refs: list[str], message: str, request_id: str | None = None) -> str:
+        """Queue a handoff without the applicant's words: hash and length only (P0d)."""
         ref = f"HO-{uuid.uuid4().hex[:10]}"
         with append_private(self.path) as f:
-            f.write(json.dumps({"handoff_ref": ref, "category": category, "refs": refs, "summary": summary[:500],
-                                "created_at": time.time()}) + "\n")
+            f.write(json.dumps({"handoff_ref": ref, "category": category, "refs": refs, "request_id": request_id,
+                                "message_sha256": hashlib.sha256(message.encode()).hexdigest(),
+                                "message_chars": len(message), "created_at": time.time()}) + "\n")
         return ref
 
 

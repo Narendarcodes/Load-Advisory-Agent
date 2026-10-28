@@ -14,7 +14,8 @@ session token; the worker forwards it as `Authorization: Bearer`, so voice uses 
 path as text. The worker never sees or chooses an application on its own.
 
 Every turn writes one JSON line (VOICE_TURN_LOG) with: end-of-user-speech -> STT done -> graph answer (and the
-graph's LLM TTFT) -> first TTS audio -> agent speaking. The same answer card (decision, citations) is published on
+graph's LLM TTFT) -> first TTS audio -> agent speaking. It keeps timings, locale, STT engine, audio duration and
+filler only, never the transcript. The same answer card (decision, citations) is published on
 the data channel (topic "advisor") for the page to render.
 """
 import asyncio
@@ -35,6 +36,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from loan_advisory.agent import observability as obs  # noqa: E402  (OTel -> Phoenix; no-op unless AGENT_TRACING=1)
 from loan_advisory.agent.settings import VoiceSettings  # noqa: E402
 from loan_advisory.agent.streaming import speakable  # noqa: E402
+from loan_advisory.agent.voice_log import turn_row  # noqa: E402
 
 CFG = VoiceSettings.from_env()
 AGENT_HTTP, STT_HTTP, TTS_HTTP, TURN_LOG = CFG.agent_http, CFG.stt_http, CFG.tts_http, CFG.turn_log
@@ -86,9 +88,7 @@ class Turn:
         t = self.t
         if "user_stopped" not in t or "graph_done" not in t:
             self.reset(); return
-        base = t["user_stopped"]
-        row = {"ts": time.time(), **self.info,
-               **{f"{k}_ms": round((v - base) * 1000, 1) for k, v in t.items() if k != "user_stopped"}}
+        row = turn_row(self.info, t, time.time())
         if self.span is not None:
             self.span.set_attributes({f"voice.{k}": v for k, v in row.items() if isinstance(v, (int, float, str)) and k != "transcript"})
             if "tts_first_audio" in t:
@@ -130,7 +130,7 @@ class SidecarSTT(stt.STT):
             j = await r.json()
         self.turn.mark("stt_done")
         self.turn.info.update(stt_ms=round((time.perf_counter() - t0) * 1000, 1), stt_engine=j.get("engine"),
-                              user_audio_s=round(frame.duration, 2), transcript=j.get("text", "")[:300])
+                              user_audio_s=round(frame.duration, 2))
         return stt.SpeechEvent(type=stt.SpeechEventType.FINAL_TRANSCRIPT,
                                alternatives=[stt.SpeechData(language=self.language, text=j.get("text", ""))])
 

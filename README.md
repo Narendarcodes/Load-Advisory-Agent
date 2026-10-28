@@ -155,7 +155,7 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | – | Voice; `/api/livekit-token` returns 503 without them |
 | `AGENT_HTTP`, `STT_HTTP`, `TTS_HTTP` | `:8095`, `:8791`, `:8793` | Voice worker targets |
 | `VOICE_STREAM`, `VOICE_HTTP_TIMEOUT_S`, `VOICE_FILLER_AFTER_S` | `1`, `40`, `4` | Sentence streaming; worker timeout (must exceed the graph deadline); "one moment" filler |
-| `VOICE_TURN_LOG`, `VOICE_WORKER_PORT` | `/root/hx/loan/voice/turns.jsonl`, `8081` | Per-turn JSONL log; worker HTTP port |
+| `VOICE_TURN_LOG`, `VOICE_WORKER_PORT` | `/root/hx/loan/voice/turns.jsonl`, `8081` | Per-turn JSONL log (timings, locale, engine, audio duration; no transcript); worker HTTP port |
 | `VOICE_MIN_ENDPOINTING_S`, `VOICE_VAD_MIN_SILENCE_S`, `VOICE_TTS_GENDER` | `0.5`, `0.55`, `Female` | End-of-turn delay, Silero silence, TTS voice |
 
 ### `AGENT_CITATION_MODE`
