@@ -6,7 +6,8 @@ Mermaid sources live in [`diagrams/`](diagrams/) next to their rendered SVG and 
 as the advisory agent; 03 and 04 keep their PR #10 scope. Other docs here:
 [synthetic-bureau.md](synthetic-bureau.md) (bureau flow, `REVIEW` vs `ERROR`, score precedence),
 [conventional-workflow.md](conventional-workflow.md) (Phase 3 decision workflow) and
-[repository-structure.md](repository-structure.md) (layout notes). Rationale is in
+[repository-structure.md](repository-structure.md) (layout notes), plus
+[hardening-baseline.md](hardening-baseline.md) (verified HEAD, P0 merge chain, roadmap status). Rationale is in
 [../../APPROACH.md](../../APPROACH.md), observability in [../observability/langfuse.md](../observability/langfuse.md).
 
 All applicant data and the four thresholds are synthetic (`synthetic-v1`). Bajaj Finance is a public reference lender,
