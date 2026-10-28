@@ -6,18 +6,17 @@ There is no generic Frappe/SQL/web tool and no write path: decisions are only RE
 Decision Evidence; what-if goes through lifecycle.simulate (in memory, never persisted).
 """
 import json
-import os
 import threading
 import time
 import uuid
 from dataclasses import dataclass
-from pathlib import Path
 
 from loan_advisory.agent import observability as obs
 from loan_advisory.agent.contracts import Citation, Session
 from loan_advisory.agent.facts import SCORED, counterfactual_targets
 from loan_advisory.application.lifecycle import simulate
 from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
+from loan_advisory.state_paths import HANDOFF_LOG, append_private, resolve
 
 FIELD_TO_DOC = {k: f"custom_{k}" for k in SCORED}
 _ZEN_LOCK = threading.Lock()   # the shared ZEN decision object is used from server/eval threads
@@ -191,13 +190,13 @@ def citation_for(label: str, c: dict, profile: dict | None) -> Citation:
 # ------------------------------------------------------------------ human handoff + audit
 class HandoffQueue:
     def __init__(self, path: str | None = None):
-        self.path = Path(path or os.environ.get("AGENT_HANDOFF_LOG", "agent_out/handoffs.jsonl"))
+        self.path = resolve(path, "AGENT_HANDOFF_LOG", HANDOFF_LOG, "agent_out/handoffs.jsonl",
+                            legacy="agent_out/handoffs.jsonl")
 
     @obs.tool("create_human_handoff")
     def create(self, category: str, refs: list[str], summary: str) -> str:
         ref = f"HO-{uuid.uuid4().hex[:10]}"
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a") as f:
+        with append_private(self.path) as f:
             f.write(json.dumps({"handoff_ref": ref, "category": category, "refs": refs, "summary": summary[:500],
                                 "created_at": time.time()}) + "\n")
         return ref

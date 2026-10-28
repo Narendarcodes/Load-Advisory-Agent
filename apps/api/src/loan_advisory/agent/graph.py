@@ -16,11 +16,9 @@ template built from the same facts if a draft fails twice.
 import hashlib
 import json
 import operator
-import os
 import re
 import time
 import uuid
-from pathlib import Path
 from typing import Annotated, TypedDict
 
 from langgraph.checkpoint.memory import MemorySaver
@@ -36,6 +34,7 @@ from loan_advisory.agent.citations import labels_of as _labels_of, verify_citati
 from loan_advisory.agent.contracts import AgentRequest, AgentResponse, Session
 from loan_advisory.agent.llm import LLMError
 from loan_advisory.agent.tools import (FrappeUnavailable, InvalidWhatIf, NotAuthorized, UnknownApplication)
+from loan_advisory.state_paths import AUDIT_LOG, append_private, resolve
 
 INTENTS = ("explain", "improve", "what_if", "policy", "greeting", "other")
 DISPUTE = re.compile(r"\b(wrong|incorrect|mistake|error in|not correct|not mine|is false|dispute|outdated|old (data|salary|income))\b|"
@@ -107,7 +106,8 @@ class AdvisoryAgent:
         self.settings = settings or AgentSettings.from_env()
         self._streams: dict = {}  # turn_key -> {"emit", "spoken", "first_ms"} for sentence streaming (not graph state)
         self.profile = profile or {}
-        self.audit_path = Path(audit_path or os.environ.get("AGENT_AUDIT_LOG", "agent_out/turns.jsonl"))
+        self.audit_path = resolve(audit_path, "AGENT_AUDIT_LOG", AUDIT_LOG, "agent_out/turns.jsonl",
+                                  legacy="agent_out/turns.jsonl")
         self._trace_ctx: dict = {}  # turn_key -> OTel context of the turn's root span (not stored in graph state)
         self.graph = self._build().compile(checkpointer=checkpointer or MemorySaver())
 
@@ -708,8 +708,7 @@ class AdvisoryAgent:
                "citations": [c.document_id for c in resp.citations], "evidence_refs": resp.evidence_refs,
                "guard_flags": resp.guard_flags, "handoff_ref": resp.handoff_ref, "events": s.get("trace"), "timings": resp.timings}
         try:
-            self.audit_path.parent.mkdir(parents=True, exist_ok=True)
-            with self.audit_path.open("a") as f:
+            with append_private(self.audit_path) as f:
                 f.write(json.dumps(row, default=str) + "\n")
         except OSError:
             pass

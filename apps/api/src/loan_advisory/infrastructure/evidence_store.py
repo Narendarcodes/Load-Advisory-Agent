@@ -4,19 +4,18 @@
 - FrappeEvidenceSink: creates a `Loan Decision Evidence` document (custom DocType made
   by infra/frappe/bootstrap/seed_site.py) and updates the Loan Application's lifecycle
   fields. Raw ZEN traces are NOT written to Frappe; they go to a content-addressed
-  companion directory (EVIDENCE_TRACE_DIR, default ./evidence_out/traces) and the record
-  stores only their sha256.
+  companion directory (EVIDENCE_TRACE_DIR, or AGENT_STATE_DIR/traces, default
+  /root/hx/loan/agent/traces) and the record stores only their sha256.
 Idempotent: a record_id that already exists is not written twice.
 """
 import json
-import os
-from pathlib import Path
 
 import requests
 
 from decision_engine.evidence.evidence_record import stable_trace
 
 from loan_advisory.infrastructure.frappe_adapter import FrappeClient, FrappeUnavailable
+from loan_advisory.state_paths import LIVE_TRACE_DIR, TRACE_DIR, resolve, write_private
 
 
 class InMemoryEvidenceSink:
@@ -39,7 +38,7 @@ class FrappeEvidenceSink:
 
     def __init__(self, client: FrappeClient | None = None, trace_dir: str | None = None):
         self.c = client or FrappeClient()
-        self.trace_dir = Path(trace_dir or os.environ.get("EVIDENCE_TRACE_DIR", "evidence_out/traces"))
+        self.trace_dir = resolve(trace_dir, "EVIDENCE_TRACE_DIR", TRACE_DIR, LIVE_TRACE_DIR)
 
     def _req(self, method, path, **kw):
         try:
@@ -50,9 +49,8 @@ class FrappeEvidenceSink:
 
     def persist(self, record, native_status, trace):
         if record["trace_ref"]["sha256"]:
-            self.trace_dir.mkdir(parents=True, exist_ok=True)
-            (self.trace_dir / f"{record['trace_ref']['sha256']}.json").write_text(
-                json.dumps(stable_trace(trace), sort_keys=True, ensure_ascii=False), encoding="utf-8")
+            write_private(self.trace_dir / f"{record['trace_ref']['sha256']}.json",
+                          json.dumps(stable_trace(trace), sort_keys=True, ensure_ascii=False))
         rid = record["record_id"]
         if self._req("GET", f"/api/resource/{self.DOCTYPE}/{rid}").status_code == 404:
             body = {
