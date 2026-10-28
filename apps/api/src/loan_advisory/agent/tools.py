@@ -110,7 +110,7 @@ class DecisionTools:
                 raise InvalidWhatIf(f"{k} must be a number")
             lo, hi = LIMITS[k]
             if not lo <= fv <= hi:
-                raise InvalidWhatIf(f"{k}={v} is outside the allowed range {lo}..{hi}")
+                raise InvalidWhatIf(f"{k} is outside the allowed range {lo}..{hi}")
             clean[k] = int(fv) if k in ("credit_score", "employment_months") else fv
         if not clean:
             raise InvalidWhatIf("no hypothetical change given")
