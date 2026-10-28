@@ -1,8 +1,8 @@
 """Frappe adapter: Loan Application -> canonical UnderwritingInput.
 
 Two backends, one mapping:
-- MockStore (default): in-memory synthetic applications. Used by tests and
-  until a live Frappe site is available.
+- MockStore: in-memory synthetic applications. Tests and demos only, and only
+  when explicitly selected with `AGENT_STORE=mock`.
 - FrappeClient: real Frappe REST API (`/api/resource/Loan Application/<name>`),
   enabled when FRAPPE_URL + FRAPPE_API_KEY + FRAPPE_API_SECRET are set.
 
@@ -108,8 +108,10 @@ class FrappeClient:
 
 
 def get_store():
-    """Live client when env is configured, else the synthetic mock store."""
-    try:
-        return FrappeClient()
-    except FrappeUnavailable:
-        return MockStore()  # ponytail: mock fallback keeps P0 runnable without a live site
+    """Live client when configured; synthetic data only on an explicit `AGENT_STORE=mock` opt-in.
+
+    A live configuration that cannot be built raises instead of falling back to synthetic records.
+    """
+    if os.environ.get("AGENT_STORE") == "mock":
+        return MockStore()
+    return FrappeClient()
