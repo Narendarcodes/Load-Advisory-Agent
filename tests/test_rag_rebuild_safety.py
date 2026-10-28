@@ -283,6 +283,18 @@ def test_stage_fetch_cleans_the_stage_when_build_fails(tmp_path, monkeypatch):
     assert (base / "src" / "manifest.json").read_text(encoding="utf-8") == "{}"
 
 
+def test_zero_chunk_fetch_leaves_the_previous_corpus_intact(tmp_path, monkeypatch):
+    base = _corpus_base(tmp_path)
+    mod = _load("fetch_sources", "scripts/policy/fetch_sources.py")
+    monkeypatch.setattr(mod, "fetch_all",
+                        lambda out_dir, only=None: {"manifest": {"D": {"status": "fetched"}}, "review_events": []})
+    monkeypatch.setattr(mod, "build_chunks", lambda _stage: [])
+    with pytest.raises(SystemExit, match="no chunks produced"):
+        mod.stage_fetch(base, None)
+    assert not list(base.glob(".src.new-*"))
+    assert (base / "chunks.jsonl").read_text(encoding="utf-8") == '{"chunk_id": "OLD#000"}\n'
+
+
 def test_concurrent_fetch_is_refused_and_the_lock_is_released(tmp_path):
     base = _corpus_base(tmp_path)
     mod = _load("fetch_sources", "scripts/policy/fetch_sources.py")
