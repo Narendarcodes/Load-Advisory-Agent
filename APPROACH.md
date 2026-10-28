@@ -2,7 +2,7 @@
 
 How the Loan Advisory Agent is built and why. Numbered evidence comes from PR descriptions or committed reports and is
 named next to each claim. Implementation history runs through PRs #1–#21 (#5 was closed with its commits already on
-`main`; #11/#12 are open docs-only PRs); diagrams are in [docs/architecture/](docs/architecture/README.md).
+`main`; #11 is the open docs-only PR); diagrams are in [docs/architecture/](docs/architecture/README.md).
 
 ## 1. Problem statement
 

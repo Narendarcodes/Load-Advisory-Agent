@@ -285,8 +285,8 @@ Details: `docs/policy/bajaj_reference_lender.md`, `docs/agent/README.md`, `docs/
 
 ## PR history
 
-PRs #1–#4, #6–#10 and #13–#21 are merged to `main`. PR #5 was **closed**, not merged, but its commits are already on
-`main`. Only #11 (this documentation revision) and #12 (investigation question bank + research notes) remain open.
+PRs #1–#4, #6–#10 and #12–#21 are merged to `main`. PR #5 was **closed**, not merged, but its commits are already on
+`main`. Only #11 (this documentation revision) remains open.
 Older PRs were stacked on the branch before them; the merged work is now on `main`.
 
 | PR | Branch | Content | State |
@@ -311,7 +311,7 @@ Older PRs were stacked on the branch before them; the merged work is now on `mai
 | #20 | `chore/pre-commit-ruff-hook` | Ruff pre-commit checks | merged |
 | #21 | `ci/github-actions-tests` | Ruff + pytest on pushes and PRs to `main` | merged |
 | #11 | `docs/project-docs` | README, APPROACH and architecture diagrams (this PR) | open |
-| #12 | `docs/investigation-question-bank` | Investigation question bank assessment + research notes | open |
+| #12 | `docs/investigation-question-bank` | Investigation question bank assessment + research notes | merged |
 
 ## Earlier milestones (P0 / P1)
 
