@@ -1,0 +1,62 @@
+%% Offline data paths: datasets, synthetic personas, decisions, bureau fixtures and the policy corpus (text stays on the droplet)
+flowchart TB
+    subgraph DS["Phase 1-2: datasets and personas"]
+        dsy["data/sources/datasets.yaml<br/>(licence per source)"]
+        dl["scripts/data/download · normalise · audit"]
+        audit["docs/data/dataset_audit.md<br/>LendingClub = US public proxy, UCI German = fallback"]
+        gen["scripts/data/generate_personas.py<br/>2,560 synthetic personas"]
+        lab["labelled by unchanged decide() (ZEN, synthetic-v1)"]
+        nar["narrate_personas.py (gpt-oss-120b)<br/>narratives + questions + misconception"]
+        dsy --> dl --> audit
+        gen --> lab --> nar
+    end
+
+    subgraph DEC["Phase 3: conventional decision workflow (no LLM)"]
+        seed["infra/frappe/bootstrap/seed.sh<br/>idempotent, keyed by custom_external_ref"]
+        prep["scripts/agent/prepare_demo.py"]
+        proc["lifecycle.process_application<br/>· process_bureau_application (PR #17)<br/>Frappe doc → pydantic schema → ZEN"]
+        ev[("Loan Decision Evidence<br/>decision-evidence/1: rule PASS/FAIL,<br/>policy + JDM + input hashes")]
+        seed --> prep --> proc --> ev
+    end
+
+    subgraph POL["Phase 4 + PR #5: policy register and RAG index"]
+        regy["data/sources/policy_register.yaml<br/>38 sources: URL, authority, dates,<br/>supersedes, approval_status, entity type"]
+        fetch["scripts/policy/fetch_sources.py<br/>fetch · hash · PDF pages · captcha check"]
+        manual["manual/ PDFs<br/>(rbidocs bot challenge)"]
+        revent["review_events.json<br/>CONTENT_CHANGED_REVIEW_REQUIRED<br/>(approval_status never changed by the script)"]
+        chunks[("chunks.jsonl<br/>section-aware chunks + governance metadata<br/>(droplet only)")]
+        manifest["policy_manifest_v2.json<br/>metadata only, committed"]
+        embed["EmbeddingGemma 2"]
+        qd[("Qdrant collection<br/>policy_chunks_v2")]
+        bm["BM25 index (in memory)"]
+        prof["config/rag.yaml + lender_profiles/*.yaml<br/>bajaj_finance: nbfc, personal_loan"]
+        regy --> fetch
+        manual --> fetch
+        fetch -->|"only approved, approved_historical,<br/>pending_review; broken sources isolated"| chunks
+        fetch -.->|"content hash changed vs last fetch"| revent
+        fetch --> manifest
+        chunks --> embed --> qd
+        chunks --> bm
+        prof -.->|filter before ranking| qd
+        prof -.-> bm
+    end
+
+    subgraph EVAL["Evaluation sets"]
+        bv1["data/evaluation/rag/bajaj_v1<br/>149 Q, 58 dev / 91 test"]
+        ab2["abstain_v2.jsonl<br/>41 agent-authored, not human-reviewed"]
+        bd["data/evaluation/agent/boundary_v1.jsonl"]
+    end
+
+    subgraph BUR["Synthetic bureau fixture (PR #17, development only)"]
+        bgen["scripts/data/generate_bureau_cases.py<br/>seed 20261024, 120 cases"]
+        bfix[("data/synthetic/bureau/cases_120.json<br/>application + report/scenario + expected")]
+        btest["tests/test_bureau_lifecycle.py<br/>replays all 120 cases"]
+        bgen --> bfix --> btest
+    end
+
+    nar -.->|"personas feed eval_agent sets A1-A5"| EVAL
+    bv1 -.->|evaluates| qd
+    btest -.->|"through process_bureau_application"| proc
+    ev -->|agent reads, never writes| agent["Advisory graph"]
+    qd --> agent
+    bm --> agent

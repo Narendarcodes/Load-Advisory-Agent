@@ -1,0 +1,44 @@
+%% System context: who and what the Loan Advisory Agent talks to (all self-hosted, 127.0.0.1-bound on the droplet)
+flowchart LR
+    applicant(["Rejected personal-loan applicant<br/>(EN / HI / TE, text or voice)"])
+    officer(["Lender staff / human reviewer<br/>(handoff queue, prototype)"])
+
+    subgraph LAA["Loan Advisory Agent (this repo)"]
+        direction TB
+        ui["Web chat + /voice page<br/>apps/web/chat"]
+        api["Advisory server<br/>stdlib http.server :8095"]
+        agraph["LangGraph advisory graph<br/>explains, never decides"]
+        beval["Bureau evaluation<br/>/api/bureau/run · DQ gates"]
+        voice["LiveKit voice worker<br/>apps/voice"]
+    end
+
+    frappe[("Frappe Lending 16<br/>Loan Application +<br/>Loan Decision Evidence")]
+    zen["ZEN Engine 2.1.2<br/>synthetic-v1 policy"]
+    bureau["Synthetic credit bureau<br/>apps/bureau · FastAPI 127.0.0.1:8001 (default;<br/>move off the LLM port) · development only, not CIBIL/FICO"]
+    llm["gpt-oss-120b<br/>vLLM, OpenAI-compatible :8001"]
+    rag[("Policy RAG<br/>Qdrant + BM25 + bge reranker")]
+    lk["Self-hosted LiveKit 1.13"]
+    speech["STT sidecar :8791<br/>TTS svara + SNAC :8793"]
+    phoenix["Arize Phoenix :6006<br/>OpenTelemetry traces<br/>(optional Langfuse :3000, same span tree)"]
+    sources["Public policy sources<br/>RBI directions, Bajaj Finance pages<br/>(public reference lender, not a partner)"]
+
+    applicant -->|text| ui
+    applicant -->|speech| lk
+    ui --> api
+    lk <--> voice
+    voice --> speech
+    voice -->|"POST /api/chat/stream<br/>(same session token)"| api
+    api --> agraph
+    api --> beval
+    beval -->|"loopback REST"| bureau
+    agraph -->|read-only REST| frappe
+    agraph -->|"what-if simulate,<br/>never persisted"| zen
+    beval -->|"resolved score,<br/>unchanged ZEN"| zen
+    beval -->|"evidence + lifecycle state"| frappe
+    agraph --> llm
+    agraph --> rag
+    agraph -.->|dispute| officer
+    agraph -.->|"OTLP, opt-in"| phoenix
+    beval -.->|"OTLP, opt-in"| phoenix
+    sources -.->|offline fetch + review| rag
+    frappe -->|conventional workflow decides| zen
