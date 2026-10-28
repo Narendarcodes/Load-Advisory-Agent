@@ -362,7 +362,8 @@ class AdvisoryAgent:
         except InvalidWhatIf as e:
             self._ev(s, "run_what_if", error=str(e))
             return {"status": "bad_what_if", "what_if": {"error": str(e)}, "trace": s["trace"]}
-        self._ev(s, "run_what_if", changes=w["changes"], simulated=w["simulated_decision"],
+        self._ev(s, "run_what_if", simulated=True, fields=sorted(w["changes"]),
+                 simulated_decision=w["simulated_decision"],
                  original_unchanged=w["original_record_unchanged"])
         return {"what_if": w, "trace": s["trace"]}
 
