@@ -130,6 +130,12 @@ class BadRequest(Exception):
     """A well-formed JSON body with a wrong shape or field type; answered with 400, never 500."""
 
 
+def _require_strings(body, keys):
+    for key in keys:
+        if key in body and not isinstance(body[key], str):
+            raise BadRequest(f"{key} must be a string")
+
+
 class App:
     def __init__(self, agent, resolve, demo=None, bureau_client=None):
         self.agent, self.resolve, self.demo = agent, resolve, demo or DEMO
@@ -137,8 +143,7 @@ class App:
         self.lock = threading.Lock()
 
     def session(self, body):
-        if "external_ref" in body and not isinstance(body["external_ref"], str):
-            raise BadRequest("external_ref must be a string")
+        _require_strings(body, ("external_ref",))
         ref = body.get("external_ref") or ""
         if ref not in {d["external_ref"] for d in self.demo}:
             return 403, {"error": "demo sign-in is limited to the synthetic demo accounts"}
@@ -155,9 +160,7 @@ class App:
                      "summary": self.agent.tools.get_application_summary(claims["application_ref"], Session(applicant_ref=claims["applicant_ref"]))}
 
     def _request(self, claims, body):
-        for key in ("request_id", "conversation_id", "message"):
-            if key in body and not isinstance(body[key], str):
-                raise BadRequest(f"{key} must be a string")
+        _require_strings(body, ("request_id", "conversation_id", "message"))
         return AgentRequest(request_id=body.get("request_id") or str(uuid.uuid4()),
                            conversation_id=body.get("conversation_id") or claims["application_ref"],
                            message=(body.get("message") or "")[:4000] or "hello",
@@ -291,6 +294,9 @@ def make_handler(app: App):
             if body is None:
                 return self._send(400, {"error": "bad JSON body"})
             try:
+                if path in ("/api/chat", "/api/chat/stream"):
+                    # Validate before _stream_chat sends 200: a malformed body must be a 400, not a 200 error line.
+                    _require_strings(body, ("request_id", "conversation_id", "message"))
                 if path == "/api/session":
                     return self._send(*app.session(body))
                 c, err = self._claims()
