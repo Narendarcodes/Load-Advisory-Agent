@@ -10,7 +10,12 @@ For each benchmark question, under its lender-profile filter (mode + profile, ap
 Relevant chunk ids are computed here (gold doc + verbatim anchor) so later stages never need the copyrighted text.
 Stage 2 (scripts/policy/eval_bajaj_score.py, CPU) tunes fusion / rerank / abstention on the DEV split and scores TEST.
 VRAM is capped at 6 GiB (torch per-process fraction) per the droplet budget.
+
+The dense index is built in memory by default: nothing under $LOAN_POLICY_DIR is written or deleted.
+--index-dir persists it (for reuse); an existing index there is only replaced with --replace-index,
+and the replacement is staged, validated and swapped in.
 """
+import argparse
 import json
 import os
 import re
@@ -22,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from rag.index_meta import index_identity  # noqa: E402
 from rag.retrieve import (BM25Index, CrossEncoderReranker, DenseIndex, DOC_PREFIX, RetrievalFilter,  # noqa: E402
-                          doc_string, load_profile, profile_filter)
+                          doc_string, load_profile, profile_filter, rebuild_index)
 
 POLICY = Path(os.environ.get("LOAN_POLICY_DIR", "/root/hx/loan/policy"))
 OUT = Path(os.environ.get("RAG_OUT", POLICY / "eval_bajaj_v1"))
@@ -32,7 +37,25 @@ BENCH = ROOT / "data/evaluation/rag/bajaj_v1/benchmark.jsonl"
 norm = lambda s: re.sub(r"\s+", " ", s).strip().lower()
 
 
-def main():
+def checked_index_dir(explicit: str, replace: bool) -> Path:
+    """A persistent index target. An existing one needs the explicit --replace-index opt-in."""
+    p = Path(explicit)
+    if (p / "collection").exists() and not replace:
+        raise SystemExit(f"{p} already contains a vector index; pass --replace-index to rebuild it")
+    return p
+
+
+def index_target(explicit: str, replace: bool) -> Path | None:
+    """None means the throwaway in-memory index: no directory is written."""
+    return checked_index_dir(explicit, replace) if explicit else None
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--index-dir", default="", help="persist the index here (default: in memory only)")
+    ap.add_argument("--replace-index", action="store_true", help="allow replacing an existing --index-dir")
+    a = ap.parse_args(argv)
+    index_dir = index_target(a.index_dir, a.replace_index)
     import torch
     from sentence_transformers import SentenceTransformer
     dev = "cuda" if torch.cuda.is_available() else "cpu"
@@ -45,10 +68,12 @@ def main():
     emb = SentenceTransformer(EMBED, device=dev, model_kwargs={"torch_dtype": torch.bfloat16})
     vecs = emb.encode([doc_string(c) for c in chunks], batch_size=32, normalize_embeddings=True, show_progress_bar=False)
     index_s = time.time() - t0
-    dense = DenseIndex(chunks, vecs, path=str(POLICY / "qdrant_v2"),
-                       meta=index_identity(embed_model=EMBED, dimension=emb.get_sentence_embedding_dimension(),
-                                           doc_prefix=DOC_PREFIX, query_prompt="QuestionAnswering",
-                                           query_prompt_text=(getattr(emb, "prompts", {}) or {}).get("QuestionAnswering")))
+    identity = index_identity(embed_model=EMBED, dimension=emb.get_sentence_embedding_dimension(),
+                              doc_prefix=DOC_PREFIX, query_prompt="QuestionAnswering",
+                              query_prompt_text=(getattr(emb, "prompts", {}) or {}).get("QuestionAnswering"))
+    dense = DenseIndex(chunks, vecs)  # temporary in-memory index; the eval never needs a persisted one
+    if index_dir is not None:
+        rebuild_index(index_dir, chunks, vecs, meta=identity, replace=a.replace_index)
     bm25 = BM25Index(chunks)
     rr = CrossEncoderReranker(RERANK, device=dev)
     profiles, rows = {}, []

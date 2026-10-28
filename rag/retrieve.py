@@ -12,14 +12,17 @@ Read-only. Governance filters are applied BEFORE ranking in every retriever:
 pending_review / registered_not_ingested content is never returned. Retrieval similarity
 never decides eligibility; it only finds citable text.
 """
+import os
 import re
+import shutil
+import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
 
 from rank_bm25 import BM25Okapi
 
-from rag.index_meta import write_index_meta
+from rag.index_meta import validate_collection, validate_index, write_index_meta
 
 DOC_PREFIX = "title: {title} | text: {text}"
 ALLOWED = {"current": {"approved"}, "historical": {"approved", "approved_historical"},
@@ -107,8 +110,15 @@ PAYLOAD_KEYS = ("chunk_id", "document_id", "approval_status", "effective_from", 
                 "document_type", "section", "source_type", "page_start", "page_end")
 
 
+class IndexExistsError(RuntimeError):
+    """An index already exists at the target; replacing it needs an explicit rebuild."""
+
+
 class DenseIndex:
-    """Qdrant collection (embedded/local mode by default; pass url= for a server)."""
+    """Qdrant collection (embedded/local mode by default; pass url= for a server).
+
+    Opening an existing collection never replaces it: build a new index with ``rebuild_index``.
+    """
 
     def __init__(self, chunks, vectors, path=None, url=None, collection="policy_chunks_v2", meta=None):
         from qdrant_client import QdrantClient, models
@@ -116,7 +126,9 @@ class DenseIndex:
         self.client = QdrantClient(url=url) if url else QdrantClient(path=path) if path else QdrantClient(":memory:")
         self.col = collection
         if self.client.collection_exists(collection):
-            self.client.delete_collection(collection)
+            self.client.close()
+            raise IndexExistsError(f"collection {collection!r} already exists at {path or url or ':memory:'}; "
+                                   "use rebuild_index(..., replace=True) to replace it explicitly")
         self.client.create_collection(collection, vectors_config=models.VectorParams(size=len(vectors[0]), distance=models.Distance.COSINE))
         for key in ("approval_status", "lender_id", "applies_to_entity", "source_type"):
             self.client.create_payload_index(collection, key, models.PayloadSchemaType.KEYWORD)
@@ -147,6 +159,49 @@ class DenseIndex:
         flt = _as_filter(mode)
         res = self.client.query_points(self.col, query=list(map(float, qvec)), query_filter=self.qdrant_filter(flt), limit=k).points
         return [(p.payload["chunk_id"], float(p.score)) for p in res]
+
+
+def rebuild_index(path, chunks, vectors, *, collection="policy_chunks_v2", meta=None, replace=False):
+    """Build the index in a staging directory, validate it, then swap it in.
+
+    An existing index is only replaced when ``replace=True``. The previous directory is kept until
+    the staged index validates and both renames succeed. Limitation: the swap is two renames
+    (target -> backup, stage -> target), not one atomic operation. A crash between them leaves the
+    previous tree at ``.<name>.old-*``; restore it by hand if that happens.
+    """
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists() and not target.is_dir():
+        raise IndexExistsError(f"{target} exists and is not an index directory")
+    if target.is_dir() and (target / "collection").exists() and not replace:
+        raise IndexExistsError(f"index already exists at {target}; refusing to replace it without "
+                               "explicit permission (replace=True)")
+    stage = Path(tempfile.mkdtemp(prefix=f".{target.name}.new-", dir=target.parent))
+    try:
+        di = DenseIndex(chunks, vectors, path=str(stage), collection=collection, meta=meta)
+        try:
+            validate_collection(di.client, collection, dimension=(meta or {}).get("dimension"),
+                                distance=(meta or {}).get("distance", "COSINE"),
+                                chunk_ids={c["chunk_id"] for c in chunks})
+            if meta is not None:
+                validate_index(stage, chunks=chunks, identity=meta, collection=collection)
+        finally:
+            di.client.close()
+        if target.exists():
+            backup = target.with_name(f".{target.name}.old-{int(time.time() * 1000)}")
+            os.replace(target, backup)
+            try:
+                os.replace(stage, target)
+            except BaseException:
+                os.replace(backup, target)
+                raise
+            shutil.rmtree(backup, ignore_errors=True)
+        else:
+            os.replace(stage, target)
+    except BaseException:
+        shutil.rmtree(stage, ignore_errors=True)
+        raise
+    return target
 
 
 # --------------------------------------------------------------------------- fusion / rerank

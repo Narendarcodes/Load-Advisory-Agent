@@ -18,8 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from rag.index_meta import index_identity  # noqa: E402
-from rag.retrieve import BM25Index, DenseIndex, DOC_PREFIX, HybridRetriever, doc_string, rrf  # noqa: E402
+from rag.retrieve import BM25Index, DenseIndex, HybridRetriever, doc_string, rrf  # noqa: E402
 
 DATA = Path(os.environ.get("LOAN_DATA_DIR", "/root/hx/loan/data")) / "policy"
 OUT = Path(os.environ.get("RAG_OUT", DATA / "eval"))
@@ -74,10 +73,7 @@ def main():
     index_s = time.time() - t
     import torch
     peak = torch.cuda.max_memory_allocated() / 2**30 if dev == "cuda" else 0.0
-    dense = DenseIndex(chunks, vecs, path=str(DATA / "qdrant"),
-                       meta=index_identity(embed_model=MODEL, dimension=model.get_sentence_embedding_dimension(),
-                                           doc_prefix=DOC_PREFIX, query_prompt="QuestionAnswering",
-                                           query_prompt_text=(getattr(model, "prompts", {}) or {}).get("QuestionAnswering")))
+    dense = DenseIndex(chunks, vecs)  # temporary in-memory index: an eval must not write or replace a policy index
     bm25 = BM25Index(chunks)
     embed_q = lambda q: model.encode(q, prompt_name="QuestionAnswering", normalize_embeddings=True)
     hyb = HybridRetriever(bm25, dense, embed_q)
