@@ -22,6 +22,7 @@ import asyncio
 import json
 import os
 import time
+from pathlib import Path
 
 import sys
 
@@ -37,6 +38,7 @@ from loan_advisory.agent import observability as obs  # noqa: E402  (OTel -> Pho
 from loan_advisory.agent.settings import VoiceSettings  # noqa: E402
 from loan_advisory.agent.streaming import speakable  # noqa: E402
 from loan_advisory.agent.voice_log import turn_row  # noqa: E402
+from loan_advisory.state_paths import append_private  # noqa: E402  (P0c private creation)
 
 CFG = VoiceSettings.from_env()
 AGENT_HTTP, STT_HTTP, TTS_HTTP, TURN_LOG = CFG.agent_http, CFG.stt_http, CFG.tts_http, CFG.turn_log
@@ -95,8 +97,7 @@ class Turn:
                 self.span.add_event("tts_first_audio", timestamp=self.epoch_ns(t["tts_first_audio"]))
             self.span.end(end_time=self.epoch_ns(t.get("agent_speaking", time.perf_counter())))
             self.span = None
-        os.makedirs(os.path.dirname(TURN_LOG), exist_ok=True)
-        with open(TURN_LOG, "a") as f:
+        with append_private(Path(TURN_LOG)) as f:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
         self.reset()
 
