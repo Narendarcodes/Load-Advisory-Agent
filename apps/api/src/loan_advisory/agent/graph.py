@@ -758,7 +758,7 @@ def _absolute_changes(raw: dict, values: dict) -> dict:
     out = {}
     for k, spec in (raw or {}).items():
         if k not in F.SCORED:
-            raise InvalidWhatIf(f"{k} cannot be simulated")
+            raise InvalidWhatIf(f"unsupported what-if field (allowed: {', '.join(F.SCORED)})")
         if isinstance(spec, (int, float)):
             out[k] = spec
         elif isinstance(spec, dict) and "set" in spec:
@@ -766,7 +766,10 @@ def _absolute_changes(raw: dict, values: dict) -> dict:
         elif isinstance(spec, dict) and "delta" in spec:
             if values.get(k) is None:
                 raise InvalidWhatIf(f"no recorded value for {k} to change")
-            out[k] = float(values[k]) + float(spec["delta"])
+            try:
+                out[k] = float(values[k]) + float(spec["delta"])
+            except (TypeError, ValueError):
+                raise InvalidWhatIf(f"could not read the change for {k}") from None
         else:
             raise InvalidWhatIf(f"could not read the change for {k}")
     if not out:

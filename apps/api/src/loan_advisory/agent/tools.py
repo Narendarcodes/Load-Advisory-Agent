@@ -103,14 +103,14 @@ class DecisionTools:
         clean = {}
         for k, v in (changes or {}).items():
             if k not in FIELD_TO_DOC:
-                raise InvalidWhatIf(f"field {k!r} cannot be simulated (allowed: {', '.join(SCORED)})")
+                raise InvalidWhatIf(f"unsupported what-if field (allowed: {', '.join(SCORED)})")
             try:
                 fv = float(v)
             except (TypeError, ValueError):
-                raise InvalidWhatIf(f"{k} must be a number")
+                raise InvalidWhatIf(f"{k} must be a number") from None
             lo, hi = LIMITS[k]
             if not lo <= fv <= hi:
-                raise InvalidWhatIf(f"{k}={v} is outside the allowed range {lo}..{hi}")
+                raise InvalidWhatIf(f"{k} is outside the allowed range {lo}..{hi}")
             clean[k] = int(fv) if k in ("credit_score", "employment_months") else fv
         if not clean:
             raise InvalidWhatIf("no hypothetical change given")
