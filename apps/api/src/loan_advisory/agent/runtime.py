@@ -132,7 +132,7 @@ def _open_dense(path: str, chunks: list[dict], identity: dict):
 
 def build_live_agent(policy_tools=None, profile=None, llm=None) -> tuple[AdvisoryAgent, FrappeClient]:
     client = FrappeClient()
-    sink = FrappeEvidenceSink(client, trace_dir=os.environ.get("EVIDENCE_TRACE_DIR", "/root/hx/loan/agent/traces"))
+    sink = FrappeEvidenceSink(client)
     tools = DecisionTools(client, FrappeEvidenceSource(sink))
     agent = AdvisoryAgent(tools, llm or ChatLLM(), policy_tools=policy_tools, handoff=HandoffQueue(), profile=profile)
     return agent, client

@@ -7,7 +7,6 @@ unchanged lifecycle.process_application for each seeded record still in SUBMITTE
     PYTHONPATH=.:apps/api/src python scripts/agent/prepare_demo.py
 """
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -22,7 +21,7 @@ from loan_advisory.infrastructure.frappe_adapter import FrappeClient  # noqa: E4
 
 def main():
     c = FrappeClient()
-    sink = FrappeEvidenceSink(c, trace_dir=os.environ.get("EVIDENCE_TRACE_DIR", "/root/hx/loan/agent/traces"))
+    sink = FrappeEvidenceSink(c)
     seeds = json.loads((ROOT / "infra/frappe/bootstrap/seed_applications.json").read_text())
     for s in seeds:
         row = frappe_resolve(c, s["external_ref"])

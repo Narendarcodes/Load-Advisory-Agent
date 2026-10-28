@@ -151,6 +151,7 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 | `LANGFUSE_SAMPLE_RATE`, `LANGFUSE_TIMEOUT`, `LANGFUSE_RELEASE` | `1.0`, `5`, – | Sampling, HTTP timeout (s), optional release label |
 | `BUREAU_BASE_URL` | `http://127.0.0.1:8001` | Loopback origin of the synthetic bureau for `/api/bureau/run`; non-loopback origins are refused |
 | `AGENT_AUDIT_LOG`, `AGENT_HANDOFF_LOG` | – | Audit rows (ids, intent, flags, timings; no message text or money values) and the handoff JSONL queue |
+| `AGENT_STATE_DIR` | – | Root for `turns.jsonl`, `handoffs.jsonl` and `traces/`; a per-artifact env var or an explicit argument wins. New directories are 0700 and new files 0600 on POSIX; existing files are never moved or chmodded |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | – | Voice; `/api/livekit-token` returns 503 without them |
 | `AGENT_HTTP`, `STT_HTTP`, `TTS_HTTP` | `:8095`, `:8791`, `:8793` | Voice worker targets |
 | `VOICE_STREAM`, `VOICE_HTTP_TIMEOUT_S`, `VOICE_FILLER_AFTER_S` | `1`, `40`, `4` | Sentence streaming; worker timeout (must exceed the graph deadline); "one moment" filler |
