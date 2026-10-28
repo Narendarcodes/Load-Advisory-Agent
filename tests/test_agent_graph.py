@@ -177,6 +177,20 @@ def test_what_if_delta_is_simulated_and_original_untouched(tmp_path):
     assert r.decision_card["decision"] == "REJECTED"  # recorded outcome unchanged
 
 
+def test_what_if_audit_marks_simulation_and_keeps_no_financial_values(tmp_path):
+    llm = ScriptedLLM(intent="what_if", changes={"credit_score": {"set": 720}},
+                      compose="Simulation only under the synthetic policy.")
+    ag, _, _ = agent_for(llm, tmp_path=tmp_path)
+    r = ask(ag, "What if my score was 720?")
+    assert r.action == "simulate"
+
+    row = json.loads(ag.audit_path.read_text(encoding="utf-8").strip().splitlines()[-1])
+    events = [e for e in row["events"] if e["node"] == "run_what_if"]
+    assert events and events[-1]["simulated"] is True
+    assert "changes" not in events[-1] and events[-1]["fields"] == ["credit_score"]
+    assert "720" not in json.dumps(events[-1])
+
+
 def test_out_of_range_what_if_is_clarified_not_simulated(tmp_path):
     ag, _, _ = agent_for(ScriptedLLM(intent="what_if", changes={"credit_score": {"set": 1200}}), tmp_path=tmp_path)
     r = ask(ag, "what if my score were 1200")
