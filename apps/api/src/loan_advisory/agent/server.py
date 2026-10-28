@@ -126,6 +126,10 @@ def verify(token: str) -> dict | None:
     return verify_token(token)[0]
 
 
+class BadRequest(Exception):
+    """A well-formed JSON body with a wrong shape or field type; answered with 400, never 500."""
+
+
 class App:
     def __init__(self, agent, resolve, demo=None, bureau_client=None):
         self.agent, self.resolve, self.demo = agent, resolve, demo or DEMO
@@ -133,7 +137,9 @@ class App:
         self.lock = threading.Lock()
 
     def session(self, body):
-        ref = str(body.get("external_ref") or "")
+        if "external_ref" in body and not isinstance(body["external_ref"], str):
+            raise BadRequest("external_ref must be a string")
+        ref = body.get("external_ref") or ""
         if ref not in {d["external_ref"] for d in self.demo}:
             return 403, {"error": "demo sign-in is limited to the synthetic demo accounts"}
         row = self.resolve(ref)
@@ -149,9 +155,12 @@ class App:
                      "summary": self.agent.tools.get_application_summary(claims["application_ref"], Session(applicant_ref=claims["applicant_ref"]))}
 
     def _request(self, claims, body):
-        return AgentRequest(request_id=str(body.get("request_id") or uuid.uuid4()),
-                           conversation_id=str(body.get("conversation_id") or claims["application_ref"]),
-                           message=str(body.get("message") or "")[:4000] or "hello",
+        for key in ("request_id", "conversation_id", "message"):
+            if key in body and not isinstance(body[key], str):
+                raise BadRequest(f"{key} must be a string")
+        return AgentRequest(request_id=body.get("request_id") or str(uuid.uuid4()),
+                           conversation_id=body.get("conversation_id") or claims["application_ref"],
+                           message=(body.get("message") or "")[:4000] or "hello",
                            channel=body.get("channel") if body.get("channel") in ("text", "voice") else "text",
                            locale=body.get("locale") if body.get("locale") in LOCALES else "en",
                            literacy=body.get("literacy") if body.get("literacy") in ("low", "medium", "high") else "medium",
@@ -222,9 +231,10 @@ def make_handler(app: App):
             if n > 64_000:
                 return None
             try:
-                return json.loads(self.rfile.read(n) or b"{}")
+                body = json.loads(self.rfile.read(n) or b"{}")
             except ValueError:
                 return None
+            return body if isinstance(body, dict) else None
 
         def do_GET(self):
             path = self.path.split("?")[0]
@@ -294,6 +304,8 @@ def make_handler(app: App):
                     return self._send(*app.bureau_run(c, body))
                 if path == "/api/livekit-token":
                     return self._send(*livekit_token(c, body))
+            except BadRequest as e:
+                return self._send(400, {"error": str(e)})
             except Exception as e:  # never leak a stack trace to the client
                 sys.stderr.write(f"error {type(e).__name__}: {e}\n")
                 return self._send(500, {"error": "internal error"})
