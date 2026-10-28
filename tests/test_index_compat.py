@@ -6,7 +6,7 @@ import pytest
 pytest.importorskip("qdrant_client")
 
 from rag.index_meta import (IndexCompatibilityError, index_identity, load_index_meta, validate_collection,  # noqa: E402
-                            validate_index)
+                            validate_index, validate_vectors)
 from rag.retrieve import DOC_PREFIX, DenseIndex  # noqa: E402
 
 
@@ -73,12 +73,52 @@ def test_index_without_metadata_is_refused(tmp_path):
 
 
 def test_embedding_dimension_mismatch_fails(tmp_path):
-    di = _build(tmp_path, identity=_identity(dimension=768))
+    di = _build(tmp_path)  # real collection has 2 dimensions
     try:
-        validate_index(tmp_path / "idx", chunks=CHUNKS, identity=_identity(dimension=768), collection="policy_chunks_v2")
+        validate_index(tmp_path / "idx", chunks=CHUNKS, identity=_identity(), collection="policy_chunks_v2")
         with pytest.raises(IndexCompatibilityError, match="vector size"):
             validate_collection(di.client, "policy_chunks_v2", dimension=768, distance="COSINE",
                                 chunk_ids={c["chunk_id"] for c in CHUNKS})
+    finally:
+        di.client.close()
+
+
+@pytest.mark.parametrize("chunks,vectors,match", [
+    ([], [], "empty chunk list"),
+    (CHUNKS, VECTORS[:1], "vector count"),
+    ([_chunk("D#000", "a"), _chunk("D#000", "b")], VECTORS, "duplicate chunk_id"),
+    ([_chunk("", "a"), CHUNKS[1]], VECTORS, "non-empty chunk_id"),
+    (CHUNKS, [[1.0, 0.0], [0.0]], "dimensions"),
+    (CHUNKS, [[1.0, 0.0], [0.0, float("nan")]], "non-finite"),
+    (CHUNKS, [[1.0, 0.0], [0.0, float("inf")]], "non-finite"),
+    (CHUNKS, [[1.0, 0.0], [0.0, "x"]], "non-numeric"),
+    (CHUNKS, [[1.0, 0.0], [0.0, None]], "non-numeric"),
+    (CHUNKS, [[1.0, 0.0], None], "not a sequence"),
+    (CHUNKS, [None, [0.0, 1.0]], "not a sequence"),
+])
+def test_validate_vectors_rejects_malformed_candidates(chunks, vectors, match):
+    with pytest.raises(IndexCompatibilityError, match=match):
+        validate_vectors(chunks, vectors)
+
+
+def test_validate_vectors_checks_the_declared_dimension():
+    with pytest.raises(IndexCompatibilityError, match="expected 3"):
+        validate_vectors(CHUNKS, VECTORS, dimension=3)
+    assert validate_vectors(CHUNKS, VECTORS, dimension=2) == 2
+
+
+def test_malformed_vectors_cannot_build_an_index(tmp_path):
+    with pytest.raises(IndexCompatibilityError, match="non-finite"):
+        DenseIndex(CHUNKS, [[1.0, 0.0], [float("nan"), 1.0]], path=str(tmp_path / "idx"), meta=_identity())
+    assert not (tmp_path / "idx" / "index_compat.json").exists()
+
+
+def test_point_count_mismatch_fails(tmp_path):
+    di = _build(tmp_path)
+    try:
+        with pytest.raises(IndexCompatibilityError, match="points"):
+            validate_collection(di.client, "policy_chunks_v2", dimension=2, distance="COSINE",
+                                chunk_ids={"D#000"})
     finally:
         di.client.close()
 

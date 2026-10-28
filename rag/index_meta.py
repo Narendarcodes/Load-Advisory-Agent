@@ -6,6 +6,7 @@ This module writes that metadata at index build time and fails closed when an in
 """
 import hashlib
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -30,6 +31,45 @@ def index_identity(*, embed_model: str, dimension: int | None, doc_prefix: str, 
                    query_prompt_text: str | None) -> dict:
     return {"schema": SCHEMA, "embed_model": embed_model, "dimension": dimension, "distance": DISTANCE,
             "doc_prefix": doc_prefix, "query_prompt": query_prompt, "query_prompt_text": query_prompt_text}
+
+
+def validate_vectors(chunks: list[dict], vectors, dimension: int | None = None) -> int:
+    """Validate candidate points before they are written; returns the vector dimension.
+
+    This is the only reliable place to reject a malformed candidate: the build path passes these
+    vectors straight to Qdrant, so nothing later re-reads their values.
+    """
+    n = len(chunks)
+    if n == 0:
+        raise IndexCompatibilityError("cannot build a vector index from an empty chunk list")
+    if len(vectors) != n:
+        raise IndexCompatibilityError(f"vector count {len(vectors)} does not match chunk count {n}")
+    ids = [c.get("chunk_id") for c in chunks]
+    if any(not isinstance(cid, str) or not cid for cid in ids):
+        raise IndexCompatibilityError("every chunk needs a non-empty chunk_id")
+    if len(set(ids)) != n:
+        raise IndexCompatibilityError("duplicate chunk_id in the candidate corpus")
+    if dimension is not None:
+        dim = dimension
+    else:
+        try:
+            dim = len(vectors[0])
+        except TypeError:
+            raise IndexCompatibilityError("vector 0 is not a sequence") from None
+    for i, v in enumerate(vectors):
+        try:
+            width = len(v)
+        except TypeError:
+            raise IndexCompatibilityError(f"vector {i} is not a sequence") from None
+        if width != dim:
+            raise IndexCompatibilityError(f"vector {i} has {width} dimensions, expected {dim}")
+        try:
+            finite = all(math.isfinite(float(x)) for x in v)
+        except (TypeError, ValueError):
+            raise IndexCompatibilityError(f"vector {i} contains a non-numeric value") from None
+        if not finite:
+            raise IndexCompatibilityError(f"vector {i} contains a non-finite value (NaN or infinity)")
+    return dim
 
 
 def write_index_meta(path: str | Path, identity: dict, chunks: list[dict], collection: str) -> dict:
@@ -85,6 +125,13 @@ def validate_collection(client, collection: str, *, dimension: int | None, dista
                                       "different embedding model")
     if dist_name != distance.upper():
         raise IndexCompatibilityError(f"distance is {dist_name}, expected {distance.upper()}")
+    try:
+        count = client.count(collection).count
+    except Exception as e:
+        raise IndexCompatibilityError(f"cannot count points in collection {collection!r}: {e}") from e
+    if count != len(chunk_ids):
+        raise IndexCompatibilityError(f"index has {count} points, expected {len(chunk_ids)}; the index is stale "
+                                      "or has duplicate points, rebuild it")
     indexed = collection_chunk_ids(client, collection)
     missing, extra = sorted(chunk_ids - indexed)[:5], sorted(indexed - chunk_ids)[:5]
     if missing or extra:

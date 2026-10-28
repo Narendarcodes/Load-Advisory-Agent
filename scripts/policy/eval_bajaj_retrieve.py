@@ -40,8 +40,8 @@ norm = lambda s: re.sub(r"\s+", " ", s).strip().lower()
 def checked_index_dir(explicit: str, replace: bool) -> Path:
     """A persistent index target. An existing one needs the explicit --replace-index opt-in."""
     p = Path(explicit)
-    if (p / "collection").exists() and not replace:
-        raise SystemExit(f"{p} already contains a vector index; pass --replace-index to rebuild it")
+    if p.exists() and (not p.is_dir() or any(p.iterdir())) and not replace:
+        raise SystemExit(f"{p} already contains an index; pass --replace-index to rebuild it")
     return p
 
 

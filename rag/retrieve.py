@@ -22,7 +22,7 @@ from pathlib import Path
 
 from rank_bm25 import BM25Okapi
 
-from rag.index_meta import validate_collection, validate_index, write_index_meta
+from rag.index_meta import validate_collection, validate_index, validate_vectors, write_index_meta
 
 DOC_PREFIX = "title: {title} | text: {text}"
 ALLOWED = {"current": {"approved"}, "historical": {"approved", "approved_historical"},
@@ -125,24 +125,28 @@ class DenseIndex:
         self.m = models
         self.client = QdrantClient(url=url) if url else QdrantClient(path=path) if path else QdrantClient(":memory:")
         self.col = collection
-        if self.client.collection_exists(collection):
-            self.client.close()
-            raise IndexExistsError(f"collection {collection!r} already exists at {path or url or ':memory:'}; "
-                                   "use rebuild_index(..., replace=True) to replace it explicitly")
-        self.client.create_collection(collection, vectors_config=models.VectorParams(size=len(vectors[0]), distance=models.Distance.COSINE))
-        for key in ("approval_status", "lender_id", "applies_to_entity", "source_type"):
-            self.client.create_payload_index(collection, key, models.PayloadSchemaType.KEYWORD)
+        try:
+            if self.client.collection_exists(collection):
+                raise IndexExistsError(f"collection {collection!r} already exists at {path or url or ':memory:'}; "
+                                       "use rebuild_index(..., replace=True) to replace it explicitly")
+            dim = validate_vectors(chunks, vectors, (meta or {}).get("dimension"))
+            self.client.create_collection(collection, vectors_config=models.VectorParams(size=dim, distance=models.Distance.COSINE))
+            for key in ("approval_status", "lender_id", "applies_to_entity", "source_type"):
+                self.client.create_payload_index(collection, key, models.PayloadSchemaType.KEYWORD)
 
-        def payload(c):
-            p = {k: c.get(k) for k in PAYLOAD_KEYS}
-            p["source_type"] = c.get("source_type") or c.get("authority")
-            p["lender_id"] = c.get("lender_id") or NO_LENDER
-            p["applies_to_entity"] = list(c.get("applies_to_entity") or ["all"])
-            return p
-        self.client.upsert(collection, points=[models.PointStruct(id=i, vector=list(map(float, v)), payload=payload(c))
-                                               for i, (c, v) in enumerate(zip(chunks, vectors))])
-        if path is not None and meta is not None:
-            write_index_meta(path, meta, chunks, collection)
+            def payload(c):
+                p = {k: c.get(k) for k in PAYLOAD_KEYS}
+                p["source_type"] = c.get("source_type") or c.get("authority")
+                p["lender_id"] = c.get("lender_id") or NO_LENDER
+                p["applies_to_entity"] = list(c.get("applies_to_entity") or ["all"])
+                return p
+            self.client.upsert(collection, points=[models.PointStruct(id=i, vector=list(map(float, v)), payload=payload(c))
+                                                   for i, (c, v) in enumerate(zip(chunks, vectors))])
+            if path is not None and meta is not None:
+                write_index_meta(path, meta, chunks, collection)
+        except BaseException:
+            self.client.close()
+            raise
 
     def qdrant_filter(self, flt: RetrievalFilter):
         m = self.m
@@ -164,19 +168,28 @@ class DenseIndex:
 def rebuild_index(path, chunks, vectors, *, collection="policy_chunks_v2", meta=None, replace=False):
     """Build the index in a staging directory, validate it, then swap it in.
 
-    An existing index is only replaced when ``replace=True``. The previous directory is kept until
-    the staged index validates and both renames succeed. Limitation: the swap is two renames
+    An existing target is only replaced when ``replace=True``. The previous directory is kept until
+    the staged index validates and has been renamed into place. Limitation: the swap is two renames
     (target -> backup, stage -> target), not one atomic operation. A crash between them leaves the
-    previous tree at ``.<name>.old-*``; restore it by hand if that happens.
+    previous tree at ``.<name>.old-*``; the next rebuild restores it before doing anything else.
     """
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
+    if not target.exists():
+        backups = sorted(target.parent.glob(f".{target.name}.old-*"))
+        if backups:
+            try:
+                os.replace(backups[-1], target)
+            except OSError as e:
+                raise IndexExistsError(
+                    f"a previous index is preserved at {backups[-1]} but could not be restored to {target}: {e}") from e
     if target.exists() and not target.is_dir():
         raise IndexExistsError(f"{target} exists and is not an index directory")
-    if target.is_dir() and (target / "collection").exists() and not replace:
+    if target.is_dir() and any(target.iterdir()) and not replace:
         raise IndexExistsError(f"index already exists at {target}; refusing to replace it without "
                                "explicit permission (replace=True)")
     stage = Path(tempfile.mkdtemp(prefix=f".{target.name}.new-", dir=target.parent))
+    keep_stage = False
     try:
         di = DenseIndex(chunks, vectors, path=str(stage), collection=collection, meta=meta)
         try:
@@ -188,18 +201,28 @@ def rebuild_index(path, chunks, vectors, *, collection="policy_chunks_v2", meta=
         finally:
             di.client.close()
         if target.exists():
-            backup = target.with_name(f".{target.name}.old-{int(time.time() * 1000)}")
+            backup = target.with_name(f".{target.name}.old-{time.time_ns()}")
             os.replace(target, backup)
             try:
                 os.replace(stage, target)
             except BaseException:
-                os.replace(backup, target)
+                try:
+                    os.replace(backup, target)
+                except BaseException as restore_error:
+                    keep_stage = True
+                    raise RuntimeError(
+                        f"index swap failed and the previous index could not be restored; previous index "
+                        f"preserved at {backup}; new index preserved at {stage}") from restore_error
                 raise
-            shutil.rmtree(backup, ignore_errors=True)
+            try:
+                shutil.rmtree(backup)
+            except OSError:
+                pass  # the validated replacement is installed; keeping the backup is harmless
         else:
             os.replace(stage, target)
     except BaseException:
-        shutil.rmtree(stage, ignore_errors=True)
+        if not keep_stage:
+            shutil.rmtree(stage, ignore_errors=True)
         raise
     return target
 
