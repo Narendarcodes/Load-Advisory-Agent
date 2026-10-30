@@ -45,7 +45,7 @@ class PersonaStore:
 
 def decide_offline(store, refs) -> InMemoryEvidenceSink:
     """Run the CONVENTIONAL workflow (not the agent) so there is recorded evidence to explain."""
-    sink = InMemoryEvidenceSink()
+    sink = InMemoryEvidenceSink(store)
     for ref in refs:
         process_application(ref, store, sink)
     return sink
@@ -134,7 +134,8 @@ def build_live_agent(policy_tools=None, profile=None, llm=None) -> tuple[Advisor
     client = FrappeClient()
     sink = FrappeEvidenceSink(client)
     tools = DecisionTools(client, FrappeEvidenceSource(sink))
-    agent = AdvisoryAgent(tools, llm or ChatLLM(), policy_tools=policy_tools, handoff=HandoffQueue(), profile=profile)
+    agent = AdvisoryAgent(tools, llm or ChatLLM.from_env(), policy_tools=policy_tools, handoff=HandoffQueue(),
+                          profile=profile)
     return agent, client
 
 
@@ -143,4 +144,5 @@ def build_offline_agent(store=None, refs=None, llm=None, policy_tools=None, prof
     refs = refs if refs is not None else list(store._apps)
     sink = decide_offline(store, refs)
     tools = DecisionTools(store, InMemoryEvidenceSource(sink))
-    return AdvisoryAgent(tools, llm or ChatLLM(), policy_tools=policy_tools, handoff=HandoffQueue(), profile=profile), store, sink
+    return (AdvisoryAgent(tools, llm or ChatLLM.from_env(), policy_tools=policy_tools, handoff=HandoffQueue(),
+                          profile=profile), store, sink)
