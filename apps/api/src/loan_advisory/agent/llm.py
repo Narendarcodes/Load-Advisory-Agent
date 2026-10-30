@@ -1,20 +1,78 @@
-"""Minimal OpenAI-compatible chat client for the self-hosted gpt-oss-120b (vLLM, model "llm").
+"""Minimal OpenAI-compatible chat client.
 
 No LiteLLM / SDK wrapper: plain `requests` against /v1/chat/completions. Streaming is used so the
 time-to-first-token (TTFT) of every call is measured and reported in the turn trace.
+
+Provider selection is explicit and env-driven (see `provider_from_env`):
+
+    LLM_PROVIDER=groq        https://api.groq.com/openai/v1, key GROQ_API_KEY
+    LLM_PROVIDER=omniroute   http://127.0.0.1:20128/v1 by default (OMNIROUTE_BASE_URL overrides),
+                             key OMNIROUTE_API_KEY when the gateway requires one
+    LLM_MODEL                required by the runtime wiring (`ChatLLM.from_env`); there is no
+                             assumed model name
+
+`LLM_BASE` / `LLM_API_KEY` remain generic overrides (an explicit argument wins over both).
+There is deliberately no fallback to a local vLLM server: an unconfigured provider fails loudly
+at startup, and a failing provider raises LLMError so the graph uses its safe template fallback.
 """
 import json
 import os
 import re
 import threading
 import time
+from dataclasses import dataclass
 
 import requests
 
 from loan_advisory.agent import observability as obs
 
-DEFAULT_BASE = os.environ.get("LLM_BASE", "http://127.0.0.1:8001/v1")
-DEFAULT_MODEL = os.environ.get("LLM_MODEL", "llm")
+DEFAULT_PROVIDER = "omniroute"
+PROVIDERS = {
+    "groq": {"base": "https://api.groq.com/openai/v1", "key_env": "GROQ_API_KEY", "base_env": None},
+    "omniroute": {"base": "http://127.0.0.1:20128/v1", "key_env": "OMNIROUTE_API_KEY", "base_env": "OMNIROUTE_BASE_URL"},
+}
+DEFAULT_BASE = PROVIDERS[DEFAULT_PROVIDER]["base"]
+DEFAULT_MODEL = os.environ.get("LLM_MODEL") or "llm"  # lenient default for ad-hoc clients only
+
+
+class LLMConfigError(ValueError):
+    """The provider configuration is missing or invalid; the service must not start."""
+
+
+@dataclass(frozen=True)
+class ProviderConfig:
+    provider: str
+    base: str
+    model: str
+    api_key: str
+    reasoning_effort: str | None
+
+
+def provider_from_env(env=None, *, base=None, model=None, api_key=None, provider=None,
+                      require_model: bool = False) -> ProviderConfig:
+    """Resolve one active provider. Explicit arguments win over env; env wins over defaults."""
+    env = os.environ if env is None else env
+    name = (provider or env.get("LLM_PROVIDER") or DEFAULT_PROVIDER).strip().lower()
+    if name not in PROVIDERS:
+        raise LLMConfigError(f"LLM_PROVIDER must be one of {sorted(PROVIDERS)}, got {name!r}")
+    spec = PROVIDERS[name]
+    base_url = (base or (env.get(spec["base_env"]) if spec["base_env"] else "") or env.get("LLM_BASE")
+                or spec["base"]).strip().rstrip("/")
+    model_id = (model or env.get("LLM_MODEL") or "").strip()
+    if not model_id:
+        if require_model:
+            raise LLMConfigError(
+                f"LLM_MODEL is not set; configure the model ID exposed by the {name} provider")
+        model_id = DEFAULT_MODEL
+    key = (api_key if api_key is not None else env.get("LLM_API_KEY") or env.get(spec["key_env"]) or "").strip()
+    effort = (env.get("LLM_REASONING_EFFORT") if "LLM_REASONING_EFFORT" in env else "low")
+    effort = (effort or "").strip() or None
+    return ProviderConfig(provider=name, base=base_url, model=model_id, api_key=key, reasoning_effort=effort)
+
+
+def _retryable_status(status: int) -> bool:
+    """Client errors are deterministic: retrying a 401/404 only delays the safe fallback."""
+    return status in (408, 409, 425, 429) or status >= 500
 
 
 STATS = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}  # process-wide counters (throughput reporting)
@@ -29,18 +87,35 @@ class _Deadline(Exception):
     pass
 
 
+class _HTTPStatus(Exception):
+    def __init__(self, status: int, message: str):
+        super().__init__(message)
+        self.status = status
+
+
 class ChatLLM:
     def __init__(self, base: str | None = None, model: str | None = None, timeout: float | None = None,
-                 reasoning_effort: str = "low", retries: int | None = None):
-        self.base = (base or DEFAULT_BASE).rstrip("/")
+                 reasoning_effort: str | None = None, retries: int | None = None, api_key: str | None = None,
+                 provider: str | None = None, env=None):
+        cfg = provider_from_env(env, base=base, model=model, api_key=api_key, provider=provider)
+        self.provider = cfg.provider
+        self.base = cfg.base
+        self.model = cfg.model
         self.retries = retries if retries is not None else int(os.environ.get("LLM_RETRIES", "3"))
-        self.model = model or DEFAULT_MODEL
         self.timeout = timeout if timeout is not None else float(os.environ.get("LLM_TIMEOUT_S", "120"))
-        self.reasoning_effort = reasoning_effort
+        self.reasoning_effort = reasoning_effort if reasoning_effort is not None else cfg.reasoning_effort
+        env = os.environ if env is None else env
+        self.stream_usage = env.get("LLM_STREAM_USAGE", "1") not in ("0", "false", "no")
         self._local = threading.local()
-        # Same precedence as the policy eval scripts: LLM_API_KEY wins, GROQ_API_KEY is the fallback.
-        self._secret = (os.environ.get("LLM_API_KEY") or os.environ.get("GROQ_API_KEY") or "").strip()
+        self._secret = cfg.api_key
         self._headers = {"Authorization": f"Bearer {self._secret}"} if self._secret else {}
+
+    @classmethod
+    def from_env(cls, *, env=None, **kw) -> "ChatLLM":
+        """The runtime wiring: requires an explicit LLM_MODEL and a known LLM_PROVIDER."""
+        cfg = provider_from_env(env, require_model=True)
+        return cls(base=cfg.base, model=cfg.model, api_key=cfg.api_key, provider=cfg.provider,
+                   reasoning_effort=cfg.reasoning_effort, env=env, **kw)
 
     def _redact(self, text: str) -> str:
         return text.replace(self._secret, "***") if self._secret else text
@@ -62,8 +137,10 @@ class ChatLLM:
     def chat_stream(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
                     deadline: float | None = None):
         """Yield content deltas as they arrive. Raises LLMError on failure or when `deadline` passes."""
-        params = {"max_tokens": max_tokens, "temperature": temperature, "reasoning_effort": self.reasoning_effort}
-        with obs.span(f"llm.{tag or 'chat'}", kind="LLM", **{"llm.model_name": self.model, "llm.provider": "vllm-self-hosted",
+        params = {"max_tokens": max_tokens, "temperature": temperature}
+        if self.reasoning_effort:
+            params["reasoning_effort"] = self.reasoning_effort
+        with obs.span(f"llm.{tag or 'chat'}", kind="LLM", **{"llm.model_name": self.model, "llm.provider": self.provider,
                                                               "llm.invocation_parameters": json.dumps(params),
                                                               "langfuse.observation.model.name": self.model,
                                                               "langfuse.observation.model.parameters": json.dumps(params),
@@ -94,9 +171,11 @@ class ChatLLM:
     def _stream(self, system: str, user: str, max_tokens: int, temperature: float, tag: str, deadline: float | None):
         body = {"model": self.model, "messages": [{"role": "system", "content": system},
                                                   {"role": "user", "content": user}],
-                "max_tokens": max_tokens, "temperature": temperature, "stream": True,
-                "stream_options": {"include_usage": True},
-                "reasoning_effort": self.reasoning_effort}
+                "max_tokens": max_tokens, "temperature": temperature, "stream": True}
+        if self.stream_usage:
+            body["stream_options"] = {"include_usage": True}
+        if self.reasoning_effort:  # optional: routed gateways may not accept it
+            body["reasoning_effort"] = self.reasoning_effort
         t0 = time.perf_counter()
         ttft = first_any = None
         usage = {}
@@ -117,7 +196,7 @@ class ChatLLM:
                     with requests.post(f"{self.base}/chat/completions", json=body, stream=True,
                                        timeout=(min(5.0, read_to), read_to), headers=self._headers) as r:
                         if r.status_code >= 400:
-                            raise LLMError(f"HTTP {r.status_code}: {self._redact(r.text[:200])}")
+                            raise _HTTPStatus(r.status_code, f"HTTP {r.status_code}: {self._redact(r.text[:200])}")
                         # OpenAI-compatible SSE is UTF-8; with no charset on text/event-stream requests falls back to
                         # ISO-8859-1, which mangles the rupee sign and Indic text.
                         r.encoding = "utf-8"
@@ -150,8 +229,10 @@ class ChatLLM:
                     break
                 except _Deadline:
                     raise LLMError("deadline exceeded while the LLM was answering")
-                except (requests.RequestException, LLMError) as e:
+                except (_HTTPStatus, requests.RequestException, LLMError) as e:
                     last_err = e
+                    if isinstance(e, _HTTPStatus) and not _retryable_status(e.status):
+                        raise LLMError(str(e))  # 401/404/... will not change on a retry
                     rem = left()
                     if rem is not None and rem <= 1.5 * (attempt + 1):
                         raise LLMError(f"deadline exceeded ({type(e).__name__})")  # no time left for a retry
@@ -161,6 +242,8 @@ class ChatLLM:
                     time.sleep(1.5 * (attempt + 1))
             else:
                 raise LLMError(str(last_err))
+            if not yielded:
+                raise LLMError("LLM returned no content")  # e.g. a filtered or non-SSE response
         except LLMError as e:
             rec["error"] = "deadline" if "deadline" in str(e) else str(e)[:120]
             raise

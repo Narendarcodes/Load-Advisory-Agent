@@ -19,9 +19,10 @@ from loan_advisory.state_paths import LIVE_TRACE_DIR, TRACE_DIR, resolve, write_
 
 
 class InMemoryEvidenceSink:
-    def __init__(self):
+    def __init__(self, store=None):
         self.records, self.status, self.traces = {}, {}, {}
         self.latest_ids = {}  # application_ref -> record_id of the newest non-simulation run (Frappe: custom_latest_evidence)
+        self.store = store   # optional: write the lifecycle state back, like the Frappe sink's PUT
 
     def persist(self, record, native_status, trace):
         self.records.setdefault(record["record_id"], record)
@@ -29,6 +30,8 @@ class InMemoryEvidenceSink:
             # Ids are deterministic, so a re-run can reproduce an older record; the pointer must still move to it.
             self.latest_ids[record["application_ref"]] = record["record_id"]
         self.status[record["application_ref"]] = (record["lifecycle_state"], native_status)
+        if self.store is not None and hasattr(self.store, "set_status"):
+            self.store.set_status(record["application_ref"], record["lifecycle_state"], native_status)
         if record["trace_ref"]["sha256"]:
             self.traces[record["trace_ref"]["sha256"]] = stable_trace(trace)
 

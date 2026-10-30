@@ -68,7 +68,8 @@ class DecisionTools:
     store: object
     evidence: object
 
-    def _owned_doc(self, application_ref: str, session: Session) -> dict:
+    def owned_doc(self, application_ref: str, session: Session) -> dict:
+        """The Loan Application document, only when the session's applicant owns it."""
         if not session or not session.authenticated:
             raise NotAuthorized("no authenticated session")
         with obs.span("frappe.get_loan_application", kind="TOOL", **{"frappe.doctype": "Loan Application",
@@ -81,11 +82,11 @@ class DecisionTools:
 
     @obs.tool("authorize")
     def authorize(self, application_ref: str, session: Session) -> None:
-        self._owned_doc(application_ref, session)
+        self.owned_doc(application_ref, session)
 
     @obs.tool("get_application_summary")
     def get_application_summary(self, application_ref: str, session: Session) -> dict:
-        doc = self._owned_doc(application_ref, session)
+        doc = self.owned_doc(application_ref, session)
         return {"application_ref": application_ref, "loan_amount": doc.get("loan_amount"),
                 "tenure_months": doc.get("repayment_periods") or doc.get("loan_tenure_months"),
                 "product": doc.get("loan_product"), "status": doc.get("status"),
@@ -93,13 +94,13 @@ class DecisionTools:
 
     @obs.tool("get_decision_evidence")
     def get_decision_evidence(self, application_ref: str, session: Session) -> dict | None:
-        doc = self._owned_doc(application_ref, session)
+        doc = self.owned_doc(application_ref, session)
         return self.evidence.latest(application_ref, doc)
 
     @obs.tool("run_what_if")
-    def run_what_if(self, application_ref: str, session: Session, changes: dict) -> dict:
+    def run_what_if(self, application_ref: str, session: Session, changes: dict, record: dict | None = None) -> dict:
         """Hypothetical re-evaluation through the unchanged ZEN path. Returns before/after per rule."""
-        doc = self._owned_doc(application_ref, session)
+        doc = self.owned_doc(application_ref, session)
         clean = {}
         for k, v in (changes or {}).items():
             if k not in FIELD_TO_DOC:
@@ -115,8 +116,14 @@ class DecisionTools:
         if not clean:
             raise InvalidWhatIf("no hypothetical change given")
         before_vals = {k: doc.get(FIELD_TO_DOC[k], doc.get(k)) for k in SCORED}
+        # A bureau-underwritten application may carry no local score; simulate from the value the
+        # stored evaluation actually used, so the what-if is not an ERROR caused by a missing field.
+        record = record if record is not None else self.evidence.latest(application_ref, doc)
+        used = ((record or {}).get("inputs") or {}).get("values") or {}
+        base = {FIELD_TO_DOC[k]: used[k] for k in SCORED
+                if doc.get(FIELD_TO_DOC[k], doc.get(k)) in (None, "") and used.get(k) is not None}
         with obs.span("zen.simulate", kind="TOOL", **{"zen.engine": "zen-engine 2.1.2", "zen.fields": sorted(clean)}) as sp, _ZEN_LOCK:
-            sim = simulate(application_ref, self.store, {FIELD_TO_DOC[k]: v for k, v in clean.items()})
+            sim = simulate(application_ref, self.store, {FIELD_TO_DOC[k]: v for k, v in clean.items()}, base=base)
             obs.set_attrs(sp, **{"zen.simulated_decision": sim["decision"], "zen.policy_version": sim["policy"]["version"]})
         after_doc = self.store.get(application_ref)
         unchanged = all(after_doc.get(FIELD_TO_DOC[k], after_doc.get(k)) == before_vals[k] for k in SCORED)
@@ -131,7 +138,7 @@ class DecisionTools:
         targets = counterfactual_targets(record)
         steps = []
         for t in targets:
-            w = self.run_what_if(application_ref, session, {t["field"]: t["target"]})
+            w = self.run_what_if(application_ref, session, {t["field"]: t["target"]}, record=record)
             steps.append({**t, "rule_passes_after_change": w["rule_results"].get(t["rule_id"]) == "PASS",
                           "simulated_decision_after_this_change_alone": w["simulated_decision"]})
         combined = None
@@ -139,7 +146,7 @@ class DecisionTools:
             ch = {}
             for t in targets:
                 ch[t["field"]] = t["target"] if t["field"] not in ch else ch[t["field"]]
-            w = self.run_what_if(application_ref, session, ch)
+            w = self.run_what_if(application_ref, session, ch, record=record)
             combined = {"changes": w["changes"], "simulated_decision": w["simulated_decision"],
                         "label": w["label"], "original_record_unchanged": w["original_record_unchanged"]}
         return {"steps": steps, "all_changes_together": combined}

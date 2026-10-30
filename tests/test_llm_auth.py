@@ -1,4 +1,4 @@
-"""ChatLLM bearer auth: LLM_API_KEY (or GROQ_API_KEY) is sent to OpenAI-compatible endpoints."""
+"""ChatLLM bearer auth: LLM_API_KEY (or the selected provider's key) is sent to OpenAI-compatible endpoints."""
 import json
 
 import pytest
@@ -40,8 +40,8 @@ def _capture(monkeypatch, resp):
 
 
 def _clear(monkeypatch):
-    monkeypatch.delenv("LLM_API_KEY", raising=False)
-    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    for name in ("LLM_API_KEY", "GROQ_API_KEY", "OMNIROUTE_API_KEY", "LLM_PROVIDER"):
+        monkeypatch.delenv(name, raising=False)
 
 
 def test_llm_api_key_is_sent_as_bearer(monkeypatch):
@@ -55,11 +55,20 @@ def test_llm_api_key_is_sent_as_bearer(monkeypatch):
     assert SECRET not in json.dumps(c.calls)
 
 
-def test_groq_api_key_is_the_fallback(monkeypatch):
+def test_provider_key_is_the_fallback(monkeypatch):
     _clear(monkeypatch)
+    monkeypatch.setenv("LLM_PROVIDER", "groq")
     monkeypatch.setenv("GROQ_API_KEY", SECRET)
     seen = _capture(monkeypatch, _Resp(_sse("ok")))
     assert L.ChatLLM(base="http://x/v1").chat("s", "u") == "ok"
+    assert seen["headers"] == {"Authorization": f"Bearer {SECRET}"}
+
+
+def test_omniroute_key_is_used_for_the_local_gateway(monkeypatch):
+    _clear(monkeypatch)
+    monkeypatch.setenv("OMNIROUTE_API_KEY", SECRET)
+    seen = _capture(monkeypatch, _Resp(_sse("ok")))
+    L.ChatLLM().chat("s", "u")
     assert seen["headers"] == {"Authorization": f"Bearer {SECRET}"}
 
 
@@ -83,6 +92,7 @@ def test_missing_credentials_send_no_authorization_header(monkeypatch):
 
 def test_authentication_failure_raises_and_redacts_the_key(monkeypatch):
     _clear(monkeypatch)
+    monkeypatch.setenv("LLM_PROVIDER", "groq")
     monkeypatch.setenv("GROQ_API_KEY", SECRET)
     monkeypatch.setattr(L.time, "sleep", lambda _s: None)
     _capture(monkeypatch, _Resp([], status=401, text=f"invalid api key: {SECRET}"))

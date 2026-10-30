@@ -17,6 +17,8 @@ Mapping (Frappe field -> canonical field -> ZEN input field):
 """
 import json
 import os
+import uuid
+from datetime import date, datetime, timezone
 
 import requests
 
@@ -24,6 +26,11 @@ from decision_engine.paths import repo_root
 from decision_engine.schemas.underwriting import UnderwritingInput
 
 DATA_DIR = repo_root() / "data" / "synthetic"
+DOCTYPE = "Loan Application"
+DEFAULT_COMPANY = "Loan Rangers Test NBFC"   # ids seeded by infra/frappe/bootstrap/seed_site.py
+DEFAULT_PRODUCT = "SYN-PERSONAL-001"
+LIST_FIELDS = ("name", "loan_amount", "repayment_periods", "custom_lifecycle_state", "status",
+               "creation", "modified", "custom_loan_purpose")
 
 
 class FrappeUnavailable(Exception):
@@ -63,6 +70,28 @@ class MockStore:
         except KeyError:
             raise UnknownApplication(f"unknown application: {application_id}")
 
+    def create(self, fields: dict) -> dict:
+        """Offline/test write path. Never reachable unless `AGENT_STORE=mock` or --offline."""
+        ref = fields.get("name") or f"APP-LCL-{uuid.uuid4().hex[:8].upper()}"
+        now = datetime.now(timezone.utc).isoformat()
+        doc = {"status": "Open", "custom_lifecycle_state": "SUBMITTED", **fields,
+               "name": ref, "created_at": now, "modified_at": now}
+        doc.setdefault("custom_external_ref", ref)
+        self._apps[ref] = doc
+        return dict(doc)
+
+    def set_status(self, application_id: str, lifecycle_state: str, native_status: str) -> None:
+        doc = self._apps.get(application_id)
+        if doc is None:
+            raise UnknownApplication(f"unknown application: {application_id}")
+        doc.update(custom_lifecycle_state=lifecycle_state, status=native_status,
+                   modified_at=datetime.now(timezone.utc).isoformat())
+
+    def list_for(self, applicant_ref: str) -> list[dict]:
+        rows = [dict(d) for d in self._apps.values() if d.get("applicant") == applicant_ref]
+        rows.sort(key=lambda d: d.get("created_at") or "", reverse=True)
+        return rows
+
 
 def from_frappe_doc(doc: dict) -> UnderwritingInput:
     """Explicit field mapping; raises pydantic ValidationError on bad data."""
@@ -94,7 +123,7 @@ class FrappeClient:
     def get(self, application_id: str) -> dict:
         try:
             r = requests.get(
-                f"{self.base_url}/api/resource/Loan Application/{application_id}",
+                f"{self.base_url}/api/resource/{DOCTYPE}/{application_id}",
                 headers=self._headers(),
                 timeout=15,
             )
@@ -105,6 +134,42 @@ class FrappeClient:
         if not r.ok:
             raise FrappeUnavailable(f"frappe HTTP {r.status_code}: {r.text[:200]}")
         return r.json().get("data", {})
+
+    def create(self, fields: dict) -> dict:
+        """Create a Loan Application. Raises on any failure: the caller must not report success."""
+        body = {
+            "doctype": DOCTYPE, "applicant_type": "Customer",
+            "company": os.environ.get("FRAPPE_LOAN_COMPANY") or DEFAULT_COMPANY,
+            "loan_product": os.environ.get("FRAPPE_LOAN_PRODUCT") or DEFAULT_PRODUCT,
+            "posting_date": date.today().isoformat(), "is_term_loan": 1,
+            "repayment_method": "Repay Over Number of Periods",
+            "status": "Open", "custom_lifecycle_state": "SUBMITTED", **fields,
+        }
+        try:
+            r = requests.post(f"{self.base_url}/api/resource/{DOCTYPE}", headers=self._headers(),
+                              json=body, timeout=20)
+        except requests.RequestException as e:
+            raise FrappeUnavailable(f"frappe unreachable: {e}")
+        if not r.ok:
+            raise FrappeUnavailable(f"application create HTTP {r.status_code}: {r.text[:200]}")
+        doc = r.json().get("data") or {}
+        if not doc.get("name"):
+            raise FrappeUnavailable("frappe accepted the application but returned no name")
+        return doc
+
+    def list_for(self, applicant_ref: str, limit: int = 50) -> list[dict]:
+        """Only the signed-in applicant's records: the filter is server-side, never a body field."""
+        params = {"filters": json.dumps([["applicant", "=", applicant_ref]]),
+                  "fields": json.dumps(list(LIST_FIELDS)),
+                  "order_by": "modified desc", "limit_page_length": str(limit)}
+        try:
+            r = requests.get(f"{self.base_url}/api/resource/{DOCTYPE}", headers=self._headers(),
+                             params=params, timeout=15)
+        except requests.RequestException as e:
+            raise FrappeUnavailable(f"frappe unreachable: {e}")
+        if not r.ok:
+            raise FrappeUnavailable(f"frappe HTTP {r.status_code}: {r.text[:200]}")
+        return r.json().get("data") or []
 
 
 def get_store():

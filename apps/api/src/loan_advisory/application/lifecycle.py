@@ -218,12 +218,17 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
     return Outcome(application_ref, current_state, to, rec, missing, flags)
 
 
-def simulate(application_ref: str, store, overrides: dict, now=None) -> dict:
-    """What-if: evaluate hypothetical values in memory. Returns an is_simulation record; persists nothing."""
+def simulate(application_ref: str, store, overrides: dict, now=None, *, base: dict | None = None) -> dict:
+    """What-if: evaluate hypothetical values in memory. Returns an is_simulation record; persists nothing.
+
+    ``base`` supplies values the source record does not carry but the latest evaluation used
+    (a bureau-resolved credit score), so a what-if starts from the inputs that were underwritten.
+    """
     pv = _active_policy()
     doc = store.get(application_ref)
-    ev = decide(application_ref, store=store, overrides=overrides)
-    rec = build_record(ev, pv, _scored_inputs({**doc, **overrides}), application_ref=application_ref,
+    merged = {**(base or {}), **overrides}
+    ev = decide(application_ref, store=store, overrides=merged)
+    rec = build_record(ev, pv, _scored_inputs({**doc, **merged}), application_ref=application_ref,
                        applicant_ref=doc.get("applicant"), lifecycle_state="SIMULATION", is_simulation=True, now=now)
     rec["hypothetical_changes"] = overrides
     return rec
