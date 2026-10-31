@@ -1,0 +1,127 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+{% if not_found %}
+{% include "templates/portal/_not_found.html" %}
+{% else %}
+<div class="page-head">
+	<div>
+		<p class="tiny"><a href="/borrower">← All applications</a></p>
+		<h1 id="app-title">Your application</h1>
+		<p id="app-purpose">&nbsp;</p>
+		<p class="small">
+			<a href="/borrower/assistant?application={{ application.name | urlencode }}">Ask the assistant about this decision →</a>
+			<span class="muted"> · </span>
+			<a href="/borrower/help">How decisions work</a>
+		</p>
+	</div>
+	<div class="row" id="app-actions"></div>
+</div>
+
+<div class="grid-2">
+	<section class="card" aria-labelledby="summary-heading">
+		<div class="card__head">
+			<h2 id="summary-heading">Summary</h2>
+			<span id="app-badge"></span>
+		</div>
+		<dl class="detail" id="summary">
+			<dt>Status</dt>
+			<dd>Loading…</dd>
+		</dl>
+	</section>
+
+	<section class="card" aria-labelledby="decision-heading">
+		<div class="card__head">
+			<h2 id="decision-heading">Decision and reasoning</h2>
+		</div>
+		<div id="decision">
+			<p class="muted small">Loading…</p>
+		</div>
+	</section>
+</div>
+
+<section class="card mt" aria-labelledby="status-help-heading">
+	<div class="card__head">
+		<h2 id="status-help-heading">What this status means</h2>
+	</div>
+	<div id="status-help" aria-live="polite">
+		<p class="muted small">Loading…</p>
+	</div>
+</section>
+
+<section id="info-request" class="card mt hidden" aria-labelledby="info-heading">
+	<div class="card__head">
+		<h2 id="info-heading">Information needed</h2>
+	</div>
+	<p class="small muted">Correct the values below and resubmit. The rest of the submitted application, including its documents, stays as it is.</p>
+	<div class="grid-2">
+		<div class="field">
+			<label for="resubmit-income">Monthly income</label>
+			<input id="resubmit-income" type="number" min="0" step="1" inputmode="numeric">
+		</div>
+		<div class="field">
+			<label for="resubmit-obligations">Monthly obligations</label>
+			<input id="resubmit-obligations" type="number" min="0" step="1" inputmode="numeric">
+		</div>
+		<div class="field">
+			<label for="resubmit-credit">Credit score (300–900)</label>
+			<input id="resubmit-credit" type="number" min="300" max="900" step="1" inputmode="numeric">
+		</div>
+		<div class="field">
+			<label for="resubmit-employment">Months in current employment</label>
+			<input id="resubmit-employment" type="number" min="0" max="720" step="1" inputmode="numeric">
+		</div>
+	</div>
+	<div class="form-actions">
+		<button class="btn" type="button" id="resubmit-button">Resubmit application</button>
+	</div>
+</section>
+
+<section class="card mt" aria-labelledby="documents-heading">
+	<div class="card__head">
+		<h2 id="documents-heading">Documents</h2>
+		<span class="small muted">PDF, JPEG or PNG · up to 10 MB each · 12 documents maximum</span>
+	</div>
+	<div id="documents" aria-live="polite">
+		<p class="muted small">Loading…</p>
+	</div>
+	<form id="upload-form" class="mt hidden" enctype="multipart/form-data" novalidate>
+		<div class="grid-2">
+			<div class="field">
+				<label for="document-type">Document type</label>
+				<select id="document-type" name="document_type" required></select>
+			</div>
+			<div class="field">
+				<label for="document-file">File</label>
+				<input id="document-file" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required>
+			</div>
+		</div>
+		<div class="form-actions">
+			<button class="btn" type="submit" id="upload-button">Upload document</button>
+		</div>
+	</form>
+</section>
+
+<section class="card mt" aria-labelledby="timeline-heading">
+	<div class="card__head">
+		<h2 id="timeline-heading">Timeline</h2>
+	</div>
+	<ol class="timeline" id="timeline">
+		<li class="muted small">Loading…</li>
+	</ol>
+</section>
+
+<div id="withdraw-panel" class="card mt hidden" role="alertdialog" aria-labelledby="withdraw-question">
+	<div class="card__head">
+		<h2 id="withdraw-question">Withdraw this application?</h2>
+	</div>
+	<p class="small muted">Withdrawing closes this application. You can start a new one at any time, but this one cannot be reopened.</p>
+	<div class="form-actions">
+		<button class="btn btn--danger" type="button" id="withdraw-confirm">Yes, withdraw</button>
+		<button class="btn btn--ghost" type="button" id="withdraw-cancel">Keep application</button>
+	</div>
+</div>
+
+<script id="application-ref" type="application/json">{{ application.name | tojson }}</script>
+<script src="/assets/loan_advisory_portal/js/pages/application.js" defer></script>
+{% endif %}
+{% endblock %}

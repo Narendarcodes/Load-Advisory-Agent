@@ -1,0 +1,42 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<h1>Loan products</h1>
+		<p>The product currently offered. Every application is assessed individually against the lending policy; the rate shown is the product rate, not a personalised offer.</p>
+	</div>
+	<a class="btn" href="/borrower/apply">Start an application</a>
+</div>
+
+{% if products %}
+<section class="grid-2" aria-label="Available products">
+	{% for product in products %}
+	<article class="card">
+		<div class="card__head">
+			<h2>{{ product.name | e }}</h2>
+			<span class="badge">Term loan</span>
+		</div>
+		<dl class="detail">
+			<dt>Maximum amount</dt>
+			<dd>₹{{ "{:,.0f}".format(product.maximum_loan_amount or 0) }}</dd>
+			<dt>Rate of interest</dt>
+			<dd>{{ product.rate_of_interest | round(2) }}% per year</dd>
+		</dl>
+		<p class="small muted mt">The actual amount and terms depend on the assessment of your application.</p>
+	</article>
+	{% endfor %}
+</section>
+{% else %}
+<section class="card">
+	<div class="empty">
+		<h2>No product is available right now</h2>
+		<p>Ask your loan advisor when applications can be started again.</p>
+		<p><a class="btn btn--ghost" href="/borrower/help">Read the help page</a></p>
+	</div>
+</section>
+{% endif %}
+
+<p class="small muted mt">
+	See the <a href="/borrower/help">help page</a> for how applications and decisions work.
+</p>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<h1>Tell us how this felt</h1>
+		<p>Whether an explanation made sense, a form was awkward, or something looked wrong — this goes to the team that runs the portal.</p>
+	</div>
+</div>
+
+<div class="grid-2">
+	<form class="card" id="feedback-form" novalidate>
+		<div class="card__head">
+			<h2>New feedback</h2>
+		</div>
+
+		<fieldset>
+			<legend>How was your experience?</legend>
+			<div class="row" role="radiogroup" aria-label="Rating">
+				<label class="check"><input type="radio" name="rating" value="1" required> <span>1 · Very poor</span></label>
+				<label class="check"><input type="radio" name="rating" value="2"> <span>2</span></label>
+				<label class="check"><input type="radio" name="rating" value="3"> <span>3</span></label>
+				<label class="check"><input type="radio" name="rating" value="4"> <span>4</span></label>
+				<label class="check"><input type="radio" name="rating" value="5"> <span>5 · Very good</span></label>
+			</div>
+		</fieldset>
+
+		<div class="grid-2 mt">
+			<div class="field">
+				<label for="category">What is this about?</label>
+				<select id="category" name="category">
+					<option value="general">General</option>
+					<option value="application">An application</option>
+					<option value="decision">A decision</option>
+					<option value="assistant">The assistant</option>
+					<option value="voice">Voice support</option>
+					<option value="accessibility">Accessibility</option>
+					<option value="other">Something else</option>
+				</select>
+			</div>
+			<div class="field">
+				<label for="application">Related application (optional)</label>
+				<select id="application" name="application">
+					<option value="">Not about one application</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="field">
+			<label for="message">Your message</label>
+			<textarea id="message" name="message" maxlength="4000" required placeholder="What happened, and what would have helped?"></textarea>
+			<p class="hint">Up to 4,000 characters. Please do not include passwords or card numbers.</p>
+		</div>
+
+		<div class="form-actions">
+			<button class="btn" type="submit" id="send">Send feedback</button>
+		</div>
+	</form>
+
+	<section class="card" aria-labelledby="history-heading">
+		<div class="card__head">
+			<h2 id="history-heading">Your earlier feedback</h2>
+		</div>
+		<div id="history" aria-live="polite">
+			<p class="muted small">Loading…</p>
+		</div>
+	</section>
+</div>
+
+<script src="/assets/loan_advisory_portal/js/pages/feedback.js" defer></script>
+{% endblock %}

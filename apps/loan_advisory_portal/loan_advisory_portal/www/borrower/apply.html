@@ -1,0 +1,103 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<h1>New application</h1>
+		<p>Five short steps. Nothing reaches an underwriter until you submit on the last step, and you can withdraw a draft at any time.</p>
+	</div>
+</div>
+
+<ol class="steps" id="steps" aria-label="Application steps">
+	<li data-step="about" data-state="current">About you</li>
+	<li data-step="work">Employment</li>
+	<li data-step="money">Income and obligations</li>
+	<li data-step="loan">Loan request</li>
+	<li data-step="review">Review</li>
+</ol>
+
+<form class="card" id="apply-form" novalidate>
+	<fieldset data-panel="about">
+		<legend>About you</legend>
+		<p class="small muted">These details come from your profile. <a href="/borrower/profile">Edit them there</a> if something is out of date.</p>
+		<div class="grid-2 mt">
+			<div class="field">
+				<label for="about-name">Full name</label>
+				<input id="about-name" type="text" readonly data-source="full_name" value="Loading…">
+			</div>
+			<div class="field">
+				<label for="about-email">Email</label>
+				<input id="about-email" type="email" readonly data-source="email" value="Loading…">
+			</div>
+		</div>
+		<div class="field">
+			<label for="about-phone">Phone</label>
+			<input id="about-phone" type="tel" readonly data-source="phone" value="Loading…">
+			<p class="hint">We use this number to reach you about this application. It must include a country code, for example +91 98765 43210.</p>
+			<p class="error hidden" id="about-phone-missing">Add a phone number with a country code to your profile before you submit.</p>
+		</div>
+	</fieldset>
+
+	<fieldset data-panel="work" class="hidden">
+		<legend>Employment</legend>
+		<div class="field">
+			<label for="work-months">Months in your current work</label>
+			<input id="work-months" name="employment_months" type="number" min="0" max="720" step="1" inputmode="numeric" required>
+			<p class="hint">If you have been working for less than a month, enter 0.</p>
+		</div>
+	</fieldset>
+
+	<fieldset data-panel="money" class="hidden">
+		<legend>Income and obligations</legend>
+		<div class="grid-2">
+			<div class="field">
+				<label for="money-income">Monthly income (₹)</label>
+				<input id="money-income" name="monthly_income" type="number" min="1" step="1" inputmode="numeric" required>
+			</div>
+			<div class="field">
+				<label for="money-obligations">Monthly obligations (₹)</label>
+				<input id="money-obligations" name="monthly_obligations" type="number" min="0" step="1" inputmode="numeric" required>
+				<p class="hint">Existing loan repayments each month. Enter 0 if you have none.</p>
+			</div>
+		</div>
+	</fieldset>
+
+	<fieldset data-panel="loan" class="hidden">
+		<legend>Loan request</legend>
+		<div class="grid-2">
+			<div class="field">
+				<label for="loan-amount">Amount you want to borrow (₹)</label>
+				<input id="loan-amount" name="loan_amount" type="number" min="1" step="1" inputmode="numeric" required>
+			</div>
+			<div class="field">
+				<label for="loan-tenure">Repayment tenure (months)</label>
+				<input id="loan-tenure" name="tenure_months" type="number" min="1" max="360" step="1" inputmode="numeric" required>
+			</div>
+		</div>
+		<div class="field">
+			<label for="loan-purpose">What is the loan for?</label>
+			<input id="loan-purpose" name="purpose" type="text" maxlength="200" required>
+			<p class="hint">For example: home renovation, school fees, medical costs, debt consolidation.</p>
+		</div>
+	</fieldset>
+
+	<fieldset data-panel="review" class="hidden">
+		<legend>Review</legend>
+		<p class="small muted">Check the details below. You can go back to any step to change them.</p>
+		<dl class="detail mt" id="review-list"></dl>
+		<div class="alert alert--warn mt" role="note">
+			<strong>After you create this application</strong>
+			<span>You will add at least one document and submit it from the application page. Submitting sends it for checks.</span>
+		</div>
+	</fieldset>
+
+	<div class="form-actions">
+		<button type="button" class="btn btn--ghost hidden" id="back">Back</button>
+		<div class="spacer"></div>
+		<a class="btn btn--quiet" href="/borrower">Cancel</a>
+		<button type="button" class="btn" id="next">Continue</button>
+		<button type="submit" class="btn hidden" id="submit">Create application</button>
+	</div>
+</form>
+
+<script src="/assets/loan_advisory_portal/js/pages/apply.js" defer></script>
+{% endblock %}
