@@ -1,0 +1,64 @@
+{% extends "templates/portal/base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/assets/loan_advisory_portal/js/assistant/assistant.css">
+{% endblock %}
+
+{% block page_content %}
+{% if not_found %}
+{% include "templates/portal/_not_found.html" %}
+{% else %}
+<div class="page-head">
+	<div>
+		<h1>Assistant</h1>
+		<p>Explains the decision recorded for one application, runs what-ifs and cites the policy. It never approves, changes or promises anything.</p>
+	</div>
+	{% if application %}
+	<a class="btn btn--ghost" href="/borrower/application?name={{ application.name | urlencode }}">Open the decision</a>
+	{% endif %}
+</div>
+
+{% if not application %}
+<section class="card" aria-labelledby="choose-heading">
+	<div class="card__head">
+		<h2 id="choose-heading">Choose an application first</h2>
+	</div>
+	<p class="small muted">The assistant answers about one recorded application at a time, so it never mixes two files.</p>
+	{% if applications %}
+	<ul class="stack mt" role="list">
+		{% for item in applications %}
+		<li>
+			<a class="row" href="/borrower/assistant?application={{ item.name | urlencode }}">
+				<span><b>{{ item.name }}</b></span>
+				<span class="small muted">{{ item.lifecycle or item.status }}</span>
+			</a>
+		</li>
+		{% endfor %}
+	</ul>
+	{% else %}
+	<p class="mt">You have no applications yet. <a href="/borrower/apply">Start one</a> and the assistant will explain its decision here.</p>
+	{% endif %}
+</section>
+{% else %}
+<section class="assistant" aria-labelledby="assistant-heading">
+	<div class="assistant__head">
+		<h2 id="assistant-heading">Application {{ application.name }}</h2>
+		<span class="badge badge--accent">{{ application.get("custom_lifecycle_state") or application.status }}</span>
+		<span class="spacer"></span>
+		<span class="tiny muted">Explains the recorded decision — a lender decides.</span>
+	</div>
+	<div class="assistant__body" id="assistant-root">
+		<p class="muted small">Loading the assistant…</p>
+	</div>
+</section>
+<noscript>
+	<div class="alert alert--warn mt" role="status">
+		<strong>JavaScript is off</strong>
+		<span>The assistant needs JavaScript. Your decision is still available on the application page.</span>
+	</div>
+</noscript>
+<script id="assistant-context" type="application/json">{{ assistant | tojson }}</script>
+<script type="module" src="/assets/loan_advisory_portal/js/assistant/assistant.js"></script>
+{% endif %}
+{% endif %}
+{% endblock %}

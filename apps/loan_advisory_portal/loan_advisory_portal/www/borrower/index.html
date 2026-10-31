@@ -1,0 +1,49 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<h1>Your applications</h1>
+		<p>Track every application, add documents, and read the reasoning behind each decision. The assistant explains your options — it never approves or rejects an application.</p>
+	</div>
+	<div class="row">
+		<a class="btn btn--quiet" href="/borrower/products">Loan products</a>
+		<a class="btn" href="/borrower/apply">Start an application</a>
+	</div>
+</div>
+
+<section class="grid-3" id="summary" aria-label="At a glance">
+	<div class="card card--tight">
+		<div class="stat">
+			<span class="stat__label">Profile</span>
+			<span class="stat__value" data-stat="completion">—</span>
+			<span class="small muted">completed</span>
+		</div>
+	</div>
+	<div class="card card--tight">
+		<div class="stat">
+			<span class="stat__label">Applications</span>
+			<span class="stat__value" data-stat="count">—</span>
+			<span class="small muted">on this account</span>
+		</div>
+	</div>
+	<div class="card card--tight">
+		<div class="stat">
+			<span class="stat__label">Latest</span>
+			<span class="stat__value" data-stat="latest">—</span>
+			<span class="small muted">status of the newest application</span>
+		</div>
+	</div>
+</section>
+
+<section class="card mt" aria-labelledby="applications-heading">
+	<div class="card__head">
+		<h2 id="applications-heading">Applications</h2>
+		<a class="small" href="/borrower/profile">Update your profile</a>
+	</div>
+	<div id="applications" aria-live="polite">
+		<p class="muted small">Loading your applications…</p>
+	</div>
+</section>
+
+<script src="/assets/loan_advisory_portal/js/pages/applications.js" defer></script>
+{% endblock %}

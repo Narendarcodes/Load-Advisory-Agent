@@ -1,0 +1,88 @@
+{% extends "templates/portal/base.html" %}
+{% block head %}
+<meta name="referrer" content="no-referrer">
+{% endblock %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<h1>Set up your account</h1>
+		<p>Your loan advisor invited you. Choose a password to start, then confirm your details so applications are prefilled.</p>
+	</div>
+</div>
+
+<div class="narrow">
+	<div class="card" id="invite-loading" aria-live="polite">
+		<p class="muted">Checking your invitation…</p>
+	</div>
+
+	<div class="card hidden" id="invite-invalid">
+		<div class="empty">
+			<h2>This link cannot be used</h2>
+			<p id="invite-invalid-message">This invitation may have expired or already been used.</p>
+			<p class="small muted">Ask your loan advisor for a new invitation. They can send one in a moment.</p>
+			<p><a class="btn btn--ghost" href="/login">Go to sign in</a></p>
+		</div>
+	</div>
+
+	<form class="card hidden" id="invite-form" novalidate>
+		<div class="card__head">
+			<h2>Create your account</h2>
+			<span class="small muted" id="invite-expiry"></span>
+		</div>
+
+		<div class="field">
+			<label for="email">Email</label>
+			<input id="email" type="email" readonly data-source="email">
+			<p class="hint">This is the address your invitation was sent to and the name you sign in with.</p>
+		</div>
+
+		<div class="field">
+			<label for="full-name">Full name</label>
+			<input id="full-name" name="full_name" type="text" maxlength="140" autocomplete="name" required>
+		</div>
+
+		<div class="field">
+			<label for="username">Username</label>
+			<input id="username" name="username" type="text" maxlength="40" autocomplete="username" required pattern="[a-z0-9][a-z0-9._\-]{1,38}[a-z0-9]">
+			<p class="hint">3–40 lowercase letters, numbers, dots, dashes or underscores. You can keep the suggestion.</p>
+		</div>
+
+		<div class="field">
+			<label for="phone">Phone (optional)</label>
+			<input id="phone" name="phone" type="tel" maxlength="40" autocomplete="tel" placeholder="+91 98765 43210">
+			<p class="hint">Include the country code so we can reach you about your application.</p>
+		</div>
+
+		<div class="grid-2">
+			<div class="field">
+				<label for="password">Password</label>
+				<input id="password" name="password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required>
+				<p class="hint">At least 10 characters.</p>
+			</div>
+			<div class="field">
+				<label for="password-confirm">Confirm password</label>
+				<input id="password-confirm" type="password" autocomplete="new-password" required>
+			</div>
+		</div>
+
+		<div class="stack">
+			<label class="check">
+				<input id="consent-terms" name="consent_terms" type="checkbox" required>
+				<span>I accept the terms of use for this portal.</span>
+			</label>
+			<label class="check">
+				<input id="consent-privacy" name="consent_privacy" type="checkbox" required>
+				<span>I have read the privacy notice and agree to my details being used to assess my applications.</span>
+			</label>
+			<p class="hint">Read the <a href="/borrower/terms" target="_blank" rel="noopener">terms of use</a> and the <a href="/borrower/privacy" target="_blank" rel="noopener">privacy notice</a>.</p>
+		</div>
+
+		<div class="form-actions">
+			<button class="btn" type="submit" id="create">Create my account</button>
+			<a class="btn btn--quiet" href="/login">I already have an account</a>
+		</div>
+	</form>
+</div>
+
+<script src="/assets/loan_advisory_portal/js/pages/invite.js" defer></script>
+{% endblock %}

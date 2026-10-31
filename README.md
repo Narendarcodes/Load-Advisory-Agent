@@ -74,37 +74,39 @@ STT/TTS stack are still installed outside a requirements file; see [Known gaps](
 # decide the seeded demo applications first: the agent only explains stored decisions
 PYTHONPATH=.:apps/api/src python scripts/agent/prepare_demo.py
 
-# chat server + web UI on http://127.0.0.1:8095
-#   --dev-ephemeral-secret   local demo only: no AGENT_SESSION_SECRET needed, tokens die on restart
+# chat server on http://127.0.0.1:8095
+#   AGENT_ASSERTION_SECRET   the site's agent_assertion_secret (>=32 chars); startup fails without it
 #   --max-inflight 8         concurrent requests admitted; extra requests get 503 + Retry-After
-PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095 --dev-ephemeral-secret
+AGENT_ASSERTION_SECRET=<same value as the site> \
+  PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095
 #   --offline   MockStore + in-memory evidence instead of live Frappe
 #   --no-rag    do not load the GPU retriever (policy questions abstain)
 ```
 
-Endpoints: `GET /`, `GET /healthz`, `GET /api/demo-accounts`, `POST /api/session` (demo sign-in, synthetic accounts
-only), `GET /api/decision`, `POST /api/chat`, `POST /api/chat/stream` (NDJSON sentences, then the final response),
-`POST /api/bureau/run`, `POST /api/livekit-token`, `GET /voice`.
+Endpoints: `GET /healthz`, `POST /api/agui` (SSE for the CopilotKit runtime), `POST /api/chat`,
+`POST /api/chat/stream` (NDJSON sentences, then the final response) and `POST /api/bureau/run`. There is no
+browser surface: Frappe renders every page and its Node runtime calls these on the borrower's behalf.
 
-`POST /api/bureau/run` takes the application from the session token (optional body `{scenario}` is a synthetic-provider
+`POST /api/bureau/run` takes the application from the assertion (optional body `{scenario}` is a synthetic-provider
 test switch) and evaluates it through the local synthetic bureau and data-quality gates. The server needs a loopback
 bureau origin via `--bureau-url` or `BUREAU_BASE_URL` (default `http://127.0.0.1:8001`); the self-hosted LLM uses the
 same default port, so run the bureau elsewhere and point the server at it:
 
 ```bash
 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m synthetic_bureau.app --port 8011
-PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --offline --bureau-url http://127.0.0.1:8011 --dev-ephemeral-secret
+AGENT_ASSERTION_SECRET=<same value as the site> \
+  PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --offline --bureau-url http://127.0.0.1:8011
 ```
 
 The bureau is **not CIBIL/FICO and not a real bureau**; every field is synthetic. Flow, `REVIEW` vs `ERROR` and score
 precedence: [docs/architecture/synthetic-bureau.md](docs/architecture/synthetic-bureau.md).
 
-The session token is an HMAC over (applicant_ref, application_ref, expiry) plus `iss`, `aud` and `iat` claims. The
-key comes from `AGENT_SESSION_SECRET`, which is required: without it the server exits with an actionable error.
-`--dev-ephemeral-secret` is the explicit local-demo escape hatch (random key, warning, tokens invalid after restart).
-Tokens minted before this claim set are rejected (the longest lifetime is 4 hours, so one re-sign-in per client).
-Application and applicant come from the token, never from the chat body. Real authentication (OTP / lender SSO) is
-not implemented.
+The only credential this service accepts is a 60-second assertion minted by Frappe (`services/assertion.py`):
+HMAC-SHA256 over compact sorted JSON with `iss = frappe:loan_advisory_portal`, `aud = loan-advisory-agent`,
+`iat`, `exp`, a single-use `jti`, and the borrower/application/literacy/locale claims. The verifier key is
+`AGENT_ASSERTION_SECRET`, which must equal the site's `agent_assertion_secret`; without it the server exits with an
+actionable error. Application, applicant, literacy and locale come from the assertion, never from the chat body.
+There is no demo sign-in: the borrower authenticates to Frappe, never to this service.
 
 ### 4. Voice
 
@@ -114,8 +116,13 @@ all bound to 127.0.0.1. The worker on its own:
 ```bash
 LIVEKIT_URL=ws://127.0.0.1:7880 LIVEKIT_API_KEY=... LIVEKIT_API_SECRET=... \
 AGENT_HTTP=http://127.0.0.1:8095 STT_HTTP=http://127.0.0.1:8791 TTS_HTTP=http://127.0.0.1:8793 \
+FRAPPE_URL=http://127.0.0.1:8080 FRAPPE_API_KEY=<service key> FRAPPE_API_SECRET=<service secret> \
   python apps/voice/agent_worker.py start
 ```
+
+The worker exchanges the participant's `session_id` (plus room and identity) for a 60-second assertion through
+`loan_advisory_portal.api.voice.voice_assertion`, authenticating to Frappe with an `Agent Integration` API key; it
+never receives a credential from the browser and cannot start a turn without a live `Voice Session` row.
 
 `infra/voice/side_stack.sh` starts an isolated second stack (own server, LiveKit and worker) for side-by-side tests.
 
@@ -134,7 +141,7 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 | `EMBED_MODEL` | `google/embeddinggemma-2` | Dense embedder |
 | `LENDER_PROFILE` | `bajaj_finance` (from `config/rag.yaml`) | Lender profile for retrieval filters |
 | `AGENT_RETRIEVER_DEVICE`, `AGENT_GPU_FRACTION` | auto, unset | Retriever device; VRAM cap on the shared GPU (e.g. `0.016` ≈ 3 GB on MI300X) |
-| `AGENT_SESSION_SECRET` | **required** | HMAC key for session tokens; startup fails without it (`--dev-ephemeral-secret` for local demos only) |
+| `AGENT_ASSERTION_SECRET` | **required** | HMAC key that verifies the Frappe assertion; must equal the site's `agent_assertion_secret`, startup fails if missing or <32 chars |
 | `AGENT_VOICE_DEADLINE_S`, `AGENT_TEXT_DEADLINE_S` | `25`, `75` | Per-turn deadline; a template answers when time runs out |
 | `AGENT_CLASSIFY_BUDGET_S`, `AGENT_MIN_COMPOSE_S` | `6`, `4` | Classifier budget; minimum time left to start or retry a compose |
 | `AGENT_FAST_CLASSIFY` | `voice` | `off` / `voice` / `all`: high-precision regex intents skip the LLM classifier |
@@ -152,7 +159,7 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 | `BUREAU_BASE_URL` | `http://127.0.0.1:8001` | Loopback origin of the synthetic bureau for `/api/bureau/run`; non-loopback origins are refused |
 | `AGENT_AUDIT_LOG`, `AGENT_HANDOFF_LOG` | – | Audit rows (ids, intent, flags, timings; no message text or money values) and the handoff JSONL queue |
 | `AGENT_STATE_DIR` | – | Root for `turns.jsonl`, `handoffs.jsonl` and `traces/`; a per-artifact env var or an explicit argument wins. New directories are 0700 and new files 0600 on POSIX; existing files are never moved or chmodded |
-| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | – | Voice; `/api/livekit-token` returns 503 without them |
+| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | – | Voice; Frappe mints the room token (`api/livekit.py`) and returns 503 without them |
 | `AGENT_HTTP`, `STT_HTTP`, `TTS_HTTP` | `:8095`, `:8791`, `:8793` | Voice worker targets |
 | `VOICE_STREAM`, `VOICE_HTTP_TIMEOUT_S`, `VOICE_FILLER_AFTER_S` | `1`, `40`, `4` | Sentence streaming; worker timeout (must exceed the graph deadline); "one moment" filler |
 | `VOICE_TURN_LOG`, `VOICE_WORKER_PORT` | `/root/hx/loan/voice/turns.jsonl`, `8081` | Per-turn JSONL log (timings, locale, engine, audio duration; no transcript); worker HTTP port |
@@ -215,14 +222,16 @@ python scripts/voice/voice_loop_test.py --out <dir>                             
 
 ```
 apps/api/src/loan_advisory/
-  agent/            LangGraph graph, guards, citations, streaming, tools, prompts, settings, stdlib server,
+  agent/            LangGraph graph, guards, citations, streaming, tools, prompts, settings, FastAPI serving,
                     observability, langfuse_config
   application/      decision_orchestrator.py, lifecycle.py (process_application, process_bureau_application, simulate),
                     bureau_intake.py
   infrastructure/   frappe_adapter.py (mock store + REST client), evidence_store.py, bureau_client.py
+  api/              FastAPI factory, assertion verifier, AG-UI + chat routes, admission middleware
 apps/bureau/src/synthetic_bureau/  local-only FastAPI bureau (app.py, generator.py, fixtures.py, scoring.py)
-apps/voice/         agent_worker.py (LiveKit Agents), tts_sidecar.py (svara + SNAC streaming)
-apps/web/chat/      index.html (chat), voice.html (/voice)
+apps/voice/         agent_worker.py (LiveKit Agents), voice_assertion_exchange.py, tts_sidecar.py (svara + SNAC)
+apps/web/assistant/ React island (CopilotKit) built into the Frappe app's public/js/assistant/
+apps/web/chat/      legacy static pages; nothing serves them any more
 config/             rag.yaml, bureau_dq_policy.json,
                     lender_profiles/{bajaj_finance,generic_bank,generic_nbfc,synthetic_prototype}.yaml
 data/sources/       datasets.yaml, policy_register.yaml, policy_manifest_v2.json (metadata only)

@@ -1,0 +1,124 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<h1>Your profile</h1>
+		<p>These details prefill new applications. Changing them never changes an application that has already been submitted.</p>
+	</div>
+	<div class="stat">
+		<span class="stat__label">Completed</span>
+		<span class="stat__value" id="completion">—</span>
+	</div>
+</div>
+
+<form class="card" id="profile-form" novalidate>
+	<fieldset>
+		<legend>About you</legend>
+		<div class="grid-2">
+			<div class="field">
+				<label for="full-name">Full name</label>
+				<input id="full-name" name="full_name" type="text" maxlength="140" required autocomplete="name">
+			</div>
+			<div class="field">
+				<label for="email">Email</label>
+				<input id="email" type="email" readonly data-source="email">
+				<p class="hint">Your email is your sign-in name. Ask your loan advisor to change it.</p>
+			</div>
+		</div>
+		<div class="grid-2">
+			<div class="field">
+				<label for="phone">Phone</label>
+				<input id="phone" name="phone" type="tel" maxlength="40" autocomplete="tel" placeholder="+91 98765 43210">
+				<p class="hint">Include the country code so we can reach you.</p>
+			</div>
+			<div class="field">
+				<label for="employer">Employer</label>
+				<input id="employer" name="employer" type="text" maxlength="140" autocomplete="organization">
+			</div>
+		</div>
+	</fieldset>
+
+	<div class="divider"></div>
+
+	<fieldset>
+		<legend>Employment and money</legend>
+		<div class="grid-2">
+			<div class="field">
+				<label for="employment-type">Employment type</label>
+				<select id="employment-type" name="employment_type">
+					<option value="">Prefer not to say</option>
+					<option value="Salaried">Salaried</option>
+					<option value="Self-employed">Self-employed</option>
+					<option value="Business">Business owner</option>
+					<option value="Student">Student</option>
+					<option value="Retired">Retired</option>
+					<option value="Unemployed">Not currently working</option>
+				</select>
+			</div>
+			<div class="field">
+				<label for="employment-months">Months in your current work</label>
+				<input id="employment-months" name="employment_months" type="number" min="0" max="720" step="1" inputmode="numeric">
+			</div>
+		</div>
+		<div class="grid-2">
+			<div class="field">
+				<label for="monthly-income">Monthly income (₹)</label>
+				<input id="monthly-income" name="monthly_income" type="number" min="0" step="1" inputmode="numeric">
+			</div>
+			<div class="field">
+				<label for="monthly-obligations">Monthly obligations (₹)</label>
+				<input id="monthly-obligations" name="monthly_obligations" type="number" min="0" step="1" inputmode="numeric">
+				<p class="hint">Loan repayments you already make each month.</p>
+			</div>
+		</div>
+	</fieldset>
+
+	<div class="divider"></div>
+
+	<fieldset>
+		<legend>How we should talk to you</legend>
+		<div class="grid-2">
+			<div class="field">
+				<label for="locale">Language</label>
+				<select id="locale" name="preferred_locale">
+					{% for option in locale_options %}
+					<option value="{{ option.code }}"{% if option.code == current_locale %} selected{% endif %}>{{ option.label }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<div class="field">
+				<label for="literacy">Reading preference</label>
+				<select id="literacy" name="literacy">
+					{% for option in literacy_options %}
+					<option value="{{ option.value }}"{% if option.value == current_literacy %} selected{% endif %}>{{ option.label }}</option>
+					{% endfor %}
+				</select>
+			</div>
+		</div>
+	</fieldset>
+
+	<div class="divider"></div>
+
+	<fieldset>
+		<legend>Consent</legend>
+		<div class="stack">
+			<label class="check">
+				<input id="consent-terms" name="consent_terms" type="checkbox">
+				<span>I accept the terms of use for this portal.</span>
+			</label>
+			<label class="check">
+				<input id="consent-privacy" name="consent_privacy" type="checkbox">
+				<span>I have read the privacy notice and agree to my details being used to assess my applications.</span>
+			</label>
+			<p class="hint">Read the <a href="/borrower/terms" target="_blank" rel="noopener">terms of use</a> and the <a href="/borrower/privacy" target="_blank" rel="noopener">privacy notice</a>.</p>
+		</div>
+	</fieldset>
+
+	<div class="form-actions">
+		<button class="btn" type="submit" id="save">Save profile</button>
+		<a class="btn btn--quiet" href="/borrower">Back to applications</a>
+	</div>
+</form>
+
+<script src="/assets/loan_advisory_portal/js/pages/profile.js" defer></script>
+{% endblock %}

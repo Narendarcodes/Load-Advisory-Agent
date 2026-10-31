@@ -1,0 +1,70 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<h1>Help</h1>
+		<p>How applications, documents, decisions and the assistant work. Your loan advisor remains the person to ask about your own case.</p>
+	</div>
+</div>
+
+<div class="grid-2">
+	<section class="card" aria-labelledby="how-heading">
+		<div class="card__head">
+			<h2 id="how-heading">How an application works</h2>
+		</div>
+		<ol class="small">
+			<li>Create the application and check the details taken from your profile.</li>
+			<li>Add at least one document. Submitting is not possible before that.</li>
+			<li>Submit. The details are frozen and the automated checks run.</li>
+			<li>The outcome appears on the application page with the reasons that affected it.</li>
+			<li>If information is needed, correct the four listed values and resubmit.</li>
+		</ol>
+		<p class="small muted">You can withdraw an application while it is open. A withdrawn application cannot be reopened; start a new one instead.</p>
+	</section>
+
+	<section class="card" aria-labelledby="status-heading">
+		<div class="card__head">
+			<h2 id="status-heading">What the status means</h2>
+		</div>
+		<dl class="detail">
+			{% for entry in states %}
+			<dt>{{ entry.title | e }}</dt><dd>{{ entry.summary | e }}</dd>
+			{% endfor %}
+		</dl>
+	</section>
+
+	<section class="card mt" aria-labelledby="assistant-heading">
+		<div class="card__head">
+			<h2 id="assistant-heading">The assistant</h2>
+		</div>
+		<p class="small">The assistant explains the decision recorded for one application, answers questions about the lending policy with sources, and can re-check “what if” figures as a simulation. It cannot approve, reject, change or promise anything. Every simulated result is labelled as a what-if and is not a decision on your application.</p>
+		<p class="small">Conversations are stored against your account and the application you are viewing. Each application has its own conversation; opening another application does not carry the first one’s history across.</p>
+	</section>
+
+	<section class="card mt" aria-labelledby="voice-heading">
+		<div class="card__head">
+			<h2 id="voice-heading">Voice sessions</h2>
+		</div>
+		<p class="small">Voice mode asks for the microphone and for your agreement to the voice notice before a session starts. The session is limited to about ten minutes; when it expires, start a new one. You can mute the microphone, hide or clear the transcript, or end the session at any time.</p>
+		<p class="small">Speech is processed on the team’s server to produce the reply. The transcript is shown on screen during the call and is not added to your stored conversation. The session records that consent was given and when, not the audio.</p>
+	</section>
+
+	<section class="card mt" aria-labelledby="account-heading">
+		<div class="card__head">
+			<h2 id="account-heading">Account and contact</h2>
+		</div>
+		<ul class="small">
+			<li><strong>Password:</strong> there is no self-service reset yet. Ask your loan advisor for help.</li>
+			<li><strong>Your details:</strong> update your profile yourself; submitted applications keep the details they were scored with.</li>
+			<li><strong>Signed-in sessions:</strong> use Sign out on a shared device. If a page says your session expired, sign in again and you will return to it.</li>
+			<li><strong>Feedback:</strong> <a href="/borrower/feedback">send feedback</a> about the portal itself.</li>
+			<li><strong>Questions about a decision:</strong> ask your loan advisor, or <a href="/borrower/assistant">ask the assistant</a> to explain what is recorded.</li>
+		</ul>
+	</section>
+</div>
+
+<p class="small muted mt">
+	Read the <a href="/borrower/terms">terms of use</a> ({{ terms_version }}) and the
+	<a href="/borrower/privacy">privacy notice</a> ({{ privacy_version }}). Last updated {{ updated }}.
+</p>
+{% endblock %}

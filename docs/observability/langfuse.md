@@ -106,16 +106,27 @@ set -a; . infra/langfuse/.env; set +a
 # 1. config + health + auth + one synthetic trace
 python scripts/development/langfuse_check.py --stack-env --send-trace
 
-# 2. run the app offline (scripted/no GPU required paths) and send a synthetic turn
-PYTHONPATH=".;apps/api/src" python -m loan_advisory.agent.server --offline --no-rag --port 8095
+# 2. run the app offline (scripted/no GPU required paths) with the assertion verifier secret
+AGENT_ASSERTION_SECRET=local-observation-secret-0123456789 \
+  PYTHONPATH=".;apps/api/src" python -m loan_advisory.agent.server --offline --no-rag --port 8095
 # POSIX: PYTHONPATH=.:apps/api/src
 
-# in another shell
-curl -s -X POST http://127.0.0.1:8095/api/session -H 'Content-Type: application/json' \
-     -d '{"external_ref":"APP-TEST-005"}'
+# in another shell: mint a 60-second assertion with the same secret (the service no longer mints credentials)
+TOKEN=$(python - <<'PY'
+import base64, hashlib, hmac, json, time
+secret = "local-observation-secret-0123456789"
+now = int(time.time())
+body = json.dumps({"iss": "frappe:loan_advisory_portal", "aud": "loan-advisory-agent", "sub": "operator",
+                   "customer": "CUS-TEST-005", "application": "APP-TEST-005", "thread": "obs-demo",
+                   "literacy": "medium", "locale": "en", "iat": now, "exp": now + 60,
+                   "jti": f"obs-{time.time_ns()}"}, sort_keys=True, separators=(",", ":")).encode()
+enc = lambda b: base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+print(f"{enc(body)}.{enc(hmac.new(secret.encode(), body, hashlib.sha256).digest())}")
+PY
+)
 curl -s -X POST http://127.0.0.1:8095/api/chat -H 'Content-Type: application/json' \
-     -H 'Authorization: Bearer <token>' \
-     -d '{"message":"How do I file a complaint?","literacy":"medium","locale":"en","channel":"text","conversation_id":"obs-demo"}'
+     -H "Authorization: Bearer $TOKEN" \
+     -d '{"message":"How do I file a complaint?","channel":"text","conversation_id":"obs-demo"}'
 ```
 
 Open the UI, choose project `loan-advisory-local`, then **Tracing**. The turn appears as `advisor.turn` with nested

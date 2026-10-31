@@ -1,0 +1,30 @@
+{
+ "actions": [],
+ "autoname": "field:invitation",
+ "creation": "2026-10-30 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["invitation", "email", "customer", "user", "redeemed_at"],
+ "fields": [
+  {"fieldname": "invitation", "fieldtype": "Link", "label": "Invitation", "options": "Account Invitation", "reqd": 1, "unique": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "email", "fieldtype": "Data", "label": "Email", "read_only": 1, "in_list_view": 1},
+  {"fieldname": "customer", "fieldtype": "Link", "label": "Customer", "options": "Customer", "read_only": 1},
+  {"fieldname": "user", "fieldtype": "Link", "label": "User", "options": "User", "read_only": 1, "in_list_view": 1},
+  {"fieldname": "redeemed_at", "fieldtype": "Datetime", "label": "Redeemed At", "read_only": 1, "in_list_view": 1}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-30 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Account Invitation Redemption",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "delete": 1, "report": 1, "export": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,51 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+<div class="narrow">
+	<div class="page-head">
+		<div>
+			<h1>Privacy notice</h1>
+			<p>Version {{ version }} · last updated {{ updated }}</p>
+		</div>
+	</div>
+
+	<section class="card">
+		<h2>What this notice covers</h2>
+		<p class="small">This notice describes the information the borrower portal holds and what it is used for. It describes how the portal works today. Retention periods are set by the lender and are not published in this version; ask your loan advisor about your own records.</p>
+
+		<h2 class="mt">What the portal holds</h2>
+		<ul class="small">
+			<li><strong>Account and profile:</strong> name, email, phone, employment and financial details you enter, language and reading preferences, and your consent choices with their version and time.</li>
+			<li><strong>Applications:</strong> the details you submit, the documents you upload, lifecycle history and the decision evidence the lender records.</li>
+			<li><strong>Assistant conversations:</strong> the questions and answers stored against your account and the application you were viewing.</li>
+			<li><strong>Voice sessions:</strong> the session identifier, room, consent version and time, and when the session ended.</li>
+			<li><strong>Feedback:</strong> the rating, category and message you send about the portal.</li>
+		</ul>
+
+		<h2 class="mt">How it is used</h2>
+		<p class="small">To create and secure your account, to prepare and assess your applications, to explain a recorded decision, to answer your questions with policy sources, and to keep the audit record of what was decided and why.</p>
+
+		<h2 class="mt">Who can see it</h2>
+		<ul class="small">
+			<li>You, when signed in to your own account.</li>
+			<li>The lender’s authorised staff reviewing your applications.</li>
+			<li>The portal’s own service accounts, limited to the task they perform (for example reading evidence during a review).</li>
+			<li>The language-model provider configured for the assistant, which receives your question and the application context needed to answer it.</li>
+		</ul>
+		<p class="small">Documents are stored privately and are served only through a download that re-checks that the file belongs to your application.</p>
+
+		<h2 class="mt">The assistant and voice</h2>
+		<p class="small">Text conversations are stored so you can return to them. Voice audio is processed on the team’s server to produce a reply; the transcript is shown during the call and is not added to your stored conversation. A voice session records that you accepted the voice notice, not the audio.</p>
+
+		<h2 class="mt">Your choices</h2>
+		<ul class="small">
+			<li>Update your profile at any time. Submitted applications keep the details they were scored with.</li>
+			<li>Withdraw an application while it is open.</li>
+			<li>Ask your loan advisor about access to, or correction of, your records.</li>
+			<li>Send feedback about the portal itself.</li>
+		</ul>
+
+		<h2 class="mt">More</h2>
+		<p class="small">Read the <a href="/borrower/terms">terms of use</a> ({{ terms_version }}) or the <a href="/borrower/help">help page</a>.</p>
+	</section>
+</div>
+{% endblock %}

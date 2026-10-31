@@ -108,7 +108,11 @@ def from_frappe_doc(doc: dict) -> UnderwritingInput:
 
 
 class FrappeClient:
-    """Minimal live-Frappe REST client (read-only for P0)."""
+    """Minimal Frappe REST client for borrower reads and the trusted evidence method.
+
+    The default identity reads applications for the agent. Evidence writes use
+    `FrappeClient.for_evidence()`, which requires a separate `Evidence Service` credential.
+    """
 
     def __init__(self, base_url=None, api_key=None, api_secret=None):
         self.base_url = (base_url or os.environ.get("FRAPPE_URL", "")).rstrip("/")
@@ -170,6 +174,31 @@ class FrappeClient:
         if not r.ok:
             raise FrappeUnavailable(f"frappe HTTP {r.status_code}: {r.text[:200]}")
         return r.json().get("data") or []
+
+    def call_method(self, method: str, payload: dict):
+        """Call a whitelisted Frappe method; the method itself owns authorization."""
+        try:
+            r = requests.post(f"{self.base_url}/api/method/{method}", headers=self._headers(),
+                              json=payload, timeout=20)
+        except requests.RequestException as e:
+            raise FrappeUnavailable(f"frappe unreachable: {e}")
+        if not r.ok:
+            raise FrappeUnavailable(f"frappe method {method} HTTP {r.status_code}: {r.text[:200]}")
+        try:
+            return r.json().get("message")
+        except ValueError:
+            raise FrappeUnavailable(f"frappe method {method} returned a non-JSON body") from None
+
+    @classmethod
+    def for_evidence(cls, env=None) -> "FrappeClient":
+        """Dedicated least-privilege identity; it never falls back to the read credential."""
+        env = os.environ if env is None else env
+        url = (env.get("EVIDENCE_FRAPPE_URL") or env.get("FRAPPE_URL") or "").rstrip("/")
+        key = env.get("EVIDENCE_FRAPPE_API_KEY") or ""
+        secret = env.get("EVIDENCE_FRAPPE_API_SECRET") or ""
+        if not (url and key and secret):
+            raise FrappeUnavailable("EVIDENCE_FRAPPE_API_KEY / EVIDENCE_FRAPPE_API_SECRET not set")
+        return cls(base_url=url, api_key=key, api_secret=secret)
 
 
 def get_store():

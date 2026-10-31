@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FIRST_PARTY = {"loan_advisory", "decision_engine", "rag", "synthetic_bureau"}
 # import name -> distribution name in requirements.txt
-DIST = {"zen": "zen-engine", "yaml": "pyyaml"}
+DIST = {"zen": "zen-engine", "yaml": "pyyaml", "ag_ui": "ag-ui-protocol"}
 
 
 def _module_level_imports(path: Path) -> set[str]:

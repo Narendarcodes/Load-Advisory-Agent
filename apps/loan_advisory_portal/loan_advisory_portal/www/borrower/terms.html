@@ -1,0 +1,49 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+<div class="narrow">
+	<div class="page-head">
+		<div>
+			<h1>Terms of use</h1>
+			<p>Version {{ version }} · last updated {{ updated }}</p>
+		</div>
+	</div>
+
+	<section class="card">
+		<h2>What these terms cover</h2>
+		<p class="small">These terms cover your use of this borrower portal: your account, your applications, the assistant and voice mode. You accept them when you create an account and when you save the consent boxes on your profile. They are not a loan agreement and do not promise credit.</p>
+
+		<h2 class="mt">The portal’s role</h2>
+		<p class="small">The portal lets you prepare and track applications, upload documents and read the reasoning behind a decision. A lending decision is made by the lending process and, where needed, by a person — never by the assistant.</p>
+
+		<h2 class="mt">Your account</h2>
+		<ul class="small">
+			<li>Give accurate details and keep your profile up to date.</li>
+			<li>Keep your password to yourself. We never ask for it by email, phone or chat.</li>
+			<li>Use one account; do not share it. Tell your loan advisor if you think someone else has used it.</li>
+		</ul>
+
+		<h2 class="mt">Applications and documents</h2>
+		<ul class="small">
+			<li>You confirm that the details and documents you submit are yours and are accurate.</li>
+			<li>A submitted application is a snapshot: changing your profile afterwards does not change it.</li>
+			<li>You can withdraw an application while it is open. Withdrawal is final; start a new application if you need one.</li>
+		</ul>
+
+		<h2 class="mt">The assistant and voice mode</h2>
+		<ul class="small">
+			<li>Answers explain the recorded decision or the published lending policy. They are information, not financial advice and not an offer.</li>
+			<li>What-if results are simulations. They are clearly labelled and are not a decision on your application.</li>
+			<li>Voice mode needs your agreement to the voice notice before the session starts. You can mute, hide the transcript, or end the session at any time.</li>
+		</ul>
+
+		<h2 class="mt">Acceptable use</h2>
+		<p class="small">Do not attempt to reach another person’s application, probe the portal for weaknesses, scrape it automatically, or upload unlawful or malicious files. Access may be limited to protect the service and its users.</p>
+
+		<h2 class="mt">Availability and changes</h2>
+		<p class="small">The portal may be unavailable for maintenance. When these terms change, the version above changes; you may be asked to accept the new version.</p>
+
+		<h2 class="mt">Questions</h2>
+		<p class="small">Your loan advisor is the first point of contact. You can also <a href="/borrower/feedback">send feedback</a> about the portal. See also the <a href="/borrower/privacy">privacy notice</a> and <a href="/borrower/help">help</a>.</p>
+	</section>
+</div>
+{% endblock %}

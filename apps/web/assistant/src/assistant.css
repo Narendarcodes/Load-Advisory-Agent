@@ -1,0 +1,450 @@
+/*
+ * Chat island inside the borrower portal. Everything is scoped to `.assistant` so the reused
+ * CopilotKit panel cannot restyle the surrounding Frappe pages; colours come from portal.css.
+ */
+
+.assistant__body {
+	display: block;
+	place-items: stretch;
+	padding: 0;
+	text-align: left;
+	color: var(--ink);
+	min-height: 0;
+}
+
+.assistant__grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 270px;
+	gap: 18px;
+	height: 100%;
+	min-height: 0;
+	padding: 16px 18px;
+}
+
+.assistant__chat {
+	display: flex;
+	min-height: 0;
+}
+
+.assistant__aside {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding-left: 18px;
+	border-left: 1px solid var(--line);
+	overflow-y: auto;
+	min-height: 0;
+}
+
+.assistant__aside .btn {
+	align-self: flex-start;
+}
+
+.assistant__title {
+	font-size: 0.82rem;
+	font-weight: 680;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--mute);
+	margin: 0 0 10px;
+}
+
+.assistant .history__title {
+	font-size: 0.72rem;
+	font-weight: 680;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--mute);
+	margin: 0 0 6px;
+}
+
+.assistant .history__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.assistant .history__item {
+	width: 100%;
+	text-align: left;
+	background: none;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	padding: 6px 8px;
+	cursor: pointer;
+	font: inherit;
+	color: inherit;
+}
+
+.assistant .history__item:hover,
+.assistant .history__item:focus-visible {
+	background: #f2f4f7;
+}
+
+.assistant .history__item--current {
+	border-color: var(--line);
+	background: #f7f9fc;
+}
+
+.assistant .history__item:disabled {
+	cursor: default;
+	opacity: 0.6;
+}
+
+.assistant .history__label {
+	display: block;
+	font-size: 0.84rem;
+	overflow-wrap: anywhere;
+}
+
+.assistant .history__meta {
+	display: block;
+	font-size: 0.72rem;
+	color: var(--mute);
+}
+
+.assistant .chat {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+}
+
+.assistant .log {
+	flex: 1;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 4px 2px 12px;
+	min-height: 140px;
+}
+
+.assistant .msg {
+	max-width: 88%;
+	padding: 10px 13px;
+	border-radius: 12px;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	font-size: 0.92rem;
+}
+
+.assistant .msg.user {
+	align-self: flex-end;
+	background: var(--accent);
+	color: #fff;
+	border-bottom-right-radius: 4px;
+}
+
+.assistant .msg.bot {
+	align-self: flex-start;
+	background: #f2f4f7;
+	border-bottom-left-radius: 4px;
+}
+
+.assistant .chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 8px 0;
+}
+
+.assistant form.row {
+	flex-wrap: nowrap;
+}
+
+.assistant form.row input {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.assistant form.row .btn {
+	flex: 0 0 auto;
+}
+
+.assistant .error {
+	background: var(--fail-bg);
+	border: 1px solid #fecdca;
+	border-radius: var(--radius-sm);
+	padding: 8px 10px;
+	margin-top: 10px;
+	font-size: 0.86rem;
+	color: var(--fail);
+}
+
+.assistant .error p {
+	margin: 0 0 6px;
+}
+
+.assistant .note {
+	font-size: 0.78rem;
+	color: var(--mute);
+	margin: 8px 0 0;
+}
+
+.assistant .empty {
+	color: var(--mute);
+	font-size: 0.86rem;
+	margin: 0;
+}
+
+.assistant .details {
+	border-top: 1px solid var(--line);
+	margin-top: 14px;
+	padding-top: 12px;
+}
+
+.assistant .details h2 {
+	font-size: 0.82rem;
+	margin: 0 0 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--mute);
+}
+
+.assistant .details h3 {
+	font-size: 0.86rem;
+	margin: 12px 0 6px;
+}
+
+.assistant .tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.assistant .tag {
+	background: var(--card);
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	padding: 1px 6px;
+	font-size: 0.72rem;
+	color: var(--mute);
+}
+
+.assistant .tag.warn {
+	color: var(--warn);
+	border-color: #fedf89;
+}
+
+.assistant .cites ul {
+	margin: 6px 0 0;
+	padding-left: 18px;
+	font-size: 0.8rem;
+}
+
+.assistant .cite-label {
+	font-weight: 600;
+}
+
+.assistant .rel {
+	color: var(--warn);
+	font-weight: 600;
+}
+
+.assistant .whatif {
+	border: 1px solid #fedf89;
+	background: #fffcf5;
+	border-radius: 10px;
+	padding: 10px 12px;
+	margin-top: 12px;
+}
+
+.assistant .whatif h3 {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+	margin-top: 0;
+}
+
+.assistant table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.8rem;
+	margin-top: 10px;
+}
+
+.assistant th,
+.assistant td {
+	padding: 6px 4px;
+	border-bottom: 1px solid var(--line);
+	text-align: left;
+	vertical-align: top;
+}
+
+.assistant thead th {
+	color: var(--mute);
+	font-weight: 600;
+}
+
+.assistant .r-FAIL {
+	color: var(--fail);
+	font-weight: 700;
+}
+
+.assistant .r-PASS {
+	color: var(--pass);
+	font-weight: 700;
+}
+
+.assistant .r-NOT_EVALUABLE {
+	color: var(--mute);
+}
+
+.assistant .plan ol {
+	padding-left: 20px;
+	margin: 6px 0;
+	font-size: 0.86rem;
+}
+
+.assistant .plan li {
+	margin-bottom: 8px;
+}
+
+.assistant .voice {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--line);
+}
+
+.assistant .voice__start {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.assistant .voice__consent {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 0.78rem;
+	color: var(--mute);
+}
+
+.assistant .voice__consent input {
+	margin-top: 2px;
+}
+
+.assistant .voice__status {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	font-size: 0.8rem;
+}
+
+.assistant .voice__dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--mute);
+	flex: 0 0 auto;
+}
+
+.assistant .voice__status--connecting .voice__dot {
+	background: var(--accent);
+}
+
+.assistant .voice__status--connected .voice__dot {
+	background: var(--pass);
+}
+
+.assistant .voice__status--reconnecting .voice__dot {
+	background: var(--warn);
+}
+
+.assistant .voice__status--failed .voice__dot {
+	background: var(--fail);
+}
+
+.assistant .voice__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.assistant .voice__expiry {
+	font-size: 0.72rem;
+	color: var(--mute);
+}
+
+.assistant .voice__transcript {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.assistant .voice__transcript-head {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.assistant .voice__lines {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.assistant .voice__line {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	background: #f7f9fc;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	padding: 6px 8px;
+	font-size: 0.8rem;
+	overflow-wrap: anywhere;
+}
+
+.assistant .voice__line--user {
+	background: #f2f4f7;
+}
+
+.assistant .voice__speaker {
+	font-size: 0.68rem;
+	font-weight: 680;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--mute);
+}
+
+.assistant .sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+@media (max-width: 900px) {
+	.assistant__grid {
+		grid-template-columns: 1fr;
+		overflow-y: auto;
+	}
+
+	.assistant__aside {
+		border-left: 0;
+		border-top: 1px solid var(--line);
+		padding-left: 0;
+		padding-top: 14px;
+		overflow: visible;
+	}
+}

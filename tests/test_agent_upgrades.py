@@ -407,29 +407,24 @@ def test_chat_respects_the_deadline_and_does_not_retry_past_it(monkeypatch):
 
 # ------------------------------------------------------------------ server: NDJSON stream endpoint
 def test_stream_endpoint_sends_sentences_then_the_final_response(tmp_path, monkeypatch):
-    import urllib.request
-    from http.server import ThreadingHTTPServer
+    from fastapi.testclient import TestClient
 
     from loan_advisory.agent import server as srv
-    monkeypatch.setenv("AGENT_SESSION_SECRET", "test-secret")
-    srv.configure_secret()
+    from loan_advisory.api import assertion
+    from loan_advisory.api.app import create_app
+    from tests.test_agent_api import SECRET, auth, mint
+
+    monkeypatch.setenv("AGENT_ASSERTION_SECRET", SECRET)
+    assertion.replay.reset()
     llm = ScriptedLLM(intent="explain", compose="Your recorded decision is REJECTED. Your credit score is 690.")
     ag = agent_for(llm, tmp_path=tmp_path)
     store_refs = {"APP-TEST-005": {"name": "APP-TEST-005", "applicant": "CUS-TEST-005"}}
-    app = srv.App(ag, store_refs.get, demo=[{"external_ref": "APP-TEST-005", "label": "x", "literacy": "medium"}])
-    httpd = ThreadingHTTPServer(("127.0.0.1", 0), srv.make_handler(app))
-    threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    base = f"http://127.0.0.1:{httpd.server_address[1]}"
-    try:
-        tok = json.loads(urllib.request.urlopen(urllib.request.Request(base + "/api/session", data=b'{"external_ref": "APP-TEST-005"}',
-                                                                       headers={"Content-Type": "application/json"})).read())["token"]
-        req = urllib.request.Request(base + "/api/chat/stream", data=json.dumps({"message": "why?", "channel": "voice"}).encode(),
-                                     headers={"Content-Type": "application/json", "Authorization": f"Bearer {tok}"})
-        with urllib.request.urlopen(req, timeout=30) as r:
-            assert r.headers["Content-Type"].startswith("application/x-ndjson")
-            events = [json.loads(l) for l in r.read().decode().splitlines() if l.strip()]
-    finally:
-        httpd.shutdown()
+    app = srv.App(ag, store_refs.get)
+    response = TestClient(create_app(app)).post(
+        "/api/chat/stream", json={"message": "why?", "channel": "voice"}, headers=auth(mint()))
+    assertion.replay.reset()
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+    events = [json.loads(line) for line in response.text.splitlines() if line.strip()]
     kinds = [e["type"] for e in events]
     assert kinds[:3] == ["sentence", "sentence", "sentence"] and kinds[-1] == "final"
     assert events[1]["text"] == "Your recorded decision is REJECTED."

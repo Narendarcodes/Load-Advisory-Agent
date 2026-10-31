@@ -18,8 +18,10 @@ Bureau-backed runs add one step: a data-quality hold becomes outcome=REVIEW whil
 `decision` keeps the legacy ERROR value (no Frappe schema change), and a provider
 failure becomes outcome=ERROR. The resolved score is what ZEN evaluates.
 """
+import json
 from dataclasses import dataclass, field
 
+from decision_engine.paths import repo_root
 from decision_engine.bureau.gates import (
     DQ_MISSING_REQUIRED_FIELD,
     GateIssue,
@@ -36,17 +38,15 @@ from loan_advisory.application import decision_orchestrator
 from loan_advisory.application.decision_orchestrator import decide
 from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
 
-STATES = ("SUBMITTED", "INFO_REQUESTED", "UNDER_REVIEW", "MANUAL_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN")
-TRANSITIONS = {
-    "SUBMITTED": {"UNDER_REVIEW", "WITHDRAWN"},
-    "UNDER_REVIEW": {"APPROVED", "REJECTED", "INFO_REQUESTED", "MANUAL_REVIEW"},
-    "INFO_REQUESTED": {"SUBMITTED", "WITHDRAWN"},
-    "MANUAL_REVIEW": {"APPROVED", "REJECTED", "INFO_REQUESTED"},
-    "REJECTED": {"MANUAL_REVIEW"},
-    "APPROVED": set(),
-    "WITHDRAWN": set(),
+# One canonical table, shared with the portal: config/loan_lifecycle.json is copied
+# byte-for-byte into the Frappe app and the copies are checked by a contract test.
+_LIFECYCLE = json.loads((repo_root() / "config" / "loan_lifecycle.json").read_text(encoding="utf-8"))
+STATES = tuple(_LIFECYCLE["states"])
+TRANSITIONS = {state: set(targets) for state, targets in _LIFECYCLE["transitions"].items()}
+AUTOMATED_TRANSITIONS = {
+    state: set(targets) for state, targets in _LIFECYCLE["automated_transitions"].items()
 }
-NATIVE_STATUS = {"APPROVED": "Approved", "REJECTED": "Rejected"}  # everything else stays "Open"
+NATIVE_STATUS = dict(_LIFECYCLE["native_status"])
 FIELD_ALIASES = {k: (f"custom_{k}", k) for k in SCORED_FIELDS}
 
 
@@ -136,7 +136,8 @@ def process_application(application_ref: str, store, sink, current_state: str | 
     rec = build_record(ev, pv, inputs, application_ref=application_ref, applicant_ref=applicant,
                        lifecycle_state=to, missing_fields=missing, now=now)
     rec["flags"] = flags
-    sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=ev.get("zen_trace") or {})
+    sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=ev.get("zen_trace") or {},
+                 expected_application=application_ref)
     return Outcome(application_ref, current_state, to, rec, missing, flags)
 
 
@@ -214,7 +215,8 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
                        now=now, outcome=blocks["outcome"], review=blocks["review"],
                        bureau=blocks["bureau"])
     rec["flags"] = flags
-    sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=ev.get("zen_trace") or {})
+    sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=ev.get("zen_trace") or {},
+                 expected_application=application_ref)
     return Outcome(application_ref, current_state, to, rec, missing, flags)
 
 
@@ -234,5 +236,6 @@ def simulate(application_ref: str, store, overrides: dict, now=None, *, base: di
     return rec
 
 
-__all__ = ["STATES", "TRANSITIONS", "IllegalTransition", "check_transition", "process_application",
+__all__ = ["STATES", "TRANSITIONS", "AUTOMATED_TRANSITIONS", "NATIVE_STATUS", "IllegalTransition",
+           "check_transition", "process_application",
            "process_bureau_application", "simulate", "Outcome", "UnknownApplication", "FrappeUnavailable"]

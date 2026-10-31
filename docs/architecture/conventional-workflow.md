@@ -12,8 +12,8 @@ production-ready, and all policy content is synthetic.
 | Repeatable seeding | `infra/frappe/bootstrap/seed.sh` → `seed_site.py` (+ `make_seed.py` → `seed_applications.json`) | Runs the setup wizard in-process (company INR, FY 2026-27); creates the offset order, Loan Product `SYN-PERSONAL-001`, custom fields, the evidence DocType, customers and 40 draft applications. **Records are keyed by `custom_external_ref`, never by autoname**, so re-running creates nothing new (verified). |
 | Versioned policy | `decision_engine/policies/registry.json` + `registry.py` | `(policy_id, version)` → policy JSON + ZEN JDM, each pinned by sha256 of its LF-normalised bytes. A tampered or edited file makes the load **fail closed** (`PolicyIntegrityError`). Only `synthetic-v1` is registered (status active, `synthetic: true`). |
 | Decision Evidence contract | `decision_engine/evidence/evidence_record.py` (schema `decision-evidence/1`) | See below |
-| Lifecycle | `apps/api/src/loan_advisory/application/lifecycle.py` | States and transitions below. It wraps the **unchanged** `decide()`. |
-| Evidence persistence | `apps/api/src/loan_advisory/infrastructure/evidence_store.py` | `FrappeEvidenceSink` writes a `Loan Decision Evidence` doc and updates the application. ZEN traces go to a content-addressed directory, not into Frappe. |
+| Lifecycle | `config/loan_lifecycle.json` (`loan-lifecycle/1`) loaded by `apps/api/src/loan_advisory/application/lifecycle.py` and the portal's vendored copy | States, native mapping, atomicity and reconciliation are in [loan-lifecycle-mapping.md](loan-lifecycle-mapping.md). It wraps the **unchanged** `decide()`. |
+| Evidence persistence | `apps/api/src/loan_advisory/infrastructure/evidence_store.py` | `FrappeEvidenceSink` calls the trusted `evidence.ingest` method with a dedicated `Evidence Service` credential; the method writes the `Loan Decision Evidence` doc, updates only allowlisted application fields and records an audit row. ZEN traces go to a content-addressed directory, not into Frappe. |
 
 ## Lifecycle (prototype workflow, not a regulatory requirement)
 

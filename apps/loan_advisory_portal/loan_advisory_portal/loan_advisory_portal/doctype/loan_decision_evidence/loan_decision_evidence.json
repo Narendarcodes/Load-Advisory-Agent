@@ -1,0 +1,41 @@
+{
+ "actions": [],
+ "autoname": "field:record_id",
+ "creation": "2026-10-30 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["record_id", "loan_application", "decision", "lifecycle_state", "policy_id", "policy_version", "policy_sha256", "jdm_sha256", "input_sha256", "engine", "evaluated_at", "trace_sha256", "trace_store", "is_simulation", "record_json"],
+ "fields": [
+  {"fieldname": "record_id", "fieldtype": "Data", "label": "Record ID", "reqd": 1, "unique": 1, "in_list_view": 1},
+  {"fieldname": "loan_application", "fieldtype": "Link", "label": "Loan Application", "options": "Loan Application", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "decision", "fieldtype": "Select", "label": "Decision", "options": "APPROVED\nREJECTED\nERROR", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "lifecycle_state", "fieldtype": "Data", "label": "Lifecycle State"},
+  {"fieldname": "policy_id", "fieldtype": "Data", "label": "Policy ID"},
+  {"fieldname": "policy_version", "fieldtype": "Data", "label": "Policy Version", "in_list_view": 1},
+  {"fieldname": "policy_sha256", "fieldtype": "Data", "label": "Policy SHA256"},
+  {"fieldname": "jdm_sha256", "fieldtype": "Data", "label": "JDM SHA256"},
+  {"fieldname": "input_sha256", "fieldtype": "Data", "label": "Input SHA256"},
+  {"fieldname": "engine", "fieldtype": "Data", "label": "Engine"},
+  {"fieldname": "evaluated_at", "fieldtype": "Datetime", "label": "Evaluated At"},
+  {"fieldname": "trace_sha256", "fieldtype": "Data", "label": "Trace SHA256"},
+  {"fieldname": "trace_store", "fieldtype": "Data", "label": "Trace Store"},
+  {"fieldname": "is_simulation", "fieldtype": "Check", "label": "Is Simulation", "default": "0"},
+  {"fieldname": "record_json", "fieldtype": "Long Text", "label": "Record JSON"}
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-30 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Loan Decision Evidence",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1},
+  {"role": "Agent Integration", "read": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
