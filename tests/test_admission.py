@@ -1,97 +1,65 @@
 """P0b: bounded admission, controlled overload, and one-release-per-request slots.
 
-The server admits at most `max_inflight` requests; the next one gets an immediate 503 + Retry-After instead of
-another thread. A slot is taken in the accept loop and released in the worker thread's finally, and release is
-idempotent because the thread-start failure path and socketserver's own shutdown both run on the same request.
+The ASGI middleware admits at most `max_inflight` requests; the next one gets an immediate 503 +
+`Retry-After` instead of queueing. A slot is held for the whole response and released on success,
+on an exception downstream and on client disconnects (the `finally` in the middleware).
 """
+import asyncio
 import json
-import socket
 import threading
-import time
-import urllib.error
-import urllib.request
-from http.client import HTTPConnection
-from http.server import BaseHTTPRequestHandler
 
 import pytest
+from fastapi.testclient import TestClient
 
 from loan_advisory.agent import server as srv
+from loan_advisory.api.admission import AdmissionMiddleware
+from loan_advisory.api.app import create_app
+from tests.test_agent_api import SECRET, auth, mint
 
 
-class _Quiet(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-Length", "2")
-        self.end_headers()
-        self.wfile.write(b"ok")
-
-    def log_message(self, *a):
-        pass
+@pytest.fixture(autouse=True)
+def _secret(monkeypatch):
+    monkeypatch.setenv("AGENT_ASSERTION_SECRET", SECRET)
 
 
-def _server(limit, handler=_Quiet):
-    server = srv.BoundedServer(("127.0.0.1", 0), handler, max_inflight=limit)
-    server.handle_error = lambda request, client_address: None  # keep expected failures out of the test log
-    return server
+class BlockingService:
+    def __init__(self):
+        self.entered = threading.Event()
+        self.gate = threading.Event()
 
-
-def _get(base):
-    try:
-        with urllib.request.urlopen(base, timeout=10) as response:
-            return response.status
-    except urllib.error.HTTPError as e:
-        return e.code
-
-
-def _wait_idle(server, timeout=5):
-    """The worker releases its slot just after the client sees the response, so poll instead of asserting instantly."""
-    deadline = time.time() + timeout
-    while server.admission.in_flight and time.time() < deadline:
-        time.sleep(0.01)
-    return server.admission.in_flight
+    def chat(self, claims, body, headers=None, on_sentence=None):
+        self.entered.set()
+        self.gate.wait(10)
+        return 200, {"answer": "ok"}
 
 
 def test_capacity_limit_refuses_extra_requests_with_503_and_recovers():
-    gate = threading.Event()
-    in_handler = threading.Event()
+    service = BlockingService()
+    app = create_app(service, max_inflight=1)
+    first, second = TestClient(app), TestClient(app)
+    first.get("/healthz")   # builds the middleware stack once, so both clients share one admission
+    results = {}
 
-    class Blocking(_Quiet):
-        def do_GET(self):
-            in_handler.set()
-            gate.wait(10)
-            super().do_GET()
+    def call():
+        results["first"] = first.post("/api/chat", json={"message": "why?"}, headers=auth(mint()))
 
-    server = _server(2, Blocking)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    base = f"http://127.0.0.1:{server.server_address[1]}"
-    results = []
-    workers = [threading.Thread(target=lambda: results.append(_get(base))) for _ in range(2)]
+    worker = threading.Thread(target=call)
     try:
-        for worker in workers:
-            worker.start()
-        assert in_handler.wait(5)
-        deadline = time.time() + 5
-        while server.admission.in_flight < 2 and time.time() < deadline:
-            time.sleep(0.01)
-        assert server.admission.in_flight == 2
+        worker.start()
+        assert service.entered.wait(5)   # the only slot is held
+        refused = second.post("/api/chat", json={"message": "why?"}, headers=auth(mint()))
+        assert refused.status_code == 503
+        assert refused.headers["retry-after"] == "1"
+        assert refused.headers["cache-control"] == "no-store"
+        assert json.loads(refused.content) == {"error": "server busy; retry shortly"}
 
-        with pytest.raises(urllib.error.HTTPError) as refused:
-            urllib.request.urlopen(base, timeout=10)
-        assert refused.value.code == 503 and refused.value.headers["Retry-After"] == "1"
-        assert json.loads(refused.value.read()) == {"error": "server busy; retry shortly"}
-        assert server.admission.in_flight == 2  # a refused request never takes a slot
-
-        gate.set()
-        for worker in workers:
-            worker.join(10)
-        assert sorted(results) == [200, 200]
-        assert _wait_idle(server) == 0  # released after success
-        assert _get(base) == 200  # capacity is back for the next request
-        assert _wait_idle(server) == 0
+        service.gate.set()
+        worker.join(10)
+        assert results["first"].status_code == 200
+        assert second.post("/api/chat", json={"message": "why?"}, headers=auth(mint())).status_code == 200
     finally:
-        gate.set()
-        server.shutdown()
-        server.server_close()
+        service.gate.set()
+        worker.join(10)
 
 
 def test_slot_release_is_idempotent():
@@ -104,114 +72,50 @@ def test_slot_release_is_idempotent():
     assert admission.in_flight == 0
 
 
-def test_thread_start_failure_releases_once_even_after_shutdown_request():
-    server = _server(1)
-
-    def cannot_start(request, client_address, slot):
-        raise RuntimeError("can't start new thread")
-
-    server._start_worker = cannot_start
-    left, right = socket.socketpair()
-    try:
-        with pytest.raises(RuntimeError, match="can't start new thread"):
-            server.process_request(left, ("127.0.0.1", 0))
-        assert server.admission.in_flight == 0
-        server.shutdown_request(left)  # what _handle_request_noblock does when process_request raises
-        assert server.admission.in_flight == 0  # no second release, no negative count
-        slot = server.admission.acquire()
-        assert slot is not None and slot.release() is True
-        assert server.admission.in_flight == 0
-    finally:
-        left.close()
-        right.close()
-        server.server_close()
-
-
-def test_oversized_request_body_still_gets_the_503():
-    gate = threading.Event()
-    in_handler = threading.Event()
-
-    class Blocking(_Quiet):
-        def do_GET(self):
-            in_handler.set()
-            gate.wait(10)
-            super().do_GET()
-
-    server = _server(1, Blocking)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    port = server.server_address[1]
-    busy = threading.Thread(target=_get, args=(f"http://127.0.0.1:{port}",))
-    try:
-        busy.start()
-        assert in_handler.wait(5)  # the only slot is taken, so the next connection is refused
-        conn = HTTPConnection("127.0.0.1", port, timeout=10)
-        try:
-            conn.request("POST", "/api/chat", body=b"x" * (256 * 1024))  # four times the old single 64 KiB read
-            response = conn.getresponse()
-            assert response.status == 503
-            assert response.getheader("Retry-After") == "1"
-            assert json.loads(response.read()) == {"error": "server busy; retry shortly"}
-        finally:
-            conn.close()
-    finally:
-        gate.set()
-        busy.join(10)
-        server.shutdown()
-        server.server_close()
-
-
-def test_drain_stops_at_the_byte_cap_and_still_responds():
-    class Endless:
-        def __init__(self):
-            self.reads = 0
-            self.sent = b""
-
-        def settimeout(self, timeout):
-            pass
-
-        def recv(self, size):
-            self.reads += 1
-            return b"x" * size  # a peer that never stops sending
-
-        def sendall(self, data):
-            self.sent = data
-
-        def shutdown(self, how):
-            pass
-
-        def close(self):
-            pass
-
-    server = _server(1)
-    fake = Endless()
-    try:
-        assert server._refusals.acquire(blocking=False)  # process_request normally takes the lane first
-        server._refuse_overloaded(fake)
-        assert fake.reads == 16  # 1 MiB cap: stop draining instead of following an unbounded body
-        assert fake.sent.startswith(b"HTTP/1.1 503 Service Unavailable")
-        assert json.loads(fake.sent.split(b"\r\n\r\n", 1)[1]) == {"error": "server busy; retry shortly"}
-    finally:
-        server.server_close()
-
-
-def test_release_survives_a_failing_handler_and_a_failing_error_handler():
-    server = _server(1)
-
-    def bad_handler(request, client_address):
+def test_a_failing_downstream_still_releases_the_slot():
+    async def boom(scope, receive, send):
         raise RuntimeError("handler failed")
 
-    def bad_error_handler(request, client_address):
-        raise RuntimeError("error handler failed")
+    middleware = AdmissionMiddleware(boom, limit=1)
+    with pytest.raises(RuntimeError, match="handler failed"):
+        asyncio.run(middleware({"type": "http", "method": "GET", "path": "/", "headers": []}, None, None))
+    assert middleware.admission.in_flight == 0
 
-    server.finish_request = bad_handler
-    server.handle_error = bad_error_handler
-    left, right = socket.socketpair()
-    slot = server.admission.acquire()
+
+def test_non_http_scopes_bypass_admission():
+    seen = []
+
+    async def app(scope, receive, send):
+        seen.append(scope["type"])
+
+    middleware = AdmissionMiddleware(app, limit=1)
+    asyncio.run(middleware({"type": "lifespan"}, None, None))
+    assert seen == ["lifespan"] and middleware.admission.in_flight == 0
+
+
+def test_refusal_does_not_take_a_slot_while_busy():
+    """A refused request must neither queue nor consume capacity: two refusals still leave the one slot held."""
+    async def hold(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    middleware = AdmissionMiddleware(hold, limit=1)
+    slot = middleware.admission.acquire()
+    assert slot is not None
+
+    async def refuse_twice():
+        for _ in range(2):
+            messages = []
+
+            async def send(message):
+                messages.append(message)
+
+            await middleware({"type": "http"}, None, send)
+            assert messages[0]["status"] == 503
+        return middleware.admission.in_flight
+
     try:
-        with pytest.raises(RuntimeError, match="error handler failed"):
-            server._serve(left, ("127.0.0.1", 0), slot)
-        assert server.admission.in_flight == 0
+        assert asyncio.run(refuse_twice()) == 1
     finally:
-        left.close()
-        right.close()
-        server.server_close()
+        slot.release()
+    assert middleware.admission.in_flight == 0

@@ -1,7 +1,8 @@
 """Phase-3 live: Frappe Lending (seeded by infra/frappe/bootstrap/seed.sh) -> lifecycle -> stored evidence.
 
-Requires FRAPPE_URL / FRAPPE_API_KEY / FRAPPE_API_SECRET and a seeded site. Applications
-are located by `custom_external_ref` (never by fixed autonames).
+Requires FRAPPE_URL / FRAPPE_API_KEY / FRAPPE_API_SECRET (reads), the dedicated
+EVIDENCE_FRAPPE_API_KEY / EVIDENCE_FRAPPE_API_SECRET (ingestion) and a seeded site.
+Applications are located by `custom_external_ref` (never by fixed autonames).
 """
 import os
 
@@ -12,7 +13,9 @@ from loan_advisory.application.lifecycle import IllegalTransition, process_appli
 from loan_advisory.infrastructure.evidence_store import FrappeEvidenceSink
 from loan_advisory.infrastructure.frappe_adapter import FrappeClient
 
-LIVE = all(os.environ.get(k) for k in ("FRAPPE_URL", "FRAPPE_API_KEY", "FRAPPE_API_SECRET"))
+LIVE = all(os.environ.get(k) for k in (
+    "FRAPPE_URL", "FRAPPE_API_KEY", "FRAPPE_API_SECRET",
+    "EVIDENCE_FRAPPE_API_KEY", "EVIDENCE_FRAPPE_API_SECRET"))
 pytestmark = pytest.mark.skipif(not LIVE, reason="no live Frappe env configured")
 
 
@@ -38,7 +41,7 @@ def _resubmit(c, name):  # ops/applicant resubmission puts the record back to SU
 def test_live_lifecycle_persists_evidence(ref, state, status, tmp_path):
     c = FrappeClient(); name = _by_ref(c, ref)
     _resubmit(c, name)
-    sink = FrappeEvidenceSink(c, trace_dir=str(tmp_path))
+    sink = FrappeEvidenceSink(trace_dir=str(tmp_path))  # dedicated Evidence Service credential
     out = process_application(name, c, sink)
     assert out.to_state == state
     doc = c.get(name)

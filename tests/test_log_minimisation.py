@@ -70,12 +70,13 @@ def test_voice_worker_never_adds_the_transcript_to_the_turn_info():
 
 
 def test_evidence_trace_content_is_written_unchanged(tmp_path):
-    class Reply:
-        def __init__(self, status_code):
-            self.status_code, self.ok = status_code, status_code < 400
+    class Client:
+        base_url = "http://frappe"
 
-    sink = FrappeEvidenceSink(client=object(), trace_dir=str(tmp_path / "traces"))
-    sink._req = lambda method, path, **kw: Reply(404 if method == "GET" else 200)
+        def call_method(self, method, payload):
+            return {"record_id": payload["record"]["record_id"], "wrote_native_status": True}
+
+    sink = FrappeEvidenceSink(client=Client(), trace_dir=str(tmp_path / "traces"))
     record = {
         "trace_ref": {"sha256": "abc123"}, "record_id": "rec-1", "application_ref": "APP-1", "decision": "ERROR",
         "lifecycle_state": "REVIEW",
@@ -85,7 +86,7 @@ def test_evidence_trace_content_is_written_unchanged(tmp_path):
     }
     trace = {"steps": [{"event": "answer", "note": SENTINEL}]}
 
-    sink.persist(record, "Open", trace)
+    sink.persist(record, "Open", trace, expected_application="APP-1")
 
     raw = (tmp_path / "traces" / "abc123.json").read_text(encoding="utf-8")
     assert raw == json.dumps(stable_trace(trace), sort_keys=True, ensure_ascii=False)
