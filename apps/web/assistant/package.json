@@ -1,0 +1,28 @@
+{
+  "name": "@loan-advisory/assistant-island",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CopilotKit chat island mounted inside the Frappe borrower portal",
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@copilotkit/react-core": "1.83.0",
+    "livekit-client": "2.23.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^30.1.3",
+    "typescript": "^5.9.0",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}
