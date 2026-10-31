@@ -9,18 +9,22 @@ Pipeline (self-hosted, no cloud services):
   te/hi, Whisper large-v3-turbo for en) -> llm_node = POST /api/chat on the advisory server (LangGraph graph:
   authorization, ZEN evidence, what-if, policy RAG, guards) -> svara-tts-v1 streaming sidecar -> LiveKit -> browser.
 
-Authorization: the browser receives a LiveKit token whose participant metadata carries the server-signed advisory
-session token; the worker forwards it as `Authorization: Bearer`, so voice uses exactly the same authorization
-path as text. The worker never sees or chooses an application on its own.
+Authorization: Frappe mints the LiveKit token and writes the `Voice Session` row before the browser joins, so
+the row is the authorisation. Participant metadata carries `{session_id, user, customer, application}` and no
+credential; for every turn the worker presents that session id (with the room and identity it is serving) to
+Frappe's `voice_assertion` method and forwards the fresh 60-second assertion as `Authorization: Bearer`. Voice
+therefore uses exactly the same authorization path as text, and the worker holds no borrower cookie. The worker
+never sees or chooses an application on its own.
 
 Every turn writes one JSON line (VOICE_TURN_LOG) with: end-of-user-speech -> STT done -> graph answer (and the
-graph's LLM TTFT) -> first TTS audio -> agent speaking. It keeps timings, locale, STT engine, audio duration and
-filler only, never the transcript. The same answer card (decision, citations) is published on
+graph's LLM TTFT) -> first TTS audio -> agent speaking. It keeps timings, locale, STT engine, audio duration,
+filler and the session id only, never the transcript. The same answer card (decision, citations) is published on
 the data channel (topic "advisor") for the page to render.
 """
 import asyncio
 import json
 import os
+import re
 import time
 from pathlib import Path
 
@@ -34,14 +38,17 @@ from livekit.agents.types import NOT_GIVEN, NotGivenOr
 from livekit.plugins import silero
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "api", "src"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from loan_advisory.agent import observability as obs  # noqa: E402  (OTel -> Phoenix; no-op unless AGENT_TRACING=1)
 from loan_advisory.agent.settings import VoiceSettings  # noqa: E402
 from loan_advisory.agent.streaming import speakable  # noqa: E402
 from loan_advisory.agent.voice_log import turn_row  # noqa: E402
 from loan_advisory.state_paths import append_private  # noqa: E402  (P0c private creation)
+from voice_assertion_exchange import Assertions  # noqa: E402  (Frappe exchange; no LiveKit imports)
 
 CFG = VoiceSettings.from_env()
 AGENT_HTTP, STT_HTTP, TTS_HTTP, TURN_LOG = CFG.agent_http, CFG.stt_http, CFG.tts_http, CFG.turn_log
+SESSION_ID = re.compile(r"^[0-9a-f]{32}$")
 GREETING = {
     "en": "Hello. I can explain your loan decision, suggest what to work on, or answer policy questions. What would you like to know?",
     "hi": "नमस्ते। मैं आपके लोन फ़ैसले के कारण समझा सकता हूँ, सुधार के उपाय बता सकता हूँ, या नीति के सवालों का जवाब दे सकता हूँ। आप क्या जानना चाहेंगे?",
@@ -184,10 +191,10 @@ class GraphLLM(llm.LLM):
 
 
 class AdvisorAgent(Agent):
-    def __init__(self, session_token: str, literacy: str, locale: str, room: rtc.Room, turn: Turn):
+    def __init__(self, auth: Assertions, locale: str, room: rtc.Room, turn: Turn):
         super().__init__(instructions="Loan advisory assistant (replies come from the LangGraph advisory graph).")
-        self.token, self.literacy, self.locale, self.room, self.turn = session_token, literacy, locale, room, turn
-        self.conv = f"voice-{utils.shortuuid()}"
+        self.auth, self.locale, self.room, self.turn = auth, locale, room, turn
+        self.conv = f"voice-{auth.session_id}"
         self._http: aiohttp.ClientSession | None = None
 
     async def llm_node(self, chat_ctx: llm.ChatContext, tools, model_settings):
@@ -198,18 +205,22 @@ class AdvisorAgent(Agent):
                 break
         self.turn.mark("graph_start")
         self.turn.info["locale"] = self.locale
+        self.turn.info["session_id"] = self.auth.session_id
         ctx = self.turn.start_span()
-        headers = {"Authorization": f"Bearer {self.token}"}
-        if ctx is not None:  # W3C traceparent -> the server's advisor.turn becomes a child of this voice.turn
-            from opentelemetry.propagate import inject
-            inject(headers, context=ctx)
         self._http = self._http or aiohttp.ClientSession()
-        body = {"message": msg or "hello", "literacy": self.literacy, "locale": self.locale, "channel": "voice",
-                "conversation_id": self.conv}
+        # The body carries the question only: identity, application and language come from the
+        # assertion, so a tampered worker cannot change whose file is explained.
+        body = {"message": msg or "hello", "channel": "voice", "conversation_id": self.conv}
         final: dict = {}
 
         async def events():
-            """NDJSON events from the advisory server (sentence streaming), or one final event from /api/chat."""
+            """One fresh assertion, then NDJSON events from the advisory server (sentence streaming)."""
+            assertion = await self.auth.fresh()
+            self.locale = assertion.get("locale") or self.locale
+            headers = {"Authorization": f"Bearer {assertion['assertion']}"}
+            if ctx is not None:  # W3C traceparent -> the server's advisor.turn becomes a child of this voice.turn
+                from opentelemetry.propagate import inject
+                inject(headers, context=ctx)
             path = "/api/chat/stream" if CFG.stream else "/api/chat"
             async with self._http.post(f"{AGENT_HTTP}{path}", headers=headers, json=body,
                                        timeout=aiohttp.ClientTimeout(total=CFG.http_timeout_s)) as r:
@@ -272,7 +283,16 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect()
     participant = await ctx.wait_for_participant()
     meta = json.loads(participant.metadata or "{}")
-    locale = meta.get("locale") if meta.get("locale") in ("en", "hi", "te") else "en"
+    session_id = meta.get("session_id")
+    if not isinstance(session_id, str) or not SESSION_ID.match(session_id):
+        # No session row means no authorisation: refuse the room instead of greeting a stranger.
+        raise RuntimeError("voice session metadata is missing; leaving the room")
+    http = aiohttp.ClientSession()
+    auth = Assertions(http, session_id, ctx.room.name, participant.identity,
+                      frappe_url=CFG.frappe_url, api_key=CFG.frappe_api_key,
+                      api_secret=CFG.frappe_api_secret, timeout_s=CFG.http_timeout_s)
+    first = await auth.fresh()  # fail fast: an unverified session never hears a greeting
+    locale = first.get("locale") if first.get("locale") in ("en", "hi", "te") else "en"
     turn = Turn()
     session = AgentSession(vad=ctx.proc.userdata["vad"], stt=SidecarSTT(locale, turn), tts=SvaraTTS(locale, turn), llm=GraphLLM(),
                            min_endpointing_delay=CFG.min_endpointing_s)
@@ -290,7 +310,7 @@ async def entrypoint(ctx: JobContext):
             turn.mark("agent_speaking")
             turn.flush()
 
-    agent = AdvisorAgent(meta.get("session_token", ""), meta.get("literacy", "medium"), locale, ctx.room, turn)
+    agent = AdvisorAgent(auth, locale, ctx.room, turn)
     await session.start(agent=agent, room=ctx.room)
     await session.say(GREETING[locale], allow_interruptions=True)
     await asyncio.sleep(0)

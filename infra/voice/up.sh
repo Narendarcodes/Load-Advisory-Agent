@@ -66,8 +66,15 @@ docker exec -d hx-loan-tts bash -lc "cd $REPO/apps/voice && exec python3 tts_sid
 for i in $(seq 1 60); do curl -fs 127.0.0.1:8793/healthz >/dev/null && break; sleep 2; done
 
 # --- voice worker (needs livekit-agents[silero] in hx-loan-agent)
+# The worker exchanges its Voice Session for an assertion, so it needs the Frappe service credential.
+for name in FRAPPE_URL FRAPPE_API_KEY FRAPPE_API_SECRET; do
+  if [ -z "${!name:-}" ]; then
+    echo "$name must be set: the worker exchanges its Voice Session for an assertion" >&2
+    exit 1
+  fi
+done
 docker exec hx-loan-agent pkill -f agent_worker.py || true
-docker exec -d hx-loan-agent bash -lc "cd $REPO/apps/voice && set -a && . $ROOT/agent/livekit.env && set +a && \
+docker exec -d -e FRAPPE_URL -e FRAPPE_API_KEY -e FRAPPE_API_SECRET hx-loan-agent bash -lc "cd $REPO/apps/voice && set -a && . $ROOT/agent/livekit.env && set +a && \
   AGENT_TRACING=${AGENT_TRACING:-1} OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:6006 OTEL_SERVICE_NAME=loan-voice-worker \
   VOICE_TURN_LOG=$V/turns.jsonl exec python agent_worker.py start > $ROOT/logs/voice_worker.log 2>&1"
 sleep 5
