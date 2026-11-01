@@ -1,42 +1,262 @@
 {% extends "templates/portal/base.html" %}
+{% block title %}Loans explained in plain language{% endblock %}
 {% block page_content %}
-<div class="page-head">
-	<div>
-		<h1>Loan products</h1>
-		<p>The product currently offered. Every application is assessed individually against the lending policy; the rate shown is the product rate, not a personalised offer.</p>
-	</div>
-	<a class="btn" href="/borrower/apply">Start an application</a>
+{%- set signed_in = boot.get("user") and boot.get("user") != "Guest" -%}
+<div class="landing">
+
+	<section class="hero" aria-labelledby="hero-title">
+		<div class="hero__copy">
+			<p class="eyebrow">Borrow with clarity</p>
+			<h1 id="hero-title">A loan you can understand before you sign.</h1>
+			<p class="lede">
+				See what you may qualify for, apply in a few short steps, and read the reasoning behind every
+				decision in plain language. A person makes the final call, not a chatbot.
+			</p>
+			<div class="hero__actions">
+				<a class="btn btn--lg" href="{{ '/borrower/eligibility' if signed_in else '/login?redirect-to=%2Fborrower%2Feligibility' }}">
+					{{ 'Check indicative eligibility' if signed_in else 'Sign in to get started' }}
+				</a>
+				<a class="btn btn--ghost btn--lg" href="#products">See loan products</a>
+			</div>
+			<div class="hero__trust">
+				<span>Indicative check, no hard credit pull</span>
+				<span>Your documents stay private</span>
+				<span>Clear reasons for every decision</span>
+			</div>
+		</div>
+		<div class="hero__art">
+			<div class="plate plate--welcome" role="img" aria-label="Illustration of a loan summary card with a clear status">
+				<div class="plate__card">
+					<span class="plate__line plate__line--ink"></span>
+					<span class="plate__line plate__line--coral"></span>
+					<span class="plate__line"></span>
+					<span class="plate__line plate__line--short"></span>
+					<span class="plate__badge">Clear terms</span>
+				</div>
+			</div>
+			<div class="hero__art-note">
+				<span class="tiny muted">Inside the portal</span>
+				<strong>Every step explained</strong>
+			</div>
+		</div>
+	</section>
+
+	<section class="section" id="products" aria-labelledby="products-heading">
+		<div class="section__head">
+			<div>
+				<p class="eyebrow">The product</p>
+				<h2 id="products-heading">What we lend</h2>
+			</div>
+			{% if signed_in %}
+			<a class="link-arrow" href="/borrower/apply">Start an application</a>
+			{% endif %}
+		</div>
+
+		{% if products %}
+		<div class="product-grid">
+			{% for product in products %}
+			<article class="product-card">
+				<span class="product-card__mark" aria-hidden="true">TL</span>
+				<div>
+					<h3>{{ product.name | e }}</h3>
+					<p>Term loan with a fixed repayment schedule. The amount and terms you are offered depend on your application.</p>
+				</div>
+				<dl>
+					<div>
+						<dt>Maximum amount</dt>
+						<dd>₹{{ "{:,.0f}".format(product.maximum_loan_amount or 0) }}</dd>
+					</div>
+					<div>
+						<dt>Product rate</dt>
+						<dd>{{ product.rate_of_interest | round(2) }}% per year</dd>
+					</div>
+					<div>
+						<dt>Repayment</dt>
+						<dd>Monthly</dd>
+					</div>
+				</dl>
+			</article>
+			{% endfor %}
+		</div>
+		{% else %}
+		<div class="card empty">
+			<span class="empty__mark" aria-hidden="true">TL</span>
+			<h2>No product is available right now</h2>
+			<p>Ask your loan advisor when applications can be started again.</p>
+			<a class="btn btn--ghost" href="/borrower/help">Read the help page</a>
+		</div>
+		{% endif %}
+	</section>
+
+	{% if primary and primary.rate_of_interest %}
+	<section class="section" aria-labelledby="calculator-heading">
+		<div class="section__head">
+			<div>
+				<p class="eyebrow">Work the numbers</p>
+				<h2 id="calculator-heading">Indicative monthly repayment</h2>
+				<p class="small muted">An estimate using the product rate. It is not an offer.</p>
+			</div>
+			<span class="badge badge--brand">Estimate only</span>
+		</div>
+		<div class="card calculator">
+			<div class="stack">
+				<div class="field">
+					<label for="calc-amount">Amount you want to borrow (₹)</label>
+					<div class="input-group">
+						<span class="input-group__prefix" aria-hidden="true">₹</span>
+						<input id="calc-amount" type="number" min="10000" step="5000" inputmode="numeric" value="300000">
+					</div>
+					<input id="calc-range" type="range" min="10000" max="{{ primary.maximum_loan_amount or 1000000 }}" step="5000" value="300000" aria-label="Amount you want to borrow">
+					<div class="range-scale"><span>₹10,000</span><span>₹{{ "{:,.0f}".format(primary.maximum_loan_amount or 1000000) }}</span></div>
+				</div>
+				<div class="grid-2">
+					<div class="field">
+						<label for="calc-tenure">Repayment tenure</label>
+						<select id="calc-tenure">
+							<option value="12">12 months</option>
+							<option value="24">24 months</option>
+							<option value="36" selected>36 months</option>
+							<option value="48">48 months</option>
+							<option value="60">60 months</option>
+						</select>
+					</div>
+					<div class="field">
+						<span class="field__label">Product rate</span>
+						<p class="metric__value metric__value--sm">{{ primary.rate_of_interest | round(2) }}<span class="small muted">% a year</span></p>
+					</div>
+				</div>
+			</div>
+			<div class="calculator__result" aria-live="polite">
+				<p class="tiny muted">Estimated monthly repayment</p>
+				<p class="result-card__amount" id="calc-emi">—</p>
+				<div class="calculator__rows">
+					<div><span class="muted">Principal</span><span id="calc-principal">—</span></div>
+					<div><span class="muted">Interest over the term</span><span id="calc-interest">—</span></div>
+					<div><span class="muted">Total you would repay</span><span id="calc-total">—</span></div>
+				</div>
+				<p class="tiny muted">Estimate only. Your offer shows the full cost, including any charges, before you accept it.</p>
+			</div>
+		</div>
+	</section>
+	{% endif %}
+
+	<section class="section" aria-labelledby="process-heading">
+		<div class="section__head">
+			<div>
+				<p class="eyebrow">How it works</p>
+				<h2 id="process-heading">Three steps, no surprises</h2>
+			</div>
+		</div>
+		<div class="process">
+			<article class="process__step">
+				<h3>Check what fits</h3>
+				<p>Answer a few questions about income and commitments. You get an indicative range, not a promise.</p>
+			</article>
+			<article class="process__step">
+				<h3>Apply with the details you know</h3>
+				<p>Tell us what the loan is for, add your documents, and review everything before you submit.</p>
+			</article>
+			<article class="process__step">
+				<h3>Read the decision</h3>
+				<p>You see the outcome, the reasons that shaped it and what to do next. Our team can talk it through.</p>
+			</article>
+		</div>
+	</section>
+
+	<section class="section" aria-labelledby="trust-heading">
+		<div class="section__head">
+			<div>
+				<p class="eyebrow">Why borrowers stay</p>
+				<h2 id="trust-heading">Built to be understood</h2>
+			</div>
+		</div>
+		<div class="assurance">
+			<div class="assurance__item">
+				<span class="assurance__mark" aria-hidden="true">01</span>
+				<div>
+					<strong>Plain language</strong>
+					<p>No abbreviations invented for the file. If a term matters, it is explained where you meet it.</p>
+				</div>
+			</div>
+			<div class="assurance__item">
+				<span class="assurance__mark" aria-hidden="true">02</span>
+				<div>
+					<strong>Reasons, not just results</strong>
+					<p>Whenever a decision is made, you can read which parts of your application mattered.</p>
+				</div>
+			</div>
+			<div class="assurance__item">
+				<span class="assurance__mark" aria-hidden="true">03</span>
+				<div>
+					<strong>Your data stays yours</strong>
+					<p>Documents are private to you and the review team. The assistant never reads raw identity numbers.</p>
+				</div>
+			</div>
+			<div class="assurance__item">
+				<span class="assurance__mark" aria-hidden="true">04</span>
+				<div>
+					<strong>A person is accountable</strong>
+					<p>The assistant explains. A human reviews and decides. You can ask for the decision to be looked at again.</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="section grid-2" aria-label="Costs and questions">
+		<div class="card">
+			<h2>What the estimate covers</h2>
+			<p class="small muted mt">The calculator adds principal and interest only. Any charges that apply to your offer are shown in your application summary before you accept. This site does not collect payments.</p>
+			<hr class="divider">
+			<h3>What is never included in the estimate</h3>
+			<ul class="small muted">
+				<li>Charges specific to your offer</li>
+				<li>Changes to the product rate after your offer</li>
+				<li>Late payment consequences</li>
+			</ul>
+			<p class="tiny muted mt">Read the <a href="/borrower/terms">terms of use</a> and <a href="/borrower/privacy">privacy notice</a>.</p>
+		</div>
+		<div class="faq">
+			<details open>
+				<summary>Is the eligibility check an approval?</summary>
+				<p>No. It is an indicative estimate based on what you tell us. It does not check your credit file and it does not promise a loan.</p>
+			</details>
+			<details>
+				<summary>Do I need to share Aadhaar or PAN to check eligibility?</summary>
+				<p>No. The indicative check uses income, employment and existing commitments only. Identity checks happen later, inside the application, and only if you continue.</p>
+			</details>
+			<details>
+				<summary>Who sees my documents?</summary>
+				<p>You and the review team. Files are private by default and downloads are re-checked against your account every time. The assistant never receives raw identity numbers.</p>
+			</details>
+			<details>
+				<summary>What happens if my application is not approved?</summary>
+				<p>You see the reasons that applied to your case, not a generic score. You can correct information if it was wrong, or start a new application if your circumstances change.</p>
+			</details>
+			<details>
+				<summary>Can I talk to someone?</summary>
+				<p>Yes. Ask the assistant for an explanation, or use <a href="/borrower/feedback">feedback</a> to ask for a person to review your case.</p>
+			</details>
+		</div>
+	</section>
+
+	<section class="section card card--accent" aria-labelledby="cta-heading">
+		<div class="row row--between">
+			<div>
+				<h2 id="cta-heading">Ready to see where you stand?</h2>
+				<p class="small muted mt">The check takes a few minutes and does not affect your credit score.</p>
+			</div>
+			<div class="row">
+				<a class="btn" href="{{ '/borrower/eligibility' if signed_in else '/login?redirect-to=%2Fborrower%2Feligibility' }}">
+					{{ 'Check indicative eligibility' if signed_in else 'Sign in' }}
+				</a>
+				<a class="btn btn--ghost" href="/borrower/help">How decisions work</a>
+			</div>
+		</div>
+	</section>
 </div>
 
-{% if products %}
-<section class="grid-2" aria-label="Available products">
-	{% for product in products %}
-	<article class="card">
-		<div class="card__head">
-			<h2>{{ product.name | e }}</h2>
-			<span class="badge">Term loan</span>
-		</div>
-		<dl class="detail">
-			<dt>Maximum amount</dt>
-			<dd>₹{{ "{:,.0f}".format(product.maximum_loan_amount or 0) }}</dd>
-			<dt>Rate of interest</dt>
-			<dd>{{ product.rate_of_interest | round(2) }}% per year</dd>
-		</dl>
-		<p class="small muted mt">The actual amount and terms depend on the assessment of your application.</p>
-	</article>
-	{% endfor %}
-</section>
-{% else %}
-<section class="card">
-	<div class="empty">
-		<h2>No product is available right now</h2>
-		<p>Ask your loan advisor when applications can be started again.</p>
-		<p><a class="btn btn--ghost" href="/borrower/help">Read the help page</a></p>
-	</div>
-</section>
+{% if primary and primary.rate_of_interest %}
+<script id="product-data" type="application/json">{{ {"rate": primary.rate_of_interest, "maximum": primary.maximum_loan_amount} | tojson }}</script>
+<script src="/assets/loan_advisory_portal/js/pages/products.js" defer></script>
 {% endif %}
-
-<p class="small muted mt">
-	See the <a href="/borrower/help">help page</a> for how applications and decisions work.
-</p>
 {% endblock %}

@@ -1,0 +1,179 @@
+{% extends "templates/portal/base.html" %}
+{% block title %}Identity check{% endblock %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<p class="eyebrow">Identity check</p>
+		<h1>Confirm who you are</h1>
+		<p>Identity checks protect you and meet lending rules. They are separate from the loan decision: a check that fails does not reject your application.</p>
+	</div>
+	<div class="page-head__actions">
+		<a class="btn btn--quiet" href="/borrower/help">How this works</a>
+	</div>
+</div>
+
+{% if boot.get("demo") %}
+<div class="alert alert--warn" role="note">
+	<strong>Preview mode <span class="demo-flag">Demo</span></strong>
+	<span>No identity document is checked, no OTP is sent and nothing you type leaves this page. Use sample values, not your real numbers.</span>
+</div>
+{% else %}
+<div class="alert alert--info" role="note">
+	<strong>Online identity checks are not open yet</strong>
+	<span>Your loan advisor will arrange identity verification with you. You do not need to enter any identity numbers on this page.</span>
+</div>
+{% endif %}
+
+<div class="kyc mt">
+	<div class="kyc__intro">
+		<div class="card card--tight">
+			<h2>Why we ask</h2>
+			{% if boot.get("demo") %}
+			<p class="small muted mt">Lenders must confirm that the person applying is who they say they are. This preview only shows how a document check would look and how details would be masked. It does not read an identity document or confirm your name.</p>
+			{% else %}
+			<p class="small muted mt">Lenders must confirm that the person applying is who they say they are. Online checks are not open yet, so your loan advisor will arrange identity verification with you at the right stage of the application.</p>
+			{% endif %}
+		</div>
+		<div class="card card--tight">
+			{% if boot.get("demo") %}
+			<h2>What the preview uses</h2>
+			<ul class="checklist mt">
+				<li><span class="checklist__mark" aria-hidden="true">1</span><span>A sample PAN, if you want to try one</span></li>
+				<li><span class="checklist__mark" aria-hidden="true">2</span><span>Sample last 4 digits of an Aadhaar</span></li>
+				<li><span class="checklist__mark" aria-hidden="true">3</span><span>A face check, shown but not connected</span></li>
+			</ul>
+			<p class="small muted mt">Use sample values only. This preview stores nothing, sends nothing and never asks for your full Aadhaar number or your password.</p>
+			{% else %}
+			<h2>What happens next</h2>
+			<ul class="checklist mt">
+				<li><span class="checklist__mark" aria-hidden="true">1</span><span>Your loan advisor tells you which documents are needed.</span></li>
+				<li><span class="checklist__mark" aria-hidden="true">2</span><span>You share them through a secure channel, not this page.</span></li>
+				<li><span class="checklist__mark" aria-hidden="true">3</span><span>A person reviews them, and a failed check is not a rejection by itself.</span></li>
+			</ul>
+			<p class="small muted mt">This portal does not ask for your PAN, your Aadhaar number or a face scan.</p>
+			{% endif %}
+		</div>
+		<div class="alert alert--info">
+			<strong>A failed check is not a rejection</strong>
+			<span>If a document cannot be read, you will be asked for another copy or a person will review your file. The identity check does not decide the loan by itself.</span>
+		</div>
+	</div>
+
+	<div class="kyc__main">
+		{% if not boot.get("demo") %}
+		<div class="card">
+			<div class="empty">
+				<span class="empty__mark" aria-hidden="true">ID</span>
+				<h2>Not available online</h2>
+				<p>Identity verification is handled by your loan advisor for now. Nothing is pending on this page.</p>
+				<a class="btn btn--ghost" href="/borrower/help">Read the help page</a>
+			</div>
+		</div>
+		{% else %}
+		<form class="card" id="kyc-form" novalidate>
+			<div class="card__head">
+				<h2>Preview the check</h2>
+				<span class="badge badge--warn">Preview</span>
+			</div>
+			<p class="small muted">Enter sample values to see how masking and the steps work. Nothing is submitted, stored or verified.</p>
+
+			<section class="kyc-step mt" id="kyc-pan">
+				<div class="kyc-step__head">
+					<div>
+						<h3>1. PAN</h3>
+						<p>Only the last 4 characters are ever shown back to you.</p>
+					</div>
+					<span class="badge badge--neutral" id="pan-status">Not started</span>
+				</div>
+				<div class="field">
+					<label for="kyc-pan-input">Sample PAN</label>
+					<input id="kyc-pan-input" type="text" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE1234F">
+					<p class="hint">Letters and numbers only. This value stays in this browser tab.</p>
+					<p class="error hidden" id="kyc-pan-error"></p>
+				</div>
+				<div class="masked-preview"><span>Masked preview</span><span id="kyc-pan-mask">Not entered</span></div>
+			</section>
+
+			<section class="kyc-step" id="kyc-aadhaar">
+				<div class="kyc-step__head">
+					<div>
+						<h3>2. Aadhaar</h3>
+						<p>Only the last 4 digits are collected. The full number is never requested.</p>
+					</div>
+					<span class="badge badge--neutral" id="aadhaar-status">Not started</span>
+				</div>
+				<div class="field">
+					<label for="kyc-aadhaar-input">Last 4 digits of your Aadhaar</label>
+					<input id="kyc-aadhaar-input" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="1234">
+					<p class="hint">Use a sample here. Nothing is sent to an identity service.</p>
+					<p class="error hidden" id="kyc-aadhaar-error"></p>
+				</div>
+				<div class="masked-preview"><span>Masked preview</span><span id="kyc-aadhaar-mask">Not entered</span></div>
+			</section>
+
+			<section class="kyc-step" data-state="locked" id="kyc-face">
+				<div class="kyc-step__head">
+					<div>
+						<h3>3. Face check</h3>
+						<p>A face check would confirm that the person in front of the camera matches the document.</p>
+					</div>
+					<span class="badge badge--neutral">Not connected</span>
+				</div>
+				<div class="alert alert--info">
+					<strong>Camera and biometric checks are not implemented</strong>
+					<span>No camera is opened and no biometric data is captured in this preview. A live deployment would use a separate, consent-based process.</span>
+				</div>
+			</section>
+
+			<div class="form-actions">
+				<button type="button" class="btn" id="kyc-preview-next">Preview the check</button>
+				<button type="button" class="btn btn--quiet" id="kyc-preview-reset">Reset preview</button>
+				<span class="spacer"></span>
+				<span class="form-note">Nothing is verified.</span>
+			</div>
+			<div class="alert alert--success hidden mt" id="kyc-finished" role="status">
+				<strong>Preview finished</strong>
+				<span>Nothing was verified and nothing was saved. In a live deployment, a failed check would ask for another document or a manual review; it would not reject the application by itself.</span>
+			</div>
+		</form>
+		{% endif %}
+	</div>
+
+	<aside class="kyc__aside" aria-label="Identity summary">
+		<div class="identity-card">
+			<div class="identity-card__top">
+				<span>Identity summary</span>
+				{% if boot.get("demo") %}<span class="demo-flag">Demo</span>{% endif %}
+			</div>
+			<div class="identity-card__name">{{ boot.get("full_name") or "Your name" }}</div>
+			<div>
+				<p class="identity-card__masked" id="card-pan">PAN ••••••••••</p>
+				<p class="identity-card__masked" id="card-aadhaar">Aadhaar •••• •••• ••••</p>
+			</div>
+			<div class="identity-card__meta">
+				{% if boot.get("demo") %}
+				<span>Not verified</span>
+				<span>Preview only</span>
+				{% else %}
+				<span>Not on file</span>
+				<span>Arranged with your advisor</span>
+				{% endif %}
+			</div>
+		</div>
+
+		<div class="card card--tight">
+			<h2>What is stored</h2>
+			<p class="small muted mt">Only the result of a real check and a masked reference would be stored. Full identity numbers are never written to this portal, its logs or the assistant.</p>
+			<p class="small muted mt">Documents you upload in the document workspace are stored privately and reviewed by a person.</p>
+		</div>
+
+		<div class="card card--tight">
+			<h2>Need help?</h2>
+			<p class="small muted mt">If a document was rejected or you cannot complete a check, contact your loan advisor. You can also read the help page.</p>
+			<a class="small link-arrow" href="/borrower/help">Read the help page</a>
+		</div>
+	</aside>
+</div>
+
+<script src="/assets/loan_advisory_portal/js/pages/kyc.js" defer></script>
+{% endblock %}

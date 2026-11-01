@@ -1,4 +1,4 @@
-/* Application detail: summary, documents, decision reasoning and timeline. */
+/* Application detail: progress, status guidance, decision evidence, documents and history. */
 (function () {
 	"use strict";
 
@@ -9,16 +9,30 @@
 	var API = {
 		get: "loan_advisory_portal.api.applications.get_application",
 		decision: "loan_advisory_portal.api.applications.get_decision",
-		documentTypes: "loan_advisory_portal.api.documents.list_document_types",
-		attach: "loan_advisory_portal.api.documents.attach_document",
-		remove: "loan_advisory_portal.api.documents.remove_document",
 		submit: "loan_advisory_portal.api.applications.submit_application",
 		resubmit: "loan_advisory_portal.api.applications.resubmit_application",
 		withdraw: "loan_advisory_portal.api.applications.withdraw_application",
-		download: "/api/method/loan_advisory_portal.api.documents.download_document",
 	};
 
 	var CLOSED = ["APPROVED", "REJECTED", "WITHDRAWN"];
+
+	var STATUS_STYLE = {
+		DRAFT: { variant: "", mark: "DR" },
+		SUBMITTED: { variant: "status-block--info", mark: "i" },
+		INFO_REQUESTED: { variant: "status-block--warn", mark: "!" },
+		UNDER_REVIEW: { variant: "status-block--info", mark: "i" },
+		MANUAL_REVIEW: { variant: "status-block--warn", mark: "!" },
+		APPROVED: { variant: "status-block--ok", mark: "OK" },
+		REJECTED: { variant: "status-block--bad", mark: "×" },
+		WITHDRAWN: { variant: "status-block--info", mark: "i" },
+	};
+
+	var FIELD_LABELS = {
+		monthly_income: "monthly income",
+		monthly_obligations: "monthly obligations",
+		credit_score: "credit score",
+		employment_months: "months in current employment",
+	};
 
 	function detailRow(label, value) {
 		return "<div><dt>" + Portal.esc(label) + "</dt><dd>" + (value || "—") + "</dd></div>";
@@ -27,10 +41,114 @@
 	function renderHeader(application) {
 		document.getElementById("app-title").textContent = "Application " + application.name;
 		document.getElementById("app-purpose").textContent = application.purpose || "No purpose recorded.";
+
+		var product = application.product || {};
+		var bits = ['<span class="mono">' + Portal.esc(application.name) + "</span>"];
+		if (product.product_name) bits.push(Portal.esc(product.product_name));
+		bits.push("Started " + Portal.esc(Portal.date(application.posting_date)));
+		if (application.submitted_at) {
+			bits.push("Submitted " + Portal.esc(Portal.date(application.submitted_at)));
+		}
+		document.getElementById("app-meta").innerHTML = bits
+			.map(function (bit) {
+				return "<span>" + bit + "</span>";
+			})
+			.join("");
+
 		document.getElementById("app-badge").innerHTML = Portal.lifecycleBadge(
 			application.lifecycle,
 			application.decision && application.decision.decision
 		);
+	}
+
+	function trackerStates(application) {
+		var state = application.lifecycle || "DRAFT";
+		if (state === "DRAFT") return ["current", "", "", ""];
+		if (state === "SUBMITTED") return ["done", "current", "", ""];
+		if (state === "UNDER_REVIEW" || state === "INFO_REQUESTED" || state === "MANUAL_REVIEW") {
+			return ["done", "done", "current", ""];
+		}
+		if (state === "APPROVED" || state === "REJECTED") return ["done", "done", "done", "done"];
+		// Withdrawn: the process stopped where it was and no outcome was reached.
+		return application.docstatus === 0 ? ["done", "", "", ""] : ["done", "done", "", ""];
+	}
+
+	function renderTracker(application) {
+		var states = trackerStates(application);
+		document.querySelectorAll("#tracker .tracker__stage").forEach(function (stage, index) {
+			if (states[index]) stage.dataset.state = states[index];
+			else delete stage.dataset.state;
+		});
+	}
+
+	function renderActions(application) {
+		var host = document.getElementById("app-actions");
+		var lifecycle = application.lifecycle || "DRAFT";
+		var open = CLOSED.indexOf(lifecycle) === -1;
+		var draft = application.docstatus === 0 && lifecycle !== "WITHDRAWN";
+		var hasDocuments = (application.documents || []).length > 0;
+		var documentsUrl = "/borrower/documents?name=" + encodeURIComponent(application.name);
+		var html = "";
+
+		if (draft) {
+			html += hasDocuments
+				? '<button class="btn" type="button" id="submit-app">Submit application</button>'
+				: '<a class="btn" href="' + documentsUrl + '">Add documents to continue</a>';
+		}
+		if (lifecycle === "INFO_REQUESTED") {
+			html += '<a class="btn" href="#info-request">Update details</a>';
+		}
+		if (lifecycle === "WITHDRAWN" || lifecycle === "REJECTED") {
+			html += '<a class="btn" href="/borrower/apply">Start a new application</a>';
+		}
+		if (open) {
+			html += '<button class="btn btn--quiet" type="button" id="withdraw">Withdraw</button>';
+		}
+		host.innerHTML = html;
+
+		var submit = document.getElementById("submit-app");
+		if (submit) submit.addEventListener("click", submitApplication);
+		var withdraw = document.getElementById("withdraw");
+		if (withdraw) {
+			withdraw.addEventListener("click", function () {
+				Portal.openDialog(document.getElementById("withdraw-dialog"));
+			});
+		}
+	}
+
+	function renderStatus(application) {
+		var lifecycle = application.lifecycle || "DRAFT";
+		var style = STATUS_STYLE[lifecycle] || STATUS_STYLE.DRAFT;
+		document.getElementById("status-block").className = "status-block" + (style.variant ? " " + style.variant : "");
+		document.getElementById("status-mark").textContent = style.mark;
+
+		var guidance = application.guidance || {};
+		document.getElementById("status-title").textContent =
+			guidance.title || Portal.lifecycleLabel(lifecycle);
+		document.getElementById("status-summary").textContent = guidance.summary || "";
+
+		var steps = guidance.next_steps || [];
+		var list = document.getElementById("status-steps");
+		list.innerHTML = steps
+			.map(function (step) {
+				return "<li>" + Portal.esc(step) + "</li>";
+			})
+			.join("");
+		list.classList.toggle("hidden", !steps.length);
+
+		var timeline = application.timeline || [];
+		var at = timeline.length
+			? timeline[timeline.length - 1].at
+			: application.submitted_at || application.posting_date;
+		var time = document.getElementById("status-time");
+		if (at) {
+			time.textContent = "Last update " + Portal.date(at);
+			time.setAttribute("datetime", at);
+			time.classList.remove("hidden");
+		} else {
+			time.textContent = "";
+			time.classList.add("hidden");
+		}
 	}
 
 	function renderSummary(application) {
@@ -38,7 +156,7 @@
 		var rows = [
 			detailRow("Amount", Portal.money(application.loan_amount)),
 			detailRow("Repayment tenure", Portal.months(application.tenure_months)),
-			detailRow("Purpose", Portal.esc(application.purpose)),
+			detailRow("Purpose", Portal.esc(application.purpose || "Not recorded")),
 			detailRow("Product", Portal.esc(product.product_name || application.loan_product)),
 			detailRow(
 				"Interest rate",
@@ -49,57 +167,186 @@
 				"Submitted",
 				application.submitted_at ? Portal.esc(Portal.date(application.submitted_at)) : "Not submitted yet"
 			),
-			detailRow("Policy version", Portal.esc(application.policy_version || "—")),
-			detailRow("Applicant", Portal.esc((application.contact && application.contact.name) || "")),
-			detailRow("Phone", Portal.esc((application.contact && application.contact.phone) || "")),
 		];
+		if (application.policy_version) {
+			rows.push(detailRow("Policy version", Portal.esc(application.policy_version)));
+		}
+		rows.push(detailRow("Applicant", Portal.esc((application.contact && application.contact.name) || "")));
+		rows.push(detailRow("Phone", Portal.esc((application.contact && application.contact.phone) || "")));
 		document.getElementById("summary").innerHTML = rows.join("");
 	}
 
-	function renderStatusHelp(application) {
-		var host = document.getElementById("status-help");
-		var guidance = application.guidance;
-		if (!guidance) {
-			host.innerHTML = "";
-			return;
+	function renderDocuments(application) {
+		var rows = application.documents || [];
+		document.getElementById("doc-count").textContent =
+			rows.length + (rows.length === 1 ? " document" : " documents");
+
+		var host = document.getElementById("documents-summary");
+		if (!rows.length) {
+			host.innerHTML =
+				'<p class="small muted">No documents yet. Add at least one before you can submit.</p>';
+		} else {
+			var shown = rows
+				.slice(0, 4)
+				.map(function (row) {
+					return (
+						'<div class="doc-summary__row"><strong>' +
+						Portal.esc(row.document_type) +
+						"</strong><span>" +
+						Portal.esc(row.file_name || "Attached file") +
+						"</span></div>"
+					);
+				})
+				.join("");
+			if (rows.length > 4) {
+				shown +=
+					'<p class="tiny muted">And ' + (rows.length - 4) + " more in the document workspace.</p>";
+			}
+			host.innerHTML = shown;
 		}
-		var steps = (guidance.next_steps || [])
-			.map(function (step) {
-				return "<li>" + Portal.esc(step) + "</li>";
-			})
-			.join("");
-		host.innerHTML =
-			"<p><strong>" + Portal.esc(guidance.title) + "</strong></p>" +
-			"<p class=\"small muted\">" + Portal.esc(guidance.summary) + "</p>" +
-			(steps ? "<ul class=\"small\">" + steps + "</ul>" : "");
+
+		var editable = application.docstatus === 0 && application.lifecycle !== "WITHDRAWN";
+		document.getElementById("documents-note").textContent = editable
+			? "Documents can be added or removed while the application is a draft."
+			: "Documents are locked now that the application has been submitted.";
+		document.getElementById("documents-link").textContent = editable
+			? "Open document workspace"
+			: "View documents";
 	}
 
-	function renderActions(application) {
-		var host = document.getElementById("app-actions");
-		var draft = application.docstatus === 0 && application.lifecycle !== "WITHDRAWN";
-		var open = CLOSED.indexOf(application.lifecycle) === -1;
-		var html = "";
-
-		if (draft) {
-			var hasDocuments = (application.documents || []).length > 0;
-			html +=
-				"<button class=\"btn\" type=\"button\" id=\"submit-app\"" +
-				(hasDocuments ? "" : " disabled title=\"Add at least one document first\"") +
-				">Submit application</button>";
+	function renderTimeline(application) {
+		var events = application.timeline || [];
+		var host = document.getElementById("timeline");
+		if (!events.length) {
+			host.innerHTML = '<li class="muted small">No history recorded yet.</li>';
+			return;
 		}
-		if (open) {
-			html += "<button class=\"btn btn--danger\" type=\"button\" id=\"withdraw\">Withdraw</button>";
-		}
-		html += "<a class=\"btn btn--ghost\" href=\"/borrower/feedback\">Give feedback</a>";
-		host.innerHTML = html;
+		host.innerHTML = events
+			.map(function (event, index) {
+				var current = index === events.length - 1 ? ' data-current="true"' : "";
+				var extra = event.policy_version ? " · policy " + Portal.esc(event.policy_version) : "";
+				return (
+					"<li" +
+					current +
+					"><strong>" +
+					Portal.esc(event.event) +
+					'</strong><span class="when">' +
+					Portal.esc(Portal.date(event.at)) +
+					extra +
+					"</span></li>"
+				);
+			})
+			.join("");
+	}
 
-		var submit = document.getElementById("submit-app");
-		if (submit) submit.addEventListener("click", submitApplication);
-		var withdraw = document.getElementById("withdraw");
-		if (withdraw) withdraw.addEventListener("click", function () {
-			document.getElementById("withdraw-panel").classList.remove("hidden");
-			document.getElementById("withdraw-confirm").focus();
+	function unavailableCopy(lifecycle) {
+		var copy = {
+			DRAFT: "No assessment yet. Submit the application to start the checks.",
+			SUBMITTED: "The checks have been queued. The outcome and its reasons appear here when they finish.",
+			UNDER_REVIEW: "The checks are running. Nothing is needed from you right now.",
+			INFO_REQUESTED: "The checks need corrected information before an outcome can be recorded.",
+			MANUAL_REVIEW: "A person is reviewing this application. The outcome appears here when it is recorded.",
+			APPROVED:
+				"The application was approved, but no decision record is attached. Contact your loan advisor for the details.",
+			REJECTED:
+				"The application was not approved, but no decision record is attached. Contact your loan advisor for the details.",
+			WITHDRAWN: "No decision was made because this application was withdrawn.",
+		};
+		return '<p class="muted small">' + Portal.esc(copy[lifecycle] || "No assessment has been recorded for this application.") + "</p>";
+	}
+
+	function decisionBadge(decision) {
+		if (decision.decision === "APPROVED") return '<span class="badge badge--ok">Approved</span>';
+		if (decision.decision === "REJECTED") return '<span class="badge badge--bad">Not approved</span>';
+		return '<span class="badge badge--warn">No outcome recorded</span>';
+	}
+
+	function missingFields(fields) {
+		return (fields || []).map(function (field) {
+			return FIELD_LABELS[field] || String(field).replace(/_/g, " ");
 		});
+	}
+
+	function renderDecision(decision, application) {
+		var host = document.getElementById("decision");
+		if (!decision || !decision.available) {
+			host.innerHTML = unavailableCopy(application.lifecycle || "DRAFT");
+			return;
+		}
+
+		var parts = [];
+		parts.push('<div class="decision-intro">' + decisionBadge(decision) + "</div>");
+
+		if (decision.provider_error) {
+			parts.push(
+				'<div class="status-block status-block--info mt"><span class="status-block__mark" aria-hidden="true">i</span>' +
+					'<div class="status-block__body"><strong>No decision has been made</strong>' +
+					'<span class="small">We could not complete the credit check for this application. It stays open; contact your loan advisor if you need an update.</span></div></div>'
+			);
+		}
+
+		if (decision.information_needed) {
+			var missing = missingFields(decision.missing_fields);
+			parts.push(
+				'<div class="status-block status-block--warn mt"><span class="status-block__mark" aria-hidden="true">!</span>' +
+					'<div class="status-block__body"><strong>More information is needed</strong>' +
+					'<span class="small">' +
+					(missing.length
+						? "Correct: " + Portal.esc(missing.join(", ")) + "."
+						: "Correct the details listed for this application.") +
+					'</span><a class="small" href="#info-request">Update the application</a></div></div>'
+			);
+		}
+
+		var reasons = decision.reasons || [];
+		if (reasons.length) {
+			parts.push(
+				'<div class="mt"><h3>What affected this outcome</h3><ul class="decision-reasons mt">' +
+					reasons
+						.map(function (reason) {
+							return "<li>" + Portal.esc(reason.text || reason.code) + "</li>";
+						})
+						.join("") +
+					"</ul></div>"
+			);
+		} else if (decision.decision === "REJECTED") {
+			parts.push(
+				'<p class="small muted mt">The recorded decision did not include written reasons. Your loan advisor can discuss it with you.</p>'
+			);
+		}
+
+		if (decision.decision === "APPROVED") {
+			parts.push(
+				'<p class="small mt">The application met the lending policy. Your loan advisor can explain what happens next.</p>'
+			);
+		} else if (decision.decision === "REJECTED") {
+			parts.push(
+				'<p class="small mt">If your circumstances change, you can <a href="/borrower/apply">start a new application</a>. Your loan advisor can talk the decision through with you.</p>'
+			);
+		}
+
+		if (decision.simulation) {
+			parts.push(
+				'<p class="tiny muted mt">This was a what-if estimate, not a decision on your application.</p>'
+			);
+		}
+
+		var meta = [];
+		if (decision.evaluated_at) meta.push("Assessed " + Portal.esc(Portal.date(decision.evaluated_at)));
+		if (decision.policy_version) meta.push("Policy version " + Portal.esc(decision.policy_version));
+		if (meta.length) {
+			parts.push(
+				'<div class="decision-meta">' +
+					meta
+						.map(function (entry) {
+							return "<span>" + entry + "</span>";
+						})
+						.join("") +
+					"</div>"
+			);
+		}
+
+		host.innerHTML = parts.join("");
 	}
 
 	function renderInfoRequest(application) {
@@ -107,172 +354,28 @@
 		var open = application.lifecycle === "INFO_REQUESTED";
 		panel.classList.toggle("hidden", !open);
 		if (!open) return;
+
 		var inputs = application.inputs || {};
-		document.getElementById("resubmit-income").value =
-			inputs.monthly_income === null || inputs.monthly_income === undefined ? "" : inputs.monthly_income;
-		document.getElementById("resubmit-obligations").value =
-			inputs.monthly_obligations === null || inputs.monthly_obligations === undefined
-				? ""
-				: inputs.monthly_obligations;
-		document.getElementById("resubmit-credit").value =
-			inputs.credit_score === null || inputs.credit_score === undefined ? "" : inputs.credit_score;
-		document.getElementById("resubmit-employment").value =
-			inputs.employment_months === null || inputs.employment_months === undefined
-				? ""
-				: inputs.employment_months;
+		[
+			["resubmit-income", inputs.monthly_income],
+			["resubmit-obligations", inputs.monthly_obligations],
+			["resubmit-credit", inputs.credit_score],
+			["resubmit-employment", inputs.employment_months],
+		].forEach(function (entry) {
+			document.getElementById(entry[0]).value =
+				entry[1] === null || entry[1] === undefined ? "" : entry[1];
+		});
 	}
 
-	function renderDocuments(application) {
-		var host = document.getElementById("documents");
-		var rows = application.documents || [];
-		if (!rows.length) {
-			host.innerHTML =
-				"<p class=\"muted small\">No documents yet. Add at least one so the application can be submitted.</p>";
-		} else {
-			var editable = application.docstatus === 0;
-			host.innerHTML =
-				"<div class=\"table-wrap\"><table><caption>Private to you and the review team</caption>" +
-				"<thead><tr><th scope=\"col\">Type</th><th scope=\"col\">File</th><th scope=\"col\">Actions</th></tr></thead><tbody>" +
-				rows
-					.map(function (row) {
-						var download =
-							"<a class=\"btn btn--quiet btn--sm\" href=\"" +
-							API.download +
-							"?application=" + encodeURIComponent(application.name) +
-							"&row=" + encodeURIComponent(row.row) +
-							"\">Download</a>";
-						var remove = editable
-							? "<button class=\"btn btn--quiet btn--sm\" type=\"button\" data-remove=\"" +
-							  Portal.esc(row.row) + "\">Remove</button>"
-							: "";
-						return (
-							"<tr><td>" + Portal.esc(row.document_type) + "</td>" +
-							"<td>" + Portal.esc(row.file_name || "Attached file") + "</td>" +
-							"<td class=\"row\">" + download + remove + "</td></tr>"
-						);
-					})
-					.join("") +
-				"</tbody></table></div>";
-
-			host.querySelectorAll("[data-remove]").forEach(function (button) {
-				button.addEventListener("click", function () {
-					removeDocument(button.dataset.remove);
-				});
-			});
-		}
-
-		var form = document.getElementById("upload-form");
-		form.classList.toggle("hidden", application.docstatus !== 0 || rows.length >= 12);
+	function showResubmitError(text) {
+		var error = document.getElementById("resubmit-error");
+		error.textContent = text;
+		error.classList.toggle("hidden", !text);
 	}
 
-	function renderUploadTypes(types) {
-		var select = document.getElementById("document-type");
-		select.innerHTML =
-			"<option value=\"\">Choose a document type</option>" +
-			types
-				.map(function (type) {
-					return "<option value=\"" + Portal.esc(type.name) + "\">" + Portal.esc(type.loan_document_type) + "</option>";
-				})
-				.join("");
-	}
-
-	function renderTimeline(application) {
-		var events = application.timeline || [];
-		var host = document.getElementById("timeline");
-		host.innerHTML = events
-			.map(function (event) {
-				var extra = event.policy_version ? " · policy " + Portal.esc(event.policy_version) : "";
-				return (
-					"<li><strong>" + Portal.esc(event.event) + "</strong>" +
-					"<span class=\"when\">" + Portal.esc(Portal.date(event.at)) + extra + "</span></li>"
-				);
-			})
-			.join("");
-	}
-
-	function renderDecision(decision) {
-		var host = document.getElementById("decision");
-		if (!decision || !decision.available) {
-			host.innerHTML =
-				"<p class=\"muted small\">No assessment yet. Once your application has been reviewed, the reasoning appears here.</p>";
-			return;
-		}
-
-		var badge =
-			decision.decision === "APPROVED"
-				? '<span class="badge badge--pass">Approved</span>'
-				: decision.decision === "REJECTED"
-				? '<span class="badge badge--fail">Not approved</span>'
-				: '<span class="badge badge--warn">No decision yet</span>';
-
-		var parts = [];
-		parts.push("<p>" + badge + "</p>");
-
-		if (decision.provider_error) {
-			parts.push(
-				"<p class=\"small mt\">We could not complete the credit check, so no decision has been made. The team has been notified and will try again.</p>"
-			);
-		} else if (decision.information_needed) {
-			parts.push("<p class=\"small mt\">We need a little more information before this can be assessed.</p>");
-		}
-
-		if (decision.missing_fields && decision.missing_fields.length) {
-			parts.push(
-				"<p class=\"small mt\">Missing: <strong>" +
-					Portal.esc(decision.missing_fields.join(", ").replace(/_/g, " ")) +
-					"</strong>. <a href=\"#info-request\">Update the application</a>.</p>"
-			);
-		}
-
-		if (decision.reasons && decision.reasons.length) {
-			parts.push(
-				"<div class=\"mt\"><h3>What affected this outcome</h3><ul class=\"small\">" +
-					decision.reasons
-						.map(function (reason) {
-							return "<li>" + Portal.esc(reason.text || reason.code) + "</li>";
-						})
-						.join("") +
-					"</ul></div>"
-			);
-		}
-
-		if (decision.decision === "REJECTED") {
-			parts.push(
-				"<p class=\"small mt\">If your circumstances change, you can <a href=\"/borrower/apply\">start a new application</a>. Your loan advisor can talk the decision through with you.</p>"
-			);
-		}
-
-		if (decision.evaluated_at) {
-			parts.push(
-				"<p class=\"tiny muted mt\">Assessed " + Portal.esc(Portal.date(decision.evaluated_at)) +
-					(decision.policy_version ? " · policy version " + Portal.esc(decision.policy_version) : "") +
-					"</p>"
-			);
-		}
-
-		if (decision.simulation) {
-			parts.push(
-				"<p class=\"tiny muted\">This was a what-if estimate, not a decision on your application.</p>"
-			);
-		}
-
-		host.innerHTML = parts.join("");
-	}
-
-	async function reload() {
-		var results = await Promise.all([
-			Portal.call(API.get, { application: reference }),
-			Portal.call(API.decision, { application: reference }),
-		]);
-		var application = results[0];
-		renderHeader(application);
-		renderSummary(application);
-		renderStatusHelp(application);
-		renderActions(application);
-		renderInfoRequest(application);
-		renderDocuments(application);
-		renderTimeline(application);
-		renderDecision(results[1]);
+	function inputNumber(id) {
+		var value = document.getElementById(id).value.trim();
+		return value === "" ? null : Number(value);
 	}
 
 	async function submitApplication() {
@@ -280,7 +383,11 @@
 		Portal.busy(button, true, "Submitting…");
 		try {
 			await Portal.call(API.submit, { application: reference });
-			Portal.flash("success", "Application submitted", "We will let you know when there is a decision.");
+			Portal.flash(
+				"success",
+				"Application submitted",
+				"The outcome and its reasons appear here when the checks finish."
+			);
 			await reload();
 		} catch (error) {
 			if (error.status === 401 || error.status === 403) return;
@@ -291,34 +398,43 @@
 
 	async function resubmitApplication() {
 		var button = document.getElementById("resubmit-button");
+		var income = inputNumber("resubmit-income");
+		var obligations = inputNumber("resubmit-obligations");
+		var credit = inputNumber("resubmit-credit");
+		var months = inputNumber("resubmit-employment");
+
+		var problem = null;
+		if (income === null || !isFinite(income) || income < 0) {
+			problem = "Enter your monthly income as a number.";
+		} else if (obligations === null || !isFinite(obligations) || obligations < 0) {
+			problem = "Enter your monthly obligations as a number.";
+		} else if (credit !== null && (!isFinite(credit) || credit < 300 || credit > 900)) {
+			problem = "A credit score is between 300 and 900.";
+		} else if (months !== null && (!isFinite(months) || months < 0 || months > 720)) {
+			problem = "Months in employment must be between 0 and 720.";
+		}
+		if (problem) {
+			showResubmitError(problem);
+			return;
+		}
+		showResubmitError("");
+
 		Portal.busy(button, true, "Resubmitting…");
 		try {
 			await Portal.call(API.resubmit, {
 				application: reference,
-				monthly_income: document.getElementById("resubmit-income").value,
-				monthly_obligations: document.getElementById("resubmit-obligations").value,
-				credit_score: document.getElementById("resubmit-credit").value,
-				employment_months: document.getElementById("resubmit-employment").value,
+				monthly_income: income,
+				monthly_obligations: obligations,
+				credit_score: credit,
+				employment_months: months,
 			});
 			Portal.flash("success", "Application resubmitted", "We will review it again.");
 			await reload();
 		} catch (error) {
 			if (error.status === 401 || error.status === 403) return;
-			Portal.flash("error", "Could not resubmit", error.message);
+			showResubmitError(error.message);
 		} finally {
 			Portal.busy(button, false);
-		}
-	}
-
-	async function removeDocument(row) {
-		if (!window.confirm("Remove this document? You will need to upload it again.")) return;
-		try {
-			await Portal.call(API.remove, { application: reference, row: row });
-			Portal.flash("success", "Document removed");
-			await reload();
-		} catch (error) {
-			if (error.status === 401 || error.status === 403) return;
-			Portal.flash("error", "Could not remove the document", error.message);
 		}
 	}
 
@@ -327,70 +443,60 @@
 		Portal.busy(button, true, "Withdrawing…");
 		try {
 			await Portal.call(API.withdraw, { application: reference });
-			document.getElementById("withdraw-panel").classList.add("hidden");
-			Portal.flash("success", "Application withdrawn");
+			Portal.closeDialog(document.getElementById("withdraw-dialog"));
+			Portal.flash("success", "Application withdrawn", "You can start a new application whenever you need one.");
 			await reload();
 		} catch (error) {
 			if (error.status === 401 || error.status === 403) return;
-			Portal.busy(button, false);
 			Portal.flash("error", "Could not withdraw", error.message);
-		}
-	}
-
-	document.getElementById("resubmit-button").addEventListener("click", resubmitApplication);
-
-	document.getElementById("withdraw-cancel").addEventListener("click", function () {
-		document.getElementById("withdraw-panel").classList.add("hidden");
-	});
-	document.getElementById("withdraw-confirm").addEventListener("click", withdrawApplication);
-
-	document.getElementById("upload-form").addEventListener("submit", async function (event) {
-		event.preventDefault();
-		var type = document.getElementById("document-type");
-		var fileInput = document.getElementById("document-file");
-		var button = document.getElementById("upload-button");
-
-		if (!type.value) {
-			Portal.flash("error", "Choose a document type");
-			type.focus();
-			return;
-		}
-		if (!fileInput.files.length) {
-			Portal.flash("error", "Choose a file to upload");
-			fileInput.focus();
-			return;
-		}
-
-		Portal.busy(button, true, "Uploading…");
-		try {
-			var uploaded = await Portal.upload(fileInput.files[0]);
-			await Portal.call(API.attach, {
-				application: reference,
-				document_type: type.value,
-				file: uploaded.name,
-			});
-			event.target.reset();
-			Portal.flash("success", "Document added");
-			await reload();
-		} catch (error) {
-			if (error.status === 401 || error.status === 403) return;
-			Portal.flash("error", "Upload failed", error.message);
 		} finally {
 			Portal.busy(button, false);
 		}
-	});
+	}
+
+	async function reload() {
+		var results = await Promise.all([
+			Portal.call(API.get, { application: reference }),
+			Portal.call(API.decision, { application: reference }),
+		]);
+		var application = results[0];
+		renderHeader(application);
+		renderTracker(application);
+		renderStatus(application);
+		renderActions(application);
+		renderSummary(application);
+		renderDocuments(application);
+		renderTimeline(application);
+		renderInfoRequest(application);
+		renderDecision(results[1], application);
+		document.getElementById("page-error").classList.add("hidden");
+	}
+
+	function showLoadError(error) {
+		document.getElementById("page-error-text").textContent = error.message;
+		document.getElementById("page-error").classList.remove("hidden");
+		document.getElementById("status-title").textContent = "This application could not be loaded";
+		document.getElementById("status-summary").textContent = "";
+		document.getElementById("decision").innerHTML =
+			'<p class="small">' + Portal.esc(error.message) + "</p>";
+	}
 
 	async function start() {
 		if (!reference) return;
 		try {
-			var types = await Portal.call(API.documentTypes);
-			renderUploadTypes(types);
 			await reload();
 		} catch (error) {
 			if (error.status === 401 || error.status === 403) return;
-			Portal.flash("error", "Could not load this application", error.message);
+			showLoadError(error);
 		}
 	}
+
+	document.getElementById("page-retry").addEventListener("click", start);
+	document.getElementById("resubmit-button").addEventListener("click", resubmitApplication);
+	document.getElementById("withdraw-cancel").addEventListener("click", function () {
+		Portal.closeDialog(document.getElementById("withdraw-dialog"));
+	});
+	document.getElementById("withdraw-confirm").addEventListener("click", withdrawApplication);
 
 	start();
 })();

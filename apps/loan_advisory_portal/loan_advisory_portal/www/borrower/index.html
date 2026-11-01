@@ -2,48 +2,112 @@
 {% block page_content %}
 <div class="page-head">
 	<div>
-		<h1>Your applications</h1>
-		<p>Track every application, add documents, and read the reasoning behind each decision. The assistant explains your options — it never approves or rejects an application.</p>
+		<p class="eyebrow">Overview</p>
+		<h1>Welcome back{% if boot.get("full_name") %}, {{ boot.get("full_name").split(" ")[0] }}{% endif %}</h1>
+		<p>Every application, document and decision in one place. The assistant explains what happened. It never approves or rejects an application.</p>
 	</div>
-	<div class="row">
-		<a class="btn btn--quiet" href="/borrower/products">Loan products</a>
+	<div class="page-head__actions">
+		<a class="btn btn--ghost" href="/borrower/eligibility">Check eligibility</a>
 		<a class="btn" href="/borrower/apply">Start an application</a>
 	</div>
 </div>
 
 <section class="grid-3" id="summary" aria-label="At a glance">
 	<div class="card card--tight">
-		<div class="stat">
-			<span class="stat__label">Profile</span>
-			<span class="stat__value" data-stat="completion">—</span>
+		<div class="metric">
+			<span class="metric__label">Profile</span>
+			<span class="metric__value" data-stat="completion">—</span>
 			<span class="small muted">completed</span>
 		</div>
 	</div>
 	<div class="card card--tight">
-		<div class="stat">
-			<span class="stat__label">Applications</span>
-			<span class="stat__value" data-stat="count">—</span>
+		<div class="metric">
+			<span class="metric__label">Applications</span>
+			<span class="metric__value" data-stat="count">—</span>
 			<span class="small muted">on this account</span>
 		</div>
 	</div>
 	<div class="card card--tight">
-		<div class="stat">
-			<span class="stat__label">Latest</span>
-			<span class="stat__value" data-stat="latest">—</span>
+		<div class="metric">
+			<span class="metric__label">Latest</span>
+			<span class="metric__value metric__value--status" data-stat="latest">—</span>
 			<span class="small muted">status of the newest application</span>
 		</div>
 	</div>
 </section>
 
-<section class="card mt" aria-labelledby="applications-heading">
-	<div class="card__head">
-		<h2 id="applications-heading">Applications</h2>
-		<a class="small" href="/borrower/profile">Update your profile</a>
+<div class="dashboard mt">
+	<div class="stack">
+		<section id="active-loan" class="card hidden" aria-labelledby="active-loan-heading">
+			<div class="card__head">
+				<div>
+					<h2 id="active-loan-heading">Your current loan</h2>
+					<p class="tiny muted">Preview data from the development fixture. No real loan is attached to this account.</p>
+				</div>
+				<span class="demo-flag">Demo</span>
+			</div>
+			<div class="grid-3">
+				<div class="metric">
+					<span class="metric__label">Outstanding</span>
+					<span class="metric__value">₹2,09,000</span>
+					<span class="small muted">of ₹2,50,000</span>
+				</div>
+				<div class="metric">
+					<span class="metric__label">Next instalment</span>
+					<span class="metric__value">₹8,544</span>
+					<span class="small muted">monthly, fixed</span>
+				</div>
+				<div class="metric">
+					<span class="metric__label">Paid so far</span>
+					<span class="metric__value">7</span>
+					<span class="small muted">of 36 instalments</span>
+				</div>
+			</div>
+			<div class="progress mt" role="img" aria-label="Loan repaid: 16 percent">
+				<div class="progress__bar" style="width:16%"></div>
+			</div>
+			<div class="card__foot">
+				<span class="small muted">Preview only. Repayment records are not connected to a payment system.</span>
+				<a class="btn btn--ghost btn--sm" href="/borrower/servicing">Open repayments</a>
+			</div>
+		</section>
+
+		<section class="card" aria-labelledby="applications-heading">
+			<div class="card__head">
+				<div>
+					<h2 id="applications-heading">Applications</h2>
+					<p class="tiny muted">Newest first. Every row is a separate application.</p>
+				</div>
+				<a class="small" href="/borrower/profile">Update your profile</a>
+			</div>
+			<div id="applications" aria-live="polite">
+				<p class="muted small">Loading your applications…</p>
+			</div>
+		</section>
 	</div>
-	<div id="applications" aria-live="polite">
-		<p class="muted small">Loading your applications…</p>
-	</div>
-</section>
+
+	<aside class="dashboard__side" aria-label="Next steps and support">
+		<section class="card card--accent" id="next-step" aria-labelledby="next-step-heading" aria-live="polite">
+			<p class="eyebrow">Next step</p>
+			<h2 id="next-step-heading">Loading…</h2>
+			<p class="small" id="next-step-body">&nbsp;</p>
+			<div id="next-step-action" class="mt"></div>
+		</section>
+
+		<section class="card">
+			<h2>Ask about your application</h2>
+			<p class="small muted mt">The assistant explains policy and the reasons behind a decision in plain language. It never approves or rejects.</p>
+			<a class="btn btn--ghost btn--sm mt" href="/borrower/assistant">Open the assistant</a>
+		</section>
+
+		<section class="card">
+			<h2>Need a person?</h2>
+			<p class="small muted mt">Ask for a human review, report a problem, or tell us what was unclear.</p>
+			<a class="btn btn--quiet btn--sm mt" href="/borrower/feedback">Send feedback</a>
+			<a class="btn btn--quiet btn--sm" href="/borrower/help">Read the help page</a>
+		</section>
+	</aside>
+</div>
 
 <script src="/assets/loan_advisory_portal/js/pages/applications.js" defer></script>
 {% endblock %}

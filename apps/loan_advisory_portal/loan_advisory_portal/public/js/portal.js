@@ -151,16 +151,24 @@
 	}
 
 	var LIFECYCLE = {
-		"": { label: "Draft", cls: "" },
-		DRAFT: { label: "Draft", cls: "" },
-		SUBMITTED: { label: "Submitted", cls: "badge--accent" },
+		"": { label: "Draft", cls: "badge--neutral" },
+		DRAFT: { label: "Draft", cls: "badge--neutral" },
+		SUBMITTED: { label: "Submitted", cls: "badge--info" },
 		INFO_REQUESTED: { label: "Information needed", cls: "badge--warn" },
-		UNDER_REVIEW: { label: "Under review", cls: "badge--warn" },
+		UNDER_REVIEW: { label: "Under review", cls: "badge--info" },
 		MANUAL_REVIEW: { label: "Manual review", cls: "badge--warn" },
-		APPROVED: { label: "Approved", cls: "badge--pass" },
-		REJECTED: { label: "Not approved", cls: "badge--fail" },
-		WITHDRAWN: { label: "Withdrawn", cls: "" },
+		APPROVED: { label: "Approved", cls: "badge--ok" },
+		REJECTED: { label: "Not approved", cls: "badge--bad" },
+		WITHDRAWN: { label: "Withdrawn", cls: "badge--neutral" },
 	};
+
+	function lifecycleLabel(lifecycle, decision) {
+		var entry = lifecycle ? LIFECYCLE[lifecycle] : null;
+		if (!entry && decision === "APPROVED") entry = LIFECYCLE.APPROVED;
+		if (!entry && decision === "REJECTED") entry = LIFECYCLE.REJECTED;
+		if (!entry) entry = lifecycle ? { label: lifecycle } : LIFECYCLE[""];
+		return entry.label;
+	}
 
 	function lifecycleBadge(lifecycle, decision) {
 		/* The canonical lifecycle always wins. A decision is only a fallback for a
@@ -169,8 +177,27 @@
 		var entry = lifecycle ? LIFECYCLE[lifecycle] : null;
 		if (!entry && decision === "APPROVED") entry = LIFECYCLE.APPROVED;
 		if (!entry && decision === "REJECTED") entry = LIFECYCLE.REJECTED;
-		if (!entry) entry = lifecycle ? { label: lifecycle, cls: "" } : LIFECYCLE[""];
+		if (!entry) entry = lifecycle ? { label: lifecycle, cls: "badge--neutral" } : LIFECYCLE[""];
 		return '<span class="badge ' + entry.cls + '">' + esc(entry.label) + "</span>";
+	}
+
+	function initials(name) {
+		var parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+		if (!parts.length) return "LA";
+		if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+		return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+	}
+
+	function openDialog(dialog) {
+		if (!dialog) return;
+		if (typeof dialog.showModal === "function") dialog.showModal();
+		else dialog.setAttribute("open", "");
+	}
+
+	function closeDialog(dialog) {
+		if (!dialog) return;
+		if (typeof dialog.close === "function") dialog.close();
+		else dialog.removeAttribute("open");
 	}
 
 	async function logout() {
@@ -193,6 +220,10 @@
 		date: date,
 		months: months,
 		lifecycleBadge: lifecycleBadge,
+		lifecycleLabel: lifecycleLabel,
+		initials: initials,
+		openDialog: openDialog,
+		closeDialog: closeDialog,
 		logout: logout,
 	};
 
@@ -206,5 +237,6 @@
 
 	if (boot.user && boot.user !== "Guest") {
 		document.documentElement.dataset.signedIn = "true";
+		if (document.body) document.body.dataset.signedIn = "true";
 	}
 })();

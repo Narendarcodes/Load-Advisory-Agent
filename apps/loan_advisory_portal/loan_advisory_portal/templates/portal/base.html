@@ -1,79 +1,176 @@
 {%- set signed_in = boot.get("user") and boot.get("user") != "Guest" -%}
+{%- set app_frame = signed_in and not blocked -%}
+{%- macro rail_link(href, key, label, abbr) -%}
+<a class="rail__link" href="{{ href }}"{% if active_page == key %} aria-current="page"{% endif %}>
+	<span class="rail__abbr" aria-hidden="true">{{ abbr }}</span>
+	<span class="rail__text">{{ label }}</span>
+</a>
+{%- endmacro -%}
+{%- macro footer_block() -%}
+<footer class="site-footer">
+	<div class="site-footer__inner">
+		<span>Loan Advisory explains your options. A person makes the final decision.</span>
+		<span class="spacer"></span>
+		<span>We never ask for your password by email, phone or chat.</span>
+	</div>
+	<nav class="site-footer__links" aria-label="Help and notices">
+		<a href="/borrower/help"{% if active_page == "help" %} aria-current="page"{% endif %}>Help</a>
+		<a href="/borrower/products"{% if active_page == "products" %} aria-current="page"{% endif %}>Loan products</a>
+		<a href="/borrower/terms"{% if active_page == "terms" %} aria-current="page"{% endif %}>Terms of use</a>
+		<a href="/borrower/privacy"{% if active_page == "privacy" %} aria-current="page"{% endif %}>Privacy notice</a>
+	</nav>
+</footer>
+{%- endmacro -%}
 <!DOCTYPE html>
 <html lang="{{ boot.get('locale') or 'en' }}">
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex, nofollow">
-	<meta name="theme-color" content="#1f5eff">
-	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f5eff'/%3E%3Ctext x='32' y='43' font-family='system-ui,sans-serif' font-size='28' font-weight='700' text-anchor='middle' fill='%23ffffff'%3ELA%3C/text%3E%3C/svg%3E">
+	<meta name="theme-color" content="#F7F3EE">
+	<meta name="description" content="Loan Advisory. Track a loan application, understand the decision and ask questions in plain language.">
+	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23FE7D6B'/%3E%3Ctext x='32' y='42' font-family='sans-serif' font-size='24' font-weight='700' text-anchor='middle' fill='%23241C1B'%3ELA%3C/text%3E%3C/svg%3E">
 	<title>{% block title %}{{ title or "Loan Advisory" }}{% endblock %} · Loan Advisory</title>
+	<link rel="preload" as="font" type="font/woff2" href="/assets/loan_advisory_portal/fonts/Manrope-latin.woff2" crossorigin>
+	<link rel="preload" as="font" type="font/woff2" href="/assets/loan_advisory_portal/fonts/Sora-latin.woff2" crossorigin>
 	<link rel="stylesheet" href="/assets/loan_advisory_portal/css/portal.css">
 	<script id="portal-bootstrap" type="application/json">{{ boot | tojson }}</script>
 	<script src="/assets/loan_advisory_portal/js/portal.js" defer></script>
 	{% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{{ 'app-shell' if app_frame else 'public-shell' }}{% endblock %}" data-signed-in="{{ 'true' if signed_in else 'false' }}">
 	<a class="skip-link" href="#main">Skip to content</a>
 
-	<header class="site-header">
-		<div class="site-header__inner">
-			<a class="brand" href="{{ '/borrower' if signed_in else '/login' }}">
+	{%- if app_frame %}
+	<div class="shell">
+		<aside class="rail" aria-label="Portal">
+			<a class="rail__brand" href="/borrower">
 				<span class="brand__mark" aria-hidden="true">LA</span>
-				<span>Loan Advisory</span>
-				<span class="brand__tag">Explains, never decides</span>
+				<span class="rail__brand-text">
+					<span class="rail__name">Loan Advisory</span>
+					<span class="rail__tag">Explains, never decides</span>
+				</span>
 			</a>
-			<nav class="site-nav" aria-label="Main">
-				{%- if signed_in and not blocked %}
-				<a href="/borrower"{% if active_page == "applications" %} aria-current="page"{% endif %}>My applications</a>
-				<a href="/borrower/apply"{% if active_page == "apply" %} aria-current="page"{% endif %}>New application</a>
-				<a href="/borrower/assistant"{% if active_page == "assistant" %} aria-current="page"{% endif %}>Assistant</a>
-				<a href="/borrower/profile"{% if active_page == "profile" %} aria-current="page"{% endif %}>Profile</a>
-				<a href="/borrower/feedback"{% if active_page == "feedback" %} aria-current="page"{% endif %}>Feedback</a>
-				<button type="button" class="nav-signout" data-action="logout">Sign out</button>
-				{%- elif signed_in %}
-				<button type="button" class="nav-signout" data-action="logout">Sign out</button>
-				{%- else %}
-				<a href="/login">Sign in</a>
-				{%- endif %}
+
+			<nav class="rail__nav" aria-label="Main">
+				<div class="rail__group">
+					<p class="rail__label" id="rail-overview">Overview</p>
+					{{ rail_link('/borrower', 'applications', 'My applications', 'AP') }}
+					{{ rail_link('/borrower/apply', 'apply', 'New application', 'NE') }}
+				</div>
+				<div class="rail__group">
+					<p class="rail__label" id="rail-borrow">Borrow</p>
+					{{ rail_link('/borrower/products', 'products', 'Loan products', 'PR') }}
+					{{ rail_link('/borrower/eligibility', 'eligibility', 'Check eligibility', 'EL') }}
+				</div>
+				<div class="rail__group">
+					<p class="rail__label" id="rail-application">Your application</p>
+					{{ rail_link('/borrower/documents', 'documents', 'Documents', 'DO') }}
+					{{ rail_link('/borrower/kyc', 'kyc', 'Identity check', 'ID') }}
+					{{ rail_link('/borrower/servicing', 'servicing', 'Repayments', 'RP') }}
+				</div>
+				<div class="rail__group">
+					<p class="rail__label" id="rail-support">Support</p>
+					{{ rail_link('/borrower/assistant', 'assistant', 'Assistant', 'AS') }}
+					{{ rail_link('/borrower/help', 'help', 'Help', 'HE') }}
+					{{ rail_link('/borrower/feedback', 'feedback', 'Feedback', 'FB') }}
+				</div>
 			</nav>
-		</div>
-	</header>
 
-	<main id="main" class="container" tabindex="-1">
-		<noscript>
-			<div class="alert alert--warn" role="status">
-				<strong>JavaScript is off</strong>
-				<span>This portal needs JavaScript. Enable it, or contact your loan advisor for help.</span>
+			<div class="rail__foot">
+				<a class="rail__user" href="/borrower/profile"{% if active_page == 'profile' %} aria-current="page"{% endif %}>
+					<span class="avatar" aria-hidden="true">{{ boot.get('initials') or 'LA' }}</span>
+					<span class="rail__user-text">
+						<span class="rail__user-name">{{ boot.get('full_name') or 'Your profile' }}</span>
+						<span class="rail__user-meta">View profile</span>
+					</span>
+				</a>
+				<button type="button" class="rail__link" data-action="logout">
+					<span class="rail__abbr" aria-hidden="true">SO</span>
+					<span class="rail__text">Sign out</span>
+				</button>
 			</div>
-		</noscript>
-		{%- if blocked %}
-		<div class="card">
-			<div class="empty">
-				<h2>This account cannot use the borrower portal</h2>
-				<p>{{ blocked }}</p>
-				<p class="small muted">If you think this is a mistake, contact your loan advisor and ask them to check your account.</p>
-			</div>
-		</div>
-		{%- else %}
-		{% block page_content %}{% endblock %}
-		{%- endif %}
-	</main>
+		</aside>
 
-	<footer class="site-footer">
-		<div class="container">
-			<span>Loan Advisory explains your options. A person makes the final decision.</span>
-			<span class="spacer"></span>
-			<span>We never ask for your password by email, phone or chat.</span>
+		<div class="shell__main">
+			<header class="topbar">
+				<a class="topbar__brand" href="/borrower">
+					<span class="brand__mark" aria-hidden="true">LA</span>
+					<span>Loan Advisory</span>
+				</a>
+				<nav class="topbar__nav" aria-label="Main">
+					<a href="/borrower"{% if active_page == "applications" %} aria-current="page"{% endif %}>Applications</a>
+					<a href="/borrower/apply"{% if active_page == "apply" %} aria-current="page"{% endif %}>Apply</a>
+					<a href="/borrower/documents"{% if active_page == "documents" %} aria-current="page"{% endif %}>Documents</a>
+					<a href="/borrower/assistant"{% if active_page == "assistant" %} aria-current="page"{% endif %}>Assistant</a>
+				</nav>
+				<span class="topbar__spacer"></span>
+				<button type="button" class="nav-signout" data-action="logout">Sign out</button>
+			</header>
+	{%- else %}
+	<div class="public-frame">
+		<header class="public-header">
+			<div class="public-header__inner">
+				<a class="brand" href="{{ '/borrower' if signed_in else '/borrower/products' }}">
+					<span class="brand__mark" aria-hidden="true">LA</span>
+					<span>Loan Advisory</span>
+					<span class="brand__tag">Explains, never decides</span>
+				</a>
+				<nav class="site-nav" aria-label="Main">
+					<a href="/borrower/products"{% if active_page == "products" %} aria-current="page"{% endif %}>Loan products</a>
+					<a href="/borrower/help"{% if active_page == "help" %} aria-current="page"{% endif %}>Help</a>
+					{%- if signed_in %}
+					<a href="/borrower">My applications</a>
+					<button type="button" class="nav-signout" data-action="logout">Sign out</button>
+					{%- else %}
+					{%- if active_page != "login" %}
+					<a href="/login">Sign in</a>
+					{%- endif %}
+					{%- endif %}
+				</nav>
+			</div>
+		</header>
+	{%- endif %}
+
+		<main id="main" class="page" tabindex="-1">
+			<noscript>
+				<div class="alert alert--warn" role="status">
+					<strong>JavaScript is off</strong>
+					<span>This portal needs JavaScript. Enable it, or contact your loan advisor for help.</span>
+				</div>
+			</noscript>
+			{%- if blocked %}
+			<div class="card">
+				<div class="empty">
+					<span class="empty__mark" aria-hidden="true">!</span>
+					<h2>This account cannot use the borrower portal</h2>
+					<p>{{ blocked }}</p>
+					<p class="small muted">If you think this is a mistake, contact your loan advisor and ask them to check your account.</p>
+				</div>
+			</div>
+			{%- else %}
+			{% block page_content %}{% endblock %}
+			{%- endif %}
+		</main>
+
+	{%- if app_frame %}
+			{{ footer_block() }}
 		</div>
-		<nav class="container site-footer__links" aria-label="Help and notices">
-			<a href="/borrower/help"{% if active_page == "help" %} aria-current="page"{% endif %}>Help</a>
-			<a href="/borrower/products"{% if active_page == "products" %} aria-current="page"{% endif %}>Loan products</a>
-			<a href="/borrower/terms"{% if active_page == "terms" %} aria-current="page"{% endif %}>Terms of use</a>
-			<a href="/borrower/privacy"{% if active_page == "privacy" %} aria-current="page"{% endif %}>Privacy notice</a>
-		</nav>
-	</footer>
+	</div>
+
+	<nav class="tabbar" aria-label="Main">
+		<a href="/borrower"{% if active_page == 'applications' %} aria-current="page"{% endif %}><span class="tabbar__abbr" aria-hidden="true">AP</span>Home</a>
+		<a href="/borrower/apply"{% if active_page == 'apply' %} aria-current="page"{% endif %}><span class="tabbar__abbr" aria-hidden="true">NE</span>Apply</a>
+		<a href="/borrower/assistant"{% if active_page == 'assistant' %} aria-current="page"{% endif %}><span class="tabbar__abbr" aria-hidden="true">AS</span>Assistant</a>
+		<a href="/borrower/documents"{% if active_page == 'documents' %} aria-current="page"{% endif %}><span class="tabbar__abbr" aria-hidden="true">DO</span>Documents</a>
+		<a href="/borrower/profile"{% if active_page == 'profile' %} aria-current="page"{% endif %}><span class="tabbar__abbr" aria-hidden="true">PF</span>Profile</a>
+	</nav>
+	{%- else %}
+		{{ footer_block() }}
+	</div>
+	{%- endif %}
 
 	<div id="flash" class="flash" aria-live="polite"></div>
+	{% block body_end %}{% endblock %}
 </body>
 </html>

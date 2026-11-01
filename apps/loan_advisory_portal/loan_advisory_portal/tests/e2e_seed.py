@@ -204,12 +204,31 @@ def teardown(tag: str) -> dict:
 		for row in file_rows:
 			frappe.delete_doc("File", row, ignore_permissions=True, delete_permanently=True)
 		deleted.append(app)
+	conversations_removed = 0
+	customers_removed = 0
 	for key in ("victim", "other"):
 		user = payload[key]["user"]
+		# An assistant transcript outlives the borrower that produced it unless this teardown removes
+		# it: `Advisory Conversation` links `user`, and its messages are child rows. Without these
+		# lines, a browser journey that held a conversation leaves synthetic text in the store.
+		for row in frappe.get_all("Advisory Conversation", filters={"user": user}, pluck="name"):
+			frappe.delete_doc("Advisory Conversation", row, ignore_permissions=True, delete_permanently=True)
+			conversations_removed += 1
 		for row in frappe.get_all("Borrower Profile", filters={"user": user}, pluck="name"):
 			frappe.delete_doc("Borrower Profile", row, ignore_permissions=True, delete_permanently=True)
 		frappe.delete_doc("User", user, ignore_permissions=True, delete_permanently=True, force=1)
+		# The Customer `seed` created is the borrower's own record, not shared with anything else;
+		# leaving it behind is the litter that made earlier teardowns incomplete.
+		customer = payload[key].get("customer")
+		if customer and frappe.db.exists("Customer", customer):
+			frappe.delete_doc("Customer", customer, ignore_permissions=True, delete_permanently=True, force=1)
+			customers_removed += 1
 	for key in ("evidence", "reader"):
 		frappe.delete_doc("User", payload[key]["user"], ignore_permissions=True, delete_permanently=True, force=1)
 	os.remove(path)
-	return {"tag": tag, "deleted": deleted}
+	return {
+		"tag": tag,
+		"deleted": deleted,
+		"conversationsRemoved": conversations_removed,
+		"customersRemoved": customers_removed,
+	}

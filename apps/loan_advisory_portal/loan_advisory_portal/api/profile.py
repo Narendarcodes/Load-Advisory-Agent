@@ -102,12 +102,18 @@ def update_profile(**values) -> dict:
 		("consent_terms", legal.TERMS_VERSION),
 		("consent_privacy", legal.PRIVACY_VERSION),
 	):
-		if consent in values:
-			accepted = 1 if values[consent] in (True, 1, "1") else 0
-			values[consent] = accepted
-			profile.set(consent.replace("consent_", "") + "_version", version if accepted else None)
-			if accepted:
-				profile.consent_at = now_datetime()
+		if consent not in values:
+			continue
+		accepted = 1 if values[consent] in (True, 1, "1") else 0
+		values[consent] = accepted
+		version_field = consent.replace("consent_", "") + "_version"
+		# The profile page resends both checkboxes on every save, so an unchanged acceptance of an
+		# already-recorded notice is not a consent event and must not move the timestamp.
+		newly_granted = bool(accepted) != bool(profile.get(consent))
+		unrecorded_notice = bool(accepted) and profile.get(version_field) != version
+		profile.set(version_field, version if accepted else None)
+		if newly_granted or unrecorded_notice:
+			profile.consent_at = now_datetime()
 	for field, value in values.items():
 		profile.set(field, 1 if value is True else 0 if value is False else value)
 	profile.save(ignore_permissions=True)

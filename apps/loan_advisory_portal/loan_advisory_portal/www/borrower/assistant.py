@@ -1,6 +1,7 @@
 import frappe
 
 from loan_advisory_portal.api import applications as applications_api
+from loan_advisory_portal.portal import guidance
 from loan_advisory_portal.portal.errors import NotFound, ServiceUnavailable
 from loan_advisory_portal.portal.identity import owned_application, selected_application
 from loan_advisory_portal.portal.pages import borrower_page
@@ -8,6 +9,12 @@ from loan_advisory_portal.services import assertion, livekit_token
 
 no_cache = 1
 base_template_path = "templates/portal/base.html"
+
+DECISION_LABELS = {
+	"APPROVED": "Approved",
+	"REJECTED": "Not approved",
+	"ERROR": "Check could not be completed",
+}
 
 
 def get_context(context):
@@ -32,8 +39,25 @@ def get_context(context):
 
 	context["application"] = application
 	if not application:
-		context["applications"] = applications_api.list_applications()
+		rows = applications_api.list_applications()
+		for row in rows:
+			row["lifecycle_label"] = guidance.for_state(row.get("lifecycle") or "DRAFT")["title"]
+		context["applications"] = rows
 		return context
+
+	# The page's context rail repeats only what the application page already shows. It never
+	# receives identity documents or masked numbers, so the island's context stays decision-only.
+	state = application.get("custom_lifecycle_state") or "DRAFT"
+	state_guidance = guidance.for_state(state)
+	decision = applications_api.get_decision(application.name)
+	context["snapshot"] = {
+		"lifecycle": state,
+		"title": state_guidance["title"],
+		"summary": state_guidance["summary"],
+		"decision_label": DECISION_LABELS.get(decision.get("decision"), "No assessment recorded")
+		if decision.get("available")
+		else "No assessment recorded",
+	}
 
 	# The same translation `mint_assertion` applies to the profile values, so the page's note and
 	# the assertion agree. The island never sends either value itself.

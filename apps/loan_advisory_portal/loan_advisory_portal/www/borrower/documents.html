@@ -1,0 +1,151 @@
+{% extends "templates/portal/base.html" %}
+{% block title %}Documents{% endblock %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<p class="eyebrow">Documents</p>
+		<h1>Add the documents for your application</h1>
+		<p>Upload private copies of the documents you are asked for. A person reviews them. Keep any originals until your application is complete.</p>
+	</div>
+	<div class="page-head__actions">
+		<a class="btn btn--quiet" href="/borrower">Back to applications</a>
+	</div>
+</div>
+
+{% if created %}
+<div class="alert alert--success" role="status">
+	<strong>Draft application created</strong>
+	<span>Add at least one document here, then open the application page to submit it for review.</span>
+</div>
+{% endif %}
+
+<div class="doc-workspace mt">
+	<div class="doc-main">
+		<div class="alert alert--error hidden" id="workspace-error" role="alert">
+			<strong>We could not load this application</strong>
+			<span id="workspace-error-text"></span>
+		</div>
+
+		<div class="card hidden" id="application-head">
+			<div class="card__head">
+				<div>
+					<p class="eyebrow">Application</p>
+					<h2 id="app-title">Loan application</h2>
+					<p class="small muted" id="app-meta">Loading</p>
+				</div>
+				<span id="app-status"></span>
+			</div>
+		</div>
+
+		<div class="card hidden" id="no-application">
+			<div class="empty">
+				<span class="empty__mark" aria-hidden="true">DO</span>
+				<h2 id="no-app-title">Choose an application</h2>
+				<p id="no-app-text">Documents belong to a single application. Open one to add or review its documents.</p>
+				<div class="stack mt" id="application-choices"></div>
+			</div>
+		</div>
+
+		<section class="card hidden" id="upload-card" aria-labelledby="upload-heading">
+			<div class="card__head">
+				<h2 id="upload-heading">Add a document</h2>
+				<span class="small muted">Private to you and your advisor</span>
+			</div>
+			<form class="upload-form" id="upload-form" novalidate>
+				<div class="field">
+					<label for="doc-type">What kind of document is this?</label>
+					<select id="doc-type" required>
+						<option value="">Loading document types</option>
+					</select>
+					<p class="hint">Choose the closest type. An advisor can reclassify it if needed.</p>
+					<p class="error hidden" id="doc-type-error"></p>
+				</div>
+				<label class="dropzone" id="dropzone" for="doc-file" tabindex="0">
+					<span class="dropzone__mark" aria-hidden="true">UP</span>
+					<strong>Choose a file or drop it here</strong>
+					<span class="small muted">PDF, JPEG or PNG. Up to 10 MB each.</span>
+					<input id="doc-file" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+				</label>
+				<p class="upload-status" id="upload-status" role="status" aria-live="polite">No file chosen</p>
+				<p class="small muted">Up to 12 documents per application. Files are stored privately and are not used to train any model.</p>
+			</form>
+		</section>
+
+		<section class="card hidden" id="list-card" aria-labelledby="list-heading">
+			<div class="card__head">
+				<h2 id="list-heading">Attached documents</h2>
+				<span class="badge badge--neutral" id="doc-count">0 documents</span>
+			</div>
+			<div class="alert alert--info hidden" id="locked-note" role="note">
+				<strong>Documents are locked</strong>
+				<span>This application has been submitted, so documents cannot be added or removed now.</span>
+			</div>
+			<div class="empty hidden" id="doc-empty">
+				<p class="muted">No documents attached yet. Choose a document type and upload a file above.</p>
+			</div>
+			<ul class="doc-list" id="doc-list"></ul>
+		</section>
+
+		<section class="card hidden" id="preview-card" aria-labelledby="preview-heading">
+			<div class="card__head">
+				<h2 id="preview-heading">Document preview</h2>
+				<button type="button" class="btn btn--quiet btn--sm hidden" id="preview-close">Close preview</button>
+			</div>
+			<div id="preview-body">
+				<p class="small muted">Choose Preview on a document to see what a checking view would show.</p>
+			</div>
+		</section>
+	</div>
+
+	<aside class="doc-workspace__aside" aria-label="Application context">
+		<div class="card card--tight hidden" id="summary-card">
+			<div class="card__head">
+				<h2>Your application</h2>
+			</div>
+			<dl class="detail detail--rows">
+				<div><dt>Amount</dt><dd id="sum-amount">Loading</dd></div>
+				<div><dt>Tenure</dt><dd id="sum-tenure">Loading</dd></div>
+				<div><dt>Purpose</dt><dd id="sum-purpose">Loading</dd></div>
+				<div><dt>Status</dt><dd id="sum-status">Loading</dd></div>
+			</dl>
+		</div>
+
+		<div class="card card--tight">
+			<h2>Before you submit</h2>
+			<ul class="checklist mt">
+				<li><span class="checklist__mark" aria-hidden="true">1</span><span>At least one document attached</span></li>
+				<li><span class="checklist__mark" aria-hidden="true">2</span><span>PDF, JPEG or PNG files, up to 10 MB</span></li>
+				<li><span class="checklist__mark" aria-hidden="true">3</span><span>Submit from the application page</span></li>
+			</ul>
+			<p class="small muted mt">Documents cannot be added or removed after you submit.</p>
+		</div>
+
+		<div class="card card--tight hidden" id="handoff-card">
+			<h2 id="handoff-title">Ready for the next step?</h2>
+			<p class="small muted" id="handoff-text">Open the application to check the details and submit it for review.</p>
+			<a class="btn btn--block mt" id="continue-application" href="/borrower">Open the application</a>
+		</div>
+
+		<div class="card card--tight">
+			<h2>Need another document?</h2>
+			<p class="small muted mt">Ask the assistant what a document type means, or contact your loan advisor through the help page.</p>
+			<a class="small link-arrow" href="/borrower/assistant">Ask the assistant</a>
+		</div>
+	</aside>
+</div>
+
+<dialog class="dialog" id="remove-dialog" aria-labelledby="remove-title">
+	<div class="dialog__body">
+		<h2 id="remove-title">Remove this document?</h2>
+		<p class="small muted" id="remove-text">The file will be deleted from this application. You can upload it again before you submit.</p>
+		<div class="dialog__actions">
+			<button type="button" class="btn btn--quiet" id="remove-cancel">Keep it</button>
+			<button type="button" class="btn btn--danger" id="remove-confirm">Remove document</button>
+		</div>
+	</div>
+</dialog>
+<iframe name="doc-download" title="Document download" hidden></iframe>
+
+<script id="documents-data" type="application/json">{{ {"application": requested_application, "demo": boot.get("demo", False)} | tojson }}</script>
+<script src="/assets/loan_advisory_portal/js/pages/documents.js" defer></script>
+{% endblock %}

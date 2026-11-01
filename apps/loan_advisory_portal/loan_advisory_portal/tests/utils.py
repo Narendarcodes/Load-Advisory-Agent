@@ -100,7 +100,9 @@ def make_customer(name: str | None = None) -> str:
 	return doc.name
 
 
-def make_borrower(customer: str | None = None, *, email: str | None = None, suspended: bool = False):
+def make_borrower(
+	customer: str | None = None, *, email: str | None = None, suspended: bool = False, consent: bool = True
+):
 	customer = customer or make_customer()
 	email = email or f"{unique('borrower').lower()}@example.invalid"
 	# Frappe blanks a username derived from a taken first name, so give each
@@ -140,8 +142,8 @@ def make_borrower(customer: str | None = None, *, email: str | None = None, susp
 			"employment_months": 24,
 			"monthly_income": 90000,
 			"monthly_obligations": 12000,
-			"consent_terms": 1,
-			"consent_privacy": 1,
+			"consent_terms": 1 if consent else 0,
+			"consent_privacy": 1 if consent else 0,
 		}
 	)
 	profile.flags.ignore_permissions = True

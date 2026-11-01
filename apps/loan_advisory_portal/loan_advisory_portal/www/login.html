@@ -1,0 +1,78 @@
+{% extends "templates/portal/base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block body_class %}public-shell auth-shell{% endblock %}
+{% block page_content %}
+<div class="auth">
+	<section class="auth__intro" aria-labelledby="auth-title">
+		<p class="eyebrow">Borrow with clarity</p>
+		<h1 id="auth-title">Your application, in one place.</h1>
+		<p class="lede">
+			Pick up where you left off, follow each step, and read the reasoning behind a decision in
+			plain language. A person makes the final call.
+		</p>
+		<ul class="auth__points">
+			<li>
+				<span class="auth__mark" aria-hidden="true">01</span>
+				<span><strong>Indicative checks only</strong> — checking eligibility does not affect your credit score.</span>
+			</li>
+			<li>
+				<span class="auth__mark" aria-hidden="true">02</span>
+				<span><strong>Your documents stay private</strong> — files are served only to you and the review team.</span>
+			</li>
+			<li>
+				<span class="auth__mark" aria-hidden="true">03</span>
+				<span><strong>Reasons, not just results</strong> — every recorded decision explains what mattered.</span>
+			</li>
+		</ul>
+		<p class="small muted">
+			New here? Accounts are created by invitation from your loan advisor.
+			<a href="/borrower/products">Read about the loan product</a> or
+			<a href="/borrower/help">see how it works</a>.
+		</p>
+	</section>
+
+	<section class="card auth__card" aria-labelledby="signin-heading">
+		<div class="card__head">
+			<div>
+				<p class="eyebrow">Welcome back</p>
+				<h2 id="signin-heading">Sign in</h2>
+			</div>
+		</div>
+
+		<div class="alert alert--bad" id="login-error" role="alert" hidden></div>
+
+		<form id="login-form" novalidate>
+			<input type="hidden" name="redirect-to" value="{{ redirect_to }}">
+
+			<div class="field">
+				<label for="email">Email</label>
+				<input id="email" name="usr" type="email" autocomplete="username" inputmode="email"
+					required autofocus spellcheck="false" placeholder="you@example.com">
+				<p class="hint">The address your loan advisor invited you with.</p>
+			</div>
+
+			<div class="field">
+				<label for="password">Password</label>
+				<div class="input-group input-group--secret">
+					<input id="password" name="pwd" type="password" autocomplete="current-password" required>
+					<button type="button" class="input-group__toggle" id="toggle-password"
+						aria-controls="password" aria-pressed="false">Show</button>
+				</div>
+			</div>
+
+			<button class="btn btn--block" type="submit" id="login-button">Sign in</button>
+		</form>
+
+		<div class="auth__help">
+			<p class="small muted">Lost your password? Ask your loan advisor to reset it for you. We never ask for your password by email, phone or chat.</p>
+			<p class="small muted">Documents and identity checks are never handled from this screen.</p>
+		</div>
+
+		{% if demo %}
+		<p class="tiny muted auth__demo">Preview mode is on. This site uses synthetic accounts and data.</p>
+		{% endif %}
+	</section>
+</div>
+
+<script src="/assets/loan_advisory_portal/js/pages/login.js" defer></script>
+{% endblock %}
