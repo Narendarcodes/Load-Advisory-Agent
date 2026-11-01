@@ -322,7 +322,9 @@ while you watch.
   * citations come **only** from the policy library search; if search returns nothing, the assistant
     abstains instead of inventing a source;
   * the library mixes **real published RBI/bank text with one synthetic reference document**;
-  * measured citation accuracy on this build is **0.59 strict** (0.80 with an opt-in re-check). So a
+  * measured strict citation accuracy on this build is **0.59 in the default mode**, **0.80 in
+    `primary_source` mode** and **0.67 with the opt-in verifier** (see
+    [the citation accuracy note](../agent/citation_accuracy.md)). So a
     citation can occasionally be a passage that does not really support the sentence. **Do not treat a
     citation as proof.** If a citation looks unrelated to the claim, note it as a defect with the
     question you asked.
@@ -529,7 +531,7 @@ Read this before filing defects, so you do not report a designed limitation as a
 | Decision explanation on A's application | **Fully implemented** | Produced by the rules engine and stored; the reasons are real |
 | Assistant conversation history, ownership, reload | **Fully implemented** | Real per-account storage |
 | AI answers (text) | **Fully implemented, live model** | `openai/gpt-oss-120b` via Groq; answers vary between runs |
-| Policy citations | **Indicative only** | Accuracy is measured at 0.59 strict / 0.80 opt-in. A citation can be weak. Never treat one as proof |
+| Policy citations | **Indicative only** | Strict accuracy is measured at 0.59 (default), 0.80 (`primary_source`), 0.67 (opt-in verifier). A citation can be weak. Never treat one as proof |
 | What-if | **Fully implemented, but a simulation** | Explicitly hypothetical; must not change the record |
 | Eligibility checker | **Demo / fixture-based, indicative only** | Needs the demo-fixtures switch, which is ON here. Arithmetic, not a credit decision |
 | KYC workspace | **Demo / fixture-based** | No identity is verified by anything. No OTP, no camera, no biometrics, no government check |
