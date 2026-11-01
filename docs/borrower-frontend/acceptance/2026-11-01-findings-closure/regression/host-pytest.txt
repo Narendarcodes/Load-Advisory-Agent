@@ -1,0 +1,21 @@
+........................................................................ [ 10%]
+........................................................................ [ 20%]
+........................................................................ [ 30%]
+........................................................................ [ 41%]
+........................................................................ [ 51%]
+...............................................................s........ [ 61%]
+..............................................ss........................ [ 72%]
+...............s........................................................ [ 82%]
+.......ssss..ssss....................................................... [ 92%]
+.....................sss............................                     [100%]
+============================== warnings summary ===============================
+..\..\..\AppData\Roaming\Python\Python314\site-packages\langchain_core\utils\pydantic.py:42
+  C:\Users\golla\AppData\Roaming\Python\Python314\site-packages\langchain_core\utils\pydantic.py:42: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+    from pydantic.v1 import BaseModel as BaseModelV1
+
+tests/test_bajaj_rag.py::test_qdrant_filter_matches_python_filter
+  C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\rag\retrieve.py:135: UserWarning: Payload indexes have no effect in the local Qdrant. Please use server Qdrant if you need payload indexes.
+    self.client.create_payload_index(collection, key, models.PayloadSchemaType.KEYWORD)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+685 passed, 15 skipped, 2 warnings in 41.01s

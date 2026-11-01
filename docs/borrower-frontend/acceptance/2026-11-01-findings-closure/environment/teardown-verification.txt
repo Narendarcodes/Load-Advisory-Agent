@@ -1,0 +1,32 @@
+
+# verification — 2026-11-01T16:42:41Z
+## host listeners on the four ports (expect none)
+none: 8081, 4200, 8096 all released
+## container :8001 (expect no listener)
+:8001 released
+## permanent stack still serving on :8000 inside the backend container
+products page: 404
+## GPU compute apps (expect empty)
+pid, used_gpu_memory [MiB]
+## containers after teardown
+loan-advisory-langfuse-langfuse-web-1 Up 6 hours (healthy)
+loan-advisory-langfuse-langfuse-worker-1 Up 6 hours
+loan-advisory-langfuse-postgres-1 Up 6 hours (healthy)
+loan-advisory-langfuse-redis-1 Up 6 hours (healthy)
+loan-advisory-langfuse-clickhouse-1 Up 6 hours (healthy)
+loan-advisory-langfuse-minio-1 Up 6 hours (healthy)
+loanrangers-frontend-1 Up 6 hours
+loanrangers-scheduler-1 Up 6 hours
+loanrangers-queue-long-1 Up 6 hours
+loanrangers-websocket-1 Up 6 hours
+loanrangers-queue-short-1 Up 6 hours
+loanrangers-backend-1 Up 6 hours
+loanrangers-redis-queue-1 Up 6 hours
+loanrangers-redis-cache-1 Up 6 hours
+loanrangers-db-1 Up 6 hours (healthy)
+## stopped but not removed
+loanportal-acceptance-proxy Exited (0) 23 seconds ago
+
+## correction: the :8000 probe needs the site host header (Frappe routes by Host)
+api ping: {"message":"pong"}
+products page: 200

@@ -1,0 +1,11 @@
++---------------------------+-----+
+| t                         | n   |
++---------------------------+-----+
+| Loan Application          |  14 |
+| Borrower Profile          |   7 |
+| Loan Application Document |  12 |
+| Advisory Conversation     | 152 |
+| Advisory Message          | 332 |
+| Version                   | 110 |
+| User                      |  15 |
++---------------------------+-----+

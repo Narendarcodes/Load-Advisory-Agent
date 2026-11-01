@@ -1,0 +1,394 @@
+{
+  "capturedAt": "2026-11-01T14:37:38.513Z",
+  "base": "http://127.0.0.1:8081",
+  "widths": [
+    1440,
+    390
+  ],
+  "method": "computed foreground against first opaque ancestor; background-image chains reported indeterminate",
+  "playwright": "1.63.0",
+  "runs": [
+    {
+      "width": 1440,
+      "view": "01-landing-products",
+      "checked": 102,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "02-sign-in",
+      "checked": 37,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "04-eligibility",
+      "checked": 93,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "05-apply",
+      "checked": 95,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "06-kyc-workspace",
+      "checked": 96,
+      "fails": [],
+      "indeterminateCount": 6,
+      "indeterminate": [
+        {
+          "sel": "span",
+          "text": "Identity summary",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "div.identity-card__name",
+          "text": "Review Demo Borrower",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "p#card-pan.identity-card__masked",
+          "text": "PAN ••••••••••",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "p#card-aadhaar.identity-card__masked",
+          "text": "Aadhaar •••• •••• ••••",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "span",
+          "text": "Not verified",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "span",
+          "text": "Preview only",
+          "reason": "background-image in the ancestor chain"
+        }
+      ],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "08-application-submitted",
+      "checked": 108,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "09-application-not-approved",
+      "checked": 121,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "10-advisory-workspace",
+      "checked": 123,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "12-profile",
+      "checked": 68,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "14-feedback",
+      "checked": 56,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "01-landing-products",
+      "checked": 101,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "02-sign-in",
+      "checked": 36,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "04-eligibility",
+      "checked": 74,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "05-apply",
+      "checked": 53,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "06-kyc-workspace",
+      "checked": 77,
+      "fails": [],
+      "indeterminateCount": 6,
+      "indeterminate": [
+        {
+          "sel": "span",
+          "text": "Identity summary",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "div.identity-card__name",
+          "text": "Review Demo Borrower",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "p#card-pan.identity-card__masked",
+          "text": "PAN ••••••••••",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "p#card-aadhaar.identity-card__masked",
+          "text": "Aadhaar •••• •••• ••••",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "span",
+          "text": "Not verified",
+          "reason": "background-image in the ancestor chain"
+        },
+        {
+          "sel": "span",
+          "text": "Preview only",
+          "reason": "background-image in the ancestor chain"
+        }
+      ],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "08-application-submitted",
+      "checked": 89,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "09-application-not-approved",
+      "checked": 102,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "10-advisory-workspace",
+      "checked": 104,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "12-profile",
+      "checked": 49,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "14-feedback",
+      "checked": 37,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    }
+  ]
+}

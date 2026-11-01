@@ -1,0 +1,353 @@
+{
+  "capturedAt": "2026-11-01T15:49:42.817Z",
+  "base": "http://127.0.0.1:8081",
+  "application": "ACC-LOAP-2026-00020",
+  "fixture": "tests/e2e/agui_stub.cjs",
+  "runs": [
+    {
+      "run": "journey",
+      "expectation": "a borrower's first load of a new thread makes no transcript request; a thread with stored turns is restored",
+      "threadKeys": {
+        "loan-advisory:thread:closure1-borrower@example.invalid:ACC-LOAP-2026-00020:pending": "da8fe40b-ec84-4c24-b6de-22a257597fb5",
+        "loan-advisory:thread:closure1-borrower@example.invalid:ACC-LOAP-2026-00020": "da8fe40b-ec84-4c24-b6de-22a257597fb5"
+      },
+      "historyCalls": [
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=da8fe40b-ec84-4c24-b6de-22a257597fb5",
+          "fromBrowser": true
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=da8fe40b-ec84-4c24-b6de-22a257597fb5",
+          "fromBrowser": true
+        }
+      ],
+      "notFound": [],
+      "serverErrors": [],
+      "failedRequests": [],
+      "consoleErrors": [],
+      "writeGuard": {
+        "label": "thread-continuity/journey",
+        "declared": 5,
+        "allowed": 5,
+        "unexpected": 0,
+        "allowedByPath": [
+          {
+            "request": "POST /api/method/login",
+            "times": 1
+          },
+          {
+            "request": "POST /api/copilotkit/agent/advisory/run",
+            "times": 2
+          },
+          {
+            "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+            "times": 2
+          }
+        ]
+      },
+      "checks": {
+        "pass": true,
+        "rows": [
+          {
+            "label": "first load: brand-new thread mints a pending marker",
+            "pass": true,
+            "detail": {
+              "loan-advisory:thread:closure1-borrower@example.invalid:ACC-LOAP-2026-00020:pending": "da8fe40b-ec84-4c24-b6de-22a257597fb5",
+              "loan-advisory:thread:closure1-borrower@example.invalid:ACC-LOAP-2026-00020": "da8fe40b-ec84-4c24-b6de-22a257597fb5"
+            }
+          },
+          {
+            "label": "first load: no transcript request is made",
+            "pass": true,
+            "detail": {
+              "historyCalls": 0
+            }
+          },
+          {
+            "label": "first load: no 404 responses",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "label": "first load: no server errors",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "label": "first load: panel is empty rather than invented",
+            "pass": true,
+            "detail": {
+              "user": [],
+              "bot": [],
+              "emptyShown": true,
+              "errorShown": false
+            }
+          },
+          {
+            "label": "first answer: the turn is recorded",
+            "pass": true,
+            "detail": [
+              {
+                "method": "POST",
+                "status": 200,
+                "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.record_turn",
+                "fromBrowser": true
+              }
+            ]
+          },
+          {
+            "label": "first answer: no transcript request yet this load",
+            "pass": true,
+            "detail": {
+              "historyCalls": 0
+            }
+          },
+          {
+            "label": "first answer: the pending marker is released",
+            "pass": true,
+            "detail": {
+              "loan-advisory:thread:closure1-borrower@example.invalid:ACC-LOAP-2026-00020:pending": "",
+              "loan-advisory:thread:closure1-borrower@example.invalid:ACC-LOAP-2026-00020": "da8fe40b-ec84-4c24-b6de-22a257597fb5"
+            }
+          },
+          {
+            "label": "reload: the stored transcript is requested",
+            "pass": true,
+            "detail": [
+              {
+                "method": "GET",
+                "status": 200,
+                "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=da8fe40b-ec84-4c24-b6de-22a257597fb5",
+                "fromBrowser": true
+              }
+            ]
+          },
+          {
+            "label": "reload: the transcript request answers 200",
+            "pass": true,
+            "detail": [
+              {
+                "method": "GET",
+                "status": 200,
+                "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=da8fe40b-ec84-4c24-b6de-22a257597fb5",
+                "fromBrowser": true
+              }
+            ]
+          },
+          {
+            "label": "reload: no 404 responses",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "label": "reload: no server errors",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "label": "reload: the recorded exchange is on screen",
+            "pass": true,
+            "detail": {
+              "user": [
+                "What information is missing from my application?"
+              ],
+              "bot": [
+                "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run"
+              ],
+              "emptyShown": false,
+              "errorShown": false
+            }
+          },
+          {
+            "label": "new conversation: the fresh thread is not asked for",
+            "pass": true,
+            "detail": {
+              "before": 1,
+              "after": 1
+            }
+          },
+          {
+            "label": "new conversation: no 404 responses",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "label": "new conversation: panel is empty, not carried over",
+            "pass": true,
+            "detail": {
+              "user": [],
+              "bot": [],
+              "emptyShown": true,
+              "errorShown": false
+            }
+          },
+          {
+            "label": "second answer: the list offers both conversations",
+            "pass": true,
+            "detail": [
+              {
+                "label": "Which policy source supports this?1 exchange",
+                "current": true
+              },
+              {
+                "label": "What information is missing from my application?1 exchange",
+                "current": false
+              }
+            ]
+          },
+          {
+            "label": "second answer: one listed conversation is not the current one",
+            "pass": true,
+            "detail": [
+              {
+                "label": "Which policy source supports this?1 exchange",
+                "current": true
+              },
+              {
+                "label": "What information is missing from my application?1 exchange",
+                "current": false
+              }
+            ]
+          },
+          {
+            "label": "reopen: the older conversation is requested",
+            "pass": true,
+            "detail": {
+              "before": 1,
+              "after": 2
+            }
+          },
+          {
+            "label": "reopen: every transcript request answered 200",
+            "pass": true,
+            "detail": [
+              {
+                "method": "GET",
+                "status": 200,
+                "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=da8fe40b-ec84-4c24-b6de-22a257597fb5",
+                "fromBrowser": true
+              },
+              {
+                "method": "GET",
+                "status": 200,
+                "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=da8fe40b-ec84-4c24-b6de-22a257597fb5",
+                "fromBrowser": true
+              }
+            ]
+          },
+          {
+            "label": "reopen: no 404 responses",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "label": "reopen: the older exchange is restored",
+            "pass": true,
+            "detail": {
+              "user": [
+                "What information is missing from my application?"
+              ],
+              "bot": [
+                "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run"
+              ],
+              "emptyShown": false,
+              "errorShown": false
+            }
+          }
+        ],
+        "failures": []
+      }
+    },
+    {
+      "run": "control",
+      "expectation": "deliberate reproduction of the original finding: with the pending marker removed by hand, the island does ask for an unknown thread and Frappe does refuse it. Kept in its own context so this 404 cannot be read as a defect of the journey.",
+      "historyCalls": [
+        {
+          "method": "GET",
+          "status": 404,
+          "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=9462f8ee-91a3-46b2-8ed5-e3e09af07e62",
+          "fromBrowser": true
+        }
+      ],
+      "notFound": [
+        {
+          "method": "GET",
+          "status": 404,
+          "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=9462f8ee-91a3-46b2-8ed5-e3e09af07e62",
+          "fromBrowser": true
+        }
+      ],
+      "serverErrors": [],
+      "failedRequests": [],
+      "consoleErrors": [
+        {
+          "run": "control",
+          "text": "Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+        }
+      ],
+      "writeGuard": {
+        "label": "thread-continuity/control",
+        "declared": 1,
+        "allowed": 1,
+        "unexpected": 0,
+        "allowedByPath": [
+          {
+            "request": "POST /api/method/login",
+            "times": 1
+          }
+        ]
+      },
+      "checks": {
+        "pass": true,
+        "rows": [
+          {
+            "label": "control: the unknown thread is now asked for",
+            "pass": true,
+            "detail": [
+              {
+                "method": "GET",
+                "status": 404,
+                "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=9462f8ee-91a3-46b2-8ed5-e3e09af07e62",
+                "fromBrowser": true
+              }
+            ]
+          },
+          {
+            "label": "control: the server refuses it as not found",
+            "pass": true,
+            "detail": [
+              {
+                "method": "GET",
+                "status": 404,
+                "url": "http://127.0.0.1:8081/api/method/loan_advisory_portal.api.agent.conversation_messages?thread_id=9462f8ee-91a3-46b2-8ed5-e3e09af07e62",
+                "fromBrowser": true
+              }
+            ]
+          },
+          {
+            "label": "control: the refusal leaves the panel empty, with no invented transcript and no raw error",
+            "pass": true,
+            "detail": {
+              "user": [],
+              "bot": [],
+              "emptyShown": true,
+              "errorShown": false
+            }
+          },
+          {
+            "label": "control: the refusal text is not shown to the borrower",
+            "pass": true,
+            "detail": {
+              "bodyContains404": false
+            }
+          }
+        ],
+        "failures": []
+      }
+    }
+  ]
+}

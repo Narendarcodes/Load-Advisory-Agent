@@ -1,0 +1,35 @@
+# port/container baseline taken 2026-11-01T15:39:58Z before starting anything in this segment
+
+## netstat (listening TCP on the harness ports)
+  TCP    127.0.0.1:3000         0.0.0.0:0              LISTENING       23420
+
+## docker ps
+loan-advisory-langfuse-langfuse-web-1	Up 5 hours (healthy)	127.0.0.1:3000->3000/tcp
+loan-advisory-langfuse-langfuse-worker-1	Up 5 hours	3030/tcp
+loan-advisory-langfuse-postgres-1	Up 5 hours (healthy)	5432/tcp
+loan-advisory-langfuse-redis-1	Up 5 hours (healthy)	6379/tcp
+loan-advisory-langfuse-clickhouse-1	Up 5 hours (healthy)	8123/tcp, 9000/tcp, 9009/tcp
+loan-advisory-langfuse-minio-1	Up 5 hours (healthy)	
+loanrangers-frontend-1	Up 5 hours	0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+loanrangers-scheduler-1	Up 5 hours	
+loanrangers-queue-long-1	Up 5 hours	
+loanrangers-websocket-1	Up 5 hours	
+loanrangers-queue-short-1	Up 5 hours	
+loanrangers-backend-1	Up 5 hours	
+loanrangers-redis-queue-1	Up 5 hours	6379/tcp
+loanrangers-redis-cache-1	Up 5 hours	6379/tcp
+loanrangers-db-1	Up 5 hours (healthy)	3306/tcp
+
+## docker ps -a (non-running, for context)
+cop-frontend	Exited (0) 6 weeks ago
+cop-api	Exited (0) 6 weeks ago
+postiz-db	Exited (0) 6 weeks ago
+postiz-redis	Exited (0) 6 weeks ago
+cop-mongo	Exited (0) 6 weeks ago
+whatsapp_calendar_backend	Exited (0) 3 weeks ago
+whatsapp_tunnel	Exited (0) 3 weeks ago
+whatsapp_hermes	Exited (137) 3 weeks ago
+whatsapp_calendar_db	Exited (0) 3 weeks ago
+whatsapp_litellm	Exited (0) 3 weeks ago
+whatsapp_calendar_redis	Exited (0) 3 weeks ago
+insta_kg_neo4j	Exited (137) 4 months ago

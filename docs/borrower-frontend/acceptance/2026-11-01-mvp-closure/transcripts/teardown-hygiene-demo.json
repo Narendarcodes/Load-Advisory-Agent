@@ -1,0 +1,19 @@
+{
+  "conversationsForUserBeforeDemo": 0,
+  "createdThread": "7f4a47ce-0844-4580-8c2c-dacd1fa14ec7",
+  "conversationsForUserAfterCreate": 1,
+  "messagesForUserAfterCreate": 2,
+  "teardownResult": {
+    "tag": "hygiene1",
+    "deleted": [
+      "ACC-LOAP-2026-00023",
+      "ACC-LOAP-2026-00024"
+    ],
+    "conversationsRemoved": 1
+  },
+  "conversationsForUserAfterTeardown": 0,
+  "messagesForUserAfterTeardown": 0,
+  "profileGone": true,
+  "userGone": true,
+  "orphanMessages": 0
+}

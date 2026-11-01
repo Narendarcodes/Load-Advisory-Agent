@@ -1,0 +1,28 @@
+# verification — 2026-11-01T18:27:09Z
+## host listeners on the four ports (expect none)
+none: 8081, 4200, 8096 released; 8095 was never opened
+## container :8001 (expect no listener)
+:8001 released
+## GPU compute apps (expect header only)
+pid, used_gpu_memory [MiB]
+## permanent containers still up
+loan-advisory-langfuse-langfuse-web-1	Up 8 hours (healthy)
+loan-advisory-langfuse-langfuse-worker-1	Up 8 hours
+loan-advisory-langfuse-postgres-1	Up 8 hours (healthy)
+loan-advisory-langfuse-redis-1	Up 8 hours (healthy)
+loan-advisory-langfuse-clickhouse-1	Up 8 hours (healthy)
+loan-advisory-langfuse-minio-1	Up 8 hours (healthy)
+loanrangers-frontend-1	Up 8 hours
+loanrangers-scheduler-1	Up 8 hours
+loanrangers-queue-long-1	Up 8 hours
+loanrangers-websocket-1	Up 8 hours
+loanrangers-queue-short-1	Up 8 hours
+loanrangers-backend-1	Up 8 hours
+loanrangers-redis-queue-1	Up 8 hours
+loanrangers-redis-cache-1	Up 8 hours
+loanrangers-db-1	Up 8 hours (healthy)
+## front door
+4bd676ee8025	loanportal-acceptance-proxy	Exited (0) 15 seconds ago
+## permanent stack health, with the site Host header Frappe routes on
+products page: 200
+{"message":"pong"}

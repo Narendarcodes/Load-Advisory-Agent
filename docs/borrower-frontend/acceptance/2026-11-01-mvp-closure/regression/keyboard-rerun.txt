@@ -1,0 +1,165 @@
+1440 02-sign-in                   stops=7 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0/3
+1440 03-dashboard                 stops=27 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0/8
+1440 05-apply                     stops=25 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0/16
+1440 07-documents                 stops=23 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0/8
+1440 09-application-not-approved  stops=24 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0/13
+1440 10-advisory-workspace        stops=23 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0/14
+1280 02-sign-in                   stops=7 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1280 03-dashboard                 stops=27 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1280 05-apply                     stops=25 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1280 07-documents                 stops=23 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1280 09-application-not-approved  stops=24 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1280 10-advisory-workspace        stops=23 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1024 02-sign-in                   stops=7 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1024 03-dashboard                 stops=27 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1024 05-apply                     stops=24 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1024 07-documents                 stops=23 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1024 09-application-not-approved  stops=24 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+1024 10-advisory-workspace        stops=23 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 768 02-sign-in                   stops=7 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 768 03-dashboard                 stops=20 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 768 05-apply                     stops=17 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 768 07-documents                 stops=16 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 768 09-application-not-approved  stops=17 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 768 10-advisory-workspace        stops=23 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 390 02-sign-in                   stops=7 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 390 03-dashboard                 stops=21 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 390 05-apply                     stops=18 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 390 07-documents                 stops=17 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 390 09-application-not-approved  stops=18 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+ 390 10-advisory-workspace        stops=28 offscreen=0 noRing=0 noName=0 unnamedControls=0 headingJumps=0 dangling=0 overlays=0 motion=0
+{
+  "logical tab order": {
+    "status": "reviewed",
+    "detail": "595 stops across 30 page/width walks; order recorded stop by stop in results[].allStops"
+  },
+  "visible focus indicators": {
+    "status": "pass",
+    "detail": "595/595 stops change outline or box-shadow between unfocused and focused"
+  },
+  "no keyboard traps": {
+    "status": "pass",
+    "detail": "no walk returned to a control it had already visited"
+  },
+  "Enter/Space activation": {
+    "status": "reviewed",
+    "detail": [
+      {
+        "check": "sign-in button activated with Enter",
+        "alertBefore": false,
+        "alertAfter": true,
+        "announcedViaRole": "alert",
+        "message": "Enter the email address your invitation was sent to.",
+        "focusBeforeActivation": "input#email",
+        "focusAfterError": "input#email",
+        "errorFollowsTriggerInDom": false,
+        "url": "/login?redirect-to=%2Fborrower"
+      },
+      {
+        "check": "sign-in button activated with Space",
+        "alertBefore": false,
+        "alertAfter": true,
+        "announcedViaRole": "alert",
+        "message": "Enter the email address your invitation was sent to.",
+        "focusBeforeActivation": "input#email",
+        "focusAfterError": "input#email",
+        "errorFollowsTriggerInDom": false,
+        "url": "/login?redirect-to=%2Fborrower"
+      },
+      {
+        "check": "dashboard navigation link activated with Enter",
+        "link": "NE New application",
+        "from": "/borrower",
+        "to": "/borrower/apply",
+        "navigated": true
+      },
+      {
+        "check": "page errors during activation checks",
+        "pageErrors": []
+      }
+    ]
+  },
+  "Escape for dismissible overlays": {
+    "status": "not applicable on these routes",
+    "detail": [
+      "no dismissible overlay or dialog exists on this route, so Escape behaviour is not applicable"
+    ]
+  },
+  "focus management on dialog open/close": {
+    "status": "not applicable: no dialog or overlay exists on the reviewed routes",
+    "detail": "0 overlay nodes found across all walks"
+  },
+  "focus after form validation errors": {
+    "status": "reviewed",
+    "detail": [
+      {
+        "check": "sign-in button activated with Enter",
+        "alertBefore": false,
+        "alertAfter": true,
+        "announcedViaRole": "alert",
+        "message": "Enter the email address your invitation was sent to.",
+        "focusBeforeActivation": "input#email",
+        "focusAfterError": "input#email",
+        "errorFollowsTriggerInDom": false,
+        "url": "/login?redirect-to=%2Fborrower"
+      },
+      {
+        "check": "sign-in button activated with Space",
+        "alertBefore": false,
+        "alertAfter": true,
+        "announcedViaRole": "alert",
+        "message": "Enter the email address your invitation was sent to.",
+        "focusBeforeActivation": "input#email",
+        "focusAfterError": "input#email",
+        "errorFollowsTriggerInDom": false,
+        "url": "/login?redirect-to=%2Fborrower"
+      }
+    ]
+  },
+  "accessible names and descriptions": {
+    "status": "pass",
+    "detail": {
+      "stopsWithoutName": 0,
+      "unnamedVisibleControls": 0,
+      "danglingAriaReferences": 0
+    }
+  },
+  "heading and landmark navigation": {
+    "status": "pass",
+    "detail": {
+      "headingLevelJumps": [],
+      "landmarksPerView": [
+        "02-sign-in:8",
+        "03-dashboard:13",
+        "05-apply:11",
+        "07-documents:13",
+        "09-application-not-approved:15",
+        "10-advisory-workspace:21"
+      ],
+      "skipLinks": [
+        {
+          "href": "#main",
+          "text": "Skip to content"
+        }
+      ],
+      "lang": [
+        "en"
+      ]
+    }
+  },
+  "status updates communicated": {
+    "status": "reviewed",
+    "detail": [
+      {
+        "view": "02-sign-in",
+        "liveRegions": [
+          "div#login-error role=alert live=",
+          "div#flash role= live=polite"
+        ]
+      },
+      {
+        "view": "03-dashboard",
+        "liveRegions": [
+  
+wrote docs\borrower-frontend\acceptance\2026-11-01-mvp-closure\keyboard\keyboard-and-ax-tree.json
+non-read requests: writes allowed 43, blocked 0

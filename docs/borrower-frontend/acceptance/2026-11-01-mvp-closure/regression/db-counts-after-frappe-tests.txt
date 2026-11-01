@@ -1,0 +1,30 @@
+# captured 2026-11-01T18:23:25Z after bench run-tests
++-------------------------------+------------+
+| doctype                       | rows_total |
++-------------------------------+------------+
+| Loan Application              |         16 |
+| Loan Application Document     |         14 |
+| Loan Decision Evidence        |          1 |
+| Application State Log         |          9 |
+| Evidence Ingestion Log        |          1 |
+| Borrower Profile              |          9 |
+| Borrower Feedback             |          1 |
+| Voice Session                 |          2 |
+| Advisory Conversation         |         73 |
+| Advisory Message              |        176 |
+| Account Invitation            |          4 |
+| Account Invitation Redemption |          4 |
+| Customer                      |         17 |
+| User                          |         19 |
+| Version                       |        127 |
+| File                          |         16 |
+| Deleted Document              |        148 |
+| Loan                          |          0 |
+| Loan Disbursement             |          0 |
+| Loan Demand                   |          0 |
++-------------------------------+------------+
++--------------------+-----------------------------+----------------------------+---------------+-----------------+----------------+------------------+
+| s                  | name                        | consent_at                 | consent_terms | consent_privacy | terms_version  | privacy_version  |
++--------------------+-----------------------------+----------------------------+---------------+-----------------+----------------+------------------+
+| demo consent state | review.demo@example.invalid | 2026-10-31 18:13:36.000000 |             1 |               1 | portal-terms/1 | portal-privacy/1 |
++--------------------+-----------------------------+----------------------------+---------------+-----------------+----------------+------------------+

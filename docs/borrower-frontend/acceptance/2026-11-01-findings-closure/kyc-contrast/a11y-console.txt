@@ -1,0 +1,11 @@
+width 1440: 26 runs
+width 1280: 17 runs
+width 1024: 17 runs
+width 768: 17 runs
+width 390: 26 runs
+runs: 103
+runs with violations: 0
+distinct rules: 0
+states not reached: 0
+console errors: 0
+non-read requests: writes allowed 17, blocked 0

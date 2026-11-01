@@ -1,0 +1,1123 @@
+{
+  "capturedAt": "2026-11-01T16:37:30.758Z",
+  "base": "http://127.0.0.1:8081",
+  "application": "ACC-LOAP-2026-00018",
+  "fixture": "tests/e2e/agui_stub.cjs (deterministic, test-only)",
+  "playwright": "1.63.0",
+  "widths": [
+    1440,
+    1280,
+    1024,
+    768,
+    390
+  ],
+  "writeGuard": [
+    {
+      "label": "valid@1440",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "valid@1280",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "valid@1024",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "valid@768",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "valid@390",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "negative/malformed",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "negative/unknown",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "negative/absent_fields",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "negative/no_missing",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "negative/no_key",
+      "requestsSeen": 5,
+      "postedReads": 2,
+      "writesAllowed": 3,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "negative/error",
+      "requestsSeen": 4,
+      "postedReads": 2,
+      "writesAllowed": 2,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    }
+  ],
+  "valid": [
+    {
+      "width": 1440,
+      "scenario": "valid",
+      "at": "2026-11-01T16:37:09.391Z",
+      "checks": {
+        "cardVisible": true,
+        "headingCopy": true,
+        "headingLabelResolves": true,
+        "itemCount": true,
+        "labels": true,
+        "everyItemExplained": true,
+        "linksNamed": true,
+        "linkTargets": true,
+        "noOverflow": true,
+        "noClipping": true,
+        "noInnerOverflow": true,
+        "cardInsideViewport": true,
+        "visibleAfterScroll": true,
+        "noLeakage": true,
+        "noConsoleErrors": true,
+        "keyboardReachesCard": true,
+        "focusVisible": true
+      },
+      "card": {
+        "heading": "Information still needed",
+        "headingId": "missing-heading",
+        "labelledBy": "missing-heading",
+        "labelResolves": true,
+        "itemCount": 3,
+        "items": [
+          {
+            "label": "Monthly income",
+            "explanation": "The income recorded for this application is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Monthly obligations",
+            "explanation": "Your total monthly loan payments (EMIs) are missing or were flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Credit score",
+            "explanation": "The credit score used for this check is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          }
+        ]
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 1440,
+        "scrollWidth": 1440,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": {
+          "left": 595,
+          "right": 1093,
+          "width": 498
+        },
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "keyboard": {
+        "tabStopsBeforeCard": 5,
+        "reachedCardLink": true,
+        "focused": {
+          "tag": "a",
+          "text": "Correct this in your application",
+          "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+          "inCard": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "boxShadow": "none",
+          "visible": true
+        },
+        "focusIndicator": true,
+        "order": [
+          "input:",
+          "input:",
+          "input:",
+          "input:",
+          "button:Run what-if",
+          "a:Correct this in your applicati"
+        ]
+      },
+      "consoleErrors": [],
+      "screenshots": [
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-1440.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-viewport-1440.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-card-1440.png"
+      ],
+      "pass": true
+    },
+    {
+      "width": 1280,
+      "scenario": "valid",
+      "at": "2026-11-01T16:37:11.612Z",
+      "checks": {
+        "cardVisible": true,
+        "headingCopy": true,
+        "headingLabelResolves": true,
+        "itemCount": true,
+        "labels": true,
+        "everyItemExplained": true,
+        "linksNamed": true,
+        "linkTargets": true,
+        "noOverflow": true,
+        "noClipping": true,
+        "noInnerOverflow": true,
+        "cardInsideViewport": true,
+        "visibleAfterScroll": true,
+        "noLeakage": true,
+        "noConsoleErrors": true,
+        "keyboardReachesCard": true,
+        "focusVisible": true
+      },
+      "card": {
+        "heading": "Information still needed",
+        "headingId": "missing-heading",
+        "labelledBy": "missing-heading",
+        "labelResolves": true,
+        "itemCount": 3,
+        "items": [
+          {
+            "label": "Monthly income",
+            "explanation": "The income recorded for this application is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Monthly obligations",
+            "explanation": "Your total monthly loan payments (EMIs) are missing or were flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Credit score",
+            "explanation": "The credit score used for this check is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          }
+        ]
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 1280,
+        "scrollWidth": 1280,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": {
+          "left": 571,
+          "right": 1221,
+          "width": 650
+        },
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "keyboard": {
+        "tabStopsBeforeCard": 5,
+        "reachedCardLink": true,
+        "focused": {
+          "tag": "a",
+          "text": "Correct this in your application",
+          "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+          "inCard": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "boxShadow": "none",
+          "visible": true
+        },
+        "focusIndicator": true,
+        "order": [
+          "input:",
+          "input:",
+          "input:",
+          "input:",
+          "button:Run what-if",
+          "a:Correct this in your applicati"
+        ]
+      },
+      "consoleErrors": [],
+      "screenshots": [
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-1280.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-viewport-1280.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-card-1280.png"
+      ],
+      "pass": true
+    },
+    {
+      "width": 1024,
+      "scenario": "valid",
+      "at": "2026-11-01T16:37:13.723Z",
+      "checks": {
+        "cardVisible": true,
+        "headingCopy": true,
+        "headingLabelResolves": true,
+        "itemCount": true,
+        "labels": true,
+        "everyItemExplained": true,
+        "linksNamed": true,
+        "linkTargets": true,
+        "noOverflow": true,
+        "noClipping": true,
+        "noInnerOverflow": true,
+        "cardInsideViewport": true,
+        "visibleAfterScroll": true,
+        "noLeakage": true,
+        "noConsoleErrors": true,
+        "keyboardReachesCard": true,
+        "focusVisible": true
+      },
+      "card": {
+        "heading": "Information still needed",
+        "headingId": "missing-heading",
+        "labelledBy": "missing-heading",
+        "labelResolves": true,
+        "itemCount": 3,
+        "items": [
+          {
+            "label": "Monthly income",
+            "explanation": "The income recorded for this application is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Monthly obligations",
+            "explanation": "Your total monthly loan payments (EMIs) are missing or were flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Credit score",
+            "explanation": "The credit score used for this check is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          }
+        ]
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 1024,
+        "scrollWidth": 1024,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": {
+          "left": 375,
+          "right": 977,
+          "width": 602
+        },
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "keyboard": {
+        "tabStopsBeforeCard": 5,
+        "reachedCardLink": true,
+        "focused": {
+          "tag": "a",
+          "text": "Correct this in your application",
+          "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+          "inCard": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "boxShadow": "none",
+          "visible": true
+        },
+        "focusIndicator": true,
+        "order": [
+          "input:",
+          "input:",
+          "input:",
+          "input:",
+          "button:Run what-if",
+          "a:Correct this in your applicati"
+        ]
+      },
+      "consoleErrors": [],
+      "screenshots": [
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-1024.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-viewport-1024.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-card-1024.png"
+      ],
+      "pass": true
+    },
+    {
+      "width": 768,
+      "scenario": "valid",
+      "at": "2026-11-01T16:37:15.836Z",
+      "checks": {
+        "cardVisible": true,
+        "headingCopy": true,
+        "headingLabelResolves": true,
+        "itemCount": true,
+        "labels": true,
+        "everyItemExplained": true,
+        "linksNamed": true,
+        "linkTargets": true,
+        "noOverflow": true,
+        "noClipping": true,
+        "noInnerOverflow": true,
+        "cardInsideViewport": true,
+        "visibleAfterScroll": true,
+        "noLeakage": true,
+        "noConsoleErrors": true,
+        "keyboardReachesCard": true,
+        "focusVisible": true
+      },
+      "card": {
+        "heading": "Information still needed",
+        "headingId": "missing-heading",
+        "labelledBy": "missing-heading",
+        "labelResolves": true,
+        "itemCount": 3,
+        "items": [
+          {
+            "label": "Monthly income",
+            "explanation": "The income recorded for this application is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Monthly obligations",
+            "explanation": "Your total monthly loan payments (EMIs) are missing or were flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Credit score",
+            "explanation": "The credit score used for this check is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          }
+        ]
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": {
+          "left": 47,
+          "right": 721,
+          "width": 674
+        },
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "keyboard": {
+        "tabStopsBeforeCard": 5,
+        "reachedCardLink": true,
+        "focused": {
+          "tag": "a",
+          "text": "Correct this in your application",
+          "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+          "inCard": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "boxShadow": "none",
+          "visible": true
+        },
+        "focusIndicator": true,
+        "order": [
+          "input:",
+          "input:",
+          "input:",
+          "input:",
+          "button:Run what-if",
+          "a:Correct this in your applicati"
+        ]
+      },
+      "consoleErrors": [],
+      "screenshots": [
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-768.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-viewport-768.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-card-768.png"
+      ],
+      "pass": true
+    },
+    {
+      "width": 390,
+      "scenario": "valid",
+      "at": "2026-11-01T16:37:17.908Z",
+      "checks": {
+        "cardVisible": true,
+        "headingCopy": true,
+        "headingLabelResolves": true,
+        "itemCount": true,
+        "labels": true,
+        "everyItemExplained": true,
+        "linksNamed": true,
+        "linkTargets": true,
+        "noOverflow": true,
+        "noClipping": true,
+        "noInnerOverflow": true,
+        "cardInsideViewport": true,
+        "visibleAfterScroll": true,
+        "noLeakage": true,
+        "noConsoleErrors": true,
+        "keyboardReachesCard": true,
+        "focusVisible": true
+      },
+      "card": {
+        "heading": "Information still needed",
+        "headingId": "missing-heading",
+        "labelledBy": "missing-heading",
+        "labelResolves": true,
+        "itemCount": 3,
+        "items": [
+          {
+            "label": "Monthly income",
+            "explanation": "The income recorded for this application is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Monthly obligations",
+            "explanation": "Your total monthly loan payments (EMIs) are missing or were flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          },
+          {
+            "label": "Credit score",
+            "explanation": "The credit score used for this check is missing or was flagged as needing correction.",
+            "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+            "linkText": "Correct this in your application"
+          }
+        ]
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 390,
+        "scrollWidth": 390,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": {
+          "left": 39,
+          "right": 351,
+          "width": 312
+        },
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "keyboard": {
+        "tabStopsBeforeCard": 5,
+        "reachedCardLink": true,
+        "focused": {
+          "tag": "a",
+          "text": "Correct this in your application",
+          "href": "/borrower/application?name=ACC-LOAP-2026-00018#info-request",
+          "inCard": true,
+          "outlineWidth": "2px",
+          "outlineStyle": "solid",
+          "boxShadow": "none",
+          "visible": true
+        },
+        "focusIndicator": true,
+        "order": [
+          "input:",
+          "input:",
+          "input:",
+          "input:",
+          "button:Run what-if",
+          "a:Correct this in your applicati"
+        ]
+      },
+      "consoleErrors": [],
+      "screenshots": [
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-390.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-viewport-390.png",
+        "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/missing-information-card-390.png"
+      ],
+      "pass": true
+    }
+  ],
+  "negative": [
+    {
+      "width": 1440,
+      "scenario": "malformed",
+      "at": "2026-11-01T16:37:19.843Z",
+      "expectation": {
+        "missingCards": 0,
+        "note": "invalid or empty payload renders no card"
+      },
+      "checks": {
+        "missingCardsAsExpected": true,
+        "noConsoleCrash": true,
+        "noOverflow": true,
+        "noInjectedMarkup": true,
+        "noLeakage": true,
+        "answerStillRendered": true,
+        "errorShown": true
+      },
+      "state": {
+        "missingCards": 0,
+        "errorAlerts": 0,
+        "decisionCards": 0,
+        "detailsBlocks": 0,
+        "botText": "Acceptance fixture response: this turn carries a deliberately malformed state payload; the island must drop it safely."
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 1440,
+        "scrollWidth": 1440,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": null,
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "consoleErrors": [],
+      "screenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/negative-malformed-1440.png",
+      "pass": true
+    },
+    {
+      "width": 1440,
+      "scenario": "unknown",
+      "at": "2026-11-01T16:37:21.794Z",
+      "expectation": {
+        "missingCards": 1,
+        "note": "unknown channels ignored, known card still renders"
+      },
+      "checks": {
+        "missingCardsAsExpected": true,
+        "noConsoleCrash": true,
+        "noOverflow": true,
+        "noInjectedMarkup": true,
+        "noLeakage": true,
+        "answerStillRendered": true,
+        "errorShown": true
+      },
+      "state": {
+        "missingCards": 1,
+        "errorAlerts": 0,
+        "decisionCards": 1,
+        "detailsBlocks": 2,
+        "botText": "Acceptance fixture response: this turn adds unsupported component channels; only the approved catalogue may render."
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 1440,
+        "scrollWidth": 1440,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": {
+          "left": 595,
+          "right": 1093,
+          "width": 498
+        },
+        "clipped": {
+          "by": "section.assistant",
+          "overflowY": "hidden",
+          "overflowX": "hidden",
+          "cardBottom": 1754,
+          "parentBottom": 979
+        },
+        "scrollables": [
+          {
+            "by": "div.assistant__body",
+            "overflowY": "auto",
+            "overflowX": "auto",
+            "cardBottom": 1754,
+            "parentBottom": 978
+          }
+        ],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "consoleErrors": [],
+      "screenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/negative-unknown-1440.png",
+      "pass": true
+    },
+    {
+      "width": 1440,
+      "scenario": "absent_fields",
+      "at": "2026-11-01T16:37:23.712Z",
+      "expectation": {
+        "missingCards": 0,
+        "note": "invalid or empty payload renders no card"
+      },
+      "checks": {
+        "missingCardsAsExpected": true,
+        "noConsoleCrash": true,
+        "noOverflow": true,
+        "noInjectedMarkup": true,
+        "noLeakage": true,
+        "answerStillRendered": true,
+        "errorShown": true
+      },
+      "state": {
+        "missingCards": 0,
+        "errorAlerts": 0,
+        "decisionCards": 1,
+        "detailsBlocks": 1,
+        "botText": "Acceptance fixture response: the list arrived without usable field names, so nothing is shown."
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 1440,
+        "scrollWidth": 1440,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": null,
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "consoleErrors": [],
+      "screenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/negative-absent_fields-1440.png",
+      "pass": true
+    },
+    {
+      "width": 1440,
+      "scenario": "no_missing",
+      "at": "2026-11-01T16:37:25.716Z",
+      "expectation": {
+        "missingCards": 0,
+        "note": "invalid or empty payload renders no card"
+      },
+      "checks": {
+        "missingCardsAsExpected": true,
+        "noConsoleCrash": true,
+        "noOverflow": true,
+        "noInjectedMarkup": true,
+        "noLeakage": true,
+        "answerStillRendered": true,
+        "errorShown": true
+      },
+      "state": {
+        "missingCards": 0,
+        "errorAlerts": 0,
+        "decisionCards": 1,
+        "detailsBlocks": 1,
+        "botText": "Acceptance fixture response: nothing is outstanding on this application right now."
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 1440,
+        "scrollWidth": 1440,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": null,
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "consoleErrors": [],
+      "screenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/negative-no_missing-1440.png",
+      "pass": true
+    },
+    {
+      "width": 1440,
+      "scenario": "no_key",
+      "at": "2026-11-01T16:37:27.675Z",
+      "expectation": {
+        "missingCards": 0,
+        "note": "invalid or empty payload renders no card"
+      },
+      "checks": {
+        "missingCardsAsExpected": true,
+        "noConsoleCrash": true,
+        "noOverflow": true,
+        "noInjectedMarkup": true,
+        "noLeakage": true,
+        "answerStillRendered": true,
+        "errorShown": true
+      },
+      "state": {
+        "missingCards": 0,
+        "errorAlerts": 0,
+        "decisionCards": 1,
+        "detailsBlocks": 1,
+        "botText": "Acceptance fixture response: this turn carries no missing-information field at all."
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 1440,
+        "scrollWidth": 1440,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": null,
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "consoleErrors": [],
+      "screenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/negative-no_key-1440.png",
+      "pass": true
+    },
+    {
+      "width": 1440,
+      "scenario": "error",
+      "at": "2026-11-01T16:37:29.243Z",
+      "expectation": {
+        "missingCards": 0,
+        "note": "RUN_ERROR surfaces as a friendly alert"
+      },
+      "checks": {
+        "missingCardsAsExpected": true,
+        "noConsoleCrash": true,
+        "noOverflow": true,
+        "noInjectedMarkup": true,
+        "noLeakage": true,
+        "answerStillRendered": true,
+        "errorShown": true
+      },
+      "state": {
+        "missingCards": 0,
+        "errorAlerts": 1,
+        "decisionCards": 0,
+        "detailsBlocks": 0,
+        "botText": ""
+      },
+      "layout": {
+        "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+        "viewport": 1440,
+        "scrollWidth": 1440,
+        "overflowPx": 0,
+        "offenders": [],
+        "cardRect": null,
+        "clipped": null,
+        "scrollables": [],
+        "innerOverflow": []
+      },
+      "leakage": {
+        "needles": [],
+        "injectedImages": 0,
+        "xssFlag": null
+      },
+      "consoleErrors": [],
+      "screenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/missing-information/negative-error-1440.png",
+      "pass": true
+    }
+  ],
+  "consoleErrors": []
+}

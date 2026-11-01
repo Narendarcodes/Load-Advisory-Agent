@@ -1,0 +1,23 @@
+
+> @loan-advisory/assistant-island@0.1.0 test
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.5 [39m[90mC:/Users/golla/Documents/Projects/Load-advisory-agent-frappe/apps/web/assistant[39m
+
+ [32m✓[39m src/thread.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/voice.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m src/genui/schema.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m src/history.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m src/context.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32m✓[39m src/genui/blocks.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[32m 163[2mms[22m[39m
+ [32m✓[39m src/island.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 139[2mms[22m[39m
+ [32m✓[39m src/what-if-form.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[32m 180[2mms[22m[39m
+ [32m✓[39m src/voice-panel.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 285[2mms[22m[39m
+ [32m✓[39m src/chat-panel.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 342[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[32m86 passed[39m[22m[90m (86)[39m
+[2m   Start at [22m 22:05:51
+[2m   Duration [22m 7.16s[2m (environment 93%, tests 2%, transform 2%, import 2%)[22m
+

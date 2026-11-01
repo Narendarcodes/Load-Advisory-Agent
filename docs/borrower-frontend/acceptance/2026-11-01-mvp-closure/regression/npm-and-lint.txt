@@ -1,0 +1,41 @@
+=== island unit tests ===
+ [32m✓[39m src/genui/schema.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m src/genui/blocks.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[32m 167[2mms[22m[39m
+ [32m✓[39m src/island.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 153[2mms[22m[39m
+ [32m✓[39m src/what-if-form.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[32m 237[2mms[22m[39m
+ [32m✓[39m src/voice-panel.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 292[2mms[22m[39m
+ [32m✓[39m src/chat-panel.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 426[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[32m86 passed[39m[22m[90m (86)[39m
+[2m   Start at [22m 23:35:35
+[2m   Duration [22m 7.63s[2m (environment 95%, tests 2%, import 1%, transform 1%)[22m
+
+=== island typecheck + build ===
+../../loan_advisory_portal/loan_advisory_portal/public/js/assistant/chunks/chunk-JAPRZBRM-CJMvR5Wo.js                  700.26 kB │ gzip: 181.44 kB
+../../loan_advisory_portal/loan_advisory_portal/public/js/assistant/chunks/directive-CMaqULIC.js                       778.58 kB │ gzip: 173.98 kB
+../../loan_advisory_portal/loan_advisory_portal/public/js/assistant/chunks/emacs-lisp-DPG4niWr.js                      782.32 kB │ gzip: 197.64 kB
+../../loan_advisory_portal/loan_advisory_portal/public/js/assistant/chunks/chunk-FOHPRMQF-C42gxkxD.js                  820.44 kB │ gzip: 156.76 kB
+../../loan_advisory_portal/loan_advisory_portal/public/js/assistant/assistant.js                                     1,211.06 kB │ gzip: 312.57 kB
+../../loan_advisory_portal/loan_advisory_portal/public/js/assistant/chunks/dist-Crbfj86V.js                          1,266.76 kB │ gzip: 267.67 kB
+
+[32m✓ built in 9.25s[39m
+=== runtime tests ===
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9990.0561
+=== runtime typecheck ===
+
+> @loan-advisory/copilot-runtime@0.1.0 typecheck
+> tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json
+
+=== ruff ===
+   |
+
+Found 1 error.
+[*] 1 fixable with `--fix`.

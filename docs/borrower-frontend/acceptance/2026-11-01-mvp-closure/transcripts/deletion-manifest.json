@@ -1,0 +1,4716 @@
+{
+  "mode": "export",
+  "site": "loanportal.local",
+  "dbName": "_21ddc3370f18f30e",
+  "owner": "review.demo@example.invalid",
+  "cutoff": "2026-11-01 00:00:00",
+  "attributionCorpusFiles": 33,
+  "countsBefore": {
+    "conversationsTotal": 163,
+    "conversationsForOwner": 141,
+    "conversationsForOwnerBeforeCutoff": 17,
+    "conversationsForOwnerInCutoff": 124,
+    "conversationsOtherOwners": 22,
+    "messagesTotal": 352,
+    "messagesUnderInScope": 290,
+    "orphanMessages": 0
+  },
+  "syntheticCount": 111,
+  "ambiguousCount": 13,
+  "syntheticMessages": 224,
+  "ambiguousMessages": 66,
+  "synthetic": [
+    {
+      "name": "verify-1793532354",
+      "threadId": "verify-1793532354",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 16:55:55.456766",
+      "modified": "2026-11-01 16:55:55.456766",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    },
+    {
+      "name": "verify-1793532365",
+      "threadId": "verify-1793532365",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 16:56:05.367436",
+      "modified": "2026-11-01 16:56:05.367436",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    },
+    {
+      "name": "07131983-3a13-4cff-a87b-d8e603ed580b",
+      "threadId": "07131983-3a13-4cff-a87b-d8e603ed580b",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 16:59:27.943254",
+      "modified": "2026-11-01 16:59:27.943254",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "mg4o1jcv9u",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 16:59:30.027047",
+          "modified": "2026-11-01 16:59:30.027047"
+        },
+        {
+          "name": "mg4o1evk39",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – your fixed‑obligation‑to‑income ratio is **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your credit score is **640**, while the minimum required is **700**. A credit score (300‑900) shows how well you have repaid past loans and credit cards. The other checks – your monthly income of **₹40,000** and your employment tenure of **18 months** – met the required criteria. I can show you what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 16:59:30.028037",
+          "modified": "2026-11-01 16:59:30.028037"
+        }
+      ]
+    },
+    {
+      "name": "verify-cite-1793533903",
+      "threadId": "verify-cite-1793533903",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 17:21:43.304876",
+      "modified": "2026-11-01 17:21:43.304876",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    },
+    {
+      "name": "12afca65-ce70-4126-a6d6-750fe89e5111",
+      "threadId": "12afca65-ce70-4126-a6d6-750fe89e5111",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:20:00.697115",
+      "modified": "2026-11-01 19:20:00.697115",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "8qsnd8iphf",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:20:01.255135",
+          "modified": "2026-11-01 19:20:01.255135"
+        },
+        {
+          "name": "8qst5uajuq",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:20:01.256694",
+          "modified": "2026-11-01 19:20:01.256694"
+        }
+      ]
+    },
+    {
+      "name": "221aadd9-b9de-45ee-9af6-b3e033d274d3",
+      "threadId": "221aadd9-b9de-45ee-9af6-b3e033d274d3",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a malformed payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:20:02.716132",
+      "modified": "2026-11-01 19:20:02.716132",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "8rfb7k3ipo",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a malformed payload.",
+          "creation": "2026-11-01 19:20:03.185006",
+          "modified": "2026-11-01 19:20:03.185006"
+        },
+        {
+          "name": "8rff8ilpo8",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries a deliberately malformed state payload; the island must drop it safely.",
+          "creation": "2026-11-01 19:20:03.187346",
+          "modified": "2026-11-01 19:20:03.187346"
+        }
+      ]
+    },
+    {
+      "name": "4f48606d-f64f-46a8-8c88-72ec2713071e",
+      "threadId": "4f48606d-f64f-46a8-8c88-72ec2713071e",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render an unknown component payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:20:04.649722",
+      "modified": "2026-11-01 19:20:04.649722",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "8s39sguprd",
+          "idx": 1,
+          "role": "user",
+          "text": "Render an unknown component payload.",
+          "creation": "2026-11-01 19:20:05.113304",
+          "modified": "2026-11-01 19:20:05.113304"
+        },
+        {
+          "name": "8s32q62ju1",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn adds unsupported component channels; only the approved catalogue may render.",
+          "creation": "2026-11-01 19:20:05.114374",
+          "modified": "2026-11-01 19:20:05.114374"
+        }
+      ]
+    },
+    {
+      "name": "aac06ae1-23fc-4ae3-bccc-f101066e68cb",
+      "threadId": "aac06ae1-23fc-4ae3-bccc-f101066e68cb",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a payload where required fields are absent.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:20:06.582901",
+      "modified": "2026-11-01 19:20:06.582901",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "8snuug5oaq",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a payload where required fields are absent.",
+          "creation": "2026-11-01 19:20:07.115949",
+          "modified": "2026-11-01 19:20:07.115949"
+        },
+        {
+          "name": "8sn97deqs4",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:20:07.116913",
+          "modified": "2026-11-01 19:20:07.116913"
+        }
+      ]
+    },
+    {
+      "name": "429dc363-d6d3-4101-a24c-99fff8495e14",
+      "threadId": "429dc363-d6d3-4101-a24c-99fff8495e14",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Confirm there is no missing information.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:20:08.638269",
+      "modified": "2026-11-01 19:20:08.638269",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "8tblrs6tkq",
+          "idx": 1,
+          "role": "user",
+          "text": "Confirm there is no missing information.",
+          "creation": "2026-11-01 19:20:09.109707",
+          "modified": "2026-11-01 19:20:09.109707"
+        },
+        {
+          "name": "8tb40qparu",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: nothing is outstanding on this application right now.",
+          "creation": "2026-11-01 19:20:09.111222",
+          "modified": "2026-11-01 19:20:09.111222"
+        }
+      ]
+    },
+    {
+      "name": "a8f5b502-d284-4c6f-80ff-eb4fdf5a6fee",
+      "threadId": "a8f5b502-d284-4c6f-80ff-eb4fdf5a6fee",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 19:20:10.683989",
+      "modified": "2026-11-01 19:20:10.683989",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    },
+    {
+      "name": "cf226de9-c3a6-4d67-a2dc-52ea139595b9",
+      "threadId": "cf226de9-c3a6-4d67-a2dc-52ea139595b9",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:23:30.607320",
+      "modified": "2026-11-01 19:23:30.607320",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "asf701d11q",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:23:31.144396",
+          "modified": "2026-11-01 19:23:31.144396"
+        },
+        {
+          "name": "asf6g577sl",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:23:31.146879",
+          "modified": "2026-11-01 19:23:31.146879"
+        }
+      ]
+    },
+    {
+      "name": "b1127307-10ff-4b5b-a380-679265010c5f",
+      "threadId": "b1127307-10ff-4b5b-a380-679265010c5f",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a malformed payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:23:32.703895",
+      "modified": "2026-11-01 19:23:32.703895",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "at38trur7f",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a malformed payload.",
+          "creation": "2026-11-01 19:23:33.164234",
+          "modified": "2026-11-01 19:23:33.164234"
+        },
+        {
+          "name": "at3635e030",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries a deliberately malformed state payload; the island must drop it safely.",
+          "creation": "2026-11-01 19:23:33.165449",
+          "modified": "2026-11-01 19:23:33.165449"
+        }
+      ]
+    },
+    {
+      "name": "cac530e1-ce3d-4a87-a365-b0f400b3a40d",
+      "threadId": "cac530e1-ce3d-4a87-a365-b0f400b3a40d",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render an unknown component payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:23:34.587968",
+      "modified": "2026-11-01 19:23:34.587968",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "atme0dgfrd",
+          "idx": 1,
+          "role": "user",
+          "text": "Render an unknown component payload.",
+          "creation": "2026-11-01 19:23:35.050755",
+          "modified": "2026-11-01 19:23:35.050755"
+        },
+        {
+          "name": "atm169bh6e",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn adds unsupported component channels; only the approved catalogue may render.",
+          "creation": "2026-11-01 19:23:35.052015",
+          "modified": "2026-11-01 19:23:35.052015"
+        }
+      ]
+    },
+    {
+      "name": "f2f2cb8b-3f52-4022-847c-bd5d61afe9ad",
+      "threadId": "f2f2cb8b-3f52-4022-847c-bd5d61afe9ad",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a payload where required fields are absent.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:23:36.507171",
+      "modified": "2026-11-01 19:23:36.507171",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "au9qrgt5gq",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a payload where required fields are absent.",
+          "creation": "2026-11-01 19:23:36.977122",
+          "modified": "2026-11-01 19:23:36.977122"
+        },
+        {
+          "name": "au934i17p2",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the list arrived without usable field names, so nothing is shown.",
+          "creation": "2026-11-01 19:23:36.978979",
+          "modified": "2026-11-01 19:23:36.978979"
+        }
+      ]
+    },
+    {
+      "name": "020b05b4-4b4b-4387-b7cd-2ebbc59d534d",
+      "threadId": "020b05b4-4b4b-4387-b7cd-2ebbc59d534d",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Confirm there is no missing information.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:23:38.406511",
+      "modified": "2026-11-01 19:23:38.406511",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "auslsudc1l",
+          "idx": 1,
+          "role": "user",
+          "text": "Confirm there is no missing information.",
+          "creation": "2026-11-01 19:23:38.879760",
+          "modified": "2026-11-01 19:23:38.879760"
+        },
+        {
+          "name": "austb9m2ua",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: nothing is outstanding on this application right now.",
+          "creation": "2026-11-01 19:23:38.882129",
+          "modified": "2026-11-01 19:23:38.882129"
+        }
+      ]
+    },
+    {
+      "name": "899eb1a5-de0d-44fb-a645-75609411052f",
+      "threadId": "899eb1a5-de0d-44fb-a645-75609411052f",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Answer without a missing information state.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:23:40.526248",
+      "modified": "2026-11-01 19:23:40.526248",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "avipijvgr1",
+          "idx": 1,
+          "role": "user",
+          "text": "Answer without a missing information state.",
+          "creation": "2026-11-01 19:23:41.010807",
+          "modified": "2026-11-01 19:23:41.010807"
+        },
+        {
+          "name": "avivs6oa4p",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries no missing-information field at all.",
+          "creation": "2026-11-01 19:23:41.012094",
+          "modified": "2026-11-01 19:23:41.012094"
+        }
+      ]
+    },
+    {
+      "name": "d32ad02f-0efa-4a18-bc54-4f19f8177a81",
+      "threadId": "d32ad02f-0efa-4a18-bc54-4f19f8177a81",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 19:23:42.539742",
+      "modified": "2026-11-01 19:23:42.539742",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    },
+    {
+      "name": "a8b9a669-19dc-4986-a2b9-4d1bc64630b0",
+      "threadId": "a8b9a669-19dc-4986-a2b9-4d1bc64630b0",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:23:58.789427",
+      "modified": "2026-11-01 19:23:58.789427",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b59gdsikn5",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:23:59.324004",
+          "modified": "2026-11-01 19:23:59.324004"
+        },
+        {
+          "name": "b59evi528r",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:23:59.325153",
+          "modified": "2026-11-01 19:23:59.325153"
+        }
+      ]
+    },
+    {
+      "name": "56fe002d-cc92-4d6d-86a2-ef646a6497d8",
+      "threadId": "56fe002d-cc92-4d6d-86a2-ef646a6497d8",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:00.893878",
+      "modified": "2026-11-01 19:24:00.893878",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b5usc0j0lv",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:24:01.436875",
+          "modified": "2026-11-01 19:24:01.436875"
+        },
+        {
+          "name": "b5ulf11j34",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:24:01.437869",
+          "modified": "2026-11-01 19:24:01.437869"
+        }
+      ]
+    },
+    {
+      "name": "b2805368-6c83-40a1-909a-7aee654875f3",
+      "threadId": "b2805368-6c83-40a1-909a-7aee654875f3",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:02.971035",
+      "modified": "2026-11-01 19:24:02.971035",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b6jfo8tp3r",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:24:03.514482",
+          "modified": "2026-11-01 19:24:03.514482"
+        },
+        {
+          "name": "b6j1qe19q7",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:24:03.515920",
+          "modified": "2026-11-01 19:24:03.515920"
+        }
+      ]
+    },
+    {
+      "name": "61c437bf-e0cc-4e6a-adf2-892bb1211ef6",
+      "threadId": "61c437bf-e0cc-4e6a-adf2-892bb1211ef6",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:04.973062",
+      "modified": "2026-11-01 19:24:04.973062",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b77fjshiv0",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:24:05.521325",
+          "modified": "2026-11-01 19:24:05.521325"
+        },
+        {
+          "name": "b77mg1nms7",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:24:05.522847",
+          "modified": "2026-11-01 19:24:05.522847"
+        }
+      ]
+    },
+    {
+      "name": "6109d8b6-9c49-4d46-abcc-f593e87c1e03",
+      "threadId": "6109d8b6-9c49-4d46-abcc-f593e87c1e03",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:07.019416",
+      "modified": "2026-11-01 19:24:07.019416",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b7r04cr2a8",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:24:07.552715",
+          "modified": "2026-11-01 19:24:07.552715"
+        },
+        {
+          "name": "b7r6glkgnn",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:24:07.553792",
+          "modified": "2026-11-01 19:24:07.553792"
+        }
+      ]
+    },
+    {
+      "name": "ddcefab4-d947-4978-a082-72e75bdd7f63",
+      "threadId": "ddcefab4-d947-4978-a082-72e75bdd7f63",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a malformed payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:08.983657",
+      "modified": "2026-11-01 19:24:08.983657",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b8efng1r19",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a malformed payload.",
+          "creation": "2026-11-01 19:24:09.444056",
+          "modified": "2026-11-01 19:24:09.444056"
+        },
+        {
+          "name": "b8e0pi2onj",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries a deliberately malformed state payload; the island must drop it safely.",
+          "creation": "2026-11-01 19:24:09.445504",
+          "modified": "2026-11-01 19:24:09.445504"
+        }
+      ]
+    },
+    {
+      "name": "a54cb313-9b93-4121-b9d7-f89f5544b102",
+      "threadId": "a54cb313-9b93-4121-b9d7-f89f5544b102",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render an unknown component payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:10.903007",
+      "modified": "2026-11-01 19:24:10.903007",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b91spd0659",
+          "idx": 1,
+          "role": "user",
+          "text": "Render an unknown component payload.",
+          "creation": "2026-11-01 19:24:11.368722",
+          "modified": "2026-11-01 19:24:11.368722"
+        },
+        {
+          "name": "b91avqm3u5",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn adds unsupported component channels; only the approved catalogue may render.",
+          "creation": "2026-11-01 19:24:11.370501",
+          "modified": "2026-11-01 19:24:11.370501"
+        }
+      ]
+    },
+    {
+      "name": "5d99fe7c-3db7-44c4-b07d-abab214e9c3a",
+      "threadId": "5d99fe7c-3db7-44c4-b07d-abab214e9c3a",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a payload where required fields are absent.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:12.868136",
+      "modified": "2026-11-01 19:24:12.868136",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b9lc8r5da8",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a payload where required fields are absent.",
+          "creation": "2026-11-01 19:24:13.334837",
+          "modified": "2026-11-01 19:24:13.334837"
+        },
+        {
+          "name": "b9lefo274f",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the list arrived without usable field names, so nothing is shown.",
+          "creation": "2026-11-01 19:24:13.335704",
+          "modified": "2026-11-01 19:24:13.335704"
+        }
+      ]
+    },
+    {
+      "name": "d283bcad-7a5c-4b08-b6f0-5a2c52daa017",
+      "threadId": "d283bcad-7a5c-4b08-b6f0-5a2c52daa017",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Confirm there is no missing information.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:14.753849",
+      "modified": "2026-11-01 19:24:14.753849",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "ba85bjainc",
+          "idx": 1,
+          "role": "user",
+          "text": "Confirm there is no missing information.",
+          "creation": "2026-11-01 19:24:15.225424",
+          "modified": "2026-11-01 19:24:15.225424"
+        },
+        {
+          "name": "ba89pra7ic",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: nothing is outstanding on this application right now.",
+          "creation": "2026-11-01 19:24:15.226422",
+          "modified": "2026-11-01 19:24:15.226422"
+        }
+      ]
+    },
+    {
+      "name": "1dec051f-c828-4d57-82f4-d6c1b5272ce8",
+      "threadId": "1dec051f-c828-4d57-82f4-d6c1b5272ce8",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Answer without a missing information state.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:16.701132",
+      "modified": "2026-11-01 19:24:16.701132",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "barm19a2o9",
+          "idx": 1,
+          "role": "user",
+          "text": "Answer without a missing information state.",
+          "creation": "2026-11-01 19:24:17.168830",
+          "modified": "2026-11-01 19:24:17.168830"
+        },
+        {
+          "name": "barfsbiblt",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries no missing-information field at all.",
+          "creation": "2026-11-01 19:24:17.169904",
+          "modified": "2026-11-01 19:24:17.169904"
+        }
+      ]
+    },
+    {
+      "name": "485a63aa-55c8-43ba-b80b-21d981e066a1",
+      "threadId": "485a63aa-55c8-43ba-b80b-21d981e066a1",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:18.584336",
+      "modified": "2026-11-01 19:24:18.584336",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    },
+    {
+      "name": "db50a8ec-87ec-4624-a467-7001e2eaa9f6",
+      "threadId": "db50a8ec-87ec-4624-a467-7001e2eaa9f6",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:24:58.874929",
+      "modified": "2026-11-01 19:24:58.874929",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "bo2qn3cq36",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:24:59.421671",
+          "modified": "2026-11-01 19:24:59.421671"
+        },
+        {
+          "name": "bo20alr6eu",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:24:59.422627",
+          "modified": "2026-11-01 19:24:59.422627"
+        }
+      ]
+    },
+    {
+      "name": "e7ce4ca8-cc23-45fc-a1fc-cded705a8d1a",
+      "threadId": "e7ce4ca8-cc23-45fc-a1fc-cded705a8d1a",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:25:17.591907",
+      "modified": "2026-11-01 19:25:17.591907",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "btt93cd5ce",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:25:18.149663",
+          "modified": "2026-11-01 19:25:18.149663"
+        },
+        {
+          "name": "bttvpgff08",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:25:18.150987",
+          "modified": "2026-11-01 19:25:18.150987"
+        }
+      ]
+    },
+    {
+      "name": "3c6e6c4e-55a8-4651-b706-36eea3ae8b64",
+      "threadId": "3c6e6c4e-55a8-4651-b706-36eea3ae8b64",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:25:35.269627",
+      "modified": "2026-11-01 19:25:35.269627",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "c3e43t3ii6",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:25:35.832494",
+          "modified": "2026-11-01 19:25:35.832494"
+        },
+        {
+          "name": "c3ehnl6f11",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:25:35.835197",
+          "modified": "2026-11-01 19:25:35.835197"
+        }
+      ]
+    },
+    {
+      "name": "bdcef2eb-2b5c-4d50-b0dd-69fb80605302",
+      "threadId": "bdcef2eb-2b5c-4d50-b0dd-69fb80605302",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:27:13.081233",
+      "modified": "2026-11-01 19:27:13.081233",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "d20ouu3mva",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:27:13.636592",
+          "modified": "2026-11-01 19:27:13.636592"
+        },
+        {
+          "name": "d20dispg87",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:27:13.637984",
+          "modified": "2026-11-01 19:27:13.637984"
+        }
+      ]
+    },
+    {
+      "name": "4aa04bde-fff8-48ca-bba1-47b6e94a2d4d",
+      "threadId": "4aa04bde-fff8-48ca-bba1-47b6e94a2d4d",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:33:30.994038",
+      "modified": "2026-11-01 19:33:30.994038",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "go3cnpriqe",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:33:31.542951",
+          "modified": "2026-11-01 19:33:31.542951"
+        },
+        {
+          "name": "go3u8blcu5",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:33:31.545212",
+          "modified": "2026-11-01 19:33:31.545212"
+        }
+      ]
+    },
+    {
+      "name": "44dcb705-fbe2-4d86-b8c2-a5320842c273",
+      "threadId": "44dcb705-fbe2-4d86-b8c2-a5320842c273",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:33:59.519503",
+      "modified": "2026-11-01 19:33:59.519503",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "h10op8cjdk",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:34:00.064713",
+          "modified": "2026-11-01 19:34:00.064713"
+        },
+        {
+          "name": "h10u23j8lf",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:34:00.066104",
+          "modified": "2026-11-01 19:34:00.066104"
+        }
+      ]
+    },
+    {
+      "name": "7f5e5c4d-ecab-4c31-968f-c373879b3fa4",
+      "threadId": "7f5e5c4d-ecab-4c31-968f-c373879b3fa4",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:34:35.447697",
+      "modified": "2026-11-01 19:34:35.447697",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "hc7cera266",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:34:35.998815",
+          "modified": "2026-11-01 19:34:35.998815"
+        },
+        {
+          "name": "hc8h40qo1b",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:34:36.000201",
+          "modified": "2026-11-01 19:34:36.000201"
+        }
+      ]
+    },
+    {
+      "name": "b8d2cc36-c970-4f5f-b938-2c015ae7e7a0",
+      "threadId": "b8d2cc36-c970-4f5f-b938-2c015ae7e7a0",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:34:37.360565",
+      "modified": "2026-11-01 19:34:37.360565",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "hcrctoki1l",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:34:37.911608",
+          "modified": "2026-11-01 19:34:37.911608"
+        },
+        {
+          "name": "hcrfbkp94k",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:34:37.912920",
+          "modified": "2026-11-01 19:34:37.912920"
+        }
+      ]
+    },
+    {
+      "name": "7308bb8e-e500-4116-8da9-967951586942",
+      "threadId": "7308bb8e-e500-4116-8da9-967951586942",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:35:35.428647",
+      "modified": "2026-11-01 19:35:35.428647",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "huvoum74rv",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:35:35.975380",
+          "modified": "2026-11-01 19:35:35.975380"
+        },
+        {
+          "name": "huvugde4v1",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:35:35.977083",
+          "modified": "2026-11-01 19:35:35.977083"
+        }
+      ]
+    },
+    {
+      "name": "3373a3b7-0adb-4388-95a5-ab50ce9a1a89",
+      "threadId": "3373a3b7-0adb-4388-95a5-ab50ce9a1a89",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:36:18.727205",
+      "modified": "2026-11-01 19:36:18.727205",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "icgvd2pquo",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:36:19.274446",
+          "modified": "2026-11-01 19:36:19.274446"
+        },
+        {
+          "name": "icg9f8p9jq",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:36:19.275432",
+          "modified": "2026-11-01 19:36:19.275432"
+        }
+      ]
+    },
+    {
+      "name": "9d93fdc4-200e-4b93-8c34-19084bf76cd1",
+      "threadId": "9d93fdc4-200e-4b93-8c34-19084bf76cd1",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:36:20.541665",
+      "modified": "2026-11-01 19:36:20.541665",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "id29db4n21",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:36:21.090003",
+          "modified": "2026-11-01 19:36:21.090003"
+        },
+        {
+          "name": "id2tonp9va",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:36:21.091655",
+          "modified": "2026-11-01 19:36:21.091655"
+        }
+      ]
+    },
+    {
+      "name": "ad763acd-5ec0-48b3-8c91-9ff513430cae",
+      "threadId": "ad763acd-5ec0-48b3-8c91-9ff513430cae",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:36:22.439935",
+      "modified": "2026-11-01 19:36:22.439935",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "idlfq2nr3e",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:36:22.975570",
+          "modified": "2026-11-01 19:36:22.975570"
+        },
+        {
+          "name": "idlb7mvhii",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:36:22.978740",
+          "modified": "2026-11-01 19:36:22.978740"
+        }
+      ]
+    },
+    {
+      "name": "bb98efd7-938e-46a8-9860-56e074cb1409",
+      "threadId": "bb98efd7-938e-46a8-9860-56e074cb1409",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:36:24.277446",
+      "modified": "2026-11-01 19:36:24.277446",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "ie80lf8da2",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:36:24.824288",
+          "modified": "2026-11-01 19:36:24.824288"
+        },
+        {
+          "name": "ie8r8u9c4s",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:36:24.825593",
+          "modified": "2026-11-01 19:36:24.825593"
+        }
+      ]
+    },
+    {
+      "name": "db8dcdba-1361-4e5e-8671-9a06ec5b3978",
+      "threadId": "db8dcdba-1361-4e5e-8671-9a06ec5b3978",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:38.221299",
+      "modified": "2026-11-01 19:37:38.221299",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "j5b30i06kk",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:37:38.754318",
+          "modified": "2026-11-01 19:37:38.754318"
+        },
+        {
+          "name": "j5b5magddi",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:37:38.755575",
+          "modified": "2026-11-01 19:37:38.755575"
+        }
+      ]
+    },
+    {
+      "name": "fc1a7ebe-1476-43a0-9be1-db39fcf3df41",
+      "threadId": "fc1a7ebe-1476-43a0-9be1-db39fcf3df41",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:40.279480",
+      "modified": "2026-11-01 19:37:40.279480",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "j60nn3vcb7",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:37:40.827341",
+          "modified": "2026-11-01 19:37:40.827341"
+        },
+        {
+          "name": "j60aakoter",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:37:40.829555",
+          "modified": "2026-11-01 19:37:40.829555"
+        }
+      ]
+    },
+    {
+      "name": "952a04de-7865-44af-8537-046ff06482f3",
+      "threadId": "952a04de-7865-44af-8537-046ff06482f3",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:42.316534",
+      "modified": "2026-11-01 19:37:42.316534",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "j6khst98mr",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:37:42.853095",
+          "modified": "2026-11-01 19:37:42.853095"
+        },
+        {
+          "name": "j6kcai0i9v",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:37:42.854459",
+          "modified": "2026-11-01 19:37:42.854459"
+        }
+      ]
+    },
+    {
+      "name": "a025bc6d-6691-4747-b031-f2590b39c663",
+      "threadId": "a025bc6d-6691-4747-b031-f2590b39c663",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:44.303846",
+      "modified": "2026-11-01 19:37:44.303846",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "j78ktrrt4t",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:37:44.839053",
+          "modified": "2026-11-01 19:37:44.839053"
+        },
+        {
+          "name": "j7895tjp2k",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:37:44.840534",
+          "modified": "2026-11-01 19:37:44.840534"
+        }
+      ]
+    },
+    {
+      "name": "02bb2b70-af82-4050-ae5f-67d3898365c7",
+      "threadId": "02bb2b70-af82-4050-ae5f-67d3898365c7",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:46.417786",
+      "modified": "2026-11-01 19:37:46.417786",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "j7t9p0o5lm",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:37:46.939616",
+          "modified": "2026-11-01 19:37:46.939616"
+        },
+        {
+          "name": "j7tgdb2ikk",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:37:46.940562",
+          "modified": "2026-11-01 19:37:46.940562"
+        }
+      ]
+    },
+    {
+      "name": "410a947e-67d7-4db2-acc3-d5a936c1cdfa",
+      "threadId": "410a947e-67d7-4db2-acc3-d5a936c1cdfa",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a malformed payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:48.370586",
+      "modified": "2026-11-01 19:37:48.370586",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "j8gp2l6arb",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a malformed payload.",
+          "creation": "2026-11-01 19:37:48.845951",
+          "modified": "2026-11-01 19:37:48.845951"
+        },
+        {
+          "name": "j8gfvmr5gl",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries a deliberately malformed state payload; the island must drop it safely.",
+          "creation": "2026-11-01 19:37:48.847149",
+          "modified": "2026-11-01 19:37:48.847149"
+        }
+      ]
+    },
+    {
+      "name": "96926627-e6ca-403d-bf71-f1f9a282b322",
+      "threadId": "96926627-e6ca-403d-bf71-f1f9a282b322",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render an unknown component payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:50.269242",
+      "modified": "2026-11-01 19:37:50.269242",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "j93j5a7u8g",
+          "idx": 1,
+          "role": "user",
+          "text": "Render an unknown component payload.",
+          "creation": "2026-11-01 19:37:50.727844",
+          "modified": "2026-11-01 19:37:50.727844"
+        },
+        {
+          "name": "j933pipv2n",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn adds unsupported component channels; only the approved catalogue may render.",
+          "creation": "2026-11-01 19:37:50.728899",
+          "modified": "2026-11-01 19:37:50.728899"
+        }
+      ]
+    },
+    {
+      "name": "9b25cbf4-5ae1-42c9-a87c-be95612410e5",
+      "threadId": "9b25cbf4-5ae1-42c9-a87c-be95612410e5",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a payload where required fields are absent.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:52.202284",
+      "modified": "2026-11-01 19:37:52.202284",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "j9muu611nj",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a payload where required fields are absent.",
+          "creation": "2026-11-01 19:37:52.660927",
+          "modified": "2026-11-01 19:37:52.660927"
+        },
+        {
+          "name": "j9monib4h5",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the list arrived without usable field names, so nothing is shown.",
+          "creation": "2026-11-01 19:37:52.662220",
+          "modified": "2026-11-01 19:37:52.662220"
+        }
+      ]
+    },
+    {
+      "name": "a2faba00-1729-4fe4-94c5-91bec3e8f00d",
+      "threadId": "a2faba00-1729-4fe4-94c5-91bec3e8f00d",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Confirm there is no missing information.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:54.068328",
+      "modified": "2026-11-01 19:37:54.068328",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "ja9tsv01sj",
+          "idx": 1,
+          "role": "user",
+          "text": "Confirm there is no missing information.",
+          "creation": "2026-11-01 19:37:54.526024",
+          "modified": "2026-11-01 19:37:54.526024"
+        },
+        {
+          "name": "ja92gi4mhn",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: nothing is outstanding on this application right now.",
+          "creation": "2026-11-01 19:37:54.527557",
+          "modified": "2026-11-01 19:37:54.527557"
+        }
+      ]
+    },
+    {
+      "name": "29fff6df-60a8-48bf-8194-f8f8629abefe",
+      "threadId": "29fff6df-60a8-48bf-8194-f8f8629abefe",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Answer without a missing information state.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:55.972984",
+      "modified": "2026-11-01 19:37:55.972984",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "jasv50egl5",
+          "idx": 1,
+          "role": "user",
+          "text": "Answer without a missing information state.",
+          "creation": "2026-11-01 19:37:56.435587",
+          "modified": "2026-11-01 19:37:56.435587"
+        },
+        {
+          "name": "jasi6imnco",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries no missing-information field at all.",
+          "creation": "2026-11-01 19:37:56.436494",
+          "modified": "2026-11-01 19:37:56.436494"
+        }
+      ]
+    },
+    {
+      "name": "6ec266db-a3fb-47aa-8730-9d36e9a063fe",
+      "threadId": "6ec266db-a3fb-47aa-8730-9d36e9a063fe",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 19:37:57.836218",
+      "modified": "2026-11-01 19:37:57.836218",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    },
+    {
+      "name": "fb387bf1-f5d1-4208-be22-91e99f5ed1cf",
+      "threadId": "fb387bf1-f5d1-4208-be22-91e99f5ed1cf",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is still missing for my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:38:57.402545",
+      "modified": "2026-11-01 19:38:57.402545",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "ju3c0h9qup",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is still missing for my application?",
+          "creation": "2026-11-01 19:38:57.933386",
+          "modified": "2026-11-01 19:38:57.933386"
+        },
+        {
+          "name": "ju3om2sl25",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:38:57.934583",
+          "modified": "2026-11-01 19:38:57.934583"
+        }
+      ]
+    },
+    {
+      "name": "0353d783-5aec-4f86-b469-231053edfb21",
+      "threadId": "0353d783-5aec-4f86-b469-231053edfb21",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:30.436086",
+      "modified": "2026-11-01 19:39:30.436086",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "k8dih8lsqs",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:39:30.981395",
+          "modified": "2026-11-01 19:39:30.981395"
+        },
+        {
+          "name": "k8dt0m324e",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:39:30.985385",
+          "modified": "2026-11-01 19:39:30.985385"
+        }
+      ]
+    },
+    {
+      "name": "9969239a-ffce-4c7d-883d-d29bfe62e277",
+      "threadId": "9969239a-ffce-4c7d-883d-d29bfe62e277",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:32.531407",
+      "modified": "2026-11-01 19:39:32.531407",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "k925o4hf44",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:39:33.052991",
+          "modified": "2026-11-01 19:39:33.052991"
+        },
+        {
+          "name": "k92denoji5",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:39:33.054583",
+          "modified": "2026-11-01 19:39:33.054583"
+        }
+      ]
+    },
+    {
+      "name": "5b379fc1-618d-49c5-96e2-b28337400bf1",
+      "threadId": "5b379fc1-618d-49c5-96e2-b28337400bf1",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:34.631932",
+      "modified": "2026-11-01 19:39:34.631932",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "k9nnartofk",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:39:35.164284",
+          "modified": "2026-11-01 19:39:35.164284"
+        },
+        {
+          "name": "k9n1p90g8v",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:39:35.165174",
+          "modified": "2026-11-01 19:39:35.165174"
+        }
+      ]
+    },
+    {
+      "name": "8874069c-5ed1-4858-ae27-f19b9ed3b8f1",
+      "threadId": "8874069c-5ed1-4858-ae27-f19b9ed3b8f1",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:36.601694",
+      "modified": "2026-11-01 19:39:36.601694",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "kab25ie00n",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:39:37.133509",
+          "modified": "2026-11-01 19:39:37.133509"
+        },
+        {
+          "name": "kabct54p4q",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:39:37.135259",
+          "modified": "2026-11-01 19:39:37.135259"
+        }
+      ]
+    },
+    {
+      "name": "4264d65b-ffc2-4e76-9bd2-26a9d8a81c63",
+      "threadId": "4264d65b-ffc2-4e76-9bd2-26a9d8a81c63",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:38.689298",
+      "modified": "2026-11-01 19:39:38.689298",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "kb0ms3u2e8",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:39:39.233996",
+          "modified": "2026-11-01 19:39:39.233996"
+        },
+        {
+          "name": "kb0g90vs6n",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:39:39.235043",
+          "modified": "2026-11-01 19:39:39.235043"
+        }
+      ]
+    },
+    {
+      "name": "adc23b33-4ea3-40c3-bcd8-b5ae6329c471",
+      "threadId": "adc23b33-4ea3-40c3-bcd8-b5ae6329c471",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a malformed payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:40.670278",
+      "modified": "2026-11-01 19:39:40.670278",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "kbjrnqdqmk",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a malformed payload.",
+          "creation": "2026-11-01 19:39:41.149643",
+          "modified": "2026-11-01 19:39:41.149643"
+        },
+        {
+          "name": "kbjdag3584",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries a deliberately malformed state payload; the island must drop it safely.",
+          "creation": "2026-11-01 19:39:41.151980",
+          "modified": "2026-11-01 19:39:41.151980"
+        }
+      ]
+    },
+    {
+      "name": "52737c35-1196-4a96-b887-8a04545babaa",
+      "threadId": "52737c35-1196-4a96-b887-8a04545babaa",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render an unknown component payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:42.526198",
+      "modified": "2026-11-01 19:39:42.526198",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "kc56f02bt7",
+          "idx": 1,
+          "role": "user",
+          "text": "Render an unknown component payload.",
+          "creation": "2026-11-01 19:39:42.988822",
+          "modified": "2026-11-01 19:39:42.988822"
+        },
+        {
+          "name": "kc5g0egc0q",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn adds unsupported component channels; only the approved catalogue may render.",
+          "creation": "2026-11-01 19:39:42.989972",
+          "modified": "2026-11-01 19:39:42.989972"
+        }
+      ]
+    },
+    {
+      "name": "2dd72ee9-5c19-468c-8e29-0e36012a4be1",
+      "threadId": "2dd72ee9-5c19-468c-8e29-0e36012a4be1",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a payload where required fields are absent.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:44.379559",
+      "modified": "2026-11-01 19:39:44.379559",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "kcof73ksof",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a payload where required fields are absent.",
+          "creation": "2026-11-01 19:39:44.847913",
+          "modified": "2026-11-01 19:39:44.847913"
+        },
+        {
+          "name": "kcob4ejbea",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the list arrived without usable field names, so nothing is shown.",
+          "creation": "2026-11-01 19:39:44.849062",
+          "modified": "2026-11-01 19:39:44.849062"
+        }
+      ]
+    },
+    {
+      "name": "e1d0fe89-4cb0-4449-8ffe-edfe76fef6bb",
+      "threadId": "e1d0fe89-4cb0-4449-8ffe-edfe76fef6bb",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Confirm there is no missing information.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:46.298351",
+      "modified": "2026-11-01 19:39:46.298351",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "kdbv08vckm",
+          "idx": 1,
+          "role": "user",
+          "text": "Confirm there is no missing information.",
+          "creation": "2026-11-01 19:39:46.754346",
+          "modified": "2026-11-01 19:39:46.754346"
+        },
+        {
+          "name": "kdbbnd375p",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: nothing is outstanding on this application right now.",
+          "creation": "2026-11-01 19:39:46.755494",
+          "modified": "2026-11-01 19:39:46.755494"
+        }
+      ]
+    },
+    {
+      "name": "5d68b4fe-9305-4bb6-ba03-e1b28e3f04c2",
+      "threadId": "5d68b4fe-9305-4bb6-ba03-e1b28e3f04c2",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Answer without a missing information state.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:48.201428",
+      "modified": "2026-11-01 19:39:48.201428",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "kduljeab8h",
+          "idx": 1,
+          "role": "user",
+          "text": "Answer without a missing information state.",
+          "creation": "2026-11-01 19:39:48.662641",
+          "modified": "2026-11-01 19:39:48.662641"
+        },
+        {
+          "name": "kduo4mcird",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries no missing-information field at all.",
+          "creation": "2026-11-01 19:39:48.664239",
+          "modified": "2026-11-01 19:39:48.664239"
+        }
+      ]
+    },
+    {
+      "name": "1359a34b-9e1d-4892-b3a6-fafb92321723",
+      "threadId": "1359a34b-9e1d-4892-b3a6-fafb92321723",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 19:39:50.082230",
+      "modified": "2026-11-01 19:39:50.082230",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    },
+    {
+      "name": "d38cc3c6-0318-4fba-917b-ff333834d544",
+      "threadId": "d38cc3c6-0318-4fba-917b-ff333834d544",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:40:46.713424",
+      "modified": "2026-11-01 19:40:46.713424",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l087db079d",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:40:47.232677",
+          "modified": "2026-11-01 19:40:47.232677"
+        },
+        {
+          "name": "l083vnjppo",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:40:47.233929",
+          "modified": "2026-11-01 19:40:47.233929"
+        }
+      ]
+    },
+    {
+      "name": "ce3e7d7f-baf2-4580-ac60-982eb235f09e",
+      "threadId": "ce3e7d7f-baf2-4580-ac60-982eb235f09e",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:40:48.728044",
+      "modified": "2026-11-01 19:40:48.728044",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l0s515pnqc",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:40:49.250871",
+          "modified": "2026-11-01 19:40:49.250871"
+        },
+        {
+          "name": "l0s1buk43h",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:40:49.251885",
+          "modified": "2026-11-01 19:40:49.251885"
+        }
+      ]
+    },
+    {
+      "name": "bc12fec1-dc60-46a0-8fce-dc55261588eb",
+      "threadId": "bc12fec1-dc60-46a0-8fce-dc55261588eb",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:40:50.732221",
+      "modified": "2026-11-01 19:40:50.732221",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l1gnp8u2s8",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:40:51.266513",
+          "modified": "2026-11-01 19:40:51.266513"
+        },
+        {
+          "name": "l1g81uba5j",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:40:51.268516",
+          "modified": "2026-11-01 19:40:51.268516"
+        }
+      ]
+    },
+    {
+      "name": "5f91da3e-7a06-4a28-838a-f7569c87bfbc",
+      "threadId": "5f91da3e-7a06-4a28-838a-f7569c87bfbc",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:40:52.746621",
+      "modified": "2026-11-01 19:40:52.746621",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l24v3gqdcm",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:40:53.295816",
+          "modified": "2026-11-01 19:40:53.295816"
+        },
+        {
+          "name": "l24k39vrqn",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:40:53.296803",
+          "modified": "2026-11-01 19:40:53.296803"
+        }
+      ]
+    },
+    {
+      "name": "9bca3522-48d6-4fb8-bb8b-bfda5dcd4188",
+      "threadId": "9bca3522-48d6-4fb8-bb8b-bfda5dcd4188",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:40:54.832648",
+      "modified": "2026-11-01 19:40:54.832648",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l2pp7o4c4l",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:40:55.379467",
+          "modified": "2026-11-01 19:40:55.379467"
+        },
+        {
+          "name": "l2pn414r5h",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:40:55.380655",
+          "modified": "2026-11-01 19:40:55.380655"
+        }
+      ]
+    },
+    {
+      "name": "0414fcb1-cae9-4055-93ae-a9dc155b4869",
+      "threadId": "0414fcb1-cae9-4055-93ae-a9dc155b4869",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a malformed payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:40:56.813637",
+      "modified": "2026-11-01 19:40:56.813637",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l3ca926lan",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a malformed payload.",
+          "creation": "2026-11-01 19:40:57.273329",
+          "modified": "2026-11-01 19:40:57.273329"
+        },
+        {
+          "name": "l3cfh1romk",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries a deliberately malformed state payload; the island must drop it safely.",
+          "creation": "2026-11-01 19:40:57.274838",
+          "modified": "2026-11-01 19:40:57.274838"
+        }
+      ]
+    },
+    {
+      "name": "4900986e-e877-4071-bc62-4a696eacd3d3",
+      "threadId": "4900986e-e877-4071-bc62-4a696eacd3d3",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render an unknown component payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:40:58.661584",
+      "modified": "2026-11-01 19:40:58.661584",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l3ver0duht",
+          "idx": 1,
+          "role": "user",
+          "text": "Render an unknown component payload.",
+          "creation": "2026-11-01 19:40:59.137382",
+          "modified": "2026-11-01 19:40:59.137382"
+        },
+        {
+          "name": "l3vde4rv1f",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn adds unsupported component channels; only the approved catalogue may render.",
+          "creation": "2026-11-01 19:40:59.139454",
+          "modified": "2026-11-01 19:40:59.139454"
+        }
+      ]
+    },
+    {
+      "name": "1eb2dca8-ad24-4b01-89dc-eadb1999ce9c",
+      "threadId": "1eb2dca8-ad24-4b01-89dc-eadb1999ce9c",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a payload where required fields are absent.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:41:00.545601",
+      "modified": "2026-11-01 19:41:00.545601",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l4ibqp4edn",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a payload where required fields are absent.",
+          "creation": "2026-11-01 19:41:01.014534",
+          "modified": "2026-11-01 19:41:01.014534"
+        },
+        {
+          "name": "l4iskq0b4g",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the list arrived without usable field names, so nothing is shown.",
+          "creation": "2026-11-01 19:41:01.017964",
+          "modified": "2026-11-01 19:41:01.017964"
+        }
+      ]
+    },
+    {
+      "name": "777da512-e035-45f5-8bdf-aa3497004e40",
+      "threadId": "777da512-e035-45f5-8bdf-aa3497004e40",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Confirm there is no missing information.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:41:02.444266",
+      "modified": "2026-11-01 19:41:02.444266",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l55aiccj6a",
+          "idx": 1,
+          "role": "user",
+          "text": "Confirm there is no missing information.",
+          "creation": "2026-11-01 19:41:02.911808",
+          "modified": "2026-11-01 19:41:02.911808"
+        },
+        {
+          "name": "l55eb466c1",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: nothing is outstanding on this application right now.",
+          "creation": "2026-11-01 19:41:02.912718",
+          "modified": "2026-11-01 19:41:02.912718"
+        }
+      ]
+    },
+    {
+      "name": "989e94e1-7d6c-4e19-861e-6630d61359dc",
+      "threadId": "989e94e1-7d6c-4e19-861e-6630d61359dc",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Answer without a missing information state.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 19:41:04.346518",
+      "modified": "2026-11-01 19:41:04.346518",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "l5o7pg0tnb",
+          "idx": 1,
+          "role": "user",
+          "text": "Answer without a missing information state.",
+          "creation": "2026-11-01 19:41:04.823452",
+          "modified": "2026-11-01 19:41:04.823452"
+        },
+        {
+          "name": "l5o2sihluj",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries no missing-information field at all.",
+          "creation": "2026-11-01 19:41:04.825227",
+          "modified": "2026-11-01 19:41:04.825227"
+        }
+      ]
+    },
+    {
+      "name": "fbe79658-9f8c-4d5e-b78c-a217f1302e41",
+      "threadId": "fbe79658-9f8c-4d5e-b78c-a217f1302e41",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 19:41:06.278893",
+      "modified": "2026-11-01 19:41:06.278893",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    },
+    {
+      "name": "4953f46a-da3a-4301-aa68-d78fc45db8d2",
+      "threadId": "4953f46a-da3a-4301-aa68-d78fc45db8d2",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 19:46:42.048989",
+      "modified": "2026-11-01 19:46:42.048989",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "ogm3kccbha",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:46:47.050909",
+          "modified": "2026-11-01 19:46:47.050909"
+        },
+        {
+          "name": "ogmvqe7qvk",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:46:47.052020",
+          "modified": "2026-11-01 19:46:47.052020"
+        },
+        {
+          "name": "oiainl7gfh",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 19:46:52.290427",
+          "modified": "2026-11-01 19:46:52.290427"
+        },
+        {
+          "name": "oiagua4j0s",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 19:46:52.291540",
+          "modified": "2026-11-01 19:46:52.291540"
+        }
+      ]
+    },
+    {
+      "name": "af8d5dc4-095c-499d-92ad-88d85eaf6736",
+      "threadId": "af8d5dc4-095c-499d-92ad-88d85eaf6736",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 19:51:01.987591",
+      "modified": "2026-11-01 19:51:01.987591",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "r1t7he3qu9",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:51:06.901040",
+          "modified": "2026-11-01 19:51:06.901040"
+        },
+        {
+          "name": "r1tlmjdjs8",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:51:06.903217",
+          "modified": "2026-11-01 19:51:06.903217"
+        },
+        {
+          "name": "r3garjh0fs",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 19:51:12.072501",
+          "modified": "2026-11-01 19:51:12.072501"
+        },
+        {
+          "name": "r3gg9dnl02",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 19:51:12.073573",
+          "modified": "2026-11-01 19:51:12.073573"
+        }
+      ]
+    },
+    {
+      "name": "4150806a-a66e-4dc8-933e-4ea1adf7cf69",
+      "threadId": "4150806a-a66e-4dc8-933e-4ea1adf7cf69",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 19:53:18.525755",
+      "modified": "2026-11-01 19:53:18.525755",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "scjvl3m0mc",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:53:23.533989",
+          "modified": "2026-11-01 19:53:23.533989"
+        },
+        {
+          "name": "scjcja52js",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:53:23.535133",
+          "modified": "2026-11-01 19:53:23.535133"
+        },
+        {
+          "name": "se8snkd6eb",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 19:53:28.861720",
+          "modified": "2026-11-01 19:53:28.861720"
+        },
+        {
+          "name": "se87hrsgi9",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 19:53:28.862665",
+          "modified": "2026-11-01 19:53:28.862665"
+        }
+      ]
+    },
+    {
+      "name": "33244c3f-5457-49d1-9a62-aebdaa2f7f46",
+      "threadId": "33244c3f-5457-49d1-9a62-aebdaa2f7f46",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 19:58:17.488312",
+      "modified": "2026-11-01 19:58:17.488312",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "va0ee498jm",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 19:58:22.414172",
+          "modified": "2026-11-01 19:58:22.414172"
+        },
+        {
+          "name": "va0627e7th",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 19:58:22.415765",
+          "modified": "2026-11-01 19:58:22.415765"
+        },
+        {
+          "name": "vbji1umqkq",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 19:58:27.551528",
+          "modified": "2026-11-01 19:58:27.551528"
+        },
+        {
+          "name": "vbjb2de269",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 19:58:27.552376",
+          "modified": "2026-11-01 19:58:27.552376"
+        }
+      ]
+    },
+    {
+      "name": "7edef8d8-6023-4b61-8639-857bda2aeb66",
+      "threadId": "7edef8d8-6023-4b61-8639-857bda2aeb66",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 20:00:35.536663",
+      "modified": "2026-11-01 20:00:35.536663",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "0l4kn4ludj",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:00:40.493509",
+          "modified": "2026-11-01 20:00:40.493509"
+        },
+        {
+          "name": "0l52tk6kpk",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:00:40.501280",
+          "modified": "2026-11-01 20:00:40.501280"
+        },
+        {
+          "name": "0mol3nkddu",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 20:00:45.695952",
+          "modified": "2026-11-01 20:00:45.695952"
+        },
+        {
+          "name": "0mojedk7fn",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 20:00:45.697473",
+          "modified": "2026-11-01 20:00:45.697473"
+        }
+      ]
+    },
+    {
+      "name": "b0c21099-469f-4846-ae74-44880a990570",
+      "threadId": "b0c21099-469f-4846-ae74-44880a990570",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 20:07:53.951263",
+      "modified": "2026-11-01 20:07:53.951263",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "4spmkj87ku",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:07:54.519456",
+          "modified": "2026-11-01 20:07:54.519456"
+        },
+        {
+          "name": "4sp7dgvo1f",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:07:54.521873",
+          "modified": "2026-11-01 20:07:54.521873"
+        }
+      ]
+    },
+    {
+      "name": "c24e6e3e-4fdb-400b-a32b-7854bd260a32",
+      "threadId": "c24e6e3e-4fdb-400b-a32b-7854bd260a32",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 20:08:10.064310",
+      "modified": "2026-11-01 20:08:10.064310",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "51qol10o1o",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:08:10.687179",
+          "modified": "2026-11-01 20:08:10.687179"
+        },
+        {
+          "name": "51qdml24iv",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:08:10.690667",
+          "modified": "2026-11-01 20:08:10.690667"
+        }
+      ]
+    },
+    {
+      "name": "51d0078d-2db5-48cf-b13f-bb0f94274bbc",
+      "threadId": "51d0078d-2db5-48cf-b13f-bb0f94274bbc",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 20:11:31.929070",
+      "modified": "2026-11-01 20:11:31.929070",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "729dsp446m",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:11:36.972945",
+          "modified": "2026-11-01 20:11:36.972945"
+        },
+        {
+          "name": "729v5btnat",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:11:36.974108",
+          "modified": "2026-11-01 20:11:36.974108"
+        },
+        {
+          "name": "73umiar9jb",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 20:11:42.221063",
+          "modified": "2026-11-01 20:11:42.221063"
+        },
+        {
+          "name": "73ujlh9rv4",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 20:11:42.222116",
+          "modified": "2026-11-01 20:11:42.222116"
+        }
+      ]
+    },
+    {
+      "name": "3228b87e-5f92-41c0-a526-6464db6afd81",
+      "threadId": "3228b87e-5f92-41c0-a526-6464db6afd81",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 20:13:49.836196",
+      "modified": "2026-11-01 20:13:49.836196",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "8dcjf10ijv",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:13:54.878465",
+          "modified": "2026-11-01 20:13:54.878465"
+        },
+        {
+          "name": "8dckd1g61i",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:13:54.879636",
+          "modified": "2026-11-01 20:13:54.879636"
+        },
+        {
+          "name": "8f2bfmeljc",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 20:14:00.230007",
+          "modified": "2026-11-01 20:14:00.230007"
+        },
+        {
+          "name": "8f29cdbter",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 20:14:00.231312",
+          "modified": "2026-11-01 20:14:00.231312"
+        }
+      ]
+    },
+    {
+      "name": "9cb3e219-2bf9-4667-8298-f9cde9928f8e",
+      "threadId": "9cb3e219-2bf9-4667-8298-f9cde9928f8e",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 20:17:35.196625",
+      "modified": "2026-11-01 20:17:35.196625",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "aid6i7tm9m",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:17:35.747374",
+          "modified": "2026-11-01 20:17:35.747374"
+        },
+        {
+          "name": "aidrrrp39g",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:17:35.749822",
+          "modified": "2026-11-01 20:17:35.749822"
+        }
+      ]
+    },
+    {
+      "name": "c3cc8595-9720-4f71-83e2-5b9067d8edfc",
+      "threadId": "c3cc8595-9720-4f71-83e2-5b9067d8edfc",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 20:17:40.590707",
+      "modified": "2026-11-01 20:17:40.590707",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "ak34krmj81",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:17:41.132795",
+          "modified": "2026-11-01 20:17:41.132795"
+        },
+        {
+          "name": "ak31m5dn0p",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:17:41.134044",
+          "modified": "2026-11-01 20:17:41.134044"
+        }
+      ]
+    },
+    {
+      "name": "4a0a31d0-20d0-4944-9bdf-5e6d5f91a883",
+      "threadId": "4a0a31d0-20d0-4944-9bdf-5e6d5f91a883",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 20:17:54.343078",
+      "modified": "2026-11-01 20:17:54.343078",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "aodqomdr16",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:17:54.901180",
+          "modified": "2026-11-01 20:17:54.901180"
+        },
+        {
+          "name": "aode1rmkdk",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:17:54.903252",
+          "modified": "2026-11-01 20:17:54.903252"
+        }
+      ]
+    },
+    {
+      "name": "831f6da1-4732-4167-8c9c-9990799588f4",
+      "threadId": "831f6da1-4732-4167-8c9c-9990799588f4",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 20:18:08.394694",
+      "modified": "2026-11-01 20:18:08.394694",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "aspm93am2h",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:18:08.950094",
+          "modified": "2026-11-01 20:18:08.950094"
+        },
+        {
+          "name": "aspti0nm2t",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:18:08.951675",
+          "modified": "2026-11-01 20:18:08.951675"
+        }
+      ]
+    },
+    {
+      "name": "e5582322-cf41-4e57-94e9-c572b1f765a3",
+      "threadId": "e5582322-cf41-4e57-94e9-c572b1f765a3",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 20:18:22.429269",
+      "modified": "2026-11-01 20:18:22.429269",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b153vic3a7",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:18:22.977131",
+          "modified": "2026-11-01 20:18:22.977131"
+        },
+        {
+          "name": "b15dfeup3p",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:18:22.979136",
+          "modified": "2026-11-01 20:18:22.979136"
+        }
+      ]
+    },
+    {
+      "name": "a1f34aa8-21a8-445b-9cc1-f2e5d2623d8c",
+      "threadId": "a1f34aa8-21a8-445b-9cc1-f2e5d2623d8c",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 20:18:36.508410",
+      "modified": "2026-11-01 20:18:36.508410",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "b5iqibnlcc",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 20:18:37.059738",
+          "modified": "2026-11-01 20:18:37.059738"
+        },
+        {
+          "name": "b5idfadj2o",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 20:18:37.063359",
+          "modified": "2026-11-01 20:18:37.063359"
+        }
+      ]
+    },
+    {
+      "name": "de16ae3a-bc29-4325-a092-ac1e037253a7",
+      "threadId": "de16ae3a-bc29-4325-a092-ac1e037253a7",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 21:44:13.154920",
+      "modified": "2026-11-01 21:44:13.154920",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "tc8lgr22o3",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:44:18.496732",
+          "modified": "2026-11-01 21:44:18.496732"
+        },
+        {
+          "name": "tc8ve8gpic",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:44:18.497781",
+          "modified": "2026-11-01 21:44:18.497781"
+        },
+        {
+          "name": "tdvtl4e5q5",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 21:44:23.918350",
+          "modified": "2026-11-01 21:44:23.918350"
+        },
+        {
+          "name": "tdv7amkcr1",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 21:44:23.919301",
+          "modified": "2026-11-01 21:44:23.919301"
+        }
+      ]
+    },
+    {
+      "name": "22fe8255-8a68-4f6c-b005-81c89639349d",
+      "threadId": "22fe8255-8a68-4f6c-b005-81c89639349d",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 21:46:37.645131",
+      "modified": "2026-11-01 21:46:37.645131",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "upc8em5nlo",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:46:42.873972",
+          "modified": "2026-11-01 21:46:42.873972"
+        },
+        {
+          "name": "upcl2bfr23",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:46:42.875528",
+          "modified": "2026-11-01 21:46:42.875528"
+        },
+        {
+          "name": "ur38hhupou",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 21:46:48.359217",
+          "modified": "2026-11-01 21:46:48.359217"
+        },
+        {
+          "name": "ur3pfk07k1",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 21:46:48.361269",
+          "modified": "2026-11-01 21:46:48.361269"
+        }
+      ]
+    },
+    {
+      "name": "2383c06a-5271-48bb-9084-f9e22a839147",
+      "threadId": "2383c06a-5271-48bb-9084-f9e22a839147",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 21:51:14.246741",
+      "modified": "2026-11-01 21:51:14.246741",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "1fro0gg7gl",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:51:19.539143",
+          "modified": "2026-11-01 21:51:19.539143"
+        },
+        {
+          "name": "1frps5ru5u",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:51:19.540912",
+          "modified": "2026-11-01 21:51:19.540912"
+        },
+        {
+          "name": "1hi5vjngu1",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 21:51:25.093702",
+          "modified": "2026-11-01 21:51:25.093702"
+        },
+        {
+          "name": "1hili4gq3v",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 21:51:25.095830",
+          "modified": "2026-11-01 21:51:25.095830"
+        }
+      ]
+    },
+    {
+      "name": "ec49eeba-c37e-40df-8d23-5b1deeeeb11a",
+      "threadId": "ec49eeba-c37e-40df-8d23-5b1deeeeb11a",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 21:53:46.574478",
+      "modified": "2026-11-01 21:53:46.574478",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "2vfa52gvte",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:53:51.917993",
+          "modified": "2026-11-01 21:53:51.917993"
+        },
+        {
+          "name": "2vfi6mr9qq",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:53:51.921528",
+          "modified": "2026-11-01 21:53:51.921528"
+        },
+        {
+          "name": "316fffcrkv",
+          "idx": 3,
+          "role": "user",
+          "text": "Which policy source supports this rule? show the citation",
+          "creation": "2026-11-01 21:53:57.454563",
+          "modified": "2026-11-01 21:53:57.454563"
+        },
+        {
+          "name": "316u70p4rh",
+          "idx": 4,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the synthetic policy sets a minimum credit score and a fixed-obligation ceiling. These passages are fixture text, not live policy.",
+          "creation": "2026-11-01 21:53:57.455959",
+          "modified": "2026-11-01 21:53:57.455959"
+        }
+      ]
+    },
+    {
+      "name": "9555b134-cc71-4c94-adda-eead022d2fa8",
+      "threadId": "9555b134-cc71-4c94-adda-eead022d2fa8",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 21:56:50.089822",
+      "modified": "2026-11-01 21:56:50.089822",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "4na5l04bh3",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:56:50.673685",
+          "modified": "2026-11-01 21:56:50.673685"
+        },
+        {
+          "name": "4na9oe8uf9",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:56:50.677043",
+          "modified": "2026-11-01 21:56:50.677043"
+        }
+      ]
+    },
+    {
+      "name": "ff5a9465-3823-4e19-9a72-b151d18318b7",
+      "threadId": "ff5a9465-3823-4e19-9a72-b151d18318b7",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 21:56:55.948432",
+      "modified": "2026-11-01 21:56:55.948432",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "4p5qi33bu3",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:56:56.506106",
+          "modified": "2026-11-01 21:56:56.506106"
+        },
+        {
+          "name": "4p5pt90s4g",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:56:56.507213",
+          "modified": "2026-11-01 21:56:56.507213"
+        }
+      ]
+    },
+    {
+      "name": "a8256fe1-411f-4c9c-a162-52433515cc68",
+      "threadId": "a8256fe1-411f-4c9c-a162-52433515cc68",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 21:57:11.051470",
+      "modified": "2026-11-01 21:57:11.051470",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "4tsuli01v1",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:57:11.612161",
+          "modified": "2026-11-01 21:57:11.612161"
+        },
+        {
+          "name": "4ts1s8vkhc",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:57:11.613966",
+          "modified": "2026-11-01 21:57:11.613966"
+        }
+      ]
+    },
+    {
+      "name": "51796dc6-5432-4859-8468-d57b71db5bb2",
+      "threadId": "51796dc6-5432-4859-8468-d57b71db5bb2",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 21:57:26.013380",
+      "modified": "2026-11-01 21:57:26.013380",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "52h2jodqer",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:57:26.571523",
+          "modified": "2026-11-01 21:57:26.571523"
+        },
+        {
+          "name": "52hbqosfjb",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:57:26.572516",
+          "modified": "2026-11-01 21:57:26.572516"
+        }
+      ]
+    },
+    {
+      "name": "0c243c31-94b4-498f-b096-4cf26eac3e02",
+      "threadId": "0c243c31-94b4-498f-b096-4cf26eac3e02",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 21:57:40.827893",
+      "modified": "2026-11-01 21:57:40.827893",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "5750g7amdj",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:57:41.395180",
+          "modified": "2026-11-01 21:57:41.395180"
+        },
+        {
+          "name": "575uno3sfs",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:57:41.396276",
+          "modified": "2026-11-01 21:57:41.396276"
+        }
+      ]
+    },
+    {
+      "name": "b3195e67-bcd6-4062-836f-ec3834e01bee",
+      "threadId": "b3195e67-bcd6-4062-836f-ec3834e01bee",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 21:57:55.679916",
+      "modified": "2026-11-01 21:57:55.679916",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "5bq63hkh37",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 21:57:56.227740",
+          "modified": "2026-11-01 21:57:56.227740"
+        },
+        {
+          "name": "5bqfl7ru6m",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 21:57:56.229069",
+          "modified": "2026-11-01 21:57:56.229069"
+        }
+      ]
+    },
+    {
+      "name": "8a5ad05d-4eb2-49c2-9387-56e43b2e2433",
+      "threadId": "8a5ad05d-4eb2-49c2-9387-56e43b2e2433",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:07.982883",
+      "modified": "2026-11-01 22:07:07.982883",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "aodclkmnpg",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 22:07:08.565323",
+          "modified": "2026-11-01 22:07:08.565323"
+        },
+        {
+          "name": "aodk6ei7n9",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 22:07:08.566321",
+          "modified": "2026-11-01 22:07:08.566321"
+        }
+      ]
+    },
+    {
+      "name": "bcbdf39b-a2df-4821-976c-13a8f2754a1d",
+      "threadId": "bcbdf39b-a2df-4821-976c-13a8f2754a1d",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:10.253417",
+      "modified": "2026-11-01 22:07:10.253417",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "ap3mkhl82n",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 22:07:10.794317",
+          "modified": "2026-11-01 22:07:10.794317"
+        },
+        {
+          "name": "ap3c0qqoe0",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 22:07:10.795274",
+          "modified": "2026-11-01 22:07:10.795274"
+        }
+      ]
+    },
+    {
+      "name": "3db52ee2-bbdf-4f12-a76e-fd9f87d2cd17",
+      "threadId": "3db52ee2-bbdf-4f12-a76e-fd9f87d2cd17",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:12.413678",
+      "modified": "2026-11-01 22:07:12.413678",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "app1a2ecg2",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 22:07:12.949593",
+          "modified": "2026-11-01 22:07:12.949593"
+        },
+        {
+          "name": "app1692ebs",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 22:07:12.951832",
+          "modified": "2026-11-01 22:07:12.951832"
+        }
+      ]
+    },
+    {
+      "name": "a71c83fa-89ce-449d-b2b4-1a748940f4fa",
+      "threadId": "a71c83fa-89ce-449d-b2b4-1a748940f4fa",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:14.529930",
+      "modified": "2026-11-01 22:07:14.529930",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "aqehm0tefc",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 22:07:15.082198",
+          "modified": "2026-11-01 22:07:15.082198"
+        },
+        {
+          "name": "aqesggmavf",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 22:07:15.083167",
+          "modified": "2026-11-01 22:07:15.083167"
+        }
+      ]
+    },
+    {
+      "name": "8ff5b35f-98d0-449c-b5d1-10f93d4f8a53",
+      "threadId": "8ff5b35f-98d0-449c-b5d1-10f93d4f8a53",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What information is missing from my application?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:16.679534",
+      "modified": "2026-11-01 22:07:16.679534",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "ar4b3puar0",
+          "idx": 1,
+          "role": "user",
+          "text": "What information is missing from my application?",
+          "creation": "2026-11-01 22:07:17.224768",
+          "modified": "2026-11-01 22:07:17.224768"
+        },
+        {
+          "name": "ar4u5ltp4e",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: your application is paused because a few details are still needed before the checks can run. The recorded decision below has not changed.",
+          "creation": "2026-11-01 22:07:17.226282",
+          "modified": "2026-11-01 22:07:17.226282"
+        }
+      ]
+    },
+    {
+      "name": "7c7315e7-259f-486a-a04d-bea4245c3e14",
+      "threadId": "7c7315e7-259f-486a-a04d-bea4245c3e14",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a malformed payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:18.695889",
+      "modified": "2026-11-01 22:07:18.695889",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "arn6bv19uq",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a malformed payload.",
+          "creation": "2026-11-01 22:07:19.170765",
+          "modified": "2026-11-01 22:07:19.170765"
+        },
+        {
+          "name": "arn4pheg87",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries a deliberately malformed state payload; the island must drop it safely.",
+          "creation": "2026-11-01 22:07:19.171863",
+          "modified": "2026-11-01 22:07:19.171863"
+        }
+      ]
+    },
+    {
+      "name": "9b4a80b9-1956-4658-abff-21d69e83d6de",
+      "threadId": "9b4a80b9-1956-4658-abff-21d69e83d6de",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render an unknown component payload.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:20.612551",
+      "modified": "2026-11-01 22:07:20.612551",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "asa87dm62a",
+          "idx": 1,
+          "role": "user",
+          "text": "Render an unknown component payload.",
+          "creation": "2026-11-01 22:07:21.081101",
+          "modified": "2026-11-01 22:07:21.081101"
+        },
+        {
+          "name": "asalk06ikk",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn adds unsupported component channels; only the approved catalogue may render.",
+          "creation": "2026-11-01 22:07:21.082173",
+          "modified": "2026-11-01 22:07:21.082173"
+        }
+      ]
+    },
+    {
+      "name": "7f31ae98-2fd5-4aef-8b8a-fd4ad5f31d86",
+      "threadId": "7f31ae98-2fd5-4aef-8b8a-fd4ad5f31d86",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Render a payload where required fields are absent.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:22.545707",
+      "modified": "2026-11-01 22:07:22.545707",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "asu194niu4",
+          "idx": 1,
+          "role": "user",
+          "text": "Render a payload where required fields are absent.",
+          "creation": "2026-11-01 22:07:23.020717",
+          "modified": "2026-11-01 22:07:23.020717"
+        },
+        {
+          "name": "asucsplgo7",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: the list arrived without usable field names, so nothing is shown.",
+          "creation": "2026-11-01 22:07:23.022676",
+          "modified": "2026-11-01 22:07:23.022676"
+        }
+      ]
+    },
+    {
+      "name": "dd55faf0-60b7-461d-a522-b2c2c1888321",
+      "threadId": "dd55faf0-60b7-461d-a522-b2c2c1888321",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Confirm there is no missing information.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:24.527511",
+      "modified": "2026-11-01 22:07:24.527511",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "ati128pmaf",
+          "idx": 1,
+          "role": "user",
+          "text": "Confirm there is no missing information.",
+          "creation": "2026-11-01 22:07:25.014006",
+          "modified": "2026-11-01 22:07:25.014006"
+        },
+        {
+          "name": "ati4v11dju",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: nothing is outstanding on this application right now.",
+          "creation": "2026-11-01 22:07:25.015138",
+          "modified": "2026-11-01 22:07:25.015138"
+        }
+      ]
+    },
+    {
+      "name": "db4ac040-4e29-4452-92c9-b9c38ae2a97a",
+      "threadId": "db4ac040-4e29-4452-92c9-b9c38ae2a97a",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Answer without a missing information state.",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:26.512981",
+      "modified": "2026-11-01 22:07:26.512981",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [],
+      "messages": [
+        {
+          "name": "au569dhs4f",
+          "idx": 1,
+          "role": "user",
+          "text": "Answer without a missing information state.",
+          "creation": "2026-11-01 22:07:26.985540",
+          "modified": "2026-11-01 22:07:26.985540"
+        },
+        {
+          "name": "au5uacjp0a",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Acceptance fixture response: this turn carries no missing-information field at all.",
+          "creation": "2026-11-01 22:07:26.986981",
+          "modified": "2026-11-01 22:07:26.986981"
+        }
+      ]
+    },
+    {
+      "name": "a25e662e-a08f-40f8-aa8e-61e3310c6eed",
+      "threadId": "a25e662e-a08f-40f8-aa8e-61e3310c6eed",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": null,
+      "turnCount": 0,
+      "status": "Open",
+      "creation": "2026-11-01 22:07:28.454914",
+      "modified": "2026-11-01 22:07:28.454914",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 0,
+      "userMessages": 0,
+      "unattributedPrompts": [],
+      "messages": []
+    }
+  ],
+  "ambiguous": [
+    {
+      "name": "a7312e71-7d97-4a3e-b8fc-0f3e72c28d54",
+      "threadId": "a7312e71-7d97-4a3e-b8fc-0f3e72c28d54",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 3,
+      "status": "Open",
+      "creation": "2026-11-01 17:02:45.473697",
+      "modified": "2026-11-01 17:02:45.473697",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 6,
+      "userMessages": 3,
+      "unattributedPrompts": [
+        "What does the lending policy say about the minimum credit score?",
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "odv2spoc41",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:02:47.991074",
+          "modified": "2026-11-01 17:02:47.991074"
+        },
+        {
+          "name": "odvouk1qul",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – your fixed‑obligation‑to‑income ratio is **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your credit score is **640**, while the minimum required is **700**. A credit score (300‑900) shows how well you have repaid past loans and credit cards. The other checks – your monthly income of **₹40,000** and your time in the current job of **18 months** – met the required criteria. I can show you what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:02:47.992316",
+          "modified": "2026-11-01 17:02:47.992316"
+        },
+        {
+          "name": "ogf6nqav37",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:02:55.923314",
+          "modified": "2026-11-01 17:02:55.923314"
+        },
+        {
+          "name": "ogftni8cqm",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the synthetic prototype policy (synthetic‑v1); your original application and its rejection remain unchanged. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - With a monthly income of **₹90,000** (required ≥ ₹40,000), the income check would be met. - With monthly obligations of **₹5,000**, the FOIR (fixed‑obligation‑to‑income ratio) would be **5.6 %**, which is below the maximum 45 % and would meet that check. - With an employment tenure of **60 months** (required ≥ 18 months), the job‑tenure check would be met. Thus, under the synthetic prototype policy, the changed numbers would meet all four synthetic thresholds, but this is only a hypothetical scenario and not a new decision or guarantee.",
+          "creation": "2026-11-01 17:02:55.924997",
+          "modified": "2026-11-01 17:02:55.924997"
+        },
+        {
+          "name": "ogt4a9p73p",
+          "idx": 5,
+          "role": "user",
+          "text": "What does the lending policy say about the minimum credit score?",
+          "creation": "2026-11-01 17:02:57.397766",
+          "modified": "2026-11-01 17:02:57.397766"
+        },
+        {
+          "name": "ogtrod6g6n",
+          "idx": 6,
+          "role": "assistant",
+          "text": "I couldn't find this in the approved policy sources I can cite, so I won't guess. You could ask the lender directly or raise it through its grievance channel.",
+          "creation": "2026-11-01 17:02:57.399405",
+          "modified": "2026-11-01 17:02:57.399405"
+        }
+      ]
+    },
+    {
+      "name": "50efefaa-fa5e-42b0-ae7a-5a1812aa1a38",
+      "threadId": "50efefaa-fa5e-42b0-ae7a-5a1812aa1a38",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 3,
+      "status": "Open",
+      "creation": "2026-11-01 17:17:38.676585",
+      "modified": "2026-11-01 17:17:38.676585",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 6,
+      "userMessages": 3,
+      "unattributedPrompts": [
+        "What does the lending policy say about the minimum credit score?",
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "14ugqldhiu",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:17:40.622874",
+          "modified": "2026-11-01 17:17:40.622874"
+        },
+        {
+          "name": "14ur9c1hh8",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – your fixed‑obligation‑to‑income ratio is **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your credit score is **640**, while the minimum required is **700**. A credit score (300‑900) shows how well you have repaid past loans and credit cards. The other checks – your monthly income of **₹40,000** and your employment tenure of **18 months** – met the required criteria. I can show you what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:17:40.624802",
+          "modified": "2026-11-01 17:17:40.624802"
+        },
+        {
+          "name": "15t0v1cg3c",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:17:43.700342",
+          "modified": "2026-11-01 17:17:43.700342"
+        },
+        {
+          "name": "15tciecfbm",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the synthetic prototype policy (synthetic‑v1); your original application and its rejection remain unchanged. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - A monthly income of **₹90,000** (required ≥ ₹40,000) would continue to meet the income check. - Monthly obligations of **₹5,000** give a FOIR of **5.6 %** (required ≤ 45 %), so the FOIR check would be met. - An employment tenure of **60 months** (required ≥ 18 months) would meet the job‑tenure check. - Under these hypothetical numbers, all four synthetic thresholds would be satisfied, but this does not constitute a loan decision or guarantee.",
+          "creation": "2026-11-01 17:17:43.702656",
+          "modified": "2026-11-01 17:17:43.702656"
+        },
+        {
+          "name": "16ou64n4j5",
+          "idx": 5,
+          "role": "user",
+          "text": "What does the lending policy say about the minimum credit score?",
+          "creation": "2026-11-01 17:17:46.424488",
+          "modified": "2026-11-01 17:17:46.424488"
+        },
+        {
+          "name": "16ohk24l4o",
+          "idx": 6,
+          "role": "assistant",
+          "text": "Bajaj Finance states that a CIBIL (credit) score of 650 or higher is required for a personal loan; scores below 650 do not meet the minimum eligibility.",
+          "creation": "2026-11-01 17:17:46.425962",
+          "modified": "2026-11-01 17:17:46.425962"
+        }
+      ]
+    },
+    {
+      "name": "32195ac4-c62f-4bda-a4b0-fec72b152482",
+      "threadId": "32195ac4-c62f-4bda-a4b0-fec72b152482",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 17:17:47.733771",
+      "modified": "2026-11-01 17:17:47.733771",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "17qq9rvht4",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:17:49.837578",
+          "modified": "2026-11-01 17:17:49.837578"
+        },
+        {
+          "name": "17quic6gb4",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – your fixed‑obligation‑to‑income ratio is **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your credit score is **640**, while the minimum required is **700**. A credit score (300‑900) shows how well you have repaid past loans and credit cards. The other checks – your monthly income of **₹40,000** and your time in the current job of **18 months** – met the required criteria. I can show you exactly what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:17:49.838749",
+          "modified": "2026-11-01 17:17:49.838749"
+        },
+        {
+          "name": "18o7qr4pfd",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:17:52.886592",
+          "modified": "2026-11-01 17:17:52.886592"
+        },
+        {
+          "name": "18oog8n9cv",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the synthetic prototype policy (synthetic‑v1); your original application and its rejection remain unchanged. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - A monthly income of **₹90,000** (required ≥ ₹40,000) would continue to meet the income check. - Monthly obligations of **₹5,000** give a FOIR of **5.6 %** (required ≤ 45 %), so the FOIR check would be met. - An employment tenure of **60 months** (required ≥ 18 months) would meet the job‑tenure check. - Under these hypothetical numbers, all four synthetic thresholds would be satisfied, but this does not constitute a loan decision or guarantee.",
+          "creation": "2026-11-01 17:17:52.887689",
+          "modified": "2026-11-01 17:17:52.887689"
+        }
+      ]
+    },
+    {
+      "name": "61a0ed1a-c593-4d7f-8552-d2655b3ea9b1",
+      "threadId": "61a0ed1a-c593-4d7f-8552-d2655b3ea9b1",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 17:17:54.464094",
+      "modified": "2026-11-01 17:17:54.464094",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "19u9aimgjn",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:17:56.621554",
+          "modified": "2026-11-01 17:17:56.621554"
+        },
+        {
+          "name": "19u81jdct1",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – the fixed‑obligation‑to‑income ratio was **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your credit score was **640**, while the minimum required is **700**. A credit score (300‑900) shows how well you have repaid past loans and credit cards. The other checks were met: your monthly income of **₹40,000** satisfied the income requirement, and your **18 months** in the current job satisfied the employment‑tenure requirement. I can show you exactly what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:17:56.622792",
+          "modified": "2026-11-01 17:17:56.622792"
+        },
+        {
+          "name": "1cgt58u6uc",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:18:04.843554",
+          "modified": "2026-11-01 17:18:04.843554"
+        },
+        {
+          "name": "1cgt5o776h",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the synthetic prototype policy (synthetic‑v1); your original application and its rejection remain unchanged. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - With a monthly income of **₹90,000** (required ≥ ₹40,000), the income check would be met. - With monthly obligations of **₹5,000**, the FOIR (fixed‑obligation‑to‑income ratio) would be **5.6 %**, which is below the maximum 45 % and would meet that check. - With an employment tenure of **60 months** (required ≥ 18 months), the job‑tenure check would be met. Thus, under the synthetic prototype policy, the changed numbers would meet all four synthetic thresholds, but this is only a hypothetical scenario and not a new decision or guarantee.",
+          "creation": "2026-11-01 17:18:04.844866",
+          "modified": "2026-11-01 17:18:04.844866"
+        }
+      ]
+    },
+    {
+      "name": "09425872-27f6-4bc6-98c7-f1efda9099ff",
+      "threadId": "09425872-27f6-4bc6-98c7-f1efda9099ff",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 3,
+      "status": "Open",
+      "creation": "2026-11-01 17:18:06.211908",
+      "modified": "2026-11-01 17:18:06.211908",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 6,
+      "userMessages": 3,
+      "unattributedPrompts": [
+        "What does the lending policy say about the minimum credit score?",
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "1guulepmv5",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:18:19.054010",
+          "modified": "2026-11-01 17:18:19.054010"
+        },
+        {
+          "name": "1gu8231mt7",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – your fixed‑obligation‑to‑income ratio is **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your credit score is **640**, while the minimum required is **700**. A credit score (300‑900) shows how well you have repaid past loans and credit cards. The other checks – your monthly income of **₹40,000** and your time in the current job of **18 months** – met the required criteria. I can show you exactly what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:18:19.055059",
+          "modified": "2026-11-01 17:18:19.055059"
+        },
+        {
+          "name": "1l2ob5cudm",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:18:32.297652",
+          "modified": "2026-11-01 17:18:32.297652"
+        },
+        {
+          "name": "1l2vlqbi1v",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- Under the synthetic prototype policy (team assumptions, not a real lender’s policy), the hypothetical numbers would meet all four checks. - Monthly income ₹90,000 → passes the income threshold (already passed). - Fixed‑obligation‑to‑income ratio (FOIR) 5.6% → meets the maximum 45% limit. - Credit score 800 → exceeds the required minimum of 700. - Employment tenure 60 months → satisfies the job‑tenure requirement (already passed). This is a simulation only; the original application and its recorded decision remain unchanged and this is not a guarantee of any future outcome.",
+          "creation": "2026-11-01 17:18:32.299750",
+          "modified": "2026-11-01 17:18:32.299750"
+        },
+        {
+          "name": "1qe6cvvc2i",
+          "idx": 5,
+          "role": "user",
+          "text": "What does the lending policy say about the minimum credit score?",
+          "creation": "2026-11-01 17:18:49.429623",
+          "modified": "2026-11-01 17:18:49.429623"
+        },
+        {
+          "name": "1qeuhpug2p",
+          "idx": 6,
+          "role": "assistant",
+          "text": "The advisory service is busy right now, so I couldn't check the policy sources in time and I won't guess. Please ask again in a moment.",
+          "creation": "2026-11-01 17:18:49.430668",
+          "modified": "2026-11-01 17:18:49.430668"
+        }
+      ]
+    },
+    {
+      "name": "f9106d66-980f-4756-837c-0be82f70a819",
+      "threadId": "f9106d66-980f-4756-837c-0be82f70a819",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "What does the lending policy say about the minimum credit score?",
+      "turnCount": 1,
+      "status": "Open",
+      "creation": "2026-11-01 17:22:10.064367",
+      "modified": "2026-11-01 17:22:10.064367",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 2,
+      "userMessages": 1,
+      "unattributedPrompts": [
+        "What does the lending policy say about the minimum credit score?"
+      ],
+      "messages": [
+        {
+          "name": "3pt3un6aj9",
+          "idx": 1,
+          "role": "user",
+          "text": "What does the lending policy say about the minimum credit score?",
+          "creation": "2026-11-01 17:22:12.538908",
+          "modified": "2026-11-01 17:22:12.538908"
+        },
+        {
+          "name": "3ptuf728d8",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Bajaj Finance states that a minimum CIBIL (credit) score of 650 is required for a personal loan; scores below 650 do not meet the eligibility criteria.",
+          "creation": "2026-11-01 17:22:12.540239",
+          "modified": "2026-11-01 17:22:12.540239"
+        }
+      ]
+    },
+    {
+      "name": "3a4212bd-35d0-4d5e-aabe-8232d39f0f11",
+      "threadId": "3a4212bd-35d0-4d5e-aabe-8232d39f0f11",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 4,
+      "status": "Open",
+      "creation": "2026-11-01 17:24:29.190100",
+      "modified": "2026-11-01 17:24:29.190100",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 8,
+      "userMessages": 4,
+      "unattributedPrompts": [
+        "I want to speak to a human advisor about this decision.",
+        "What does the lending policy say about the minimum credit score?",
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "55c7eeshn0",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:24:31.661843",
+          "modified": "2026-11-01 17:24:31.661843"
+        },
+        {
+          "name": "55c8hlm7qh",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – your fixed‑obligation‑to‑income ratio is **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your credit score is **640**, while the minimum required is **700**. A credit score (300‑900) shows how well you have repaid past loans and credit cards. The other checks – your monthly income of **₹40,000** and your time in the current job of **18 months** – met the required criteria. I can show you exactly what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:24:31.663077",
+          "modified": "2026-11-01 17:24:31.663077"
+        },
+        {
+          "name": "56arefjjeo",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:24:34.647056",
+          "modified": "2026-11-01 17:24:34.647056"
+        },
+        {
+          "name": "56a59ar25h",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the synthetic prototype policy (synthetic‑v1); your original application and its rejection remain unchanged. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - With a monthly income of **₹90,000** (required ≥ ₹40,000), the income check would be met. - With monthly obligations of **₹5,000**, the FOIR (fixed‑obligation‑to‑income ratio) would be **5.6 %**, which is below the maximum 45 % and would meet that check. - With an employment tenure of **60 months** (required ≥ 18 months), the job‑tenure check would be met. Thus, under the synthetic prototype policy, the changed numbers would meet all four synthetic thresholds, but this is only a hypothetical scenario and not a new decision or guarantee.",
+          "creation": "2026-11-01 17:24:34.648829",
+          "modified": "2026-11-01 17:24:34.648829"
+        },
+        {
+          "name": "575ffvk0vj",
+          "idx": 5,
+          "role": "user",
+          "text": "What does the lending policy say about the minimum credit score?",
+          "creation": "2026-11-01 17:24:37.312220",
+          "modified": "2026-11-01 17:24:37.312220"
+        },
+        {
+          "name": "575gb5aaph",
+          "idx": 6,
+          "role": "assistant",
+          "text": "Bajaj Finance states that a CIBIL (credit) score of 650 or higher is required for a personal loan; scores below 650 do not meet the minimum eligibility.",
+          "creation": "2026-11-01 17:24:37.313862",
+          "modified": "2026-11-01 17:24:37.313862"
+        },
+        {
+          "name": "580fpf9069",
+          "idx": 7,
+          "role": "user",
+          "text": "I want to speak to a human advisor about this decision.",
+          "creation": "2026-11-01 17:24:40.008844",
+          "modified": "2026-11-01 17:24:40.008844"
+        },
+        {
+          "name": "580dl055ts",
+          "idx": 8,
+          "role": "assistant",
+          "text": "You can contact Bajaj Finance’s service team through the digital channels mentioned in the Citizen’s Charter, such as the Bajaj Finserv App, the customer portal, or the dedicated service email. If you’re not satisfied with the response, you can raise a request, reopen it, and request escalation to the grievance redressal officer or the nodal officer, which will connect you with a human representative.",
+          "creation": "2026-11-01 17:24:40.010915",
+          "modified": "2026-11-01 17:24:40.010915"
+        }
+      ]
+    },
+    {
+      "name": "687b1de9-f6ce-4c14-a323-bdf1e38c5318",
+      "threadId": "687b1de9-f6ce-4c14-a323-bdf1e38c5318",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 4,
+      "status": "Open",
+      "creation": "2026-11-01 17:27:58.085833",
+      "modified": "2026-11-01 17:27:58.085833",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 8,
+      "userMessages": 4,
+      "unattributedPrompts": [
+        "The income recorded on my application is wrong. I want to dispute it.",
+        "What does the lending policy say about the minimum credit score?",
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "76h3k4963f",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:28:00.103871",
+          "modified": "2026-11-01 17:28:00.103871"
+        },
+        {
+          "name": "76h905akjk",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – your fixed‑obligation‑to‑income ratio is **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your credit score is **640**, while the minimum required is **700**. A credit score (300‑900) shows how well you have repaid past loans and credit cards. The other checks – your monthly income of **₹40,000** and your employment tenure of **18 months** – met the required criteria. I can show you what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:28:00.105655",
+          "modified": "2026-11-01 17:28:00.105655"
+        },
+        {
+          "name": "77b4ug8f2e",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:28:02.763185",
+          "modified": "2026-11-01 17:28:02.763185"
+        },
+        {
+          "name": "77bicvfmue",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the synthetic prototype policy (synthetic‑v1); your original application and its rejection remain unchanged. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - With a monthly income of **₹90,000** (required ≥ ₹40,000), the income check would be met. - With monthly obligations of **₹5,000**, the FOIR (fixed‑obligation‑to‑income ratio) would be **5.6 %**, which is below the maximum 45 % and would meet that check. - With an employment tenure of **60 months** (required ≥ 18 months), the job‑tenure check would be met. Thus, under the synthetic prototype policy, the changed numbers would meet all four synthetic thresholds, but this is only a hypothetical scenario and not a new decision or guarantee.",
+          "creation": "2026-11-01 17:28:02.764204",
+          "modified": "2026-11-01 17:28:02.764204"
+        },
+        {
+          "name": "789hnht5qj",
+          "idx": 5,
+          "role": "user",
+          "text": "What does the lending policy say about the minimum credit score?",
+          "creation": "2026-11-01 17:28:05.707051",
+          "modified": "2026-11-01 17:28:05.707051"
+        },
+        {
+          "name": "789mlflt73",
+          "idx": 6,
+          "role": "assistant",
+          "text": "Bajaj Finance states that a minimum CIBIL (credit) score of 650 is required for a personal loan; scores below 650 do not meet the eligibility criteria.",
+          "creation": "2026-11-01 17:28:05.709186",
+          "modified": "2026-11-01 17:28:05.709186"
+        },
+        {
+          "name": "78bq0vc1e1",
+          "idx": 7,
+          "role": "user",
+          "text": "The income recorded on my application is wrong. I want to dispute it.",
+          "creation": "2026-11-01 17:28:05.954448",
+          "modified": "2026-11-01 17:28:05.954448"
+        },
+        {
+          "name": "78bj3g1mtv",
+          "idx": 8,
+          "role": "assistant",
+          "text": "I've passed this to a human reviewer so they can check the recorded information (reference HO-6f9e8bd07f). I can't change the record myself. Meanwhile I can explain the recorded reasons or run a what-if.",
+          "creation": "2026-11-01 17:28:05.955812",
+          "modified": "2026-11-01 17:28:05.955812"
+        }
+      ]
+    },
+    {
+      "name": "19304e10-75b6-4d55-802b-ef22d5c0291b",
+      "threadId": "19304e10-75b6-4d55-802b-ef22d5c0291b",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 17:28:07.362700",
+      "modified": "2026-11-01 17:28:07.362700",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "79fspc7d6g",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:28:09.513082",
+          "modified": "2026-11-01 17:28:09.513082"
+        },
+        {
+          "name": "79fpmcijgu",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds (these are team assumptions used only for this demo, not a real lender’s rules): - **Existing EMIs vs income (FOIR)** – the fixed‑obligation‑to‑income ratio was **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your score was **640**, while the minimum required is **700**. A credit score (300‑900) reflects how well you have repaid past loans and credit cards. The other checks (monthly income of ₹40,000 and 18 months in your current job) met the requirements. I can show you what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:28:09.514486",
+          "modified": "2026-11-01 17:28:09.514486"
+        },
+        {
+          "name": "7adje2cg47",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:28:12.582427",
+          "modified": "2026-11-01 17:28:12.582427"
+        },
+        {
+          "name": "7adkom804p",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the synthetic prototype policy (synthetic‑v1); your original application and its rejection remain unchanged. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - A monthly income of **₹90,000** (required ≥ ₹40,000) would continue to meet the income check. - Monthly obligations of **₹5,000** give a FOIR of **5.6 %** (required ≤ 45 %), so the FOIR check would be met. - An employment tenure of **60 months** (required ≥ 18 months) would meet the job‑tenure check. - Under these hypothetical numbers, all four synthetic thresholds would be satisfied, but this does not constitute a loan decision or guarantee.",
+          "creation": "2026-11-01 17:28:12.583461",
+          "modified": "2026-11-01 17:28:12.583461"
+        }
+      ]
+    },
+    {
+      "name": "7d92c7c5-4ef1-4b61-bda8-d70a87e00492",
+      "threadId": "7d92c7c5-4ef1-4b61-bda8-d70a87e00492",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 17:28:14.294194",
+      "modified": "2026-11-01 17:28:14.294194",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "7cc4tirof1",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:28:18.816602",
+          "modified": "2026-11-01 17:28:18.816602"
+        },
+        {
+          "name": "7cctvas4d1",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds (these are team assumptions used only for this demo, not a real lender’s rules): - **Existing EMIs vs income (FOIR)** – the fixed‑obligation‑to‑income ratio was **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your score was **640**, while the minimum required is **700**. A credit score (300‑900) reflects how well you have repaid past loans and credit cards. The other checks (monthly income of ₹40,000 and 18 months in your current job) met the requirements. I can show you exactly what would need to change to meet these checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:28:18.817739",
+          "modified": "2026-11-01 17:28:18.817739"
+        },
+        {
+          "name": "7hnc7a7q6o",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:28:35.993057",
+          "modified": "2026-11-01 17:28:35.993057"
+        },
+        {
+          "name": "7hnvfec559",
+          "idx": 4,
+          "role": "assistant",
+          "text": "What-if only (your application and decision are unchanged), under the synthetic prototype policy (synthetic-v1) — the four thresholds are team assumptions, not any real lender's policy: - Monthly income: PASS - Existing EMIs vs income (FOIR): PASS - Credit score: PASS - Time in current job: PASS With these numbers the simulation passes all checks. This is not a decision or a guarantee.",
+          "creation": "2026-11-01 17:28:35.994161",
+          "modified": "2026-11-01 17:28:35.994161"
+        }
+      ]
+    },
+    {
+      "name": "d1e7447f-df5d-45d0-93d4-2b0ae621bcc5",
+      "threadId": "d1e7447f-df5d-45d0-93d4-2b0ae621bcc5",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 3,
+      "status": "Open",
+      "creation": "2026-11-01 17:28:37.424612",
+      "modified": "2026-11-01 17:28:37.424612",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 6,
+      "userMessages": 3,
+      "unattributedPrompts": [
+        "What does the lending policy say about the minimum credit score?",
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "7iqm11hjt8",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:28:39.462395",
+          "modified": "2026-11-01 17:28:39.462395"
+        },
+        {
+          "name": "7iqt1a0sc8",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds (these are team assumptions used only for this demo, not a real lender’s rules): - **Existing EMIs vs income (FOIR)** – the fixed‑obligation‑to‑income ratio was **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your score was **640**, while the minimum required is **700**. A credit score (300‑900) reflects how well you have repaid past loans and credit cards. The other checks (monthly income of ₹40,000 and 18 months in your current job) met the requirements. I can show you what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:28:39.463675",
+          "modified": "2026-11-01 17:28:39.463675"
+        },
+        {
+          "name": "7kjvk01i3j",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:28:45.131885",
+          "modified": "2026-11-01 17:28:45.131885"
+        },
+        {
+          "name": "7kjimlf96k",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the synthetic prototype policy (synthetic‑v1); your original application and its rejection remain unchanged. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - A monthly income of **₹90,000** (required ≥ ₹40,000) would continue to meet the income check. - Monthly obligations of **₹5,000** give a FOIR of **5.6 %** (required ≤ 45 %), so the FOIR check would be met. - An employment tenure of **60 months** (required ≥ 18 months) would meet the job‑tenure check. - Under these hypothetical numbers, all four synthetic thresholds would be satisfied, but this does not constitute a loan decision or guarantee.",
+          "creation": "2026-11-01 17:28:45.148833",
+          "modified": "2026-11-01 17:28:45.148833"
+        },
+        {
+          "name": "7n66l6cq0o",
+          "idx": 5,
+          "role": "user",
+          "text": "What does the lending policy say about the minimum credit score?",
+          "creation": "2026-11-01 17:28:53.468310",
+          "modified": "2026-11-01 17:28:53.468310"
+        },
+        {
+          "name": "7n6l1lf698",
+          "idx": 6,
+          "role": "assistant",
+          "text": "Bajaj Finance states that a minimum CIBIL (credit) score of 650 is required for a personal loan; scores below 650 do not meet the eligibility criteria.",
+          "creation": "2026-11-01 17:28:53.469530",
+          "modified": "2026-11-01 17:28:53.469530"
+        }
+      ]
+    },
+    {
+      "name": "62f90615-0fa3-40c2-816d-dda822650b76",
+      "threadId": "62f90615-0fa3-40c2-816d-dda822650b76",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 17:33:53.526248",
+      "modified": "2026-11-01 17:33:53.526248",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "alno8jcidk",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:33:55.904686",
+          "modified": "2026-11-01 17:33:55.904686"
+        },
+        {
+          "name": "aln48q7bp4",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – your fixed‑obligation‑to‑income ratio is **55.0%**, but it must be **at most 45.0%**. FOIR measures the part of your monthly income already going to loan EMIs and other fixed payments. - **Credit score** – your credit score is **640**, while the minimum required is **700**. A credit score (300‑900) shows how well you have repaid past loans and credit cards. The other checks – your monthly income of **₹40,000** and your time in the current job of **18 months** – met the required criteria. I can show you exactly what would need to change for the loan to meet the checks, or answer any other questions you have.",
+          "creation": "2026-11-01 17:33:55.906173",
+          "modified": "2026-11-01 17:33:55.906173"
+        },
+        {
+          "name": "amnbmgodl3",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:33:59.143088",
+          "modified": "2026-11-01 17:33:59.143088"
+        },
+        {
+          "name": "amn5fe4bes",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the **synthetic prototype policy (synthetic‑v1)**; your original application and its rejection remain unchanged, and this is not a guarantee or a new decision. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - With a monthly income of **₹90,000** (required ≥ ₹40,000), the income check would be met. - With monthly obligations of **₹5,000**, the FOIR (fixed‑obligation‑to‑income ratio) would be **5.6 %** (required ≤ 45 %), so that check would be met. - With an employment tenure of **60 months** (required ≥ 18 months), the job‑tenure check would be met. In this hypothetical scenario, all four synthetic thresholds would be satisfied.",
+          "creation": "2026-11-01 17:33:59.144417",
+          "modified": "2026-11-01 17:33:59.144417"
+        }
+      ]
+    },
+    {
+      "name": "b8fa2a5f-1aa4-460b-8859-cd54a8d6c3bd",
+      "threadId": "b8fa2a5f-1aa4-460b-8859-cd54a8d6c3bd",
+      "user": "review.demo@example.invalid",
+      "customer": "Review Demo Borrower",
+      "application": "ACC-LOAP-2026-00018",
+      "title": "Why was my loan rejected?",
+      "turnCount": 2,
+      "status": "Open",
+      "creation": "2026-11-01 17:34:00.584069",
+      "modified": "2026-11-01 17:34:00.584069",
+      "owner": "review.demo@example.invalid",
+      "messageCount": 4,
+      "userMessages": 2,
+      "unattributedPrompts": [
+        "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?"
+      ],
+      "messages": [
+        {
+          "name": "anrpv58vg6",
+          "idx": 1,
+          "role": "user",
+          "text": "Why was my loan rejected?",
+          "creation": "2026-11-01 17:34:02.710152",
+          "modified": "2026-11-01 17:34:02.710152"
+        },
+        {
+          "name": "anr1ff5j7r",
+          "idx": 2,
+          "role": "assistant",
+          "text": "Your loan was rejected because two checks did not meet the synthetic prototype policy thresholds: - **Existing EMIs vs income (FOIR)** – your fixed‑obligation‑to‑income ratio is **55.0%**, but it must be **at most 45.0%**. - **Credit score** – your score is **640**, while the minimum required is **700**. The other checks (monthly income of ₹40,000 and 18 months in your current job) were met. I can show you exactly what would need to change to meet the policy, or answer any other questions you have.",
+          "creation": "2026-11-01 17:34:02.711291",
+          "modified": "2026-11-01 17:34:02.711291"
+        },
+        {
+          "name": "aoqg8ktfdl",
+          "idx": 3,
+          "role": "user",
+          "text": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+          "creation": "2026-11-01 17:34:05.835039",
+          "modified": "2026-11-01 17:34:05.835039"
+        },
+        {
+          "name": "aoqdelbdqs",
+          "idx": 4,
+          "role": "assistant",
+          "text": "- This is a simulation using the **synthetic prototype policy (synthetic‑v1)**; your original application and its rejection remain unchanged and this is not a guarantee of any future decision. - With a credit score of **800** (required ≥ 700), the credit‑score check would be met. - With a monthly income of **₹90,000** (required ≥ ₹40,000), the income check would be met. - With monthly obligations of **₹5,000**, the FOIR (fixed‑obligation‑to‑income ratio) would be **5.6 %**, which is below the maximum **45 %**, so the FOIR check would be met. - With an employment tenure of **60 months** (required ≥ 18 months), the employment‑tenure check would be met. In this hypothetical scenario, all four synthetic thresholds would be satisfied.",
+          "creation": "2026-11-01 17:34:05.836140",
+          "modified": "2026-11-01 17:34:05.836140"
+        }
+      ]
+    }
+  ],
+  "syntheticDigest": "80e52d4f852876d6f2d016d7f0f22a1146ef71fdd05c588ad0f0d72e9285eed6",
+  "inScopeIds": [
+    "verify-1793532354",
+    "verify-1793532365",
+    "07131983-3a13-4cff-a87b-d8e603ed580b",
+    "verify-cite-1793533903",
+    "12afca65-ce70-4126-a6d6-750fe89e5111",
+    "221aadd9-b9de-45ee-9af6-b3e033d274d3",
+    "4f48606d-f64f-46a8-8c88-72ec2713071e",
+    "aac06ae1-23fc-4ae3-bccc-f101066e68cb",
+    "429dc363-d6d3-4101-a24c-99fff8495e14",
+    "a8f5b502-d284-4c6f-80ff-eb4fdf5a6fee",
+    "cf226de9-c3a6-4d67-a2dc-52ea139595b9",
+    "b1127307-10ff-4b5b-a380-679265010c5f",
+    "cac530e1-ce3d-4a87-a365-b0f400b3a40d",
+    "f2f2cb8b-3f52-4022-847c-bd5d61afe9ad",
+    "020b05b4-4b4b-4387-b7cd-2ebbc59d534d",
+    "899eb1a5-de0d-44fb-a645-75609411052f",
+    "d32ad02f-0efa-4a18-bc54-4f19f8177a81",
+    "a8b9a669-19dc-4986-a2b9-4d1bc64630b0",
+    "56fe002d-cc92-4d6d-86a2-ef646a6497d8",
+    "b2805368-6c83-40a1-909a-7aee654875f3",
+    "61c437bf-e0cc-4e6a-adf2-892bb1211ef6",
+    "6109d8b6-9c49-4d46-abcc-f593e87c1e03",
+    "ddcefab4-d947-4978-a082-72e75bdd7f63",
+    "a54cb313-9b93-4121-b9d7-f89f5544b102",
+    "5d99fe7c-3db7-44c4-b07d-abab214e9c3a",
+    "d283bcad-7a5c-4b08-b6f0-5a2c52daa017",
+    "1dec051f-c828-4d57-82f4-d6c1b5272ce8",
+    "485a63aa-55c8-43ba-b80b-21d981e066a1",
+    "db50a8ec-87ec-4624-a467-7001e2eaa9f6",
+    "e7ce4ca8-cc23-45fc-a1fc-cded705a8d1a",
+    "3c6e6c4e-55a8-4651-b706-36eea3ae8b64",
+    "bdcef2eb-2b5c-4d50-b0dd-69fb80605302",
+    "4aa04bde-fff8-48ca-bba1-47b6e94a2d4d",
+    "44dcb705-fbe2-4d86-b8c2-a5320842c273",
+    "7f5e5c4d-ecab-4c31-968f-c373879b3fa4",
+    "b8d2cc36-c970-4f5f-b938-2c015ae7e7a0",
+    "7308bb8e-e500-4116-8da9-967951586942",
+    "3373a3b7-0adb-4388-95a5-ab50ce9a1a89",
+    "9d93fdc4-200e-4b93-8c34-19084bf76cd1",
+    "ad763acd-5ec0-48b3-8c91-9ff513430cae",
+    "bb98efd7-938e-46a8-9860-56e074cb1409",
+    "db8dcdba-1361-4e5e-8671-9a06ec5b3978",
+    "fc1a7ebe-1476-43a0-9be1-db39fcf3df41",
+    "952a04de-7865-44af-8537-046ff06482f3",
+    "a025bc6d-6691-4747-b031-f2590b39c663",
+    "02bb2b70-af82-4050-ae5f-67d3898365c7",
+    "410a947e-67d7-4db2-acc3-d5a936c1cdfa",
+    "96926627-e6ca-403d-bf71-f1f9a282b322",
+    "9b25cbf4-5ae1-42c9-a87c-be95612410e5",
+    "a2faba00-1729-4fe4-94c5-91bec3e8f00d",
+    "29fff6df-60a8-48bf-8194-f8f8629abefe",
+    "6ec266db-a3fb-47aa-8730-9d36e9a063fe",
+    "fb387bf1-f5d1-4208-be22-91e99f5ed1cf",
+    "0353d783-5aec-4f86-b469-231053edfb21",
+    "9969239a-ffce-4c7d-883d-d29bfe62e277",
+    "5b379fc1-618d-49c5-96e2-b28337400bf1",
+    "8874069c-5ed1-4858-ae27-f19b9ed3b8f1",
+    "4264d65b-ffc2-4e76-9bd2-26a9d8a81c63",
+    "adc23b33-4ea3-40c3-bcd8-b5ae6329c471",
+    "52737c35-1196-4a96-b887-8a04545babaa",
+    "2dd72ee9-5c19-468c-8e29-0e36012a4be1",
+    "e1d0fe89-4cb0-4449-8ffe-edfe76fef6bb",
+    "5d68b4fe-9305-4bb6-ba03-e1b28e3f04c2",
+    "1359a34b-9e1d-4892-b3a6-fafb92321723",
+    "d38cc3c6-0318-4fba-917b-ff333834d544",
+    "ce3e7d7f-baf2-4580-ac60-982eb235f09e",
+    "bc12fec1-dc60-46a0-8fce-dc55261588eb",
+    "5f91da3e-7a06-4a28-838a-f7569c87bfbc",
+    "9bca3522-48d6-4fb8-bb8b-bfda5dcd4188",
+    "0414fcb1-cae9-4055-93ae-a9dc155b4869",
+    "4900986e-e877-4071-bc62-4a696eacd3d3",
+    "1eb2dca8-ad24-4b01-89dc-eadb1999ce9c",
+    "777da512-e035-45f5-8bdf-aa3497004e40",
+    "989e94e1-7d6c-4e19-861e-6630d61359dc",
+    "fbe79658-9f8c-4d5e-b78c-a217f1302e41",
+    "4953f46a-da3a-4301-aa68-d78fc45db8d2",
+    "af8d5dc4-095c-499d-92ad-88d85eaf6736",
+    "4150806a-a66e-4dc8-933e-4ea1adf7cf69",
+    "33244c3f-5457-49d1-9a62-aebdaa2f7f46",
+    "7edef8d8-6023-4b61-8639-857bda2aeb66",
+    "b0c21099-469f-4846-ae74-44880a990570",
+    "c24e6e3e-4fdb-400b-a32b-7854bd260a32",
+    "51d0078d-2db5-48cf-b13f-bb0f94274bbc",
+    "3228b87e-5f92-41c0-a526-6464db6afd81",
+    "9cb3e219-2bf9-4667-8298-f9cde9928f8e",
+    "c3cc8595-9720-4f71-83e2-5b9067d8edfc",
+    "4a0a31d0-20d0-4944-9bdf-5e6d5f91a883",
+    "831f6da1-4732-4167-8c9c-9990799588f4",
+    "e5582322-cf41-4e57-94e9-c572b1f765a3",
+    "a1f34aa8-21a8-445b-9cc1-f2e5d2623d8c",
+    "de16ae3a-bc29-4325-a092-ac1e037253a7",
+    "22fe8255-8a68-4f6c-b005-81c89639349d",
+    "2383c06a-5271-48bb-9084-f9e22a839147",
+    "ec49eeba-c37e-40df-8d23-5b1deeeeb11a",
+    "9555b134-cc71-4c94-adda-eead022d2fa8",
+    "ff5a9465-3823-4e19-9a72-b151d18318b7",
+    "a8256fe1-411f-4c9c-a162-52433515cc68",
+    "51796dc6-5432-4859-8468-d57b71db5bb2",
+    "0c243c31-94b4-498f-b096-4cf26eac3e02",
+    "b3195e67-bcd6-4062-836f-ec3834e01bee",
+    "8a5ad05d-4eb2-49c2-9387-56e43b2e2433",
+    "bcbdf39b-a2df-4821-976c-13a8f2754a1d",
+    "3db52ee2-bbdf-4f12-a76e-fd9f87d2cd17",
+    "a71c83fa-89ce-449d-b2b4-1a748940f4fa",
+    "8ff5b35f-98d0-449c-b5d1-10f93d4f8a53",
+    "7c7315e7-259f-486a-a04d-bea4245c3e14",
+    "9b4a80b9-1956-4658-abff-21d69e83d6de",
+    "7f31ae98-2fd5-4aef-8b8a-fd4ad5f31d86",
+    "dd55faf0-60b7-461d-a522-b2c2c1888321",
+    "db4ac040-4e29-4452-92c9-b9c38ae2a97a",
+    "a25e662e-a08f-40f8-aa8e-61e3310c6eed"
+  ]
+}

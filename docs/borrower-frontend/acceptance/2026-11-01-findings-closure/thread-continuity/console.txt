@@ -1,0 +1,8 @@
+journey checks: 22/22 passed
+  transcript requests made during the journey: 2 (all 200)
+  404 responses during the journey: 0
+control checks: 4/4 passed
+  404 responses in the control run (expected): 1
+console errors: 1
+non-read requests: writes allowed 6, blocked 0
+wrote C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\docs\borrower-frontend\acceptance\2026-11-01-findings-closure\thread-continuity\thread-continuity-results.json

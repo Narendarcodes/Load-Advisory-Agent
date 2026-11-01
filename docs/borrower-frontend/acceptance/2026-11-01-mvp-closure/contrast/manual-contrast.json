@@ -1,0 +1,910 @@
+{
+  "capturedAt": "2026-11-01T18:09:33.644Z",
+  "base": "http://127.0.0.1:8081",
+  "widths": [
+    1440,
+    390
+  ],
+  "method": "computed foreground against first opaque ancestor; background-image chains reported indeterminate",
+  "playwright": "1.63.0",
+  "writeGuard": [
+    {
+      "label": "1440/01-landing-products",
+      "requestsSeen": 0,
+      "postedReads": 0,
+      "writesAllowed": 0,
+      "writesBlocked": 0,
+      "byPath": []
+    },
+    {
+      "label": "1440/02-sign-in",
+      "requestsSeen": 0,
+      "postedReads": 0,
+      "writesAllowed": 0,
+      "writesBlocked": 0,
+      "byPath": []
+    },
+    {
+      "label": "1440/04-eligibility",
+      "requestsSeen": 4,
+      "postedReads": 3,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "1440/05-apply",
+      "requestsSeen": 5,
+      "postedReads": 4,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "1440/06-kyc-workspace",
+      "requestsSeen": 3,
+      "postedReads": 2,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "1440/08-application-submitted",
+      "requestsSeen": 3,
+      "postedReads": 2,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "1440/09-application-not-approved",
+      "requestsSeen": 3,
+      "postedReads": 2,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "1440/10-advisory-workspace",
+      "requestsSeen": 3,
+      "postedReads": 2,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "1440/12-profile",
+      "requestsSeen": 4,
+      "postedReads": 3,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "1440/14-feedback",
+      "requestsSeen": 5,
+      "postedReads": 4,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.feedback.list_feedback",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "390/01-landing-products",
+      "requestsSeen": 0,
+      "postedReads": 0,
+      "writesAllowed": 0,
+      "writesBlocked": 0,
+      "byPath": []
+    },
+    {
+      "label": "390/02-sign-in",
+      "requestsSeen": 0,
+      "postedReads": 0,
+      "writesAllowed": 0,
+      "writesBlocked": 0,
+      "byPath": []
+    },
+    {
+      "label": "390/04-eligibility",
+      "requestsSeen": 4,
+      "postedReads": 3,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "390/05-apply",
+      "requestsSeen": 5,
+      "postedReads": 4,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "390/06-kyc-workspace",
+      "requestsSeen": 3,
+      "postedReads": 2,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "390/08-application-submitted",
+      "requestsSeen": 3,
+      "postedReads": 2,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "390/09-application-not-approved",
+      "requestsSeen": 3,
+      "postedReads": 2,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "390/10-advisory-workspace",
+      "requestsSeen": 3,
+      "postedReads": 2,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "390/12-profile",
+      "requestsSeen": 4,
+      "postedReads": 3,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "390/14-feedback",
+      "requestsSeen": 5,
+      "postedReads": 4,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.feedback.list_feedback",
+          "times": 1
+        }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "width": 1440,
+      "view": "01-landing-products",
+      "checked": 102,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "02-sign-in",
+      "checked": 37,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "04-eligibility",
+      "checked": 93,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "05-apply",
+      "checked": 95,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "06-kyc-workspace",
+      "checked": 96,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [
+        {
+          "sel": "span",
+          "text": "Identity summary",
+          "fg": "rgb(232, 217, 205)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 12.12,
+          "required": 4.5,
+          "size": 10.56,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "span.demo-flag",
+          "text": "Demo",
+          "fg": "rgb(138, 90, 18)",
+          "bg": "rgb(247, 236, 216)",
+          "ratio": 5.05,
+          "required": 4.5,
+          "size": 10.88,
+          "weight": true,
+          "pass": true
+        },
+        {
+          "sel": "div.identity-card__name",
+          "text": "Mvp1 Borrower Renamed",
+          "fg": "rgb(247, 243, 238)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 15.12,
+          "required": 4.5,
+          "size": 16.8,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "p#card-pan.identity-card__masked",
+          "text": "PAN ••••••••••",
+          "fg": "rgb(255, 217, 207)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 12.79,
+          "required": 4.5,
+          "size": 16,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "p#card-aadhaar.identity-card__masked",
+          "text": "Aadhaar •••• •••• ••••",
+          "fg": "rgb(255, 217, 207)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 12.79,
+          "required": 4.5,
+          "size": 16,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "span",
+          "text": "Not verified",
+          "fg": "rgb(217, 201, 189)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 10.37,
+          "required": 4.5,
+          "size": 11.84,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "span",
+          "text": "Preview only",
+          "fg": "rgb(217, 201, 189)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 10.37,
+          "required": 4.5,
+          "size": 11.84,
+          "weight": false,
+          "pass": true
+        }
+      ],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "08-application-submitted",
+      "checked": 42,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "09-application-not-approved",
+      "checked": 42,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "10-advisory-workspace",
+      "checked": 42,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "12-profile",
+      "checked": 68,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 1440,
+      "view": "14-feedback",
+      "checked": 56,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "01-landing-products",
+      "checked": 101,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "02-sign-in",
+      "checked": 36,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "04-eligibility",
+      "checked": 74,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "05-apply",
+      "checked": 53,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "06-kyc-workspace",
+      "checked": 77,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [
+        {
+          "sel": "span",
+          "text": "Identity summary",
+          "fg": "rgb(232, 217, 205)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 12.12,
+          "required": 4.5,
+          "size": 10.56,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "span.demo-flag",
+          "text": "Demo",
+          "fg": "rgb(138, 90, 18)",
+          "bg": "rgb(247, 236, 216)",
+          "ratio": 5.05,
+          "required": 4.5,
+          "size": 10.88,
+          "weight": true,
+          "pass": true
+        },
+        {
+          "sel": "div.identity-card__name",
+          "text": "Mvp1 Borrower Renamed",
+          "fg": "rgb(247, 243, 238)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 15.12,
+          "required": 4.5,
+          "size": 16.8,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "p#card-pan.identity-card__masked",
+          "text": "PAN ••••••••••",
+          "fg": "rgb(255, 217, 207)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 12.79,
+          "required": 4.5,
+          "size": 16,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "p#card-aadhaar.identity-card__masked",
+          "text": "Aadhaar •••• •••• ••••",
+          "fg": "rgb(255, 217, 207)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 12.79,
+          "required": 4.5,
+          "size": 16,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "span",
+          "text": "Not verified",
+          "fg": "rgb(217, 201, 189)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 10.37,
+          "required": 4.5,
+          "size": 11.84,
+          "weight": false,
+          "pass": true
+        },
+        {
+          "sel": "span",
+          "text": "Preview only",
+          "fg": "rgb(217, 201, 189)",
+          "bg": "rgb(36, 28, 27)",
+          "ratio": 10.37,
+          "required": 4.5,
+          "size": 11.84,
+          "weight": false,
+          "pass": true
+        }
+      ],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "08-application-submitted",
+      "checked": 23,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "09-application-not-approved",
+      "checked": 23,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "10-advisory-workspace",
+      "checked": 23,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "12-profile",
+      "checked": 49,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    },
+    {
+      "width": 390,
+      "view": "14-feedback",
+      "checked": 37,
+      "fails": [],
+      "indeterminateCount": 0,
+      "indeterminate": [],
+      "card": [],
+      "tightest": {
+        "sel": "a",
+        "text": "Privacy notice",
+        "ratio": 4.68,
+        "required": 4.5,
+        "size": 12.48,
+        "weight": false
+      }
+    }
+  ]
+}

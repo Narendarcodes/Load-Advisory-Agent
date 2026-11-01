@@ -1,0 +1,14 @@
+Starting test run with parameters: site=loanportal.local, module=loan_advisory_portal.tests.test_kyc_page, verbose=False, tests=(), force=False, profile=False, failfast=False, skip_before_tests=False, debug=False, selected_categories=[]
+View detailed logs (using --verbose): /home/frappe/frappe-bench/logs/frappe.testing.log
+
+Running 2 old-frappe-test-class-category tests for loan_advisory_portal
+
+loan_advisory_portal.tests.test_kyc_page.KycCopyTest
+   [32m ✔ [0m test_preview_copy_is_explicitly_a_preview
+   [32m ✔ [0m test_production_copy_does_not_ask_for_pan_or_aadhaar
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.269s
+
+OK

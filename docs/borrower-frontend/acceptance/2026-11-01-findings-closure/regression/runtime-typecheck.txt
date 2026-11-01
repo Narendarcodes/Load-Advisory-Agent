@@ -1,0 +1,4 @@
+
+> @loan-advisory/copilot-runtime@0.1.0 typecheck
+> tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json
+

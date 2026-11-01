@@ -1,0 +1,12 @@
+   [32m ✔ [0m test_resending_unchanged_checkboxes_is_not_a_new_consent_event
+   [32m ✔ [0m test_revocation_then_reconsent_records_a_new_event
+   [32m ✔ [0m test_saving_the_document_outside_the_api_does_not_restamp
+   [32m ✔ [0m test_the_audit_trail_shows_consent_events_and_not_ordinary_edits
+   [32m ✔ [0m test_the_wizard_payload_that_caused_the_finding_leaves_consent_untouched
+   [32m ✔ [0m test_unrelated_profile_save_preserves_the_consent_timestamp
+
+
+----------------------------------------------------------------------
+Ran 193 tests in 43.092s
+
+OK

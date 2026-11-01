@@ -1,0 +1,71 @@
+# Services started for the owner-approved closure run (2026-11-01)
+
+Recorded so that only these processes are stopped afterwards. The baseline in
+[`worktree-and-environment.txt`](worktree-and-environment.txt) §3 shows every one of these ports free
+before the run.
+
+| Service | Where it runs | Identifier | Started (UTC) |
+| --- | --- | --- | --- |
+| Frappe dev server `:8001` | inside `loanrangers-backend-1` (`bench --site loanportal.local serve --port 8001`, log `/tmp/serve-8001-owner-closure.log`) | container pids 16770 (bench) / 16775 (werkzeug) | 2026-11-01T17:36Z |
+| Test front door `127.0.0.1:8081` | the existing container `loanportal-acceptance-proxy` (`4bd676ee8025`, nginx:alpine, `tests/e2e/nginx.loanportal.conf`), **restarted, not recreated** — it was left stopped-but-present by the previous run and carries no `--rm` | host forwarding pid 23420 (Docker Desktop, also fronts `:3000`) | 2026-11-01T17:36Z |
+| CopilotKit runtime `127.0.0.1:4200` | host, `apps/runtime/dist/index.js`, upstream pointed at the stub | host pid **40340** | 2026-11-01T17:38Z |
+| Deterministic AG-UI stub `127.0.0.1:8096` | host, `tests/e2e/agui_stub.cjs` with `STUB_APPLICATION=ACC-LOAP-2026-00022` | host pid **39744** | 2026-11-01T17:38Z |
+
+Bring-up command, as documented in
+[docs/development/frappe-disposable-environment.md:158-159](../../../../docs/development/frappe-disposable-environment.md#L158-L159),
+with the upstream swapped to the stub:
+
+```bash
+# runtime (host)
+AGENT_RUNTIME_PORT=4200 AGENT_AGUI_URL=http://127.0.0.1:8096/api/agui \
+  FRAPPE_BASE_URL=http://127.0.0.1:8081 AGENT_WEB_ORIGINS=http://127.0.0.1:8081 node dist/index.js
+# stub (host)
+STUB_APPLICATION=ACC-LOAP-2026-00022 node tests/e2e/agui_stub.cjs
+```
+
+## Deliberately not started
+
+- the live FastAPI agent on `:8095` — the stub replaces only the agent upstream, so no model is loaded
+  and no GPU memory is held;
+- the RAG index and anything else that allocates GPU memory.
+
+Everything already running was left alone: the nine `loanrangers-*` bench containers, the six
+`loan-advisory-langfuse-*` containers, `:8080` and `:3000`.
+
+## Health checks at bring-up
+
+```
+inside container  http://127.0.0.1:8001/login                       -> 200
+front door        http://127.0.0.1:8081/login                       -> 200
+runtime           advisory copilot runtime on http://127.0.0.1:4200/api/copilotkit
+                  (agent advisory -> http://127.0.0.1:8096/api/agui; assertions from :8081/…mint_assertion)
+stub              AG-UI fixture stub on http://127.0.0.1:8096/api/agui (test only)
+GPU               nvidia-smi --query-compute-apps=pid,used_memory   -> header only, no compute process
+```
+
+The runtime's start-up notice — *"Listing and clearing threads need a caller identity… GET /threads and
+POST /threads/clear return HTTP 403 until then"* — is CopilotKit's own warning about its thread-listing
+endpoints. It is noted here rather than passed over: this portal does not use those endpoints (the
+borrower's conversation list comes from `loan_advisory_portal.api.agent.list_conversations`, scoped by
+Frappe ownership), and a 403 default is the safe direction. It is recorded as an open observation in the
+readiness report.
+
+## Disposable-site fixture created for this run
+
+`bench --site loanportal.local execute loan_advisory_portal.tests.e2e_seed.seed --kwargs '{"tag": "nvda1"}'`
+
+| Piece | Value |
+| --- | --- |
+| borrower (journeys) | `nvda1-borrower@example.invalid`, application `ACC-LOAP-2026-00022` |
+| other borrower (ownership probes) | `nvda1-other@example.invalid`, application `ACC-LOAP-2026-00023` |
+| service accounts | `nvda1-evidence@…` (Evidence Service only), `nvda1-reader@…` (read-only) |
+
+Credentials were written by the seeder to `/tmp/loanportal-e2e/nvda1.json` inside the container (mode
+600), copied to `%TEMP%\loanportal-e2e\nvda1.json` on the host — outside the repository — and deleted
+inside the container; the directory is verified empty. They are not reproduced in any document here.
+The fixture is removed with `e2e_seed.teardown --kwargs '{"tag": "nvda1"}'` at the end of the run, and
+conversations it generates are listed for the Part B transcript cleanup.
+
+Seeding also wrote two customers, two users and two loan applications (`ACC-LOAP-2026-00022`,
+`ACC-LOAP-2026-00023`) — deliberate, disclosed test-fixture writes on the disposable site, recorded in
+the changed-file and environment reports.

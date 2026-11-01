@@ -1,0 +1,61 @@
+===== accessibility_audit.cjs -> accessibility
+width 1440: 26 runs
+width 1280: 17 runs
+width 1024: 17 runs
+width 768: 17 runs
+width 390: 26 runs
+runs: 103
+runs with violations: 0
+distinct rules: 0
+states not reached: 0
+console errors: 15
+non-read requests: writes allowed 17, blocked 0
+exit=0
+===== manual_contrast.cjs -> contrast
+      CARD span "Not verified" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+      CARD span "Preview only" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+ 390 08-application-submitted   text nodes=  23 fails=0 indeterminate=0
+ 390 09-application-not-approved text nodes=  23 fails=0 indeterminate=0
+ 390 10-advisory-workspace      text nodes=  23 fails=0 indeterminate=0
+ 390 12-profile                 text nodes=  49 fails=0 indeterminate=0
+ 390 14-feedback                text nodes=  37 fails=0 indeterminate=0
+text nodes below AA across runs: 0; indeterminate: 0
+tightest passing measurement: 4.68:1 (need 4.5) at a "Privacy notice" [1440 01-landing-products]
+identity-card text nodes: 14 measured, 0 below AA, 0 still unmeasurable
+wrote docs\borrower-frontend\acceptance\2026-11-01-mvp-closure\contrast\manual-contrast.json
+non-read requests: writes allowed 16, blocked 0
+exit=0
+===== keyboard_review.cjs -> keyboard
+        "view": "02-sign-in",
+        "liveRegions": [
+          "div#login-error role=alert live=",
+          "div#flash role= live=polite"
+        ]
+      },
+      {
+        "view": "03-dashboard",
+        "liveRegions": [
+  
+wrote docs\borrower-frontend\acceptance\2026-11-01-mvp-closure\keyboard\keyboard-and-ax-tree.json
+non-read requests: writes allowed 43, blocked 0
+exit=0
+===== missing_information_e2e.cjs -> missing-information
+valid runs: 5/5
+negative runs: 6/6
+console errors: 0
+non-read requests: writes allowed 32, blocked 0
+exit=0
+===== borrower_views.cjs -> views
+  {
+    "width": 1280,
+    "view": "http://localhost:8081/borrower/application?name=ACC-LOAP-2026-00019",
+    "text": "Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  },
+  {
+    "width": 1280,
+    "view": "http://localhost:8081/borrower/application?name=ACC-LOAP-2026-00018",
+    "text": "Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  }
+]
+non-read requests: writes allowed 5, blocked 0
+exit=0

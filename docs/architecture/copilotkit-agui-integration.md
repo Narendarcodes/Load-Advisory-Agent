@@ -27,9 +27,23 @@ Versions (Phase 2 check): `@copilotkit/runtime` 1.83.0 and `@copilotkit/react-co
 
 There is **no `identifyUser` call** anywhere in the React app and no user-id header. Identity is exactly the bearer token.
 
-### AG-UI event sequence (verified in `api/agui.py:106-125`, builders in `api/events.py:21-43`)
+### AG-UI event sequence (verified in `api/agui.py:106-140`, builders in `api/events.py:21-55`)
 
-`RUN_STARTED` → `TEXT_MESSAGE_START` → one `TEXT_MESSAGE_CONTENT` per guarded sentence (delta + trailing space) → `STATE_SNAPSHOT` → `TEXT_MESSAGE_END` → `RUN_FINISHED`, with `RUN_ERROR` on failure. The state snapshot is an allowlist that excludes timings and internal state (`events.py:11-13`). No AG-UI tool-call events are emitted: tools run inside the server-side graph.
+`RUN_STARTED` → `TEXT_MESSAGE_START` → zero or more progress `STATE_SNAPSHOT`s → one
+`TEXT_MESSAGE_CONTENT` per guarded sentence (delta + trailing space) → the final `STATE_SNAPSHOT` →
+`TEXT_MESSAGE_END` → `RUN_FINISHED`, with `RUN_ERROR` on failure. The final state snapshot is an
+allowlist that excludes timings and internal state (`events.py:13-15`).
+
+**Progress** uses the same `StateSnapshotEvent`, never fabricated `ToolCall*` events: the private
+server "tools" are deterministic Python methods invoked by graph nodes, not model tool calls. When a
+node in `agent/progress.py::PUBLIC_STAGES` (`authenticate`, `load_evidence`, `retrieve_policy`,
+`what_if`, `compose`) starts, `_node` calls the turn's `on_stage` listener
+(`graph.py:159-180`); `events.progress_snapshot` refuses any other name. The frame carries only
+`{"progress": {"stage": <id>}}` — no node inputs, outputs, tool arguments or PII. The island maps
+the id to borrower words (`src/genui/catalog.ts`); an unknown id renders nothing.
+
+No AG-UI tool-call events are emitted, and the protocol version is unchanged
+(`@ag-ui/client` 1.0.2 / `ag-ui-protocol` 1.0.0).
 
 ## Target design
 
@@ -128,11 +142,31 @@ had the same payload.
 The run is same-origin, so the browser's default `same-origin` credentials policy attaches the Frappe
 cookie to `/api/copilotkit`; only the CSRF header is supplied by the island.
 
-Tests: `apps/web/assistant/src/*.test.ts(x)` (33: context parsing incl. the account key and the
+Tests: `apps/web/assistant/src/*.test.ts(x)` (72: context parsing incl. the account key and the
 voice block, thread reuse/rotation per account+application, history reads and the CSRF-protected turn
 write, the panel's "only the application is forwarded", 401 handling, the stored exchange, the
-conflict reset, and the voice API/panel suites described in
-[livekit-integration.md](livekit-integration.md)).
+conflict reset, the GenUI registry/schema suites, the what-if form, and the voice API/panel suites
+described in [livekit-integration.md](livekit-integration.md)).
+
+### Typed GenUI blocks (`apps/web/assistant/src/genui/`)
+
+The snapshot is untrusted JSON, so nothing renders straight from `agent.state`:
+
+| Piece | Where | Behaviour |
+| --- | --- | --- |
+| Runtime gate | `schema.ts` | Hand-written validators (no schema dependency). Each optional field is validated on its own, unknown keys are dropped, and an unrecognisable payload returns `null`; a decision card needs a recorded outcome and, if it has rules, rules that parse. No value is ever interpreted as markup. |
+| Vocabulary | `catalog.ts` | Server codes → borrower words (`REJECTED → Not approved`, `NOT_EVALUABLE → Not checked`), bureau outcome kinds, the five progress stage labels, and the real portal routes for missing information (`/borrower/application?name=…#info-request`, or `/borrower/help` for identity). |
+| Blocks | `blocks.tsx` | Decision card, rule table, policy citations, what-if result (recorded vs hypothetical), improvement plan, missing information, human assistance, progress, notices. |
+| Registry | `registry.tsx` | A discriminated union of 11 approved block types with a typed renderer map. `renderBlock` returns `null` for an unknown type; `buildBlocks` orders what a turn contributes. There is no HTML/script channel. |
+| What-if form | `what-if-form.tsx` | Mirrors the backend's four fields and limits. Submits a canonical `What if …?` question through the normal `runAgent` turn, so the server still classifies and re-validates; the result arrives as `state.what_if`. |
+
+The decision card is a projection of the stored record (`agent/facts.py::decision_card`), never a
+new assessment: the block says so, labels a synthetic policy, and shows bureau/review evidence only
+when the record carries it. It appears after a turn, because it travels in the state snapshot; there
+is no separate bootstrap endpoint.
+
+The human-assistance block records a local `HO-…` reference from `agent_out/handoffs.jsonl` and says
+plainly that no person has been contacted and no external ticket exists.
 
 ### Implemented FastAPI verifier (`apps/api/src/loan_advisory/api/`)
 
@@ -171,6 +205,12 @@ foreign and unknown id, chooser, stale selection, guest redirect, account key).
 - Replay state is shared through Redis (`ASSERTION_REPLAY_BACKEND=redis` plus
   `ASSERTION_REPLAY_REDIS_URL`); see [assertion-security-and-scaling.md](assertion-security-and-scaling.md).
 - CopilotKit's `identifyUser` is unused; a stable display identity for threads may want it.
+- Decision-card data reaches the browser only in the final state snapshot of a turn; a freshly opened
+  thread shows no card until the borrower asks something. A bootstrap endpoint was deliberately not
+  invented.
+- The what-if form accepts exactly the four backend fields (`monthly_income`, `monthly_obligations`,
+  `credit_score`, `employment_months`) and their limits. A free-text question naming another fact
+  still goes to the agent, which classifies it; the form does not collect new underwriting inputs.
 - The Frappe transcript is the durable conversation record and what the island restores. FastAPI's
   LangGraph checkpointer comes from `build_checkpointer()` (`agent/checkpoint.py`): process-local memory
   in development, shared Redis (`AGENT_CHECKPOINT_REDIS_URL`, defaulting to the replay URL) as soon as

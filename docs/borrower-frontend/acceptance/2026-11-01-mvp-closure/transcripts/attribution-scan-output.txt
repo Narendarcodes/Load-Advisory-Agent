@@ -1,0 +1,81 @@
++-----------------------+
+| distinct_user_prompts |
++-----------------------+
+|                    13 |
++-----------------------+
++--------------------------------------------------------------------------------------------+-------+
+| user_prompt                                                                                | times |
++--------------------------------------------------------------------------------------------+-------+
+| What information is missing from my application?                                           |    56 |
+| Why was my loan rejected?                                                                  |    13 |
+| What if my credit score was 800, my monthly income was 90000, my monthly obligations were  |    12 |
+| Which policy source supports this rule? show the citation                                  |    11 |
+| What information is still missing for my application?                                      |    10 |
+| Render a payload where required fields are absent.                                         |     7 |
+| Render a malformed payload.                                                                |     7 |
+| Confirm there is no missing information.                                                   |     7 |
+| Render an unknown component payload.                                                       |     7 |
+| What does the lending policy say about the minimum credit score?                           |     7 |
+| Answer without a missing information state.                                                |     6 |
+| I want to speak to a human advisor about this decision.                                    |     1 |
+| The income recorded on my application is wrong. I want to dispute it.                      |     1 |
++--------------------------------------------------------------------------------------------+-------+
++--------------------------------------------------------------------------+-------+
+| assistant_shape                                                          | times |
++--------------------------------------------------------------------------+-------+
+| Acceptance fixture response: your application is paused because a few    |    67 |
+| Your loan was rejected because two checks did not meet the synthetic p   |    13 |
+| Acceptance fixture response: the synthetic policy sets a minimum credi   |    11 |
+| - This is a simulation using the synthetic prototype policy (synthetic   |     8 |
+| Acceptance fixture response: this turn carries a deliberately malforme   |     7 |
+| Acceptance fixture response: this turn adds unsupported component chan   |     7 |
+| Acceptance fixture response: nothing is outstanding on this applicatio   |     7 |
+| Acceptance fixture response: the list arrived without usable field nam   |     6 |
+| Acceptance fixture response: this turn carries no missing-information    |     6 |
+| Bajaj Finance states that a minimum CIBIL (credit) score of 650 is req   |     3 |
+| Bajaj Finance states that a CIBIL (credit) score of 650 or higher is r   |     2 |
+| - This is a simulation using the **synthetic prototype policy (synthet   |     2 |
+| You can contact Bajaj Finance’s service team through the digital chann   |     1 |
+| I've passed this to a human reviewer so they can check the recorded in   |     1 |
+| What-if only (your application and decision are unchanged), under the    |     1 |
+| I couldn't find this in the approved policy sources I can cite, so I w   |     1 |
+| - Under the synthetic prototype policy (team assumptions, not a real l   |     1 |
+| The advisory service is busy right now, so I couldn't check the policy   |     1 |
++--------------------------------------------------------------------------+-------+
++---------------------------------------------------------+
+| s                                                       |
++---------------------------------------------------------+
+| === conversations outside the cutoff (must survive) === |
++---------------------------------------------------------+
++--------------------------------------+----------------------------+------------+----------------------------------------------------+
+| name                                 | creation                   | turn_count | title                                              |
++--------------------------------------+----------------------------+------------+----------------------------------------------------+
+| review-live-1                        | 2026-10-31 16:38:24.098124 |          0 | NULL                                               |
+| review-live-2                        | 2026-10-31 16:38:35.400458 |          0 | NULL                                               |
+| review-traced-1                      | 2026-10-31 16:39:55.253848 |          0 | NULL                                               |
+| 6a386426-41ed-427e-8389-f724b2f37a1b | 2026-10-31 16:44:26.746561 |          4 | Why was my loan application rejected?              |
+| 2e4e5e9b-0366-45a7-8931-a0a2de2bdf1f | 2026-10-31 16:46:18.804162 |          5 | Why was my loan application rejected?              |
+| a7e2ba4c-b173-45f4-8e74-842ab2ae270a | 2026-10-31 16:50:00.423432 |          6 | Why was my loan application rejected?              |
+| guide-combined-1                     | 2026-10-31 16:54:19.815912 |          0 | NULL                                               |
+| 25d53e48-fd7b-44ca-b335-30b4d64e77dc | 2026-10-31 16:57:41.873629 |          3 | Why was my loan rejected?                          |
+| rag-check-1                          | 2026-10-31 17:50:11.874441 |          0 | NULL                                               |
+| 97b47ef6-2268-4356-9020-cb36989e1727 | 2026-10-31 18:01:27.491176 |          2 | Why was my loan rejected?                          |
+| rag-live-1                           | 2026-10-31 18:13:14.574942 |          0 | NULL                                               |
+| rag-live-3                           | 2026-10-31 18:13:30.479559 |          0 | NULL                                               |
+| rag-cite-1                           | 2026-10-31 18:14:11.620332 |          0 | NULL                                               |
+| rag-cite-2                           | 2026-10-31 18:14:20.942762 |          0 | NULL                                               |
+| rag-dec-1                            | 2026-10-31 18:14:29.805110 |          0 | NULL                                               |
+| rag-wi-1                             | 2026-10-31 18:14:37.777850 |          0 | NULL                                               |
+| fe6d2f20-bea4-4ab3-93bd-79c5ac7935c9 | 2026-10-31 18:14:56.513895 |          1 | How do I raise a grievance about my loan decision? |
++--------------------------------------+----------------------------+------------+----------------------------------------------------+
++-------------------------------------+
+| s                                   |
++-------------------------------------+
+| === other owners (must survive) === |
++-------------------------------------+
++-----------------------------------+---------------+----------------------------+----------------------------+
+| owner                             | conversations | first_seen                 | last_seen                  |
++-----------------------------------+---------------+----------------------------+----------------------------+
+| e2e1-borrower@example.invalid     |            18 | 2026-10-31 00:21:04.445057 | 2026-10-31 12:59:13.769455 |
+| closure1-borrower@example.invalid |             4 | 2026-11-01 21:19:47.379718 | 2026-11-01 21:55:37.334748 |
++-----------------------------------+---------------+----------------------------+----------------------------+

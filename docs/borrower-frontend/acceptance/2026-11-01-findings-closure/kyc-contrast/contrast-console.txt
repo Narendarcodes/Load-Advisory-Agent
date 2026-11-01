@@ -1,0 +1,90 @@
+1440 01-landing-products        text nodes= 102 fails=0 indeterminate=0
+1440 02-sign-in                 text nodes=  37 fails=0 indeterminate=0
+1440 04-eligibility             text nodes=  93 fails=0 indeterminate=0
+1440 05-apply                   text nodes=  95 fails=0 indeterminate=0
+1440 06-kyc-workspace           text nodes=  96 fails=0 indeterminate=0
+      CARD span "Identity summary" 12.12:1 (need 4.5) rgb(232, 217, 205) on rgb(36, 28, 27) @10.56px w400 pass
+      CARD span.demo-flag "Demo" 5.05:1 (need 4.5) rgb(138, 90, 18) on rgb(247, 236, 216) @10.88px w700 pass
+      CARD div.identity-card__name "Review Demo Borrower" 15.12:1 (need 4.5) rgb(247, 243, 238) on rgb(36, 28, 27) @16.8px w400 pass
+      CARD p#card-pan.identity-card__masked "PAN ••••••••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD p#card-aadhaar.identity-card__masked "Aadhaar •••• •••• ••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD span "Not verified" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+      CARD span "Preview only" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+1440 08-application-submitted   text nodes= 108 fails=0 indeterminate=0
+1440 09-application-not-approved text nodes= 121 fails=0 indeterminate=0
+1440 10-advisory-workspace      text nodes= 123 fails=0 indeterminate=0
+1440 12-profile                 text nodes=  68 fails=0 indeterminate=0
+1440 14-feedback                text nodes=  56 fails=0 indeterminate=0
+1280 01-landing-products        text nodes= 102 fails=0 indeterminate=0
+1280 02-sign-in                 text nodes=  37 fails=0 indeterminate=0
+1280 04-eligibility             text nodes=  93 fails=0 indeterminate=0
+1280 05-apply                   text nodes=  95 fails=0 indeterminate=0
+1280 06-kyc-workspace           text nodes=  96 fails=0 indeterminate=0
+      CARD span "Identity summary" 12.12:1 (need 4.5) rgb(232, 217, 205) on rgb(36, 28, 27) @10.56px w400 pass
+      CARD span.demo-flag "Demo" 5.05:1 (need 4.5) rgb(138, 90, 18) on rgb(247, 236, 216) @10.88px w700 pass
+      CARD div.identity-card__name "Review Demo Borrower" 15.12:1 (need 4.5) rgb(247, 243, 238) on rgb(36, 28, 27) @16.8px w400 pass
+      CARD p#card-pan.identity-card__masked "PAN ••••••••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD p#card-aadhaar.identity-card__masked "Aadhaar •••• •••• ••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD span "Not verified" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+      CARD span "Preview only" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+1280 08-application-submitted   text nodes= 108 fails=0 indeterminate=0
+1280 09-application-not-approved text nodes= 121 fails=0 indeterminate=0
+1280 10-advisory-workspace      text nodes= 123 fails=0 indeterminate=0
+1280 12-profile                 text nodes=  68 fails=0 indeterminate=0
+1280 14-feedback                text nodes=  56 fails=0 indeterminate=0
+1024 01-landing-products        text nodes= 102 fails=0 indeterminate=0
+1024 02-sign-in                 text nodes=  37 fails=0 indeterminate=0
+1024 04-eligibility             text nodes=  92 fails=0 indeterminate=0
+1024 05-apply                   text nodes=  71 fails=0 indeterminate=0
+1024 06-kyc-workspace           text nodes=  95 fails=0 indeterminate=0
+      CARD span "Identity summary" 12.12:1 (need 4.5) rgb(232, 217, 205) on rgb(36, 28, 27) @10.56px w400 pass
+      CARD span.demo-flag "Demo" 5.05:1 (need 4.5) rgb(138, 90, 18) on rgb(247, 236, 216) @10.88px w700 pass
+      CARD div.identity-card__name "Review Demo Borrower" 15.12:1 (need 4.5) rgb(247, 243, 238) on rgb(36, 28, 27) @16.8px w400 pass
+      CARD p#card-pan.identity-card__masked "PAN ••••••••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD p#card-aadhaar.identity-card__masked "Aadhaar •••• •••• ••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD span "Not verified" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+      CARD span "Preview only" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+1024 08-application-submitted   text nodes= 107 fails=0 indeterminate=0
+1024 09-application-not-approved text nodes= 120 fails=0 indeterminate=0
+1024 10-advisory-workspace      text nodes= 122 fails=0 indeterminate=0
+1024 12-profile                 text nodes=  67 fails=0 indeterminate=0
+1024 14-feedback                text nodes=  55 fails=0 indeterminate=0
+ 768 01-landing-products        text nodes= 102 fails=0 indeterminate=0
+ 768 02-sign-in                 text nodes=  37 fails=0 indeterminate=0
+ 768 04-eligibility             text nodes=  68 fails=0 indeterminate=0
+ 768 05-apply                   text nodes=  47 fails=0 indeterminate=0
+ 768 06-kyc-workspace           text nodes=  71 fails=0 indeterminate=0
+      CARD span "Identity summary" 12.12:1 (need 4.5) rgb(232, 217, 205) on rgb(36, 28, 27) @10.56px w400 pass
+      CARD span.demo-flag "Demo" 5.05:1 (need 4.5) rgb(138, 90, 18) on rgb(247, 236, 216) @10.88px w700 pass
+      CARD div.identity-card__name "Review Demo Borrower" 15.12:1 (need 4.5) rgb(247, 243, 238) on rgb(36, 28, 27) @16.8px w400 pass
+      CARD p#card-pan.identity-card__masked "PAN ••••••••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD p#card-aadhaar.identity-card__masked "Aadhaar •••• •••• ••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD span "Not verified" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+      CARD span "Preview only" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+ 768 08-application-submitted   text nodes=  83 fails=0 indeterminate=0
+ 768 09-application-not-approved text nodes=  96 fails=0 indeterminate=0
+ 768 10-advisory-workspace      text nodes=  98 fails=0 indeterminate=0
+ 768 12-profile                 text nodes=  43 fails=0 indeterminate=0
+ 768 14-feedback                text nodes=  31 fails=0 indeterminate=0
+ 390 01-landing-products        text nodes= 101 fails=0 indeterminate=0
+ 390 02-sign-in                 text nodes=  36 fails=0 indeterminate=0
+ 390 04-eligibility             text nodes=  74 fails=0 indeterminate=0
+ 390 05-apply                   text nodes=  53 fails=0 indeterminate=0
+ 390 06-kyc-workspace           text nodes=  77 fails=0 indeterminate=0
+      CARD span "Identity summary" 12.12:1 (need 4.5) rgb(232, 217, 205) on rgb(36, 28, 27) @10.56px w400 pass
+      CARD span.demo-flag "Demo" 5.05:1 (need 4.5) rgb(138, 90, 18) on rgb(247, 236, 216) @10.88px w700 pass
+      CARD div.identity-card__name "Review Demo Borrower" 15.12:1 (need 4.5) rgb(247, 243, 238) on rgb(36, 28, 27) @16.8px w400 pass
+      CARD p#card-pan.identity-card__masked "PAN ••••••••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD p#card-aadhaar.identity-card__masked "Aadhaar •••• •••• ••••" 12.79:1 (need 4.5) rgb(255, 217, 207) on rgb(36, 28, 27) @16px w400 pass
+      CARD span "Not verified" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+      CARD span "Preview only" 10.37:1 (need 4.5) rgb(217, 201, 189) on rgb(36, 28, 27) @11.84px w400 pass
+ 390 08-application-submitted   text nodes=  89 fails=0 indeterminate=0
+ 390 09-application-not-approved text nodes= 102 fails=0 indeterminate=0
+ 390 10-advisory-workspace      text nodes= 104 fails=0 indeterminate=0
+ 390 12-profile                 text nodes=  49 fails=0 indeterminate=0
+ 390 14-feedback                text nodes=  37 fails=0 indeterminate=0
+text nodes below AA across runs: 0; indeterminate: 0
+tightest passing measurement: 4.68:1 (need 4.5) at a "Privacy notice" [1440 01-landing-products]
+identity-card text nodes: 35 measured, 0 below AA, 0 still unmeasurable
+wrote docs\borrower-frontend\acceptance\2026-11-01-findings-closure\kyc-contrast\manual-contrast.json
+non-read requests: writes allowed 40, blocked 0
