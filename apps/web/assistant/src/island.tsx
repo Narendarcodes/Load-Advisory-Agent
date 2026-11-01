@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { UseAgentUpdate, useAgent } from "@copilotkit/react-core/v2";
 
 import type { AssistantContext } from "./context";
-import type { Locale, PublicState } from "./types";
+import type { Locale } from "./types";
+import { parsePublicState } from "./genui/schema";
 import { ChatPanel } from "./chat-panel";
 import { PlanPanel } from "./plan-panel";
 import { VoicePanel } from "./voice-panel";
 import { conversationMessages, HistoryError, listConversations, recordTurn, type Conversation } from "./history";
-import { newThread, storedThread } from "./thread";
+import { clearThreadPending, newThread, pendingThread, threadFor } from "./thread";
 
 const LOCALE_LABEL: Record<Locale, string> = { en: "English", hi: "हिन्दी", te: "తెలుగు" };
 const LITERACY_LABEL = { low: "new to loans", medium: "knows the basics", high: "very familiar" } as const;
@@ -29,14 +30,7 @@ export function Island({ context }: { context: AssistantContext }) {
     updates: [UseAgentUpdate.OnMessagesChanged, UseAgentUpdate.OnStateChanged, UseAgentUpdate.OnRunStatusChanged],
     throttleMs: 60,
   });
-  const freshThreads = useRef(new Set<string>());
-  const [thread, setThread] = useState(() => {
-    const stored = storedThread(context.user, context.application);
-    if (stored) return stored;
-    const id = newThread(context.user, context.application);
-    freshThreads.current.add(id);
-    return id;
-  });
+  const [thread, setThread] = useState(() => threadFor(context.user, context.application));
   const [history, setHistory] = useState<Conversation[]>([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
@@ -65,15 +59,16 @@ export function Island({ context }: { context: AssistantContext }) {
 
   // A thread change starts from the stored transcript of that conversation. The conversation was
   // bound to this application and this borrower when Frappe minted it, so the server restores
-  // only what belongs here; a 404 simply means the thread has not had a turn yet.
+  // only what belongs here; anything else is refused as not found.
   useEffect(() => {
     if (!isReady) return;
     let cancelled = false;
     agent.setMessages([]);
     agent.setState({});
     agent.threadId = thread;
-    // A thread started in this page load has no stored turns; asking for them is a needless 404.
-    if (freshThreads.current.has(thread)) return;
+    // A thread this tab minted but never used has no stored rows, so its transcript cannot be
+    // restored yet. The marker is kept in storage precisely so a reload does not ask for it.
+    if (pendingThread(context.user, context.application) === thread) return;
     conversationMessages(context, thread)
       .then((detail) => {
         if (cancelled || detail.thread_id !== thread) return;
@@ -84,7 +79,7 @@ export function Island({ context }: { context: AssistantContext }) {
       .catch((error) => {
         if (cancelled) return;
         if (error instanceof HistoryError && error.status === 401) signInAgain();
-        // 404: nothing stored for this thread yet (or it was removed). The first mint creates it.
+        // Anything else, 404 included, leaves the panel empty: the transcript is never invented.
       });
     return () => {
       cancelled = true;
@@ -95,6 +90,8 @@ export function Island({ context }: { context: AssistantContext }) {
     async (question: string, answer: string) => {
       try {
         await recordTurn(context, thread, question, answer);
+        // The transcript is stored, so a later page load of this tab can restore it.
+        clearThreadPending(context.user, context.application, thread);
         await refreshHistory();
       } catch (error) {
         if (error instanceof HistoryError && error.status === 401) signInAgain();
@@ -104,11 +101,7 @@ export function Island({ context }: { context: AssistantContext }) {
     [context, refreshHistory, thread],
   );
 
-  const startNewThread = useCallback(() => {
-    const id = newThread(context.user, context.application);
-    freshThreads.current.add(id);
-    setThread(id);
-  }, [context]);
+  const startNewThread = useCallback(() => setThread(newThread(context.user, context.application)), [context]);
 
   const conversationConflict = useCallback(() => {
     // The server refused this thread (another application, another account or a signed-out
@@ -116,7 +109,8 @@ export function Island({ context }: { context: AssistantContext }) {
     startNewThread();
   }, [startNewThread]);
 
-  const state = (agent.state ?? {}) as PublicState;
+  // The runtime snapshot is untyped JSON; only fields in the server contract survive validation.
+  const state = parsePublicState(agent.state);
   const visible = history.slice(0, VISIBLE_HISTORY);
 
   return (

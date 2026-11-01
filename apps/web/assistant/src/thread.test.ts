@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { newThread, storedThread, threadFor } from "./thread";
+import { clearThreadPending, newThread, pendingThread, storedThread, threadFor } from "./thread";
 
 const USER = "borrower@example.invalid";
 
@@ -58,5 +58,71 @@ describe("assistant thread", () => {
     const key = `loan-advisory:thread:${USER}:LA-1`;
     expect(storedThread(USER, "LA-1", memoryStore({ [key]: "thread-1" }))).toBe("thread-1");
     expect(storedThread(USER, "LA-1", memoryStore({ [key]: "<script>" }))).toBeNull();
+  });
+});
+
+describe("pending transcript marker", () => {
+  const pendingKey = `loan-advisory:thread:${USER}:LA-1:pending`;
+
+  it("names a thread the moment it is minted", () => {
+    const store = memoryStore();
+    const thread = threadFor(USER, "LA-1", store);
+    expect(pendingThread(USER, "LA-1", store)).toBe(thread);
+  });
+
+  it("survives the reload that used to cause a needless 404", () => {
+    const store = memoryStore();
+    const minted = threadFor(USER, "LA-1", store);
+    // A page load hands back the same store; nothing was ever sent to Frappe in between.
+    const reloaded = threadFor(USER, "LA-1", store);
+    expect(reloaded).toBe(minted);
+    expect(pendingThread(USER, "LA-1", store)).toBe(minted);
+  });
+
+  it("is released once a turn has been recorded", () => {
+    const store = memoryStore();
+    const thread = newThread(USER, "LA-1", store);
+    clearThreadPending(USER, "LA-1", thread, store);
+    expect(pendingThread(USER, "LA-1", store)).toBeNull();
+    expect(storedThread(USER, "LA-1", store)).toBe(thread);
+  });
+
+  it("keeps the marker of a newer thread when an older turn lands late", () => {
+    const store = memoryStore();
+    const first = newThread(USER, "LA-1", store);
+    const second = newThread(USER, "LA-1", store);
+    clearThreadPending(USER, "LA-1", first, store);
+    expect(pendingThread(USER, "LA-1", store)).toBe(second);
+  });
+
+  it("holds one marker per application", () => {
+    const store = memoryStore();
+    const first = newThread(USER, "LA-1", store);
+    const second = newThread(USER, "LA-2", store);
+    expect(pendingThread(USER, "LA-1", store)).toBe(first);
+    expect(pendingThread(USER, "LA-2", store)).toBe(second);
+    clearThreadPending(USER, "LA-1", first, store);
+    expect(pendingThread(USER, "LA-1", store)).toBeNull();
+    expect(pendingThread(USER, "LA-2", store)).toBe(second);
+  });
+
+  it("works without a usable storage backend", () => {
+    const unusable = {
+      getItem: () => {
+        throw new Error("storage is blocked");
+      },
+      setItem: () => {
+        throw new Error("storage is blocked");
+      },
+    };
+    const thread = newThread(USER, "LA-1", unusable);
+    expect(thread).toMatch(/^[A-Za-z0-9._:-]{1,128}$/);
+    expect(pendingThread(USER, "LA-1", unusable)).toBeNull();
+    expect(() => clearThreadPending(USER, "LA-1", thread, unusable)).not.toThrow();
+  });
+
+  it("ignores a marker that storage no longer holds", () => {
+    expect(pendingThread(USER, "LA-1", memoryStore({ [pendingKey]: "" }))).toBeNull();
+    expect(pendingThread(USER, "LA-1", memoryStore({ "loan-advisory:thread:someone-else@example.invalid:LA-1:pending": "theirs" }))).toBeNull();
   });
 });

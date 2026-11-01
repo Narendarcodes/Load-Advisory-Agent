@@ -3,6 +3,7 @@ import type { AbstractAgent, Message } from "@copilotkit/react-core/v2";
 
 import type { PublicState } from "./types";
 import { AnswerDetails } from "./answer-details";
+import { renderBlock, type GenUiContext } from "./genui/registry";
 
 const CHIPS = [
   "Why was my loan rejected?",
@@ -123,12 +124,14 @@ export function ChatPanel({
   }
 
   const disabled = busy || !isReady;
+  const genui: GenUiContext = { application, busy: disabled, onAsk: (question) => void run(question, true) };
 
   return (
     <section className="chat" aria-labelledby="chat-heading">
       <h2 id="chat-heading" className="assistant__title">
         Ask about this application
       </h2>
+      {renderBlock({ type: "application_context", application }, genui)}
       <p className="sr-only" role="status">
         {busy ? "The assistant is answering." : ""}
       </p>
@@ -160,6 +163,7 @@ export function ChatPanel({
           })
         )}
       </div>
+      {busy && state.progress ? renderBlock({ type: "progress", stage: state.progress.stage }, genui) : null}
       <div className="chips">
         {CHIPS.map((chip) => (
           <button key={chip} type="button" className="btn btn--ghost btn--sm" disabled={disabled} onClick={() => void run(chip, true)}>
@@ -186,7 +190,8 @@ export function ChatPanel({
         </button>
       </form>
       {!isReady ? <p className="note">Connecting to the advisory service…</p> : null}
-      <AnswerDetails state={state} />
+      {renderBlock({ type: "what_if_form", card: state.decision_card }, genui)}
+      <AnswerDetails state={state} application={application} busy={disabled} onAsk={genui.onAsk} />
     </section>
   );
 }

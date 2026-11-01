@@ -135,7 +135,9 @@
 .assistant .msg.user {
 	align-self: flex-end;
 	background: var(--accent);
-	color: #fff;
+	/* White on --coral is 2.51:1. The dark-ink-on-light-coral pairing the design system prefers
+	   measures 6.65:1 here, so the bubble keeps its fill and only the ink changes. */
+	color: var(--ink);
 	border-bottom-right-radius: 4px;
 }
 
@@ -189,6 +191,24 @@
 	color: var(--mute);
 	font-size: 0.86rem;
 	margin: 0;
+}
+
+/* The host panel is height-clamped on desktop; without this the blocks after the
+   composer (what-if, decision card, plan) are clipped by `overflow: hidden`. */
+@media (min-width: 901px) {
+	.assistant-layout__main .assistant__body {
+		overflow-y: auto;
+	}
+
+	.assistant .log {
+		flex: 0 1 auto;
+		max-height: 46vh;
+	}
+
+	.assistant-layout__main .assistant__grid {
+		height: auto;
+		overflow: visible;
+	}
 }
 
 .assistant .details {
@@ -434,10 +454,190 @@
 	border: 0;
 }
 
-@media (max-width: 900px) {
+.assistant .appctx {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 10px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	padding: 6px 10px;
+	margin-bottom: 8px;
+	font-size: 0.78rem;
+	color: var(--mute);
+	background: #f7f9fc;
+}
+
+.assistant .appctx__ref {
+	color: var(--ink);
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.assistant .appctx__links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-left: auto;
+}
+
+.assistant .card-block {
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: var(--card);
+	padding: 12px 14px;
+}
+
+.assistant .card-block__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.assistant .card-block h3 {
+	margin: 0;
+	font-size: 0.9rem;
+}
+
+.assistant .card-block h4 {
+	margin: 12px 0 4px;
+	font-size: 0.82rem;
+}
+
+.assistant .card-block p {
+	margin: 6px 0 0;
+}
+
+.assistant .synthetic {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.assistant .provenance {
+	border-top: 1px dashed var(--line);
+	padding-top: 8px;
+	margin-top: 10px;
+	font-size: 0.72rem;
+	color: var(--mute);
+	overflow-wrap: anywhere;
+}
+
+.assistant .bureau {
+	border-top: 1px solid var(--line);
+	margin-top: 10px;
+}
+
+.assistant .missing ul,
+.assistant .handoff {
+	font-size: 0.84rem;
+}
+
+.assistant .missing ul {
+	padding-left: 18px;
+}
+
+.assistant .missing li {
+	margin-bottom: 10px;
+}
+
+.assistant .missing a,
+.assistant .handoff a {
+	font-size: 0.8rem;
+}
+
+.assistant .details__block + .details__block {
+	margin-top: 12px;
+}
+
+.assistant .progress {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 6px 0 0;
+	padding: 6px 10px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: #f7f9fc;
+	font-size: 0.8rem;
+	color: var(--mute);
+}
+
+.assistant .progress__dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--accent);
+	flex: 0 0 auto;
+}
+
+.assistant .whatif-form {
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	padding: 10px 12px;
+	margin-top: 10px;
+}
+
+.assistant .whatif-form h3 {
+	margin: 0;
+	font-size: 0.88rem;
+}
+
+.assistant .whatif-form__fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 6px 14px;
+}
+
+.assistant .whatif-form .field {
+	margin: 0;
+}
+
+.assistant .whatif-form .hint {
+	margin: 2px 0 0;
+}
+
+.assistant .whatif-form .form-actions {
+	margin-top: 10px;
+}
+
+.assistant .field-error {
+	color: var(--fail);
+	font-size: 0.78rem;
+	margin: 4px 0 0;
+}
+
+.assistant .r-ERROR {
+	color: var(--fail);
+	font-weight: 700;
+}
+
+.assistant .r-REVIEW {
+	color: var(--warn);
+	font-weight: 700;
+}
+
+.assistant th,
+.assistant td {
+	overflow-wrap: anywhere;
+}
+
+/* The voice/history column is 270px; below this the chat column is too narrow
+   for the decision table, so stack it under the conversation instead. */
+@media (max-width: 1300px) {
 	.assistant__grid {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 		overflow-y: auto;
+	}
+
+	/* The design system sets `white-space: nowrap` on table headers. Kept here it gives the
+	   rules table a min-content width wider than this column at 390px, which forces the `1fr`
+	   track past the panel and severs the card against its `overflow: hidden` ancestor. */
+	.assistant thead th {
+		white-space: normal;
 	}
 
 	.assistant__aside {

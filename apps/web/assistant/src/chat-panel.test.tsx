@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AbstractAgent } from "@copilotkit/react-core/v2";
 
 import { ChatPanel } from "./chat-panel";
+import type { PublicState } from "./types";
+import { parsePublicState } from "./genui/schema";
 
 interface RunCall {
   runId: string;
@@ -43,7 +45,7 @@ afterEach(async () => {
   container = undefined;
 });
 
-async function mount(agent: AbstractAgent, onSessionExpired = vi.fn()) {
+async function mount(agent: AbstractAgent, onSessionExpired = vi.fn(), state: PublicState = {}) {
   container = document.createElement("div");
   document.body.append(container);
   const onAnswered = vi.fn();
@@ -55,7 +57,7 @@ async function mount(agent: AbstractAgent, onSessionExpired = vi.fn()) {
         agent={agent}
         isReady
         application="LA-2026-00001"
-        state={{}}
+        state={state}
         onSessionExpired={onSessionExpired}
         onAnswered={onAnswered}
         onConversationReset={onConversationReset}
@@ -74,7 +76,7 @@ describe("ChatPanel", () => {
       type(element.querySelector("#question") as HTMLInputElement, "Why was I rejected?");
     });
     await act(async () => {
-      element.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      element.querySelector("form.row")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
 
     expect(calls).toHaveLength(1);
@@ -92,7 +94,7 @@ describe("ChatPanel", () => {
       type(element.querySelector("#question") as HTMLInputElement, "why?");
     });
     await act(async () => {
-      element.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      element.querySelector("form.row")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
 
     expect(onSessionExpired).toHaveBeenCalledOnce();
@@ -107,7 +109,7 @@ describe("ChatPanel", () => {
       type(element.querySelector("#question") as HTMLInputElement, "Why was I rejected?");
     });
     await act(async () => {
-      element.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      element.querySelector("form.row")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
 
     expect(onAnswered).toHaveBeenCalledWith(
@@ -124,7 +126,7 @@ describe("ChatPanel", () => {
       type(element.querySelector("#question") as HTMLInputElement, "why?");
     });
     await act(async () => {
-      element.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      element.querySelector("form.row")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
 
     expect(onConversationReset).toHaveBeenCalledOnce();
@@ -157,5 +159,64 @@ describe("ChatPanel", () => {
       await Promise.resolve();
     });
     expect(chips[0].disabled).toBe(false);
+  });
+
+  it("shows the application this conversation is about", async () => {
+    const { agent } = fakeAgent();
+    const { container: element } = await mount(agent);
+    expect(element.querySelector(".appctx")?.textContent).toContain("LA-2026-00001");
+    expect(element.querySelector('.appctx a[href="/borrower/documents?name=LA-2026-00001"]')).not.toBeNull();
+  });
+
+  it("renders the recorded decision card from the validated state snapshot", async () => {
+    const { agent } = fakeAgent();
+    const state = parsePublicState({
+      decision_card: {
+        application_ref: "LA-2026-00001",
+        decision: "REJECTED",
+        recorded_outcome: "REJECTED",
+        policy_synthetic: true,
+        rules: [{ rule_id: "MIN_CREDIT_SCORE", name: "Credit score", result: "FAIL", actual: "640", threshold: "≥ 700" }],
+        failed_reason_codes: ["MIN_CREDIT_SCORE"],
+        missing_fields: [],
+        flags: [],
+        answer_html: "<img src=x onerror=alert(1)>",
+      },
+    });
+    const { container: element } = await mount(agent, vi.fn(), state);
+    expect(element.textContent).toContain("Recorded decision");
+    expect(element.textContent).toContain("Not approved");
+    expect(element.textContent).toContain("Reason codes on the record: MIN_CREDIT_SCORE");
+    expect(element.querySelector("img")).toBeNull();
+  });
+
+  it("shows a real server stage only while the turn is running", async () => {
+    let release: (() => void) | undefined;
+    const agent = {
+      messages: [],
+      state: {},
+      addMessage: vi.fn(),
+      setMessages: vi.fn(),
+      setState: vi.fn(),
+      runAgent: vi.fn(() => new Promise<void>((resolve) => (release = resolve))),
+    } as unknown as AbstractAgent;
+    const { container: element } = await mount(agent, vi.fn(), parsePublicState({ progress: { stage: "retrieve_policy" } }));
+    expect(element.querySelector(".progress")).toBeNull();
+
+    await act(async () => {
+      type(element.querySelector("#question") as HTMLInputElement, "why?");
+    });
+    await act(async () => {
+      element.querySelector("form.row")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    expect(element.querySelector(".progress")?.textContent).toContain("Searching the policy library");
+    expect(element.textContent).not.toContain("retrieve_policy");
+
+    await act(async () => {
+      release?.();
+      await Promise.resolve();
+    });
+    expect(element.querySelector(".progress")).toBeNull();
   });
 });
