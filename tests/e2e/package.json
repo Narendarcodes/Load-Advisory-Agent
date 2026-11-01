@@ -1,0 +1,20 @@
+{
+  "name": "@loan-advisory/portal-acceptance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Browser acceptance and accessibility harness for the borrower portal (test-only)",
+  "scripts": {
+    "missing-info": "node missing_information_e2e.cjs",
+    "thread": "node thread_continuity_e2e.cjs",
+    "a11y": "node accessibility_audit.cjs",
+    "contrast": "node manual_contrast.cjs",
+    "keyboard": "node keyboard_review.cjs",
+    "consent": "node consent_regression_e2e.cjs",
+    "list": "node conversation_list_state.cjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "playwright": "1.63.0"
+  }
+}
