@@ -1,0 +1,236 @@
+{
+  "capturedAt": "2026-11-01T12:04:06.292Z",
+  "base": "http://127.0.0.1:8081",
+  "app": "ACC-LOAP-2026-00018",
+  "results": [
+    {
+      "width": 1280,
+      "step": "workspace-ready",
+      "overflowPx": 0,
+      "scrollWidth": 1280,
+      "viewport": 1280
+    },
+    {
+      "shot": "genui-00-workspace-1280",
+      "file": "docs/borrower-frontend/screenshots/2026-11-01-genui/genui-00-workspace-1280.png",
+      "overflowPx": 0,
+      "scrollWidth": 1280,
+      "viewport": 1280
+    },
+    {
+      "width": 1280,
+      "step": "decision-turn",
+      "progress": "Checking your application",
+      "progressLabels": [
+        "Checking your application",
+        "Preparing the explanation"
+      ],
+      "progressGone": true,
+      "decision": {
+        "text": "Recorded decision Not approved Recorded for ACC-LOAP-2026-00018. This is the decision already on file, not a new assessment. Synthetic policy synthetic prototype policy (synthetic-v1) — the four thresholds are team assumptions, not any real lender's policy Checks recorded on this decision CHECK YOUR RECORDED VALUE REQUIREMENT RESULT Monthly income ₹40,000 ≥ ₹25,000 Met Existing EMIs vs income (FOIR) 55.0% ≤ 45.0% Not met Credit score 640 ≥ 700 Not met Time in current job 18 months ≥ 12 months Met Reason codes on the record: ERR_FOIR_EXCEEDED, ERR_CREDIT_SCORE_BELOW_MINIMUM. Decision record 0ba30b37-3225-562d-8394-10ba41a438bc · policy synthetic-v1 · evaluated 2026-10-31T11:06:11.299493+00:00",
+        "ruleRows": 4,
+        "hasProvenance": true
+      },
+      "sources": 0
+    },
+    {
+      "shot": "genui-02-decision-1280",
+      "file": "docs/borrower-frontend/screenshots/2026-11-01-genui/genui-02-decision-1280.png",
+      "overflowPx": 0,
+      "scrollWidth": 1280,
+      "viewport": 1280,
+      "a11y": {
+        "controls": 25,
+        "unnamed": [],
+        "unlabelledInputs": [],
+        "headings": [
+          "Ask about this application",
+          "Try a what-if",
+          "About the latest answer",
+          "Recorded decision",
+          "Talk instead of typing",
+          "Recent conversations",
+          "Improvement plan"
+        ],
+        "liveRegions": 2
+      }
+    },
+    {
+      "width": 1280,
+      "step": "whatif-turn",
+      "whatIf": {
+        "text": "What-if Hypothetical simulation, not a decision With credit score = 800, monthly income = 90,000, monthly obligations = 5,000, employment months = 60: Simulated outcome: Approved (simulation only) Hypothetical rule results compared with the recorded decision CHECK RECORDED HYPOTHETICAL Monthly income Met Met Existing EMIs vs income (FOIR) Not met Met Credit score Not met Met Time in current job Met Met hypothetical result under the synthetic prototype policy; not a decision and not a guarantee Your recorded application was not changed by this simulation.",
+        "flagged": true
+      },
+      "applicationUnchanged": true
+    },
+    {
+      "shot": "genui-03-whatif-1280",
+      "file": "docs/borrower-frontend/screenshots/2026-11-01-genui/genui-03-whatif-1280.png",
+      "overflowPx": 0,
+      "scrollWidth": 1280,
+      "viewport": 1280
+    },
+    {
+      "width": 1280,
+      "step": "keyboard",
+      "order": [
+        {
+          "tag": "input",
+          "id": "whatif-credit_score",
+          "text": ""
+        },
+        {
+          "tag": "input",
+          "id": "whatif-monthly_income",
+          "text": ""
+        },
+        {
+          "tag": "input",
+          "id": "whatif-monthly_obligations",
+          "text": ""
+        },
+        {
+          "tag": "input",
+          "id": "whatif-employment_months",
+          "text": ""
+        },
+        {
+          "tag": "button",
+          "id": null,
+          "text": "Run what-if"
+        },
+        {
+          "tag": "input",
+          "id": "voice-consent",
+          "text": ""
+        },
+        {
+          "tag": "button",
+          "id": null,
+          "text": "New conversation"
+        },
+        {
+          "tag": "button",
+          "id": null,
+          "text": "Why was my loan rejected?\n2 exchanges"
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "step": "workspace-ready",
+      "overflowPx": 0,
+      "scrollWidth": 1024,
+      "viewport": 1024
+    },
+    {
+      "shot": "genui-00-workspace-1024",
+      "file": "docs/borrower-frontend/screenshots/2026-11-01-genui/genui-00-workspace-1024.png",
+      "overflowPx": 0,
+      "scrollWidth": 1024,
+      "viewport": 1024
+    },
+    {
+      "width": 1024,
+      "step": "decision-turn",
+      "progress": "Checking your application",
+      "progressLabels": [
+        "Checking your application",
+        "Preparing the explanation"
+      ],
+      "progressGone": true,
+      "decision": {
+        "text": "Recorded decision Not approved Recorded for ACC-LOAP-2026-00018. This is the decision already on file, not a new assessment. Synthetic policy synthetic prototype policy (synthetic-v1) — the four thresholds are team assumptions, not any real lender's policy Checks recorded on this decision CHECK YOUR RECORDED VALUE REQUIREMENT RESULT Monthly income ₹40,000 ≥ ₹25,000 Met Existing EMIs vs income (FOIR) 55.0% ≤ 45.0% Not met Credit score 640 ≥ 700 Not met Time in current job 18 months ≥ 12 months Met Reason codes on the record: ERR_FOIR_EXCEEDED, ERR_CREDIT_SCORE_BELOW_MINIMUM. Decision record 0ba30b37-3225-562d-8394-10ba41a438bc · policy synthetic-v1 · evaluated 2026-10-31T11:06:11.299493+00:00",
+        "ruleRows": 4,
+        "hasProvenance": true
+      },
+      "sources": 0
+    },
+    {
+      "shot": "genui-02-decision-1024",
+      "file": "docs/borrower-frontend/screenshots/2026-11-01-genui/genui-02-decision-1024.png",
+      "overflowPx": 0,
+      "scrollWidth": 1024,
+      "viewport": 1024,
+      "a11y": {
+        "controls": 25,
+        "unnamed": [],
+        "unlabelledInputs": [],
+        "headings": [
+          "Ask about this application",
+          "Try a what-if",
+          "About the latest answer",
+          "Recorded decision",
+          "Talk instead of typing",
+          "Recent conversations",
+          "Improvement plan"
+        ],
+        "liveRegions": 2
+      }
+    },
+    {
+      "width": 1024,
+      "step": "whatif-turn",
+      "whatIf": {
+        "text": "What-if Hypothetical simulation, not a decision With credit score = 800, monthly income = 90,000, monthly obligations = 5,000, employment months = 60: Simulated outcome: Approved (simulation only) Hypothetical rule results compared with the recorded decision CHECK RECORDED HYPOTHETICAL Monthly income Met Met Existing EMIs vs income (FOIR) Not met Met Credit score Not met Met Time in current job Met Met hypothetical result under the synthetic prototype policy; not a decision and not a guarantee Your recorded application was not changed by this simulation.",
+        "flagged": true
+      },
+      "applicationUnchanged": true
+    },
+    {
+      "shot": "genui-03-whatif-1024",
+      "file": "docs/borrower-frontend/screenshots/2026-11-01-genui/genui-03-whatif-1024.png",
+      "overflowPx": 0,
+      "scrollWidth": 1024,
+      "viewport": 1024
+    },
+    {
+      "width": 1024,
+      "step": "keyboard",
+      "order": [
+        {
+          "tag": "input",
+          "id": "whatif-credit_score",
+          "text": ""
+        },
+        {
+          "tag": "input",
+          "id": "whatif-monthly_income",
+          "text": ""
+        },
+        {
+          "tag": "input",
+          "id": "whatif-monthly_obligations",
+          "text": ""
+        },
+        {
+          "tag": "input",
+          "id": "whatif-employment_months",
+          "text": ""
+        },
+        {
+          "tag": "button",
+          "id": null,
+          "text": "Run what-if"
+        },
+        {
+          "tag": "input",
+          "id": "voice-consent",
+          "text": ""
+        },
+        {
+          "tag": "button",
+          "id": null,
+          "text": "New conversation"
+        },
+        {
+          "tag": "button",
+          "id": null,
+          "text": "Why was my loan rejected?\n2 exchanges"
+        }
+      ]
+    }
+  ],
+  "consoleErrors": []
+}

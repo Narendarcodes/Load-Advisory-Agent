@@ -1,0 +1,112 @@
+# Production-like front door for the borrower portal (Phase F).
+#
+# Rendered by the nginx image's envsubst hook: mount this file as
+# /etc/nginx/templates/default.conf.template and set
+#   PORTAL_SITE        the one public hostname (and Frappe site name)
+#   FRAPPE_UPSTREAM    host:port of the Frappe web server
+#   RUNTIME_UPSTREAM   host:port of the CopilotKit runtime
+#   LIVEKIT_UPSTREAM   host:port of a same-origin LiveKit server, or empty
+#
+# Invariants, in order of importance:
+#   * Host and X-Frappe-Site-Name are overwritten with PORTAL_SITE. Frappe resolves the
+#     site before the app runs, so a client header must never select one.
+#   * X-Forwarded-For is replaced with the peer address, never appended. A client cannot
+#     claim an upstream address; adding a CDN means adding a trusted header here, not
+#     trusting the chain.
+#   * Only PORTAL_SITE is served; any other Host gets 421 instead of a cookie being
+#     forwarded to a different Frappe site.
+#   * Server-sent events are unbuffered and gzip is off on the runtime path.
+#   * Assets are compressed; the portal is used on mobile networks.
+map $http_upgrade $connection_upgrade {
+	default upgrade;
+	'' close;
+}
+
+upstream portal_backend {
+	server ${FRAPPE_UPSTREAM};
+	keepalive 16;
+}
+
+upstream copilot_runtime {
+	server ${RUNTIME_UPSTREAM};
+	keepalive 8;
+}
+
+server {
+	listen 80 default_server;
+	server_name _;
+	# A literal host, not $host: a forged Host must not become an open redirect.
+	return 308 https://${PORTAL_SITE}$request_uri;
+}
+
+server {
+	listen 443 ssl default_server;
+	http2 on;
+	server_name _;
+
+	ssl_certificate /etc/nginx/tls/tls.crt;
+	ssl_certificate_key /etc/nginx/tls/tls.key;
+	ssl_protocols TLSv1.2 TLSv1.3;
+	ssl_session_cache shared:portal_tls:10m;
+	ssl_session_timeout 1h;
+
+	client_max_body_size 50m;
+
+	gzip on;
+	gzip_vary on;
+	gzip_min_length 1024;
+	gzip_proxied any;
+	gzip_types text/css text/plain application/javascript application/json application/xml image/svg+xml;
+
+	location = /healthz {
+		access_log off;
+		return 204;
+	}
+
+	location /api/copilotkit {
+		# Same-origin browser traffic only. The runtime forwards inbound x-* headers to
+		# the agent, so the site name is pinned here as well.
+		proxy_http_version 1.1;
+		proxy_set_header Host ${PORTAL_SITE};
+		proxy_set_header X-Frappe-Site-Name ${PORTAL_SITE};
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $remote_addr;
+		proxy_set_header X-Forwarded-Proto https;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection $connection_upgrade;
+		proxy_pass http://copilot_runtime;
+		proxy_buffering off;
+		gzip off;
+		proxy_read_timeout 300;
+		proxy_send_timeout 300;
+	}
+
+	location /livekit/ {
+		proxy_http_version 1.1;
+		proxy_set_header Host ${PORTAL_SITE};
+		proxy_set_header X-Frappe-Site-Name ${PORTAL_SITE};
+		proxy_set_header X-Forwarded-For $remote_addr;
+		proxy_set_header X-Forwarded-Proto https;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection $connection_upgrade;
+		proxy_pass http://${LIVEKIT_UPSTREAM};
+		proxy_buffering off;
+		proxy_read_timeout 3600;
+	}
+
+	location / {
+		if ($host != "${PORTAL_SITE}") {
+			return 421;
+		}
+		proxy_http_version 1.1;
+		proxy_set_header Host ${PORTAL_SITE};
+		proxy_set_header X-Frappe-Site-Name ${PORTAL_SITE};
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $remote_addr;
+		proxy_set_header X-Forwarded-Proto https;
+		proxy_pass http://portal_backend;
+		proxy_read_timeout 300;
+		proxy_send_timeout 300;
+		proxy_redirect off;
+	}
+}

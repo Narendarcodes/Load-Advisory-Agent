@@ -1,0 +1,3276 @@
+{
+  "capturedAt": "2026-11-01T16:24:16.177Z",
+  "base": "http://127.0.0.1:8081",
+  "authentication": "real Frappe login form (session cookie + CSRF); no auth bypass",
+  "target": "WCAG 2.2 AA",
+  "tags": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21a",
+    "wcag21aa",
+    "wcag22aa"
+  ],
+  "versions": {
+    "playwright": "1.63.0",
+    "axe_playwright": "4.14.0",
+    "axe_core": "4.14.0"
+  },
+  "suppressions": "none: no rules disabled, no includes/excludes, no overrides",
+  "widths": [
+    1440,
+    1280,
+    1024,
+    768,
+    390
+  ],
+  "stateWidths": [
+    1440,
+    390
+  ],
+  "fixture": "tests/e2e/agui_stub.cjs (deterministic, test-only) for the advisory states",
+  "writeGuard": [
+    {
+      "label": "1440/guest",
+      "requestsSeen": 0,
+      "postedReads": 0,
+      "writesAllowed": 0,
+      "writesBlocked": 0,
+      "byPath": []
+    },
+    {
+      "label": "1440/authed",
+      "requestsSeen": 30,
+      "postedReads": 23,
+      "writesAllowed": 7,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 4
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 5
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 4
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 5
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_application",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_documents",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_document_types",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_decision",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.feedback.list_feedback",
+          "times": 2
+        }
+      ]
+    },
+    {
+      "label": "1280/guest",
+      "requestsSeen": 0,
+      "postedReads": 0,
+      "writesAllowed": 0,
+      "writesBlocked": 0,
+      "byPath": []
+    },
+    {
+      "label": "1280/authed",
+      "requestsSeen": 19,
+      "postedReads": 18,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 4
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_application",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_documents",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_document_types",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_decision",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.feedback.list_feedback",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "1024/guest",
+      "requestsSeen": 0,
+      "postedReads": 0,
+      "writesAllowed": 0,
+      "writesBlocked": 0,
+      "byPath": []
+    },
+    {
+      "label": "1024/authed",
+      "requestsSeen": 19,
+      "postedReads": 18,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 4
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_application",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_documents",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_document_types",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_decision",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.feedback.list_feedback",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "768/guest",
+      "requestsSeen": 0,
+      "postedReads": 0,
+      "writesAllowed": 0,
+      "writesBlocked": 0,
+      "byPath": []
+    },
+    {
+      "label": "768/authed",
+      "requestsSeen": 19,
+      "postedReads": 18,
+      "writesAllowed": 1,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 4
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_application",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_documents",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_document_types",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_decision",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.feedback.list_feedback",
+          "times": 1
+        }
+      ]
+    },
+    {
+      "label": "390/guest",
+      "requestsSeen": 0,
+      "postedReads": 0,
+      "writesAllowed": 0,
+      "writesBlocked": 0,
+      "byPath": []
+    },
+    {
+      "label": "390/authed",
+      "requestsSeen": 30,
+      "postedReads": 23,
+      "writesAllowed": 7,
+      "writesBlocked": 0,
+      "byPath": [
+        {
+          "request": "POST /api/method/login",
+          "times": 1
+        },
+        {
+          "request": "POST /api/copilotkit/agent/advisory/run",
+          "times": 4
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.agent.record_turn",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.session.me",
+          "times": 5
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+          "times": 4
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+          "times": 5
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_application",
+          "times": 3
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_documents",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.documents.list_document_types",
+          "times": 1
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.applications.get_decision",
+          "times": 2
+        },
+        {
+          "request": "POST /api/method/loan_advisory_portal.api.feedback.list_feedback",
+          "times": 2
+        }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "at": "2026-11-01T16:20:43.026Z",
+      "width": 1440,
+      "kind": "guest",
+      "view": "01-landing-products",
+      "viewLabel": "Public loan products (landing)",
+      "url": "/borrower/products",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 29,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".plate__badge",
+          "html": "<span class=\"plate__badge\">Clear terms</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".input-group__prefix",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#calc-tenure",
+          "html": "<select id=\"calc-tenure\">\n\t\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t\t<option value=\"36\" selected=\"\">36 mon",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 35
+    },
+    {
+      "at": "2026-11-01T16:20:44.350Z",
+      "width": 1440,
+      "kind": "guest",
+      "view": "02-sign-in",
+      "viewLabel": "Sign in",
+      "url": "/login?redirect-to=%2Fborrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:20:46.567Z",
+      "width": 1440,
+      "kind": "guest",
+      "view": "02-sign-in",
+      "viewLabel": "Sign in",
+      "url": "/login?redirect-to=%2Fborrower",
+      "state": "form-validation",
+      "stateLabel": "Empty sign-in submission shows the inline error",
+      "reached": true,
+      "note": "alert #login-error: Enter the email address your invitation was sent to.",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 27,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 37,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/1440/02-sign-in-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:20:47.885Z",
+      "width": 1440,
+      "kind": "guest",
+      "view": "17-invite-unavailable",
+      "viewLabel": "Invitation link (unavailable state)",
+      "url": "/borrower/invite",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 16,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 48
+    },
+    {
+      "at": "2026-11-01T16:20:49.834Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "03-dashboard",
+      "viewLabel": "Borrower dashboard",
+      "url": "/borrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:20:51.292Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "04-eligibility",
+      "viewLabel": "Indicative eligibility (empty + validation)",
+      "url": "/borrower/eligibility",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "section[aria-labelledby=\"req-heading\"] > .field > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-tenure",
+          "html": "<select id=\"el-tenure\" name=\"tenure\">\n\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t<option value=\"36\" selected=",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-purpose",
+          "html": "<select id=\"el-purpose\" name=\"purpose\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".field:nth-child(1) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".grid-2 > .field:nth-child(2) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:20:53.687Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "04-eligibility",
+      "viewLabel": "Indicative eligibility (empty + validation)",
+      "url": "/borrower/eligibility",
+      "state": "form-validation",
+      "stateLabel": "Required income left blank",
+      "reached": true,
+      "note": "message #el-employment-error: Choose the option that describes you best. | message #el-income-error: Enter your monthly take-home income.",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "section[aria-labelledby=\"req-heading\"] > .field > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-tenure",
+          "html": "<select id=\"el-tenure\" name=\"tenure\">\n\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t<option value=\"36\" selected=",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-purpose",
+          "html": "<select id=\"el-purpose\" name=\"purpose\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".field:nth-child(1) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".grid-2 > .field:nth-child(2) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 38,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/1440/04-eligibility-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:20:55.216Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "05-apply",
+      "viewLabel": "Application wizard (locked steps + validation)",
+      "url": "/borrower/apply",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 39
+    },
+    {
+      "at": "2026-11-01T16:20:57.545Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "05-apply",
+      "viewLabel": "Application wizard (locked steps + validation)",
+      "url": "/borrower/apply",
+      "state": "form-validation",
+      "stateLabel": "Step 1 with the name left blank",
+      "reached": true,
+      "note": "message #about-name-error: Enter your full name.",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 39,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/1440/05-apply-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:20:59.052Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "06-kyc-workspace",
+      "viewLabel": "Identity (KYC) workspace (preview state)",
+      "url": "/borrower/kyc",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:21:01.438Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "06-kyc-workspace",
+      "viewLabel": "Identity (KYC) workspace (preview state)",
+      "url": "/borrower/kyc",
+      "state": "form-validation",
+      "stateLabel": "Malformed PAN in the preview",
+      "reached": true,
+      "note": "message #kyc-pan-error: Enter a 10-character sample PAN to preview masking.",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 38,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/1440/06-kyc-workspace-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:21:02.998Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "07-documents-empty",
+      "viewLabel": "Documents workspace (empty state)",
+      "url": "/borrower/documents?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 39
+    },
+    {
+      "at": "2026-11-01T16:21:04.451Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "08-application-submitted",
+      "viewLabel": "Application tracker (submitted)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:21:05.954Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "09-application-not-approved",
+      "viewLabel": "Recorded decision (not approved)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:21:10.302Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 30,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 34
+    },
+    {
+      "at": "2026-11-01T16:21:15.030Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "loading-progress",
+      "stateLabel": "Progress stage card visible while the run is in flight",
+      "reached": true,
+      "note": "progress cards=1, composer disabled=true, role=status nodes=1",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 29,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 35,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/1440/10-advisory-workspace-loading-progress.png"
+    },
+    {
+      "at": "2026-11-01T16:21:20.607Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "missing-info-card",
+      "stateLabel": "Missing Information GenUI card",
+      "reached": true,
+      "note": "card rendered by the real registry",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 32,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 32,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/1440/10-advisory-workspace-missing-info-card.png"
+    },
+    {
+      "at": "2026-11-01T16:21:26.016Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "citations-response",
+      "stateLabel": "Assistant answer with policy citations",
+      "reached": true,
+      "note": "sources block rendered",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 30,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 34,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/1440/10-advisory-workspace-citations-response.png"
+    },
+    {
+      "at": "2026-11-01T16:21:32.898Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "error-alert",
+      "stateLabel": "Upstream failure surfaced as an alert",
+      "reached": true,
+      "note": "RUN_ERROR rendered as role=alert",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 30,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 34,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/1440/10-advisory-workspace-error-alert.png"
+    },
+    {
+      "at": "2026-11-01T16:21:34.541Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "11-servicing",
+      "viewLabel": "Repayments (demo fixture, disabled actions)",
+      "url": "/borrower/servicing",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:21:36.055Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "12-profile",
+      "viewLabel": "Profile and consents",
+      "url": "/borrower/profile",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#employment-type",
+          "html": "<select id=\"employment-type\" name=\"employment_type\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#locale",
+          "html": "<select id=\"locale\" name=\"preferred_locale\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"en\" selected=\"\">English</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"hi\">हिन्दी</option>\n\t\t\t\t\t\n\t\t\t\t",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#literacy",
+          "html": "<select id=\"literacy\" name=\"literacy\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"low\">Plain, simple wording</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"medium\" selected=\"\">Standard word",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:21:37.488Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "13-help",
+      "viewLabel": "Help",
+      "url": "/borrower/help",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:21:38.927Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "14-feedback",
+      "viewLabel": "Feedback (empty form + validation)",
+      "url": "/borrower/feedback",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#category",
+          "html": "<select id=\"category\" name=\"category\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#application",
+          "html": "<select id=\"application\" name=\"application\">\n\t\t\t\t\t<option value=\"\">Not about one application</option>\n\t\t\t\t<option value=\"ACC-LOAP-2026-00019\">Medical costs · AC",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:21:41.370Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "14-feedback",
+      "viewLabel": "Feedback (empty form + validation)",
+      "url": "/borrower/feedback",
+      "state": "form-validation",
+      "stateLabel": "Send with no rating and no message",
+      "reached": true,
+      "note": "message div.alert.alert--error: Choose a rating from 1 to 5 | alert div.alert.alert--error: Choose a rating from 1 to 5",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#category",
+          "html": "<select id=\"category\" name=\"category\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#application",
+          "html": "<select id=\"application\" name=\"application\">\n\t\t\t\t\t<option value=\"\">Not about one application</option>\n\t\t\t\t<option value=\"ACC-LOAP-2026-00019\">Medical costs · AC",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 40,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/1440/14-feedback-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:21:42.939Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "15-terms",
+      "viewLabel": "Terms of use",
+      "url": "/borrower/terms",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    },
+    {
+      "at": "2026-11-01T16:21:44.436Z",
+      "width": 1440,
+      "kind": "authed",
+      "view": "16-privacy",
+      "viewLabel": "Privacy notice",
+      "url": "/borrower/privacy",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    },
+    {
+      "at": "2026-11-01T16:21:46.395Z",
+      "width": 1280,
+      "kind": "guest",
+      "view": "01-landing-products",
+      "viewLabel": "Public loan products (landing)",
+      "url": "/borrower/products",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 29,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".plate__badge",
+          "html": "<span class=\"plate__badge\">Clear terms</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".input-group__prefix",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#calc-tenure",
+          "html": "<select id=\"calc-tenure\">\n\t\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t\t<option value=\"36\" selected=\"\">36 mon",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 35
+    },
+    {
+      "at": "2026-11-01T16:21:47.824Z",
+      "width": 1280,
+      "kind": "guest",
+      "view": "02-sign-in",
+      "viewLabel": "Sign in",
+      "url": "/login?redirect-to=%2Fborrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:21:49.192Z",
+      "width": 1280,
+      "kind": "guest",
+      "view": "17-invite-unavailable",
+      "viewLabel": "Invitation link (unavailable state)",
+      "url": "/borrower/invite",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 16,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 48
+    },
+    {
+      "at": "2026-11-01T16:21:51.405Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "03-dashboard",
+      "viewLabel": "Borrower dashboard",
+      "url": "/borrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 39
+    },
+    {
+      "at": "2026-11-01T16:21:53.054Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "04-eligibility",
+      "viewLabel": "Indicative eligibility (empty + validation)",
+      "url": "/borrower/eligibility",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "section[aria-labelledby=\"req-heading\"] > .field > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-tenure",
+          "html": "<select id=\"el-tenure\" name=\"tenure\">\n\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t<option value=\"36\" selected=",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-purpose",
+          "html": "<select id=\"el-purpose\" name=\"purpose\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".field:nth-child(1) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".grid-2 > .field:nth-child(2) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:21:54.581Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "05-apply",
+      "viewLabel": "Application wizard (locked steps + validation)",
+      "url": "/borrower/apply",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 39
+    },
+    {
+      "at": "2026-11-01T16:21:56.102Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "06-kyc-workspace",
+      "viewLabel": "Identity (KYC) workspace (preview state)",
+      "url": "/borrower/kyc",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:21:57.599Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "07-documents-empty",
+      "viewLabel": "Documents workspace (empty state)",
+      "url": "/borrower/documents?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 39
+    },
+    {
+      "at": "2026-11-01T16:21:59.116Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "08-application-submitted",
+      "viewLabel": "Application tracker (submitted)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:22:00.902Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "09-application-not-approved",
+      "viewLabel": "Recorded decision (not approved)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:22:05.400Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 30,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 34
+    },
+    {
+      "at": "2026-11-01T16:22:06.896Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "11-servicing",
+      "viewLabel": "Repayments (demo fixture, disabled actions)",
+      "url": "/borrower/servicing",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:22:08.430Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "12-profile",
+      "viewLabel": "Profile and consents",
+      "url": "/borrower/profile",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#employment-type",
+          "html": "<select id=\"employment-type\" name=\"employment_type\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#locale",
+          "html": "<select id=\"locale\" name=\"preferred_locale\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"en\" selected=\"\">English</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"hi\">हिन्दी</option>\n\t\t\t\t\t\n\t\t\t\t",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#literacy",
+          "html": "<select id=\"literacy\" name=\"literacy\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"low\">Plain, simple wording</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"medium\" selected=\"\">Standard word",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:22:09.929Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "13-help",
+      "viewLabel": "Help",
+      "url": "/borrower/help",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:22:11.457Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "14-feedback",
+      "viewLabel": "Feedback (empty form + validation)",
+      "url": "/borrower/feedback",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#category",
+          "html": "<select id=\"category\" name=\"category\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#application",
+          "html": "<select id=\"application\" name=\"application\">\n\t\t\t\t\t<option value=\"\">Not about one application</option>\n\t\t\t\t<option value=\"ACC-LOAP-2026-00019\">Medical costs · AC",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:22:12.922Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "15-terms",
+      "viewLabel": "Terms of use",
+      "url": "/borrower/terms",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    },
+    {
+      "at": "2026-11-01T16:22:14.390Z",
+      "width": 1280,
+      "kind": "authed",
+      "view": "16-privacy",
+      "viewLabel": "Privacy notice",
+      "url": "/borrower/privacy",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    },
+    {
+      "at": "2026-11-01T16:22:16.119Z",
+      "width": 1024,
+      "kind": "guest",
+      "view": "01-landing-products",
+      "viewLabel": "Public loan products (landing)",
+      "url": "/borrower/products",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 29,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".plate__badge",
+          "html": "<span class=\"plate__badge\">Clear terms</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".input-group__prefix",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#calc-tenure",
+          "html": "<select id=\"calc-tenure\">\n\t\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t\t<option value=\"36\" selected=\"\">36 mon",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 35
+    },
+    {
+      "at": "2026-11-01T16:22:17.503Z",
+      "width": 1024,
+      "kind": "guest",
+      "view": "02-sign-in",
+      "viewLabel": "Sign in",
+      "url": "/login?redirect-to=%2Fborrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:22:18.828Z",
+      "width": 1024,
+      "kind": "guest",
+      "view": "17-invite-unavailable",
+      "viewLabel": "Invitation link (unavailable state)",
+      "url": "/borrower/invite",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 16,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 48
+    },
+    {
+      "at": "2026-11-01T16:22:21.056Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "03-dashboard",
+      "viewLabel": "Borrower dashboard",
+      "url": "/borrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 39
+    },
+    {
+      "at": "2026-11-01T16:22:22.580Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "04-eligibility",
+      "viewLabel": "Indicative eligibility (empty + validation)",
+      "url": "/borrower/eligibility",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "section[aria-labelledby=\"req-heading\"] > .field > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-tenure",
+          "html": "<select id=\"el-tenure\" name=\"tenure\">\n\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t<option value=\"36\" selected=",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-purpose",
+          "html": "<select id=\"el-purpose\" name=\"purpose\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".field:nth-child(1) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".grid-2 > .field:nth-child(2) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:22:24.082Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "05-apply",
+      "viewLabel": "Application wizard (locked steps + validation)",
+      "url": "/borrower/apply",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:22:25.590Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "06-kyc-workspace",
+      "viewLabel": "Identity (KYC) workspace (preview state)",
+      "url": "/borrower/kyc",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:22:27.051Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "07-documents-empty",
+      "viewLabel": "Documents workspace (empty state)",
+      "url": "/borrower/documents?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 39
+    },
+    {
+      "at": "2026-11-01T16:22:28.562Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "08-application-submitted",
+      "viewLabel": "Application tracker (submitted)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:22:30.129Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "09-application-not-approved",
+      "viewLabel": "Recorded decision (not approved)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:22:34.700Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 30,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 34
+    },
+    {
+      "at": "2026-11-01T16:22:36.178Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "11-servicing",
+      "viewLabel": "Repayments (demo fixture, disabled actions)",
+      "url": "/borrower/servicing",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:22:37.646Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "12-profile",
+      "viewLabel": "Profile and consents",
+      "url": "/borrower/profile",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#employment-type",
+          "html": "<select id=\"employment-type\" name=\"employment_type\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#locale",
+          "html": "<select id=\"locale\" name=\"preferred_locale\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"en\" selected=\"\">English</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"hi\">हिन्दी</option>\n\t\t\t\t\t\n\t\t\t\t",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#literacy",
+          "html": "<select id=\"literacy\" name=\"literacy\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"low\">Plain, simple wording</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"medium\" selected=\"\">Standard word",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:22:39.099Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "13-help",
+      "viewLabel": "Help",
+      "url": "/borrower/help",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:22:40.710Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "14-feedback",
+      "viewLabel": "Feedback (empty form + validation)",
+      "url": "/borrower/feedback",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#category",
+          "html": "<select id=\"category\" name=\"category\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#application",
+          "html": "<select id=\"application\" name=\"application\">\n\t\t\t\t\t<option value=\"\">Not about one application</option>\n\t\t\t\t<option value=\"ACC-LOAP-2026-00019\">Medical costs · AC",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:22:42.125Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "15-terms",
+      "viewLabel": "Terms of use",
+      "url": "/borrower/terms",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    },
+    {
+      "at": "2026-11-01T16:22:43.629Z",
+      "width": 1024,
+      "kind": "authed",
+      "view": "16-privacy",
+      "viewLabel": "Privacy notice",
+      "url": "/borrower/privacy",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    },
+    {
+      "at": "2026-11-01T16:22:45.425Z",
+      "width": 768,
+      "kind": "guest",
+      "view": "01-landing-products",
+      "viewLabel": "Public loan products (landing)",
+      "url": "/borrower/products",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 29,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".plate__badge",
+          "html": "<span class=\"plate__badge\">Clear terms</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".input-group__prefix",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#calc-tenure",
+          "html": "<select id=\"calc-tenure\">\n\t\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t\t<option value=\"36\" selected=\"\">36 mon",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 35
+    },
+    {
+      "at": "2026-11-01T16:22:46.794Z",
+      "width": 768,
+      "kind": "guest",
+      "view": "02-sign-in",
+      "viewLabel": "Sign in",
+      "url": "/login?redirect-to=%2Fborrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:22:48.114Z",
+      "width": 768,
+      "kind": "guest",
+      "view": "17-invite-unavailable",
+      "viewLabel": "Invitation link (unavailable state)",
+      "url": "/borrower/invite",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 16,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 48
+    },
+    {
+      "at": "2026-11-01T16:22:50.269Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "03-dashboard",
+      "viewLabel": "Borrower dashboard",
+      "url": "/borrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:22:51.862Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "04-eligibility",
+      "viewLabel": "Indicative eligibility (empty + validation)",
+      "url": "/borrower/eligibility",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "section[aria-labelledby=\"req-heading\"] > .field > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-tenure",
+          "html": "<select id=\"el-tenure\" name=\"tenure\">\n\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t<option value=\"36\" selected=",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-purpose",
+          "html": "<select id=\"el-purpose\" name=\"purpose\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".field:nth-child(1) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".grid-2 > .field:nth-child(2) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:22:53.329Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "05-apply",
+      "viewLabel": "Application wizard (locked steps + validation)",
+      "url": "/borrower/apply",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:22:54.811Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "06-kyc-workspace",
+      "viewLabel": "Identity (KYC) workspace (preview state)",
+      "url": "/borrower/kyc",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:22:56.231Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "07-documents-empty",
+      "viewLabel": "Documents workspace (empty state)",
+      "url": "/borrower/documents?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 39
+    },
+    {
+      "at": "2026-11-01T16:22:57.707Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "08-application-submitted",
+      "viewLabel": "Application tracker (submitted)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:22:59.194Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "09-application-not-approved",
+      "viewLabel": "Recorded decision (not approved)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:23:03.666Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 30,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 34
+    },
+    {
+      "at": "2026-11-01T16:23:05.344Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "11-servicing",
+      "viewLabel": "Repayments (demo fixture, disabled actions)",
+      "url": "/borrower/servicing",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:23:06.821Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "12-profile",
+      "viewLabel": "Profile and consents",
+      "url": "/borrower/profile",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#employment-type",
+          "html": "<select id=\"employment-type\" name=\"employment_type\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#locale",
+          "html": "<select id=\"locale\" name=\"preferred_locale\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"en\" selected=\"\">English</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"hi\">हिन्दी</option>\n\t\t\t\t\t\n\t\t\t\t",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#literacy",
+          "html": "<select id=\"literacy\" name=\"literacy\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"low\">Plain, simple wording</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"medium\" selected=\"\">Standard word",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:23:08.391Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "13-help",
+      "viewLabel": "Help",
+      "url": "/borrower/help",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:23:09.802Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "14-feedback",
+      "viewLabel": "Feedback (empty form + validation)",
+      "url": "/borrower/feedback",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#category",
+          "html": "<select id=\"category\" name=\"category\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#application",
+          "html": "<select id=\"application\" name=\"application\">\n\t\t\t\t\t<option value=\"\">Not about one application</option>\n\t\t\t\t<option value=\"ACC-LOAP-2026-00019\">Medical costs · AC",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:23:11.209Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "15-terms",
+      "viewLabel": "Terms of use",
+      "url": "/borrower/terms",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    },
+    {
+      "at": "2026-11-01T16:23:12.668Z",
+      "width": 768,
+      "kind": "authed",
+      "view": "16-privacy",
+      "viewLabel": "Privacy notice",
+      "url": "/borrower/privacy",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    },
+    {
+      "at": "2026-11-01T16:23:14.472Z",
+      "width": 390,
+      "kind": "guest",
+      "view": "01-landing-products",
+      "viewLabel": "Public loan products (landing)",
+      "url": "/borrower/products",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 29,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".plate__badge",
+          "html": "<span class=\"plate__badge\">Clear terms</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".input-group__prefix",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#calc-tenure",
+          "html": "<select id=\"calc-tenure\">\n\t\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t\t<option value=\"36\" selected=\"\">36 mon",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 35
+    },
+    {
+      "at": "2026-11-01T16:23:15.875Z",
+      "width": 390,
+      "kind": "guest",
+      "view": "02-sign-in",
+      "viewLabel": "Sign in",
+      "url": "/login?redirect-to=%2Fborrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:23:18.139Z",
+      "width": 390,
+      "kind": "guest",
+      "view": "02-sign-in",
+      "viewLabel": "Sign in",
+      "url": "/login?redirect-to=%2Fborrower",
+      "state": "form-validation",
+      "stateLabel": "Empty sign-in submission shows the inline error",
+      "reached": true,
+      "note": "alert #login-error: Enter the email address your invitation was sent to.",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 27,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 37,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/390/02-sign-in-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:23:19.510Z",
+      "width": 390,
+      "kind": "guest",
+      "view": "17-invite-unavailable",
+      "viewLabel": "Invitation link (unavailable state)",
+      "url": "/borrower/invite",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 16,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 48
+    },
+    {
+      "at": "2026-11-01T16:23:21.544Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "03-dashboard",
+      "viewLabel": "Borrower dashboard",
+      "url": "/borrower",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:23:23.106Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "04-eligibility",
+      "viewLabel": "Indicative eligibility (empty + validation)",
+      "url": "/borrower/eligibility",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "section[aria-labelledby=\"req-heading\"] > .field > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-tenure",
+          "html": "<select id=\"el-tenure\" name=\"tenure\">\n\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t<option value=\"36\" selected=",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-purpose",
+          "html": "<select id=\"el-purpose\" name=\"purpose\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".field:nth-child(1) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".grid-2 > .field:nth-child(2) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tabbar > a[href$=\"borrower\"]",
+          "html": "<a href=\"/borrower\"><span class=\"tabbar__abbr\" aria-hidden=\"true\">AP</span>Home</a>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        }
+      ],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:23:25.537Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "04-eligibility",
+      "viewLabel": "Indicative eligibility (empty + validation)",
+      "url": "/borrower/eligibility",
+      "state": "form-validation",
+      "stateLabel": "Required income left blank",
+      "reached": true,
+      "note": "message #el-employment-error: Choose the option that describes you best. | message #el-income-error: Enter your monthly take-home income.",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "section[aria-labelledby=\"req-heading\"] > .field > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-tenure",
+          "html": "<select id=\"el-tenure\" name=\"tenure\">\n\t\t\t\t\t\t<option value=\"12\">12 months</option>\n\t\t\t\t\t\t<option value=\"24\">24 months</option>\n\t\t\t\t\t\t<option value=\"36\" selected=",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#el-purpose",
+          "html": "<select id=\"el-purpose\" name=\"purpose\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".field:nth-child(1) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".grid-2 > .field:nth-child(2) > .input-group > .input-group__prefix[aria-hidden=\"true\"]",
+          "html": "<span class=\"input-group__prefix\" aria-hidden=\"true\">₹</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 38,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/390/04-eligibility-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:23:27.118Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "05-apply",
+      "viewLabel": "Application wizard (locked steps + validation)",
+      "url": "/borrower/apply",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:23:29.488Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "05-apply",
+      "viewLabel": "Application wizard (locked steps + validation)",
+      "url": "/borrower/apply",
+      "state": "form-validation",
+      "stateLabel": "Step 1 with the name left blank",
+      "reached": true,
+      "note": "message #about-name-error: Enter your full name.",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "a[href$=\"borrower\"] > .tabbar__abbr[aria-hidden=\"true\"]",
+          "html": "<span class=\"tabbar__abbr\" aria-hidden=\"true\">AP</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "a[href$=\"assistant\"] > .tabbar__abbr[aria-hidden=\"true\"]",
+          "html": "<span class=\"tabbar__abbr\" aria-hidden=\"true\">AS</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "a[href$=\"documents\"] > .tabbar__abbr[aria-hidden=\"true\"]",
+          "html": "<span class=\"tabbar__abbr\" aria-hidden=\"true\">DO</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "a[href$=\"profile\"] > .tabbar__abbr[aria-hidden=\"true\"]",
+          "html": "<span class=\"tabbar__abbr\" aria-hidden=\"true\">PF</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        }
+      ],
+      "inapplicable": 41,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/390/05-apply-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:23:31.070Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "06-kyc-workspace",
+      "viewLabel": "Identity (KYC) workspace (preview state)",
+      "url": "/borrower/kyc",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 38
+    },
+    {
+      "at": "2026-11-01T16:23:33.506Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "06-kyc-workspace",
+      "viewLabel": "Identity (KYC) workspace (preview state)",
+      "url": "/borrower/kyc",
+      "state": "form-validation",
+      "stateLabel": "Malformed PAN in the preview",
+      "reached": true,
+      "note": "message #kyc-pan-error: Enter a 10-character sample PAN to preview masking.",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 26,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".topbar__brand > span:nth-child(2)",
+          "html": "<span>Loan Advisory</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".nav-signout",
+          "html": "<button type=\"button\" class=\"nav-signout\" data-action=\"logout\">Sign out</button>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tabbar > a[href$=\"borrower\"]",
+          "html": "<a href=\"/borrower\"><span class=\"tabbar__abbr\" aria-hidden=\"true\">AP</span>Home</a>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tabbar > a[href$=\"profile\"]",
+          "html": "<a href=\"/borrower/profile\"><span class=\"tabbar__abbr\" aria-hidden=\"true\">PF</span>Profile</a>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        }
+      ],
+      "inapplicable": 38,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/390/06-kyc-workspace-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:23:35.104Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "07-documents-empty",
+      "viewLabel": "Documents workspace (empty state)",
+      "url": "/borrower/documents?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 25,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "a[href$=\"borrower\"] > .tabbar__abbr[aria-hidden=\"true\"]",
+          "html": "<span class=\"tabbar__abbr\" aria-hidden=\"true\">AP</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "a[href$=\"apply\"] > .tabbar__abbr[aria-hidden=\"true\"]",
+          "html": "<span class=\"tabbar__abbr\" aria-hidden=\"true\">NE</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "a[href$=\"assistant\"] > .tabbar__abbr[aria-hidden=\"true\"]",
+          "html": "<span class=\"tabbar__abbr\" aria-hidden=\"true\">AS</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "a[href$=\"profile\"] > .tabbar__abbr[aria-hidden=\"true\"]",
+          "html": "<span class=\"tabbar__abbr\" aria-hidden=\"true\">PF</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        }
+      ],
+      "inapplicable": 39
+    },
+    {
+      "at": "2026-11-01T16:23:36.569Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "08-application-submitted",
+      "viewLabel": "Application tracker (submitted)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00019",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li[data-state=\"done\"] > strong",
+          "html": "<strong>Started</strong>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li[data-state=\"done\"] > span",
+          "html": "<span>Draft created</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li[data-state=\"current\"] > strong",
+          "html": "<strong>Submitted</strong>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li[data-state=\"current\"] > span",
+          "html": "<span>Sent for checks</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tracker__stage:nth-child(3) > strong",
+          "html": "<strong>Checks</strong>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tracker__stage:nth-child(3) > span",
+          "html": "<span>Policy and information</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        }
+      ],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:23:38.074Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "09-application-not-approved",
+      "viewLabel": "Recorded decision (not approved)",
+      "url": "/borrower/application?name=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".tracker__stage[data-state=\"done\"]:nth-child(1) > strong",
+          "html": "<strong>Started</strong>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tracker__stage[data-state=\"done\"]:nth-child(1) > span",
+          "html": "<span>Draft created</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tracker__stage[data-state=\"done\"]:nth-child(2) > strong",
+          "html": "<strong>Submitted</strong>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tracker__stage[data-state=\"done\"]:nth-child(2) > span",
+          "html": "<span>Sent for checks</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tracker__stage[data-state=\"done\"]:nth-child(3) > strong",
+          "html": "<strong>Checks</strong>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tracker__stage[data-state=\"done\"]:nth-child(3) > span",
+          "html": "<span>Policy and information</span>",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a pseudo element"
+        }
+      ],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:23:42.531Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 30,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 34
+    },
+    {
+      "at": "2026-11-01T16:23:47.311Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "loading-progress",
+      "stateLabel": "Progress stage card visible while the run is in flight",
+      "reached": true,
+      "note": "progress cards=1, composer disabled=true, role=status nodes=1",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 29,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".nav-signout",
+          "html": "<button type=\"button\" class=\"nav-signout\" data-action=\"logout\">Sign out</button>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 35,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/390/10-advisory-workspace-loading-progress.png"
+    },
+    {
+      "at": "2026-11-01T16:23:52.878Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "missing-info-card",
+      "stateLabel": "Missing Information GenUI card",
+      "reached": true,
+      "note": "card rendered by the real registry",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 32,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".nav-signout",
+          "html": "<button type=\"button\" class=\"nav-signout\" data-action=\"logout\">Sign out</button>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 32,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/390/10-advisory-workspace-missing-info-card.png"
+    },
+    {
+      "at": "2026-11-01T16:23:58.361Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "citations-response",
+      "stateLabel": "Assistant answer with policy citations",
+      "reached": true,
+      "note": "sources block rendered",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 30,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": ".nav-signout",
+          "html": "<button type=\"button\" class=\"nav-signout\" data-action=\"logout\">Sign out</button>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": ".tabbar > a[href$=\"apply\"]",
+          "html": "<a href=\"/borrower/apply\"><span class=\"tabbar__abbr\" aria-hidden=\"true\">NE</span>Apply</a>",
+          "reason": "Fix any of the following: Element's background color could not be determined because it's partially obscured by another element"
+        }
+      ],
+      "inapplicable": 34,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/390/10-advisory-workspace-citations-response.png"
+    },
+    {
+      "at": "2026-11-01T16:24:03.800Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "10-advisory-workspace",
+      "viewLabel": "AI advisory workspace",
+      "url": "/borrower/assistant?application=ACC-LOAP-2026-00018",
+      "state": "error-alert",
+      "stateLabel": "Upstream failure surfaced as an alert",
+      "reached": true,
+      "note": "RUN_ERROR rendered as role=alert",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 30,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(1) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(2) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(3) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "li:nth-child(4) > .checklist__mark[aria-hidden=\"true\"]",
+          "html": "<span class=\"checklist__mark\" aria-hidden=\"true\">✓</span>",
+          "reason": "Fix any of the following: Element content contains only non-text characters"
+        }
+      ],
+      "inapplicable": 34,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/390/10-advisory-workspace-error-alert.png"
+    },
+    {
+      "at": "2026-11-01T16:24:05.353Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "11-servicing",
+      "viewLabel": "Repayments (demo fixture, disabled actions)",
+      "url": "/borrower/servicing",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:24:06.783Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "12-profile",
+      "viewLabel": "Profile and consents",
+      "url": "/borrower/profile",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 22,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#employment-type",
+          "html": "<select id=\"employment-type\" name=\"employment_type\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#locale",
+          "html": "<select id=\"locale\" name=\"preferred_locale\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"en\" selected=\"\">English</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"hi\">हिन्दी</option>\n\t\t\t\t\t\n\t\t\t\t",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#literacy",
+          "html": "<select id=\"literacy\" name=\"literacy\">\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"low\">Plain, simple wording</option>\n\t\t\t\t\t\n\t\t\t\t\t<option value=\"medium\" selected=\"\">Standard word",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 42
+    },
+    {
+      "at": "2026-11-01T16:24:08.159Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "13-help",
+      "viewLabel": "Help",
+      "url": "/borrower/help",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 23,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 41
+    },
+    {
+      "at": "2026-11-01T16:24:09.541Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "14-feedback",
+      "viewLabel": "Feedback (empty form + validation)",
+      "url": "/borrower/feedback",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#category",
+          "html": "<select id=\"category\" name=\"category\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#application",
+          "html": "<select id=\"application\" name=\"application\">\n\t\t\t\t\t<option value=\"\">Not about one application</option>\n\t\t\t\t<option value=\"ACC-LOAP-2026-00019\">Medical costs · AC",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 40
+    },
+    {
+      "at": "2026-11-01T16:24:11.865Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "14-feedback",
+      "viewLabel": "Feedback (empty form + validation)",
+      "url": "/borrower/feedback",
+      "state": "form-validation",
+      "stateLabel": "Send with no rating and no message",
+      "reached": true,
+      "note": "message div.alert.alert--error: Choose a rating from 1 to 5 | alert div.alert.alert--error: Choose a rating from 1 to 5",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 24,
+      "incomplete": [
+        "color-contrast"
+      ],
+      "incompleteNodes": [
+        {
+          "rule": "color-contrast",
+          "target": "#category",
+          "html": "<select id=\"category\" name=\"category\">",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "rule": "color-contrast",
+          "target": "#application",
+          "html": "<select id=\"application\" name=\"application\">\n\t\t\t\t\t<option value=\"\">Not about one application</option>\n\t\t\t\t<option value=\"ACC-LOAP-2026-00019\">Medical costs · AC",
+          "reason": "Fix any of the following: Element's background color could not be determined due to a background gradient"
+        }
+      ],
+      "inapplicable": 40,
+      "stateScreenshot": "docs/borrower-frontend/acceptance/2026-11-01-findings-closure/kyc-contrast/accessibility/states/390/14-feedback-form-validation.png"
+    },
+    {
+      "at": "2026-11-01T16:24:13.247Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "15-terms",
+      "viewLabel": "Terms of use",
+      "url": "/borrower/terms",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    },
+    {
+      "at": "2026-11-01T16:24:14.616Z",
+      "width": 390,
+      "kind": "authed",
+      "view": "16-privacy",
+      "viewLabel": "Privacy notice",
+      "url": "/borrower/privacy",
+      "state": "default",
+      "stateLabel": "default render",
+      "reached": true,
+      "note": "",
+      "violations": [],
+      "violationNodeCount": 0,
+      "passes": 20,
+      "incomplete": [],
+      "incompleteNodes": [],
+      "inapplicable": 44
+    }
+  ],
+  "consoleErrors": [],
+  "failedRequests": []
+}

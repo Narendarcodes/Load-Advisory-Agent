@@ -1,0 +1,97 @@
+# Worktree and environment baseline — owner-approved closure task
+
+Captured 2026-11-01 before any edit, as required by §2 of the task. Secret-bearing site-config values
+(`db_password`, `encryption_key`, `agent_assertion_secret`, livekit credentials) were read but are
+deliberately not reproduced here.
+
+## 1. Git state
+
+| | |
+| --- | --- |
+| Repository | `C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe` |
+| Branch | `feat/frappe-borrower-platform` |
+| HEAD | `7ec710e` (`7ec710ef384637d8d540638b16caa0ea0ea00f9e`) — matches the "last reported HEAD" in the task |
+| `git status --short` entries | **78** (37 modified, 41 untracked) |
+| Staged entries | none |
+| Commits / pushes / merges made by this task | none, and none will be made |
+
+## 2. Comparison with the previous findings-closure baseline
+
+The prior task recorded 71 entries in
+[`../2026-11-01-findings-closure/worktree-baseline.txt`](../2026-11-01-findings-closure/worktree-baseline.txt)
+(35 modified, 36 untracked). Diffing path lists, ignoring status letters:
+
+**Added since that report (7)** — all of them produced by the findings-closure task itself:
+
+```
+ M apps/web/assistant/src/thread.ts          (newly modified: Option B thread contract)
+ M apps/web/assistant/src/thread.test.ts     (newly modified: +7 marker lifecycle tests)
+?? apps/loan_advisory_portal/.../tests/test_transcript_contract.py
+?? apps/web/assistant/src/island.test.tsx
+?? tests/e2e/thread_continuity_e2e.cjs
+?? tests/e2e/write_guard.cjs
+?? tests/e2e/write_guard_proof.cjs
+```
+
+**Removed since that report: none.**
+
+So 71 + 7 = 78, and **no other workstream has modified this worktree since the findings-closure
+report**. Nothing foreign was found, so no isolation warning applies to this task.
+
+## 3. Containers, volumes, ports, GPU
+
+Fifteen permanent containers `Up 7 hours`, all preserved by this task:
+
+```
+loanrangers-backend-1  -db-1 (healthy)  -redis-cache-1  -redis-queue-1  -frontend-1 (:8080)
+loanrangers-websocket-1  -scheduler-1  -queue-short-1  -queue-long-1
+loan-advisory-langfuse-langfuse-web-1 (:3000, healthy)  -langfuse-worker-1  -postgres-1
+loan-advisory-langfuse-redis-1  -clickhouse-1  -minio-1   (all healthy)
+```
+
+Stopped-but-present, from the previous task and deliberately not removed:
+`4bd676ee8025 loanportal-acceptance-proxy Exited (0)`. Pre-existing unrelated exited containers
+(`cop-*`, `postiz-*`, `whatsapp_*`, `insta_kg_neo4j`, `loanrangers-configurator-1`) untouched.
+Docker volumes: 24+ local volumes listed; none created, removed or pruned by this task.
+
+Host listeners at the harness ports: **none** on 8001 / 8081 / 4200 / 8095 / 8096. Only
+`:8080` (Frappe frontend) and `127.0.0.1:3000` (Langfuse) are listening, both under the Docker
+Desktop forwarding pid 23420, plus `[::1]:8080` pid 26176.
+
+GPU: `nvidia-smi --query-compute-apps=pid,used_memory --format=csv` → header only, **no compute
+process**. The RAG agent is not running and will not be started for this task.
+
+## 4. Target site and database identity (§2.7 and the pre-write checks)
+
+From `bench --site loanportal.local show-config` inside `loanrangers-backend-1` (secrets redacted):
+
+| Key | Value |
+| --- | --- |
+| site | `loanportal.local` — the disposable test site |
+| `db_name` | `_21ddc3370f18f30e` |
+| `db_type` | `mariadb`, host `db` (`loanrangers-db-1`) |
+| `allow_tests` | **`True`** |
+| `installed_apps` | `["frappe", "erpnext", "lending", "loan_advisory_portal"]` |
+| `enable_demo_fixtures` | `1` |
+
+`p1loan.local` is **not** the target and nothing in this task connects to it.
+
+Borrower identity check and consent-timestamp reverification are in
+[`database/`](database/) — run before any persistent write, and re-run again immediately before the
+restoration itself.
+
+## 5. Consent contract as it stands before any edit
+
+| Site | File | Behaviour |
+| --- | --- | --- |
+| Controller | [`borrower_profile.py:32`](../../../../apps/loan_advisory_portal/loan_advisory_portal/loan_advisory_portal/doctype/borrower_profile/borrower_profile.py#L32) | `consent_at = now_datetime() if consent_terms and consent_privacy else None` on **every** `validate()` — restamps unrelated saves, and clears on withdrawal |
+| Consent API | [`api/profile.py:101-110`](../../../../apps/loan_advisory_portal/loan_advisory_portal/api/profile.py#L101-L110) | stamps `terms_version`/`privacy_version` and sets `consent_at = now_datetime()` whenever a consent flag is *present in the payload* and accepted — so a client that always resends the checkboxes restamps on every save |
+| DocType | [`borrower_profile.json:40`](../../../../apps/loan_advisory_portal/loan_advisory_portal/loan_advisory_portal/doctype/borrower_profile/borrower_profile.json#L40) | `consent_at` Datetime, `read_only: 1`; `terms_version`/`privacy_version` read-only; `track_changes: 1` so edits produce Version records; `autoname: field:user` |
+| Notice versions | [`portal/legal.py:8-9`](../../../../apps/loan_advisory_portal/loan_advisory_portal/portal/legal.py#L8-L9) | `portal-terms/1`, `portal-privacy/1` |
+| Account creation | [`services/invitations.py:215-300`](../../../../apps/loan_advisory_portal/loan_advisory_portal/services/invitations.py#L215-L300) | `redeem()` **requires both consents** (`InvitationInvalid` otherwise) and writes the flags plus both notice versions on insert — a genuine first-time consent event |
+| Fixtures | `tests/utils.py:143`, `tests/e2e_seed.py:92` | create profiles with both consent flags set |
+
+Only these two code paths write the profile's `consent_at` (the `Voice Session` doctype has an
+unrelated field of the same name). No existing test asserts that a save restamps consent
+(`tests/test_profile.py` checks versions and withdrawal only), so correcting the semantics does not
+require weakening anything.

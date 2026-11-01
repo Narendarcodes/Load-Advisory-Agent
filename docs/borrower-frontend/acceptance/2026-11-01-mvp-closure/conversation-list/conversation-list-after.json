@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-11-01T18:04:23.468Z",
+  "label": "after",
+  "url": "http://127.0.0.1:8081/borrower/assistant?application=ACC-LOAP-2026-00024",
+  "api": {
+    "status": 200,
+    "threads": []
+  },
+  "panel": {
+    "historySectionPresent": true,
+    "headingText": "Recent conversations",
+    "renderedItems": 0,
+    "itemLabels": [],
+    "currentItemAria": null,
+    "emptyStateNote": "Questions you ask about this application are kept here for you to reopen."
+  },
+  "writeGuard": {
+    "label": "conversation-list/after",
+    "requestsSeen": 4,
+    "postedReads": 3,
+    "writesAllowed": 1,
+    "writesBlocked": 0,
+    "byPath": [
+      {
+        "request": "POST /api/method/login",
+        "times": 1
+      },
+      {
+        "request": "POST /api/method/loan_advisory_portal.api.session.me",
+        "times": 1
+      },
+      {
+        "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+        "times": 1
+      },
+      {
+        "request": "POST /api/method/loan_advisory_portal.api.agent.list_conversations",
+        "times": 1
+      }
+    ]
+  },
+  "consoleErrors": [],
+  "failedRequests": []
+}

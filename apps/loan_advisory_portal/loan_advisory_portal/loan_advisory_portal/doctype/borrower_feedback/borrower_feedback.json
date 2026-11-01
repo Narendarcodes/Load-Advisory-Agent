@@ -1,0 +1,33 @@
+{
+ "actions": [],
+ "autoname": "LAFB-.#####",
+ "creation": "2026-10-30 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["user", "customer", "application", "rating", "category", "message", "status", "submitted_at"],
+ "fields": [
+  {"fieldname": "user", "fieldtype": "Link", "label": "User", "options": "User", "reqd": 1, "read_only": 1, "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "customer", "fieldtype": "Link", "label": "Customer", "options": "Customer", "reqd": 1, "read_only": 1, "in_standard_filter": 1},
+  {"fieldname": "application", "fieldtype": "Link", "label": "Loan Application", "options": "Loan Application"},
+  {"fieldname": "rating", "fieldtype": "Int", "label": "Rating", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "category", "fieldtype": "Select", "label": "Category", "options": "\nGeneral\nApplication\nDecision\nAssistant\nVoice\nOther", "default": "General"},
+  {"fieldname": "message", "fieldtype": "Small Text", "label": "Message", "reqd": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "New\nReviewed\nClosed", "default": "New", "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "submitted_at", "fieldtype": "Datetime", "label": "Submitted At", "read_only": 1}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-31 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Borrower Feedback",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

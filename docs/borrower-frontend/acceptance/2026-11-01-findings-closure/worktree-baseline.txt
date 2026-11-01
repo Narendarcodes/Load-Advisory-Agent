@@ -1,0 +1,71 @@
+ M apps/api/src/loan_advisory/agent/graph.py
+ M apps/api/src/loan_advisory/agent/prompts.py
+ M apps/api/src/loan_advisory/api/agui.py
+ M apps/api/src/loan_advisory/api/events.py
+ M apps/loan_advisory_portal/loan_advisory_portal/portal/jinja.py
+ M apps/loan_advisory_portal/loan_advisory_portal/public/css/portal.css
+ M apps/loan_advisory_portal/loan_advisory_portal/public/js/pages/application.js
+ M apps/loan_advisory_portal/loan_advisory_portal/public/js/pages/applications.js
+ M apps/loan_advisory_portal/loan_advisory_portal/public/js/pages/apply.js
+ M apps/loan_advisory_portal/loan_advisory_portal/public/js/portal.js
+ M apps/loan_advisory_portal/loan_advisory_portal/templates/portal/base.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/application.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/apply.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/apply.py
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/assistant.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/assistant.py
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/feedback.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/help.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/index.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/invite.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/privacy.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/products.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/products.py
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/profile.html
+ M apps/loan_advisory_portal/loan_advisory_portal/www/borrower/terms.html
+ M apps/web/assistant/src/answer-details.tsx
+ M apps/web/assistant/src/assistant.css
+ M apps/web/assistant/src/chat-panel.test.tsx
+ M apps/web/assistant/src/chat-panel.tsx
+ M apps/web/assistant/src/island.tsx
+ M apps/web/assistant/src/plan-panel.tsx
+ M apps/web/assistant/src/types.ts
+ M docs/architecture/copilotkit-agui-integration.md
+ M tests/e2e/README.md
+ M tests/test_agent_api.py
+?? apps/api/src/loan_advisory/agent/progress.py
+?? apps/loan_advisory_portal/loan_advisory_portal/portal/catalogue.py
+?? apps/loan_advisory_portal/loan_advisory_portal/public/fonts/
+?? apps/loan_advisory_portal/loan_advisory_portal/public/js/assistant/
+?? apps/loan_advisory_portal/loan_advisory_portal/public/js/pages/documents.js
+?? apps/loan_advisory_portal/loan_advisory_portal/public/js/pages/eligibility.js
+?? apps/loan_advisory_portal/loan_advisory_portal/public/js/pages/kyc.js
+?? apps/loan_advisory_portal/loan_advisory_portal/public/js/pages/login.js
+?? apps/loan_advisory_portal/loan_advisory_portal/public/js/pages/products.js
+?? apps/loan_advisory_portal/loan_advisory_portal/tests/test_kyc_page.py
+?? apps/loan_advisory_portal/loan_advisory_portal/www/borrower/documents.html
+?? apps/loan_advisory_portal/loan_advisory_portal/www/borrower/documents.py
+?? apps/loan_advisory_portal/loan_advisory_portal/www/borrower/eligibility.html
+?? apps/loan_advisory_portal/loan_advisory_portal/www/borrower/eligibility.py
+?? apps/loan_advisory_portal/loan_advisory_portal/www/borrower/kyc.html
+?? apps/loan_advisory_portal/loan_advisory_portal/www/borrower/kyc.py
+?? apps/loan_advisory_portal/loan_advisory_portal/www/borrower/servicing.html
+?? apps/loan_advisory_portal/loan_advisory_portal/www/borrower/servicing.py
+?? apps/loan_advisory_portal/loan_advisory_portal/www/login.html
+?? apps/loan_advisory_portal/loan_advisory_portal/www/login.py
+?? apps/runtime/dist/
+?? apps/runtime/node_modules/
+?? apps/web/assistant/node_modules/
+?? apps/web/assistant/src/genui/
+?? apps/web/assistant/src/what-if-form.test.tsx
+?? apps/web/assistant/src/what-if-form.tsx
+?? docs/borrower-frontend/
+?? tests/e2e/accessibility_audit.cjs
+?? tests/e2e/agui_stub.cjs
+?? tests/e2e/borrower_views.cjs
+?? tests/e2e/keyboard_review.cjs
+?? tests/e2e/manual_contrast.cjs
+?? tests/e2e/missing_information_e2e.cjs
+?? tests/e2e/out/
+?? tests/e2e/package-lock.json
+?? tests/e2e/package.json

@@ -1,8 +1,10 @@
-"""Bureau evidence survives the existing Frappe evidence adapter (record_json round trip).
+"""Evidence records survive the trusted Frappe ingestion method (record_json round trip).
 
-The adapter writes only the legacy top-level columns; the additive outcome/review/bureau
-blocks live inside `record_json`, so the DocType and decision-evidence/1 contract do not
-change. A live site is not available in this environment: these tests use a mock transport.
+The FastAPI sink no longer holds Document permissions: it calls
+`loan_advisory_portal.api.evidence.ingest` with a dedicated `Evidence Service`
+credential. These tests use a fake transport that mirrors the method contract:
+application linkage, immutable record id, and a review/outcome/bureau payload that
+travels whole inside `record_json`.
 """
 import json
 from datetime import datetime, timezone
@@ -13,8 +15,14 @@ from fastapi.testclient import TestClient
 
 from loan_advisory.application.lifecycle import process_application, process_bureau_application
 from loan_advisory.infrastructure.bureau_client import BureauClient
-from loan_advisory.infrastructure.evidence_store import FrappeEvidenceSink, InMemoryEvidenceSink
-from loan_advisory.infrastructure.frappe_adapter import MockStore
+from loan_advisory.infrastructure.evidence_store import (
+    EVIDENCE_GET_METHOD,
+    EVIDENCE_METHOD,
+    EvidenceRejected,
+    FrappeEvidenceSink,
+    InMemoryEvidenceSink,
+)
+from loan_advisory.infrastructure.frappe_adapter import FrappeClient, FrappeUnavailable, MockStore
 from synthetic_bureau.app import create_app
 from synthetic_bureau.labeling import to_frappe_doc
 
@@ -35,49 +43,48 @@ class _Store:
         return dict(self._doc)
 
 
-class _Resp:
-    def __init__(self, status_code: int, payload: dict | None = None):
-        self.status_code = status_code
-        self._payload = payload or {}
-        self.text = json.dumps(self._payload)
+class _EvidenceClient:
+    """Fake Frappe transport for the two whitelisted evidence methods."""
 
-    @property
-    def ok(self) -> bool:
-        return 200 <= self.status_code < 300
-
-    def json(self) -> dict:
-        return self._payload
-
-
-class _Frappe:
     base_url = "http://127.0.0.1:8080"
 
-    def _headers(self) -> dict:
-        return {}
+    def __init__(self, docstatus: int = 0):
+        self.calls = []
+        self.stored = {}
+        self.docstatus = docstatus
+
+    def call_method(self, method, payload):
+        self.calls.append((method, payload))
+        if method == EVIDENCE_GET_METHOD:
+            rid = payload["record_id"]
+            if rid not in self.stored:
+                raise FrappeUnavailable("evidence not found")
+            return self.stored[rid]
+        if method != EVIDENCE_METHOD:
+            raise AssertionError(f"unexpected method {method}")
+        record = payload["record"]
+        assert payload["expected_application"] == record["application_ref"]
+        rid = record["record_id"]
+        action = "unchanged" if rid in self.stored else "created"
+        self.stored.setdefault(rid, record)
+        wrote_native = self.docstatus == 0
+        return {
+            "record_id": rid, "application": record["application_ref"], "action": action,
+            "lifecycle_state": record["lifecycle_state"], "docstatus": self.docstatus,
+            "wrote_native_status": wrote_native,
+        }
 
 
 @pytest.fixture
-def frappe(monkeypatch, tmp_path):
-    calls, stored = [], {}
+def frappe(tmp_path):
+    client = _EvidenceClient()
+    sink = FrappeEvidenceSink(client=client, trace_dir=str(tmp_path / "traces"))
+    return sink, client, tmp_path
 
-    def request(method, url, headers=None, timeout=None, **kw):
-        payload = kw.get("json")
-        calls.append((method, url, payload))
-        if method == "GET" and "/Loan Decision Evidence/" in url:
-            rid = url.rsplit("/", 1)[-1]
-            if rid in stored:
-                return _Resp(200, {"data": {"record_json": json.dumps(stored[rid])}})
-            return _Resp(404, {})
-        if method == "POST" and "/Loan Decision Evidence" in url:
-            stored[payload["record_id"]] = json.loads(payload["record_json"])
-            return _Resp(200, {"data": {"name": payload["record_id"]}})
-        if method == "PUT" and "/Loan Application/" in url:
-            return _Resp(200, {"data": {}})
-        return _Resp(500, {})
 
-    monkeypatch.setattr("loan_advisory.infrastructure.evidence_store.requests.request", request)
-    sink = FrappeEvidenceSink(client=_Frappe(), trace_dir=str(tmp_path / "traces"))
-    return sink, calls, stored, tmp_path
+def _persist(sink, record, native_status="Open", trace=None):
+    return sink.persist(record, native_status=native_status, trace=trace or {},
+                        expected_application=record["application_ref"])
 
 
 def _bureau_record(case: dict, scenario: str | None = None) -> dict:
@@ -92,29 +99,28 @@ def _bureau_record(case: dict, scenario: str | None = None) -> dict:
 
 
 def test_review_record_round_trips_through_record_json(frappe):
-    sink, calls, stored, _ = frappe
+    sink, client, _ = frappe
     rec = _bureau_record(_case("NO_HIT"))
     assert rec["decision"] == "ERROR" and rec["outcome"] == "REVIEW"  # legacy Select untouched
 
-    sink.persist(rec, native_status="Open", trace={"node": "zen"})
-    post = next(p for m, _, p in calls if m == "POST")
-    assert post["decision"] == "ERROR"  # top-level column stays legacy
-    assert "outcome" not in post and "review" not in post and "bureau" not in post
-    assert "review" in json.loads(post["record_json"])
+    _persist(sink, rec, trace={"node": "zen"})
+    assert [m for m, _ in client.calls] == [EVIDENCE_METHOD]  # no REST DocType writes
+    sent = client.calls[0][1]["record"]
+    assert sent["decision"] == "ERROR"
+    assert sent["review"]["reason_codes"] == ["DQ_BUREAU_NO_HIT"]
+    assert sent["bureau"]["data_quality"]["category"] == "DATA_QUALITY"
 
     back = sink.get_record(rec["record_id"])
     assert back["outcome"] == "REVIEW"
-    assert back["review"]["reason_codes"] == ["DQ_BUREAU_NO_HIT"]
     assert back["review"]["required"] is True
-    assert back["bureau"]["data_quality"]["category"] == "DATA_QUALITY"
     assert back["bureau"]["score"]["source"] == rec["bureau"]["score"]["source"]
-    assert back == stored[rec["record_id"]]
+    assert back == client.stored[rec["record_id"]]
 
 
 def test_provider_failure_round_trips_as_error_with_retryable_flag(frappe):
-    sink, calls, _, _ = frappe
+    sink, _, _ = frappe
     rec = _bureau_record(_case("VALID_PASS"), scenario="TIMEOUT")
-    sink.persist(rec, native_status="Open", trace={"node": "zen"})
+    _persist(sink, rec, trace={"node": "zen"})
     back = sink.get_record(rec["record_id"])
     assert back["outcome"] == back["decision"] == "ERROR"
     assert back["review"] is None
@@ -123,51 +129,73 @@ def test_provider_failure_round_trips_as_error_with_retryable_flag(frappe):
 
 
 def test_plain_lifecycle_record_stays_additive_and_legacy_compatible(frappe):
-    sink, calls, _, _ = frappe
+    sink, _, _ = frappe
     rec = process_application("APP-TEST-001", MockStore(), InMemoryEvidenceSink(), now=NOW).record
     assert rec["outcome"] == rec["decision"]
     assert rec["review"] is None and rec["bureau"] is None
-    sink.persist(rec, native_status="Open", trace={"node": "zen"})
+    _persist(sink, rec, trace={"node": "zen"})
     back = sink.get_record(rec["record_id"])
     assert back["schema"] == "decision-evidence/1"
     assert back["decision"] == rec["decision"] and back["outcome"] == rec["decision"]
     assert set(("record_id", "policy", "inputs", "rule_evaluations", "failed_reason_codes")) <= set(back)
 
 
-def test_persisting_the_same_record_id_twice_does_not_insert_twice(frappe):
-    sink, calls, _, _ = frappe
+def test_persisting_the_same_record_twice_is_idempotent(frappe):
+    sink, client, _ = frappe
     rec = _bureau_record(_case("VALID_PASS", 0))
-    sink.persist(rec, native_status="Approved", trace={"node": "zen"})
-    sink.persist(rec, native_status="Approved", trace={"node": "zen"})
-    assert sum(1 for m, u, _ in calls if m == "POST") == 1
-    assert sum(1 for m, u, _ in calls if m == "PUT") == 2
+    first = _persist(sink, rec, native_status="Approved", trace={"node": "zen"})
+    second = _persist(sink, rec, native_status="Approved", trace={"node": "zen"})
+    assert first["action"] == "created" and second["action"] == "unchanged"
+    assert list(client.stored) == [rec["record_id"]]
+    assert sum(1 for m, _ in client.calls if m == EVIDENCE_METHOD) == 2
+
+
+def test_native_status_is_decided_server_side(frappe):
+    """Portal applications are submitted before evaluation; the method, not the sink, decides."""
+    sink, client, _ = frappe
+    client.docstatus = 1
+    rec = process_application("APP-TEST-001", MockStore(), InMemoryEvidenceSink(), now=NOW).record
+    result = _persist(sink, rec, native_status="Rejected")
+    assert result["wrote_native_status"] is False and result["docstatus"] == 1
+    assert client.calls[0][1]["native_status"] == "Rejected"  # forwarded, not applied by the sink
+
+
+def test_expected_application_is_required_and_must_match(frappe):
+    sink, client, _ = frappe
+    rec = _bureau_record(_case("VALID_PASS", 0))
+    with pytest.raises(EvidenceRejected):
+        sink.persist(rec, native_status="Open", trace={})
+    with pytest.raises(EvidenceRejected):
+        sink.persist(rec, native_status="Open", trace={}, expected_application="APP-OTHER-999")
+    assert client.calls == [] and client.stored == {}
 
 
 def test_trace_is_written_as_utf8_alongside_the_record(frappe):
-    sink, _, _, tmp_path = frappe
+    sink, client, tmp_path = frappe
     rec = _bureau_record(_case("VALID_PASS", 0))
-    sink.persist(rec, native_status="Approved", trace={"note": "₹ synthetic"})
+    _persist(sink, rec, native_status="Approved", trace={"note": "₹ synthetic"})
     path = tmp_path / "traces" / f"{rec['trace_ref']['sha256']}.json"
     assert path.exists()
     assert json.loads(path.read_text(encoding="utf-8"))["note"] == "₹ synthetic"
+    assert client.calls[0][1]["trace_store"] == str(tmp_path / "traces")
 
 
-def test_utf8_is_stored_literally_in_record_json(frappe):
-    sink, calls, _, _ = frappe
+def test_utf8_is_stored_literally_in_the_record(frappe):
+    sink, client, _ = frappe
     rec = dict(_bureau_record(_case("VALID_PASS", 0)))
     rec["flags"] = ["UTF8_₹_राम_తెలుగు"]
     rec["review"] = {"notes": "₹1,00,000 — हिन्दी पाठ / తెలుగు పాఠం", "reason_codes": [], "required": True}
-    sink.persist(rec, native_status="Approved", trace={})
-    post = next(p for m, _, p in calls if m == "POST")
-    assert "₹" in post["record_json"] and "हिन्दी" in post["record_json"] and "తెలుగు" in post["record_json"]
-    assert json.loads(post["record_json"])["flags"] == rec["flags"]
+    _persist(sink, rec, native_status="Approved")
+    sent = client.calls[0][1]["record"]
+    assert sent["flags"] == rec["flags"]
+    assert sent["review"]["notes"] == rec["review"]["notes"]
 
 
 def test_bureau_hold_over_legacy_inputs_gets_its_own_evidence_record(frappe):
     """Live-Frappe validation found this: a hold over the same application/inputs as an earlier
     plain credit decision used to reuse its record_id, and the idempotent sink then kept the stale
     legacy record_json while the application pointed at it. Different evidence must mean a new id."""
-    sink, calls, stored, _ = frappe
+    sink, client, _ = frappe
     case = _case("NO_HIT")
     app = case["application"]["application_id"]
     legacy = process_application(app, _Store(case), InMemoryEvidenceSink(), now=NOW).record
@@ -177,10 +205,32 @@ def test_bureau_hold_over_legacy_inputs_gets_its_own_evidence_record(frappe):
     assert hold["decision"] == "ERROR" and hold["outcome"] == "REVIEW"
     assert hold["record_id"] != legacy["record_id"]
 
-    sink.persist(legacy, native_status="Open", trace={})
-    sink.persist(hold, native_status="Open", trace={})
-    assert sum(1 for m, _, _ in calls if m == "POST") == 2  # neither write replaced the other
-    assert stored[legacy["record_id"]]["bureau"] is None
+    _persist(sink, legacy)
+    _persist(sink, hold)
+    assert set(client.stored) == {legacy["record_id"], hold["record_id"]}
+    assert client.stored[legacy["record_id"]]["bureau"] is None
     back = sink.get_record(hold["record_id"])
     assert back["outcome"] == "REVIEW"
     assert back["bureau"]["data_quality"]["category"] == "DATA_QUALITY"
+
+
+def test_get_record_uses_the_trusted_read_method(frappe):
+    sink, client, _ = frappe
+    rec = _bureau_record(_case("VALID_PASS", 0))
+    _persist(sink, rec)
+    sink.get_record(rec["record_id"])
+    assert [m for m, _ in client.calls][-1] == EVIDENCE_GET_METHOD
+    assert client.calls[-1][1] == {"record_id": rec["record_id"]}
+
+
+def test_for_evidence_never_falls_back_to_the_read_credential():
+    read_only = {"FRAPPE_URL": "http://frappe", "FRAPPE_API_KEY": "k", "FRAPPE_API_SECRET": "s"}
+    with pytest.raises(FrappeUnavailable):
+        FrappeClient.for_evidence(read_only)
+    with pytest.raises(FrappeUnavailable):
+        FrappeClient.for_evidence({"EVIDENCE_FRAPPE_API_KEY": "k", "EVIDENCE_FRAPPE_API_SECRET": "s"})
+    client = FrappeClient.for_evidence({
+        "EVIDENCE_FRAPPE_URL": "http://frappe", "EVIDENCE_FRAPPE_API_KEY": "ek",
+        "EVIDENCE_FRAPPE_API_SECRET": "es",
+    })
+    assert client.base_url == "http://frappe" and client.api_key == "ek"

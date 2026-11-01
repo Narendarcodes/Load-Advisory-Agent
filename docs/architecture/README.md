@@ -13,11 +13,41 @@ as the advisory agent; 03 and 04 keep their PR #10 scope. Other docs here:
 All applicant data and the four thresholds are synthetic (`synthetic-v1`). Bajaj Finance is a public reference lender,
 not a partner. The synthetic bureau is a development-only FastAPI service, not CIBIL/FICO.
 
+## Migration documentation (Frappe platform)
+
+The diagrams below describe the **agent runtime** and are unchanged by the migration. The borrower platform, its
+boundaries and its test plan are documented separately:
+
+| Document | Covers |
+| --- | --- |
+| [frappe-borrower-platform.md](frappe-borrower-platform.md) | systems of record, routes, rendering contract, identity/roles, lifecycle, deployment topology, failure modes |
+| [fastapi-agent-boundary.md](fastapi-agent-boundary.md) | what stays in FastAPI, the assertion contract, trust rules |
+| [assertion-security-and-scaling.md](assertion-security-and-scaling.md) | single-use replay (Redis `SET NX EX`), fail-closed behaviour, multi-worker deployment |
+| [loan-lifecycle-mapping.md](loan-lifecycle-mapping.md) | canonical `loan-lifecycle/1` states, native ↔ portal adapters, atomic transitions, audit log, reconciliation |
+| [rate-limits.md](rate-limits.md) | per-account portal budgets, per-`sub` agent budgets, shared store and fail-closed behaviour |
+| [copilotkit-agui-integration.md](copilotkit-agui-integration.md) | runtime → FastAPI identity bridge and AG-UI streaming |
+| [livekit-integration.md](livekit-integration.md) | voice token minting in Frappe and the worker gap |
+| [../migration/frappe-screen-inventory.md](../migration/frappe-screen-inventory.md) | legacy screen → Frappe destination |
+| [../migration/screen-completion-matrix.md](../migration/screen-completion-matrix.md) | every borrower screen: route, purpose, data, permissions, validation, states, acceptance and owner-deferred gaps |
+| [../migration/fastapi-endpoint-migration-matrix.md](../migration/fastapi-endpoint-migration-matrix.md) | every legacy endpoint, where it goes |
+| [../migration/frappe-lending-doctype-mapping.md](../migration/frappe-lending-doctype-mapping.md) | Lending doctypes, custom fields, ownership |
+| [../development/frappe-disposable-environment.md](../development/frappe-disposable-environment.md) | isolated site, commands, secrets, failure modes |
+| [../testing/borrower-platform-test-plan.md](../testing/borrower-platform-test-plan.md) | Suite map and Addenda G/H: current-run 169 Frappe, 683 host (15 skipped), 13 runtime and 34 island tests, 36 journeys, 39 security checks |
+| [../testing/responsive-accessibility-performance.md](../testing/responsive-accessibility-performance.md) | Phase E measurements: reflow at six widths, axe scans, keyboard/tap-target checks, Shiki/voice lazy-load |
+| [../testing/production-readiness.md](../testing/production-readiness.md) | Phase F evidence: production-like proxy checks, two-worker Redis state, bounded load, deployment contract and residual risks; §9 Phase H confirmation |
+| [../audit/frappe-implementation-audit.md](../audit/frappe-implementation-audit.md) | Independent audit findings, mapped to phases, with post-audit status per phase |
+| [../audit/frappe-hardening-report.md](../audit/frappe-hardening-report.md) | Ten-section consolidation of the hardening campaign, labelled verified / test-only / unverified, with the current-run regression record |
+
 ## 1. System context
 
 Who and what the agent talks to. Everything is self-hosted and bound to 127.0.0.1 on the droplet. The advisory server
-is the Python standard library; the synthetic bureau is a separate FastAPI service. `/api/bureau/run` evaluates the
-signed-in application through that bureau and the data-quality gates, then the unchanged ZEN decision.
+is FastAPI (`apps/api/src/loan_advisory/api/`); the synthetic bureau is a separate FastAPI service. `/api/bureau/run`
+evaluates the signed-in application through that bureau and the data-quality gates, then the unchanged ZEN decision.
+The diagrams predate the migration and show the legacy bearer credential; the agent endpoints themselves are unchanged.
+
+> Post-migration, the borrower-facing routes in this section belong to Frappe. The agent endpoints
+> (`/api/agui`, `/api/chat`, `/api/chat/stream`, `/api/bureau/run`, `/healthz`) remain; the rest is retired.
+> See the migration documents above.
 
 ![System context](diagrams/01-system-context.png)
 

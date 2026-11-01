@@ -1,0 +1,33 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-31 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": ["loan_application", "from_state", "to_state", "actor", "source", "record_id", "native_status", "native_written"],
+ "fields": [
+  {"fieldname": "loan_application", "fieldtype": "Link", "label": "Loan Application", "options": "Loan Application", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "from_state", "fieldtype": "Data", "label": "From State", "in_list_view": 1},
+  {"fieldname": "to_state", "fieldtype": "Data", "label": "To State", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "actor", "fieldtype": "Link", "label": "Actor", "options": "User", "reqd": 1},
+  {"fieldname": "source", "fieldtype": "Select", "label": "Source", "options": "portal\nagent\nops", "reqd": 1, "default": "portal", "in_list_view": 1},
+  {"fieldname": "record_id", "fieldtype": "Data", "label": "Evidence Record"},
+  {"fieldname": "native_status", "fieldtype": "Data", "label": "Native Status"},
+  {"fieldname": "native_written", "fieldtype": "Check", "label": "Native Status Written", "default": "0"}
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-31 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Application State Log",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "report": 1, "export": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

@@ -129,17 +129,19 @@ def test_audit_log_follows_the_state_dir(tmp_path, monkeypatch):
 
 
 def test_evidence_sink_writes_traces_through_the_shared_helper(tmp_path):
-    class Reply:
-        status_code, ok = 200, True
+    class Client:
+        base_url = "http://frappe"
 
-    sink = FrappeEvidenceSink(client=object(), trace_dir=str(tmp_path / "traces"))
-    sink._req = lambda *args, **kwargs: Reply()
+        def call_method(self, method, payload):
+            return {"record_id": payload["record"]["record_id"], "wrote_native_status": True}
+
+    sink = FrappeEvidenceSink(client=Client(), trace_dir=str(tmp_path / "traces"))
     record = {
         "trace_ref": {"sha256": "abc123"}, "record_id": "rec-1", "application_ref": "APP-1", "decision": "ERROR",
         "lifecycle_state": "REVIEW", "policy": {"id": "p", "version": "1", "policy_sha256": "a", "jdm_sha256": "b"},
         "inputs": {"input_sha256": "c"}, "engine": {"name": "ZEN", "version": "1"},
         "evaluated_at": "2026-01-01T00:00:00", "is_simulation": True,
     }
-    sink.persist(record, "Open", {"steps": []})
+    sink.persist(record, "Open", {"steps": []}, expected_application="APP-1")
     trace = tmp_path / "traces" / "abc123.json"
     assert json.loads(trace.read_text(encoding="utf-8")) == {"steps": []}

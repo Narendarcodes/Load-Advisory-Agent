@@ -1,0 +1,38 @@
+{
+ "actions": [],
+ "autoname": "field:session_id",
+ "creation": "2026-10-30 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["session_id", "room", "identity", "user", "customer", "application", "expires_at", "status", "created_at", "consent_version", "consent_at", "ended_at"],
+ "fields": [
+  {"fieldname": "session_id", "fieldtype": "Data", "label": "Session ID", "reqd": 1, "unique": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "room", "fieldtype": "Data", "label": "Room", "reqd": 1, "unique": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "identity", "fieldtype": "Data", "label": "Participant Identity", "reqd": 1, "read_only": 1},
+  {"fieldname": "user", "fieldtype": "Link", "label": "User", "options": "User", "reqd": 1, "in_standard_filter": 1},
+  {"fieldname": "customer", "fieldtype": "Link", "label": "Customer", "options": "Customer"},
+  {"fieldname": "application", "fieldtype": "Link", "label": "Loan Application", "options": "Loan Application"},
+  {"fieldname": "expires_at", "fieldtype": "Datetime", "label": "Expires At", "reqd": 1, "read_only": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Created\nJoined\nEnded\nExpired", "default": "Created", "in_list_view": 1},
+  {"fieldname": "created_at", "fieldtype": "Datetime", "label": "Created At", "read_only": 1},
+  {"fieldname": "consent_version", "fieldtype": "Data", "label": "Consent Version", "read_only": 1},
+  {"fieldname": "consent_at", "fieldtype": "Datetime", "label": "Consent At", "read_only": 1},
+  {"fieldname": "ended_at", "fieldtype": "Datetime", "label": "Ended At", "read_only": 1}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-31 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Voice Session",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1},
+  {"role": "Agent Integration", "read": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

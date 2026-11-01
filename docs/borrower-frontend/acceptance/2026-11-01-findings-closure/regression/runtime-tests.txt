@@ -1,0 +1,87 @@
+
+> @loan-advisory/copilot-runtime@0.1.0 test
+> node --import tsx --test test/*.test.ts
+
+[CopilotKit] Listing and clearing threads need a caller identity. Pass `identifyUser: (request) => ({ id, name })` to CopilotRuntime so each user lists and clears only their own threads, or pass `threads: { access: "open" }` to let every caller share threads created without identity (insecure for multi-user deployments). Until then, GET /threads and POST /threads/clear return HTTP 403.
+✔ a signed-in turn mints one assertion and completes through Runtime -> FastAPI -> agent (2816.1819ms)
+✔ the island's application is minted; a malformed reference is dropped (116.8319ms)
+[gateway] assertion mint refused: HTTP 404
+Agent execution failed: MintRefused: HTTP 404: assertion mint refused
+    at mintCredential (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\src\gateway.ts:160:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Kt.HttpAgent.fetch (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\src\gateway.ts:207:32) {
+  status: 404
+}
+✔ an application the borrower does not own is refused before the agent runs (6.7862ms)
+✔ FastAPI receives the assertion only: no cookie, no CSRF header (22.6349ms)
+Agent execution failed: Error: HTTP 401: {"error":"sign in first"}
+    at <anonymous> (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\@ag-ui\client\src\run\http-request.ts:37:77)
+    at doInnerSub (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\operators\mergeInternals.ts:71:15)
+    at outerNext (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\operators\mergeInternals.ts:53:58)
+    at OperatorSubscriber.OperatorSubscriber._this._next (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\operators\OperatorSubscriber.ts:70:13)
+    at OperatorSubscriber.Subscriber.next (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\Subscriber.ts:75:12)
+    at <anonymous> (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\observable\innerFrom.ts:90:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  status: 401,
+  payload: { error: 'sign in first' }
+}
+✔ a run without a Frappe session is refused, never answered (12.1402ms)
+Agent execution failed: Error: HTTP 401: {"error":"sign in first"}
+    at <anonymous> (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\@ag-ui\client\src\run\http-request.ts:37:77)
+    at doInnerSub (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\operators\mergeInternals.ts:71:15)
+    at outerNext (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\operators\mergeInternals.ts:53:58)
+    at OperatorSubscriber.OperatorSubscriber._this._next (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\operators\OperatorSubscriber.ts:70:13)
+    at OperatorSubscriber.Subscriber.next (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\Subscriber.ts:75:12)
+    at <anonymous> (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\observable\innerFrom.ts:90:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  status: 401,
+  payload: { error: 'sign in first' }
+}
+✔ a missing CSRF header is not minted and the run is refused (8.4702ms)
+[gateway] assertion mint refused: HTTP 403
+Agent execution failed: MintRefused: HTTP 403: assertion mint refused
+    at mintCredential (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\src\gateway.ts:160:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Kt.HttpAgent.fetch (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\src\gateway.ts:207:32) {
+  status: 403
+}
+✔ Frappe refusing to mint keeps its own status instead of a false sign-out (5.2793ms)
+[gateway] assertion mint returned no assertion
+Agent execution failed: MintRefused: HTTP 503: assertion mint returned no assertion
+    at mintCredential (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\src\gateway.ts:175:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Kt.HttpAgent.fetch (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\src\gateway.ts:207:32) {
+  status: 503
+}
+✔ a mint response without an assertion is a service failure, not a sign-out (4.8382ms)
+[gateway] assertion mint refused: HTTP 409
+Agent execution failed: MintRefused: HTTP 409: This conversation is linked to another application. Start a new conversation.
+    at mintCredential (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\src\gateway.ts:160:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Kt.HttpAgent.fetch (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\src\gateway.ts:207:32) {
+  status: 409
+}
+✔ a rebound conversation is refused with its own status, never a sign-out (5.6761ms)
+✔ a browser identity header cannot override the asserted customer (23.6849ms)
+Agent execution failed: Error: HTTP 401: {"error":"sign in first"}
+    at <anonymous> (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\@ag-ui\client\src\run\http-request.ts:37:77)
+    at doInnerSub (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\operators\mergeInternals.ts:71:15)
+    at outerNext (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\operators\mergeInternals.ts:53:58)
+    at OperatorSubscriber.OperatorSubscriber._this._next (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\operators\OperatorSubscriber.ts:70:13)
+    at OperatorSubscriber.Subscriber.next (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\Subscriber.ts:75:12)
+    at <anonymous> (C:\Users\golla\Documents\Projects\Load-advisory-agent-frappe\apps\runtime\node_modules\rxjs\src\internal\observable\innerFrom.ts:90:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  status: 401,
+  payload: { error: 'sign in first' }
+}
+✔ an assertion cannot be replayed (31.6354ms)
+✔ CORS preflight admits the configured origin with credentials only (2.8419ms)
+✔ two concurrent applicants keep their own assertion and conversation (33.6366ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10045.487

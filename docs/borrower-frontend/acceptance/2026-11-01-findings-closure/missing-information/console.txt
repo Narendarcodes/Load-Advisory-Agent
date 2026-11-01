@@ -1,0 +1,4 @@
+valid runs: 5/5
+negative runs: 6/6
+console errors: 0
+non-read requests: writes allowed 32, blocked 0

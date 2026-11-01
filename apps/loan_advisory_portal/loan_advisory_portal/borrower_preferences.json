@@ -1,0 +1,17 @@
+{
+  "schema": "borrower-preferences/1",
+  "locales": [
+    {"code": "en", "label": "English"},
+    {"code": "hi", "label": "हिन्दी"},
+    {"code": "te", "label": "తెలుగు"}
+  ],
+  "literacy": [
+    {"value": "low", "label": "Plain, simple wording"},
+    {"value": "medium", "label": "Standard wording"},
+    {"value": "high", "label": "Detailed wording"}
+  ],
+  "aliases": {
+    "literacy": {"plain": "low", "standard": "medium", "detailed": "high"},
+    "locale": {"mr": "en"}
+  }
+}

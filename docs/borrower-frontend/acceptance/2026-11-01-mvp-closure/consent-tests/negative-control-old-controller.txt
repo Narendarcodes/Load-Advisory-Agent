@@ -1,0 +1,54 @@
+    self.assertEqual(str(stored(self.name)["consent_at"]), PAST)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    doc = <BorrowerProfile: doctype=Borrower Profile borrower-7509a59e7d@example.invalid>
+    self = <loan_advisory_portal.tests.test_consent.ConsentTimestampTest testMethod=test_saving_the_document_outside_the_api_does_not_restamp>
+AssertionError: '2026-11-01 22:55:39.228837' != '2026-01-05 09:00:00'
+- 2026-11-01 22:55:39.228837
++ 2026-01-05 09:00:00
+
+
+======================================================================
+ FAIL  test_the_wizard_payload_that_caused_the_finding_leaves_consent_untouched (loan_advisory_portal.tests.test_consent.ConsentTimestampTest.test_the_wizard_payload_that_caused_the_finding_leaves_consent_untouched)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/frappe/frappe-bench/apps/loan_advisory_portal/loan_advisory_portal/tests/test_consent.py", line 95, in test_the_wizard_payload_that_caused_the_finding_leaves_consent_untouched
+    self.assertEqual(str(stored(self.name)["consent_at"]), PAST)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    self = <loan_advisory_portal.tests.test_consent.ConsentTimestampTest testMethod=test_the_wizard_payload_that_caused_the_finding_leaves_consent_untouched>
+AssertionError: '2026-11-01 22:55:39.536937' != '2026-01-05 09:00:00'
+- 2026-11-01 22:55:39.536937
++ 2026-01-05 09:00:00
+
+
+======================================================================
+ FAIL  test_unrelated_profile_save_preserves_the_consent_timestamp (loan_advisory_portal.tests.test_consent.ConsentTimestampTest.test_unrelated_profile_save_preserves_the_consent_timestamp)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/frappe/frappe-bench/apps/loan_advisory_portal/loan_advisory_portal/tests/test_consent.py", line 86, in test_unrelated_profile_save_preserves_the_consent_timestamp
+    self.assertEqual(str(after["consent_at"]), PAST)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    after = {'consent_at': datetime.datetime(2026, 11, 1, 22, 55, 39, 695379), 'consent_terms': 1, 'consent_privacy': 1, 'terms_version': None, 'privacy_version': None, 'full_name': 'Renamed Borrower', 'phone': '+919812345678', 'employer': None}
+    self = <loan_advisory_portal.tests.test_consent.ConsentTimestampTest testMethod=test_unrelated_profile_save_preserves_the_consent_timestamp>
+AssertionError: '2026-11-01 22:55:39.695379' != '2026-01-05 09:00:00'
+- 2026-11-01 22:55:39.695379
++ 2026-01-05 09:00:00
+
+
+----------------------------------------------------------------------
+Ran 14 tests in 3.490s
+
+FAILED (failures=8)
+
+## reading of this run
+
+14 tests, 8 failures, against the PRE-FIX controller (the committed one-liner
+`consent_at = now_datetime() if consent_terms and consent_privacy else None`, taken from
+`git show HEAD:.../borrower_profile.py` and copied into the container only for this run).
+
+The failures are exactly the preservation half of the invariant: the unrelated saves, the repeated
+saves, the desk save, the checkbox resend, the validation-only save and the audit-trail test all saw
+`consent_at` move to the current time. The consent-event tests still passed, which is the point: the
+old code stamped too much, never too little.
+
+`.../borrower_profile.py` (md5 87c2ce1f5d7b734824743d34aef29ab4) was redeployed immediately afterwards
+and the module re-run green; the repository file was never the old version at any point.

@@ -1,0 +1,35 @@
+{
+  "schema": "loan-lifecycle/1",
+  "states": ["DRAFT", "SUBMITTED", "INFO_REQUESTED", "UNDER_REVIEW", "MANUAL_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
+  "terminal": ["APPROVED", "REJECTED", "WITHDRAWN"],
+  "borrower_actions": ["SUBMITTED", "WITHDRAWN"],
+  "transitions": {
+    "DRAFT": ["SUBMITTED", "WITHDRAWN"],
+    "SUBMITTED": ["UNDER_REVIEW", "WITHDRAWN"],
+    "UNDER_REVIEW": ["APPROVED", "REJECTED", "INFO_REQUESTED", "MANUAL_REVIEW"],
+    "INFO_REQUESTED": ["SUBMITTED", "WITHDRAWN"],
+    "MANUAL_REVIEW": ["APPROVED", "REJECTED", "INFO_REQUESTED"],
+    "REJECTED": ["MANUAL_REVIEW"],
+    "APPROVED": [],
+    "WITHDRAWN": []
+  },
+  "automated_transitions": {
+    "SUBMITTED": ["APPROVED", "REJECTED", "INFO_REQUESTED", "MANUAL_REVIEW"],
+    "UNDER_REVIEW": ["APPROVED", "REJECTED", "INFO_REQUESTED", "MANUAL_REVIEW"],
+    "MANUAL_REVIEW": ["APPROVED", "REJECTED", "INFO_REQUESTED"]
+  },
+  "native_status": {
+    "DRAFT": "Open",
+    "SUBMITTED": "Open",
+    "INFO_REQUESTED": "Open",
+    "UNDER_REVIEW": "Open",
+    "MANUAL_REVIEW": "Open",
+    "APPROVED": "Approved",
+    "REJECTED": "Rejected",
+    "WITHDRAWN": "Open"
+  },
+  "native_to_state": {
+    "Approved": "APPROVED",
+    "Rejected": "REJECTED"
+  }
+}

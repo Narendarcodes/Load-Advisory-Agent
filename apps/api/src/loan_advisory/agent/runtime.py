@@ -12,6 +12,7 @@ from pathlib import Path
 import requests
 
 from decision_engine.paths import repo_root
+from loan_advisory.agent.checkpoint import build_checkpointer
 from loan_advisory.agent.graph import AdvisoryAgent
 from loan_advisory.agent.llm import ChatLLM
 from loan_advisory.agent.tools import (DecisionTools, FrappeEvidenceSource, HandoffQueue, InMemoryEvidenceSource,
@@ -132,10 +133,10 @@ def _open_dense(path: str, chunks: list[dict], identity: dict):
 
 def build_live_agent(policy_tools=None, profile=None, llm=None) -> tuple[AdvisoryAgent, FrappeClient]:
     client = FrappeClient()
-    sink = FrappeEvidenceSink(client)
+    sink = FrappeEvidenceSink()  # dedicated Evidence Service credential, never the read client
     tools = DecisionTools(client, FrappeEvidenceSource(sink))
     agent = AdvisoryAgent(tools, llm or ChatLLM.from_env(), policy_tools=policy_tools, handoff=HandoffQueue(),
-                          profile=profile)
+                          profile=profile, checkpointer=build_checkpointer())
     return agent, client
 
 
@@ -145,4 +146,4 @@ def build_offline_agent(store=None, refs=None, llm=None, policy_tools=None, prof
     sink = decide_offline(store, refs)
     tools = DecisionTools(store, InMemoryEvidenceSource(sink))
     return (AdvisoryAgent(tools, llm or ChatLLM.from_env(), policy_tools=policy_tools, handoff=HandoffQueue(),
-                          profile=profile), store, sink)
+                          profile=profile, checkpointer=build_checkpointer()), store, sink)

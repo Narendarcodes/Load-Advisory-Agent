@@ -1,0 +1,208 @@
+{
+  "generatedAt": "2026-11-01T18:00:34.011Z",
+  "base": "http://127.0.0.1:8081",
+  "borrower": "mvp1-borrower@example.invalid",
+  "steps": [
+    {
+      "step": "entry",
+      "profile": {
+        "name": "mvp1-borrower@example.invalid",
+        "customer": "Synthetic Borrower-77610f5edb",
+        "status": "Active",
+        "onboarding_state": "Profile Complete",
+        "full_name": "Mvp1 Borrower Renamed",
+        "email": "mvp1-borrower@example.invalid",
+        "phone": "+919876500011",
+        "employment_type": "Salaried",
+        "employer": "Synthetic Traders",
+        "employment_months": 24,
+        "monthly_income": 52000,
+        "monthly_obligations": 8000,
+        "preferred_locale": "en",
+        "literacy": "medium",
+        "consent_terms": 1,
+        "consent_privacy": 1,
+        "terms_version": "portal-terms/1",
+        "privacy_version": "portal-privacy/1",
+        "profile_completion": 100
+      },
+      "expected": "consent flags set by the seeder, no notice version yet"
+    },
+    {
+      "step": "save 1 — unrelated field with the consent checkboxes present",
+      "status": "Profile savedNew applications will use these details.",
+      "profile": {
+        "name": "mvp1-borrower@example.invalid",
+        "customer": "Synthetic Borrower-77610f5edb",
+        "status": "Active",
+        "onboarding_state": "Profile Complete",
+        "full_name": "Mvp1 Borrower Renamed",
+        "email": "mvp1-borrower@example.invalid",
+        "phone": "+919876500011",
+        "employment_type": "Salaried",
+        "employer": "Synthetic Traders",
+        "employment_months": 24,
+        "monthly_income": 52000,
+        "monthly_obligations": 8000,
+        "preferred_locale": "en",
+        "literacy": "medium",
+        "consent_terms": 1,
+        "consent_privacy": 1,
+        "terms_version": "portal-terms/1",
+        "privacy_version": "portal-privacy/1",
+        "profile_completion": 100
+      }
+    },
+    {
+      "step": "save 2 — another unrelated field, consent unchanged",
+      "status": "Profile savedNew applications will use these details.",
+      "profile": {
+        "name": "mvp1-borrower@example.invalid",
+        "customer": "Synthetic Borrower-77610f5edb",
+        "status": "Active",
+        "onboarding_state": "Profile Complete",
+        "full_name": "Mvp1 Borrower Renamed",
+        "email": "mvp1-borrower@example.invalid",
+        "phone": "+919876500011",
+        "employment_type": "Salaried",
+        "employer": "Synthetic Traders",
+        "employment_months": 24,
+        "monthly_income": 52000,
+        "monthly_obligations": 8000,
+        "preferred_locale": "en",
+        "literacy": "medium",
+        "consent_terms": 1,
+        "consent_privacy": 1,
+        "terms_version": "portal-terms/1",
+        "privacy_version": "portal-privacy/1",
+        "profile_completion": 100
+      }
+    },
+    {
+      "step": "wizard step 1 — posts full_name and phone only",
+      "status": "step advanced",
+      "nameOnScreen": "Mvp1 Borrower Renamed",
+      "profile": {
+        "name": "mvp1-borrower@example.invalid",
+        "customer": "Synthetic Borrower-77610f5edb",
+        "status": "Active",
+        "onboarding_state": "Profile Complete",
+        "full_name": "Mvp1 Borrower Renamed",
+        "email": "mvp1-borrower@example.invalid",
+        "phone": "+919876500011",
+        "employment_type": "Salaried",
+        "employer": "Synthetic Traders",
+        "employment_months": 24,
+        "monthly_income": 52000,
+        "monthly_obligations": 8000,
+        "preferred_locale": "en",
+        "literacy": "medium",
+        "consent_terms": 1,
+        "consent_privacy": 1,
+        "terms_version": "portal-terms/1",
+        "privacy_version": "portal-privacy/1",
+        "profile_completion": 100
+      }
+    },
+    {
+      "step": "save 3 — third unrelated save, the one that used to restamp",
+      "status": "Profile savedNew applications will use these details.",
+      "profile": {
+        "name": "mvp1-borrower@example.invalid",
+        "customer": "Synthetic Borrower-77610f5edb",
+        "status": "Active",
+        "onboarding_state": "Profile Complete",
+        "full_name": "Mvp1 Borrower Renamed",
+        "email": "mvp1-borrower@example.invalid",
+        "phone": "+919876500011",
+        "employment_type": "Salaried",
+        "employer": "Synthetic Traders",
+        "employment_months": 24,
+        "monthly_income": 52000,
+        "monthly_obligations": 8000,
+        "preferred_locale": "en",
+        "literacy": "medium",
+        "consent_terms": 1,
+        "consent_privacy": 1,
+        "terms_version": "portal-terms/1",
+        "privacy_version": "portal-privacy/1",
+        "profile_completion": 100
+      }
+    }
+  ],
+  "consentFlagsAtEnd": {
+    "terms": 1,
+    "privacy": 1
+  },
+  "noticeVersionsAtEnd": {
+    "terms": "portal-terms/1",
+    "privacy": "portal-privacy/1"
+  },
+  "profileFieldsAtEnd": {
+    "full_name": "Mvp1 Borrower Renamed",
+    "employer": "Synthetic Traders",
+    "monthly_income": 52000,
+    "monthly_obligations": 8000
+  },
+  "writeGuard": {
+    "label": "consent-regression",
+    "requestsSeen": 18,
+    "postedReads": 13,
+    "writesAllowed": 5,
+    "writesBlocked": 0,
+    "byPath": [
+      {
+        "request": "POST /api/method/login",
+        "times": 1
+      },
+      {
+        "request": "POST /api/method/loan_advisory_portal.api.profile.update_profile",
+        "times": 4
+      },
+      {
+        "request": "POST /api/method/loan_advisory_portal.api.session.me",
+        "times": 2
+      },
+      {
+        "request": "POST /api/method/loan_advisory_portal.api.applications.list_applications",
+        "times": 1
+      },
+      {
+        "request": "POST /api/method/loan_advisory_portal.api.profile.get_profile",
+        "times": 10
+      }
+    ]
+  },
+  "consoleErrors": [],
+  "failedRequests": [],
+  "checks": [
+    {
+      "check": "every save reported success",
+      "pass": true
+    },
+    {
+      "check": "consent flags stayed granted",
+      "pass": true
+    },
+    {
+      "check": "both notice versions recorded",
+      "pass": true
+    },
+    {
+      "check": "the unrelated edits landed",
+      "pass": true
+    },
+    {
+      "check": "no undeclared write attempted",
+      "pass": true
+    },
+    {
+      "check": "no console errors",
+      "pass": true
+    },
+    {
+      "check": "no failed requests",
+      "pass": true
+    }
+  ]
+}

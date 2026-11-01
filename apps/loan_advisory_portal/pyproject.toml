@@ -1,0 +1,19 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "loan_advisory_portal"
+authors = [{ name = "Loan Rangers", email = "dev@example.invalid" }]
+readme = "README.md"
+dynamic = ["version"]
+description = "Borrower portal for the Loan Advisory Agent, built on Frappe and Frappe Lending"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Framework :: Frappe",
+]
+dependencies = []
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.0.0,<17.0.0"

@@ -18,16 +18,33 @@ Refactored after P1 (see Git history: P0 → Discovery → Status → P1 → ref
   No Frappe imports allowed here.
 - `apps/api/src/loan_advisory/agent/` — advisory agent: graph, guards, tools,
   state paths, HTTP server, observability. Consumes Decision Evidence only.
+- `apps/api/src/loan_advisory/api/` — the agent-only HTTP surface: `app.py`
+  (factory, error handlers), `assertion.py` (verifier + replay cache), `auth.py`,
+  `agui.py` + `events.py` (AG-UI stream), `routes_agent.py` (chat, bureau,
+  health), `admission.py`.
+- `apps/runtime/` — CopilotKit Node gateway: `/api/copilotkit` → mint an
+  assertion from the Frappe session → FastAPI `/api/agui`.
+- `apps/web/assistant/` — the chat island mounted on the Frappe page: one
+  CopilotKit provider, one panel, no router. Builds into
+  `apps/loan_advisory_portal/.../public/js/assistant/` with fixed asset names.
+- `apps/loan_advisory_portal/` — the Frappe app: borrower Doctypes, pages
+  (`www/borrower/`, including `/borrower/assistant`), whitelisted API (`api/`),
+  services (invitations, assertion, livekit, documents) and integration tests.
 - `rag/` — policy retrieval: corpus assembly, hybrid Qdrant + BM25 retrieval,
   rerank, index provenance metadata.
 - `apps/voice/agent_worker.py` — LiveKit voice worker (STT/TTS around the same graph).
-- `apps/web/chat/` — static chat client served by the API.
+- `apps/web/chat/` — legacy static chat/voice pages. The chat page is superseded by
+  the island and nothing serves these files any more (the FastAPI static handler is gone);
+  the voice page has no replacement yet.
 - `data/` — `synthetic/` (dev/test fixtures + provenance note in docs);
   `evaluation/` reserved for evaluation-only data. Never mixed.
 - `infra/frappe/` — deployment/config only (compose file, apps.json).
   Upstream Frappe/ERPNext/Lending source must NEVER be copied in.
 - `scripts/development/` — runnable demos (P0 matrix, trace inspector).
-- `tests/` — root suite (smoke, P0 matrix, connection, P1 live).
+- `tests/` — root suite (smoke, P0 matrix, connection, P1 live, `test_agent_api.py`
+  for the agent surface, `test_voice_assertions.py` for the worker exchange). The
+  legacy account/session suites are gone; the only remaining session-contract test
+  checks that startup fails closed without `AGENT_ASSERTION_SECRET`.
 - `docs/` — `architecture/` (current truth), `research/`, `prototypes/`
   (frozen P0/P1 history — old `prototype_0/` paths inside are historical),
   `operations/` (reserved).

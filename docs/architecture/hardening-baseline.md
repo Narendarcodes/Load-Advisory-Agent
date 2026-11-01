@@ -2,7 +2,19 @@
 
 Documentation only. Nothing in this file changes runtime behaviour.
 
-## Verified baseline
+> **Historical baseline (2026-10-28, original worktree).** This file records the pre-migration
+> state of `main` at `1b5bad1`: the P0 merge chain, the unresolved P1–P15 numbering and the
+> residuals known at that HEAD. It is kept because the numbering is still owner-blocked, not
+> because those counts describe this branch. The current state of the Frappe borrower platform
+> is recorded in [frappe-borrower-platform.md](frappe-borrower-platform.md) (architecture,
+> **verified** against this branch), [the audit](../audit/frappe-implementation-audit.md)
+> (findings and post-audit status), [the hardening report](../audit/frappe-hardening-report.md)
+> (**verified** / **test-only** / **unverified** per item), [the test plan](../testing/borrower-platform-test-plan.md)
+> (**verified** current-run totals) and [production-readiness.md](../testing/production-readiness.md)
+> (**verified in the disposable environment**; **BLOCKED** where stated). The residuals table
+> below still applies to the original worktree; do not quote its test counts for this branch.
+
+## Verified baseline — original worktree, 2026-10-28
 
 Verified on 2026-10-28 against the primary checkout.
 

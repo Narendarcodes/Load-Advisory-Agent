@@ -1,0 +1,67 @@
+{
+  "site": "loanportal.local",
+  "profile": "review.demo@example.invalid",
+  "borrowerListedConversations": 30,
+  "listedThreadsThatWereDeleted": [],
+  "deletedThreadsRefusingWithNotFound": 12,
+  "preservedThreadsAnswering": 12,
+  "stillPresentAmongDeleted": [],
+  "orphanMessageRows": 0,
+  "messagesWithWrongParenttype": 0,
+  "counts": {
+    "Advisory Conversation": 52,
+    "Advisory Message": 128,
+    "Deleted Document": 138,
+    "Borrower Profile": 9,
+    "Loan Application": 16,
+    "Loan Application Document": 14,
+    "Loan Decision Evidence": 1,
+    "Application State Log": 9,
+    "Loan": 0,
+    "Loan Disbursement": 0,
+    "Loan Demand": 0,
+    "User": 19,
+    "Customer": 17
+  },
+  "demoProfile": {
+    "consent_at": "2026-10-31 18:13:36",
+    "consent_terms": "1",
+    "consent_privacy": "1",
+    "terms_version": "portal-terms/1",
+    "privacy_version": "portal-privacy/1",
+    "full_name": "Review Demo Borrower",
+    "email": "review.demo@example.invalid",
+    "customer": "Review Demo Borrower",
+    "status": "Active",
+    "onboarding_state": "Registered",
+    "monthly_income": "0.0",
+    "monthly_obligations": "13000.0",
+    "profile_completion": "86"
+  },
+  "demoApplications": [
+    {
+      "name": "ACC-LOAP-2026-00018",
+      "status": "Open",
+      "modified": "2026-10-31 16:35:47.445966"
+    },
+    {
+      "name": "ACC-LOAP-2026-00019",
+      "status": "Open",
+      "modified": "2026-10-31 16:44:38.911738"
+    }
+  ],
+  "conversationsPerOwner": {
+    "closure1-borrower@example.invalid": 4,
+    "review.demo@example.invalid": 30,
+    "e2e1-borrower@example.invalid": 18
+  },
+  "authUnchanged": {
+    "enabled": 1,
+    "restrict_ip": "",
+    "roles": [
+      "Loan Borrower"
+    ],
+    "last_password_reset": "None"
+  },
+  "problems": []
+}

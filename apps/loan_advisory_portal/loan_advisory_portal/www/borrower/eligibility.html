@@ -1,0 +1,164 @@
+{% extends "templates/portal/base.html" %}
+{% block title %}Check eligibility{% endblock %}
+{% block page_content %}
+<div class="page-head">
+	<div>
+		<p class="eyebrow">Indicative check</p>
+		<h1>See what you may be able to borrow</h1>
+		<p>Answer a few questions about income and commitments. You get an indicative estimate, not an approval, and nothing is sent for review from this page.</p>
+	</div>
+	<div class="page-head__actions">
+		<a class="btn btn--ghost" href="/borrower/apply">Skip to the application</a>
+	</div>
+</div>
+
+{% if not product %}
+<div class="card empty">
+	<span class="empty__mark" aria-hidden="true">EL</span>
+	<h2>No lending product is available right now</h2>
+	<p>An estimate needs a current product rate. Ask your loan advisor when applications can be started again.</p>
+	<a class="btn btn--ghost" href="/borrower/help">Read the help page</a>
+</div>
+{% else %}
+
+<div class="alert alert--info" role="note">
+	<strong>What this check does</strong>
+	<span>It uses only the details you enter here. It does not check your credit file, does not ask for Aadhaar or PAN, and does not promise a loan. A formal application is assessed separately.</span>
+</div>
+
+<div class="eligibility mt">
+	<form class="eligibility__form" id="eligibility-form" novalidate>
+		<section class="form-section" aria-labelledby="req-heading">
+			<div class="form-section__head">
+				<h2 id="req-heading">What you need</h2>
+				<span class="tiny">Step 1 of 3</span>
+			</div>
+			<div class="field">
+				<label for="el-amount">Amount you want to borrow (₹)</label>
+				<div class="input-group">
+					<span class="input-group__prefix" aria-hidden="true">₹</span>
+					<input id="el-amount" name="amount" type="number" min="10000" max="{{ product.maximum or 1000000 }}" step="5000" inputmode="numeric" value="300000" required>
+				</div>
+				<input id="el-range" type="range" min="10000" max="{{ product.maximum or 1000000 }}" step="5000" value="300000" aria-label="Amount you want to borrow">
+				<div class="range-scale"><span>₹10,000</span><span>₹{{ "{:,.0f}".format(product.maximum or 1000000) }}</span></div>
+				<p class="error hidden" id="el-amount-error">Enter an amount between ₹10,000 and the product maximum.</p>
+			</div>
+			<div class="grid-2">
+				<div class="field">
+					<label for="el-tenure">Preferred tenure</label>
+					<select id="el-tenure" name="tenure">
+						<option value="12">12 months</option>
+						<option value="24">24 months</option>
+						<option value="36" selected>36 months</option>
+						<option value="48">48 months</option>
+						<option value="60">60 months</option>
+					</select>
+					<p class="hint">The final tenure is agreed in your offer.</p>
+				</div>
+				<div class="field">
+					<label for="el-purpose">What is the loan for?</label>
+					<select id="el-purpose" name="purpose">
+						<option value="">Prefer not to say yet</option>
+						<option value="Home renovation">Home renovation</option>
+						<option value="Education">Education</option>
+						<option value="Medical costs">Medical costs</option>
+						<option value="Debt consolidation">Debt consolidation</option>
+						<option value="Business">Business</option>
+						<option value="Wedding">Wedding</option>
+						<option value="Other">Other</option>
+					</select>
+				</div>
+			</div>
+		</section>
+
+		<section class="form-section" aria-labelledby="work-heading">
+			<div class="form-section__head">
+				<h2 id="work-heading">How you earn</h2>
+				<span class="tiny">Step 2 of 3</span>
+			</div>
+			<fieldset>
+				<legend class="field__label">Employment type</legend>
+				<div class="choice-grid">
+					<label class="choice"><input type="radio" name="employment_type" value="Salaried" required><span><strong>Salaried</strong><small>Paid by an employer</small></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Self-employed"><span><strong>Self-employed</strong><small>Own practice or contract</small></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Business"><span><strong>Business owner</strong><small>You run a business</small></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Student"><span><strong>Student</strong><small>Currently studying</small></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Retired"><span><strong>Retired</strong><small>Drawing a pension</small></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Unemployed"><span><strong>Not working</strong><small>Between jobs</small></span></label>
+				</div>
+				<p class="error hidden mt" id="el-employment-error">Choose the option that describes you best.</p>
+			</fieldset>
+			<div class="field mt">
+				<label for="el-months" id="el-months-label">Months in your current work</label>
+				<input id="el-months" name="employment_months" type="number" min="0" max="720" step="1" inputmode="numeric" required>
+				<p class="hint" id="el-months-hint">If you started less than a month ago, enter 0.</p>
+				<p class="error hidden" id="el-months-error">Enter a whole number of months between 0 and 720.</p>
+			</div>
+		</section>
+
+		<section class="form-section" aria-labelledby="money-heading">
+			<div class="form-section__head">
+				<h2 id="money-heading">Income and commitments</h2>
+				<span class="tiny">Step 3 of 3</span>
+			</div>
+			<div class="grid-2">
+				<div class="field">
+					<label for="el-income">Monthly net income (₹)</label>
+					<div class="input-group">
+						<span class="input-group__prefix" aria-hidden="true">₹</span>
+						<input id="el-income" name="monthly_income" type="number" min="1" step="500" inputmode="numeric" required>
+					</div>
+					<p class="hint">Take-home pay after tax and deductions.</p>
+					<p class="error hidden" id="el-income-error">Enter your monthly take-home income.</p>
+				</div>
+				<div class="field">
+					<label for="el-obligations">Existing monthly repayments (₹)</label>
+					<div class="input-group">
+						<span class="input-group__prefix" aria-hidden="true">₹</span>
+						<input id="el-obligations" name="monthly_obligations" type="number" min="0" step="500" inputmode="numeric" value="0">
+					</div>
+					<p class="hint">Loan EMIs and other fixed repayments. Enter 0 if you have none.</p>
+					<p class="error hidden" id="el-obligations-error">Enter a whole amount of 0 or more.</p>
+				</div>
+			</div>
+			<p class="tiny muted">Why we ask: these two figures decide how much of a monthly repayment the estimate can support. They are not shared with anyone from this page.</p>
+		</section>
+
+		<div class="form-actions">
+			<button class="btn" type="submit" id="el-submit">Estimate eligibility</button>
+			<button class="btn btn--quiet" type="reset" id="el-reset">Clear</button>
+			<span class="spacer"></span>
+			<span class="form-note">Nothing is submitted for review.</span>
+		</div>
+	</form>
+
+	<aside aria-label="Estimate result">
+		<div class="alert alert--warn hidden" id="result-stale" role="status">
+			<strong>Your inputs changed</strong>
+			<span>Recalculate to refresh the estimate.</span>
+		</div>
+		<div class="result-card" id="result-panel" aria-live="polite">
+			<p class="eyebrow">Your estimate</p>
+			<h2>Nothing calculated yet</h2>
+			<p class="small muted">Fill in the three sections and choose Estimate eligibility. You can change any answer and recalculate.</p>
+			<div>
+				<h3>What the estimate uses</h3>
+				<ul class="result-factors">
+					<li>The amount and tenure you choose</li>
+					<li>Your monthly income and existing repayments</li>
+					<li>Your employment type and time in work</li>
+					<li>The current product rate</li>
+				</ul>
+			</div>
+			<div class="alert alert--info">
+				<strong>This is not an approval</strong>
+				<span>It does not check your credit file, ask for identity numbers or run a credit bureau enquiry.</span>
+			</div>
+		</div>
+	</aside>
+</div>
+
+<script id="eligibility-data" type="application/json">{{ {"product": product, "demo": boot.get("demo", False)} | tojson }}</script>
+<script src="/assets/loan_advisory_portal/js/pages/eligibility.js" defer></script>
+{% endif %}
+{% endblock %}

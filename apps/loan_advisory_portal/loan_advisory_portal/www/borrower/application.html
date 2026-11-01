@@ -1,0 +1,164 @@
+{% extends "templates/portal/base.html" %}
+{% block page_content %}
+{% if not_found %}
+{% include "templates/portal/_not_found.html" %}
+{% else %}
+<div class="page-head">
+	<div>
+		<p class="tiny"><a href="/borrower">← All applications</a></p>
+		<p class="eyebrow">Application</p>
+		<h1 id="app-title">Your application</h1>
+		<p id="app-purpose">Loading…</p>
+		<p class="app-meta" id="app-meta"></p>
+	</div>
+	<div class="page-head__actions" id="app-actions"></div>
+</div>
+
+<div class="alert alert--error hidden" id="page-error" role="alert">
+	<strong>We could not load this application</strong>
+	<span id="page-error-text"></span>
+	<div class="form-actions">
+		<button class="btn btn--ghost btn--sm" type="button" id="page-retry">Try again</button>
+	</div>
+</div>
+
+<section class="card tracker-card mt" aria-label="Application progress">
+	<ol class="tracker" id="tracker">
+		<li class="tracker__stage"><strong>Started</strong><span>Draft created</span></li>
+		<li class="tracker__stage"><strong>Submitted</strong><span>Sent for checks</span></li>
+		<li class="tracker__stage"><strong>Checks</strong><span>Policy and information</span></li>
+		<li class="tracker__stage"><strong>Outcome</strong><span>Decision recorded</span></li>
+	</ol>
+</section>
+
+<div class="application-grid mt">
+	<div class="stack">
+		<section class="card" aria-labelledby="status-heading">
+			<div class="card__head">
+				<h2 id="status-heading">Status</h2>
+				<span id="app-badge"></span>
+			</div>
+			<div class="status-block" id="status-block" aria-live="polite">
+				<span class="status-block__mark" id="status-mark" aria-hidden="true">·</span>
+				<div class="status-block__body">
+					<strong id="status-title">Loading…</strong>
+					<span class="small muted" id="status-summary"></span>
+					<ul class="small" id="status-steps"></ul>
+					<time id="status-time"></time>
+				</div>
+			</div>
+		</section>
+
+		<section class="card" aria-labelledby="decision-heading">
+			<div class="card__head">
+				<div>
+					<h2 id="decision-heading">Decision and reasoning</h2>
+					<p class="tiny muted">Only checks recorded on this application appear here.</p>
+				</div>
+			</div>
+			<div id="decision" aria-live="polite">
+				<p class="muted small">Loading…</p>
+			</div>
+		</section>
+
+		<section id="info-request" class="card hidden" aria-labelledby="info-heading">
+			<div class="card__head">
+				<div>
+					<h2 id="info-heading">Information needed</h2>
+					<p class="tiny muted">Correct the values below and resubmit. Everything else, including your documents, stays as it is.</p>
+				</div>
+			</div>
+			<div class="grid-2">
+				<div class="field">
+					<label for="resubmit-income">Monthly income</label>
+					<input id="resubmit-income" type="number" min="0" step="1" inputmode="numeric">
+				</div>
+				<div class="field">
+					<label for="resubmit-obligations">Monthly obligations</label>
+					<input id="resubmit-obligations" type="number" min="0" step="1" inputmode="numeric">
+				</div>
+				<div class="field">
+					<label for="resubmit-credit">Credit score (300–900)</label>
+					<input id="resubmit-credit" type="number" min="300" max="900" step="1" inputmode="numeric">
+				</div>
+				<div class="field">
+					<label for="resubmit-employment">Months in current employment</label>
+					<input id="resubmit-employment" type="number" min="0" max="720" step="1" inputmode="numeric">
+				</div>
+			</div>
+			<p class="error hidden" id="resubmit-error" role="alert"></p>
+			<div class="form-actions">
+				<button class="btn" type="button" id="resubmit-button">Resubmit application</button>
+			</div>
+		</section>
+
+		<section class="card" aria-labelledby="documents-heading">
+			<div class="card__head">
+				<div>
+					<h2 id="documents-heading">Documents</h2>
+					<p class="tiny muted">Private to you and the review team.</p>
+				</div>
+				<span class="badge badge--neutral" id="doc-count">—</span>
+			</div>
+			<div id="documents-summary" aria-live="polite">
+				<p class="muted small">Loading…</p>
+			</div>
+			<div class="card__foot">
+				<span class="small muted" id="documents-note">Documents can be changed while the application is a draft.</span>
+				<a class="btn btn--ghost btn--sm" id="documents-link" href="/borrower/documents?name={{ application.name | urlencode }}">Open document workspace</a>
+			</div>
+		</section>
+
+		<section class="card" aria-labelledby="timeline-heading">
+			<div class="card__head">
+				<h2 id="timeline-heading">History</h2>
+				<span class="tiny muted">Every recorded change, oldest first</span>
+			</div>
+			<ol class="timeline" id="timeline">
+				<li class="muted small">Loading…</li>
+			</ol>
+		</section>
+	</div>
+
+	<aside class="application-side" aria-label="Application details and help">
+		<section class="card">
+			<div class="card__head">
+				<h2>Application facts</h2>
+			</div>
+			<dl class="detail detail--rows" id="summary">
+				<div><dt>Status</dt><dd>Loading…</dd></div>
+			</dl>
+		</section>
+
+		{% set decided = application.custom_lifecycle_state in ("APPROVED", "REJECTED", "MANUAL_REVIEW") %}
+		<section class="card card--accent">
+			<p class="eyebrow">Assistant</p>
+			<h2>{{ "Understand this decision" if decided else "Ask about this application" }}</h2>
+			<p class="small mt">{{ "The assistant explains policy and the recorded reasons in plain language. It never approves or rejects an application." if decided else "The assistant explains policy and what happens next in plain language. It never approves or rejects an application." }}</p>
+			<a class="btn btn--sm mt" href="/borrower/assistant?application={{ application.name | urlencode }}">Ask the assistant</a>
+		</section>
+
+		<section class="card">
+			<h2>Need a person?</h2>
+			<p class="small muted mt">Ask for a human review or tell us what was unclear. The help page explains how decisions are made.</p>
+			<a class="btn btn--quiet btn--sm mt" href="/borrower/feedback?application={{ application.name | urlencode }}">Send feedback</a>
+			<a class="btn btn--quiet btn--sm" href="/borrower/help">How decisions work</a>
+		</section>
+	</aside>
+</div>
+
+<dialog class="dialog" id="withdraw-dialog" aria-labelledby="withdraw-title">
+	<div class="dialog__body">
+		<h2 id="withdraw-title">Withdraw this application?</h2>
+		<p class="small muted">Withdrawing closes this application. You can start a new one at any time, but this one cannot be reopened.</p>
+		<div class="dialog__actions">
+			<button type="button" class="btn btn--quiet" id="withdraw-cancel">Keep application</button>
+			<button type="button" class="btn btn--danger" id="withdraw-confirm">Withdraw application</button>
+		</div>
+	</div>
+</dialog>
+
+<script id="application-ref" type="application/json">{{ application.name | tojson }}</script>
+<script src="/assets/loan_advisory_portal/js/pages/application.js" defer></script>
+{% endif %}
+{% endblock %}

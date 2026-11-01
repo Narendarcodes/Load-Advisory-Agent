@@ -1,0 +1,55 @@
+# Services started for the findings-closure run (2026-11-01)
+
+Recorded so that only these processes are stopped afterwards. The baseline in
+`baseline-before-start.txt` shows every one of these ports free before the run.
+
+| Service | Where it runs | Identifier | Started |
+| --- | --- | --- | --- |
+| Frappe dev server `:8001` | inside `loanrangers-backend-1` (`bench --site loanportal.local serve --port 8001`) | container pids 8483 (bench) / 8486 (werkzeug) | 2026-11-01 ~15:41Z |
+| Test front door `127.0.0.1:8081` | container `loanportal-acceptance-proxy` (nginx:alpine, `tests/e2e/nginx.loanportal.conf`) | docker pid 83633, `AutoRemove=false` so it survives a `docker stop` | 2026-11-01T15:41:22Z |
+| CopilotKit runtime `127.0.0.1:4200` | host, `apps/runtime/dist/index.js` | host pid 36316 | this segment |
+| Deterministic AG-UI stub `127.0.0.1:8096` | host, `tests/e2e/agui_stub.cjs` (`STUB_APPLICATION=ACC-LOAP-2026-00020`) | host pid 34888 | this segment |
+
+Deliberately **not** started:
+
+- the live FastAPI agent on `:8095` — the stub replaces only the agent upstream, so no model is loaded
+  and no GPU memory is held;
+- `loanportal-e2e-proxy` — the front door above is the same config, created without `--rm` on purpose.
+
+Everything else that was already running (the `loanrangers-*` bench containers and the six
+`loan-advisory-langfuse-*` containers) is untouched by this run.
+
+## GPU
+
+`nvidia-smi --query-compute-apps=pid,used_memory --format=csv` during the run:
+
+```
+pid, used_gpu_memory [MiB]
+```
+
+No compute processes: the retriever is not loaded, as intended.
+
+## Health checks at bring-up
+
+```
+inside container  http://127.0.0.1:8001/login            -> 200
+front door        http://127.0.0.1:8081/login            -> 200
+runtime           http://127.0.0.1:4200/api/copilotkit/info -> 200
+stub              http://127.0.0.1:8096/api/agui          (listening)
+```
+
+## Disposable-site fixtures for this segment
+
+`e2e_seed.seed --kwargs '{"tag": "closure1"}'` created the borrower used below. The credentials file
+was copied out of the container to `%TEMP%/loanportal-e2e/closure1.json` (outside the repository, mode
+600) and deleted inside the container. It is not reproduced here: it holds passwords and API secrets.
+
+| Piece | Value |
+| --- | --- |
+| borrower (journeys) | `closure1-borrower@example.invalid`, application `ACC-LOAP-2026-00020` |
+| other borrower (ownership probes) | `closure1-other@example.invalid`, application `ACC-LOAP-2026-00021` |
+| service accounts | `closure1-evidence@…` (Evidence Service only), `closure1-reader@…` (read-only) |
+
+`seed_evidence.py` was **not** re-run in this segment: the thread-continuity and contrast checks need
+a seeded application and a rendered island, not a fresh policy decision, and the decision card in the
+assistant is supplied by the deterministic stub.

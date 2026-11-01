@@ -1,0 +1,97 @@
+{
+  "corpusFiles": 33,
+  "prompts": [
+    {
+      "prompt": "What information is missing from my application?",
+      "harnessFiles": [
+        "tests/e2e/accessibility_audit.cjs",
+        "tests/e2e/keyboard_review.cjs",
+        "tests/e2e/missing_information_e2e.cjs",
+        "tests/e2e/out/debug_clip.cjs",
+        "tests/e2e/thread_continuity_e2e.cjs"
+      ],
+      "attributed": true
+    },
+    {
+      "prompt": "Which policy source supports this rule? show the citation",
+      "harnessFiles": [
+        "tests/e2e/accessibility_audit.cjs"
+      ],
+      "attributed": true
+    },
+    {
+      "prompt": "Why was my loan rejected?",
+      "harnessFiles": [
+        "tests/e2e/portal_journeys.py",
+        "tests/e2e/portal_security.py"
+      ],
+      "attributed": true
+    },
+    {
+      "prompt": "What if my credit score was 800, my monthly income was 90000, my monthly obligations were 5000 and my employment tenure was 60 months?",
+      "harnessFiles": [],
+      "attributed": false
+    },
+    {
+      "prompt": "What does the lending policy say about the minimum credit score?",
+      "harnessFiles": [],
+      "attributed": false
+    },
+    {
+      "prompt": "I want to speak to a human advisor about this decision.",
+      "harnessFiles": [],
+      "attributed": false
+    },
+    {
+      "prompt": "The income recorded on my application is wrong. I want to dispute it.",
+      "harnessFiles": [],
+      "attributed": false
+    },
+    {
+      "prompt": "Render a malformed payload.",
+      "harnessFiles": [
+        "tests/e2e/missing_information_e2e.cjs"
+      ],
+      "attributed": true
+    },
+    {
+      "prompt": "Render an unknown component payload.",
+      "harnessFiles": [
+        "tests/e2e/missing_information_e2e.cjs"
+      ],
+      "attributed": true
+    },
+    {
+      "prompt": "Render a payload where required fields are absent.",
+      "harnessFiles": [
+        "tests/e2e/missing_information_e2e.cjs"
+      ],
+      "attributed": true
+    },
+    {
+      "prompt": "Confirm there is no missing information.",
+      "harnessFiles": [
+        "tests/e2e/missing_information_e2e.cjs"
+      ],
+      "attributed": true
+    },
+    {
+      "prompt": "Answer without a missing information state.",
+      "harnessFiles": [
+        "tests/e2e/missing_information_e2e.cjs"
+      ],
+      "attributed": true
+    },
+    {
+      "prompt": "What information is still missing for my application?",
+      "harnessFiles": [
+        "tests/e2e/out/debug_fix.cjs",
+        "tests/e2e/out/debug_minmax.cjs",
+        "tests/e2e/out/debug_served.cjs",
+        "tests/e2e/out/debug_th.cjs",
+        "tests/e2e/out/debug_width.cjs"
+      ],
+      "attributed": true
+    }
+  ]
+}

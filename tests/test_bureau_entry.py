@@ -123,7 +123,7 @@ def _app_for(case, client):
     sink = InMemoryEvidenceSink()
     store = _Store([case])
     tools = DecisionTools(store, InMemoryEvidenceSource(sink))
-    app = App(SimpleNamespace(tools=tools), resolve=None, demo=[], bureau_client=client)
+    app = App(SimpleNamespace(tools=tools), resolve=None, bureau_client=client)
     return app, sink
 
 

@@ -73,6 +73,9 @@ class VoiceSettings:
     min_endpointing_s: float = 0.5       # LiveKit AgentSession end-of-turn delay after VAD silence (library default 0.5)
     vad_min_silence_s: float = 0.55      # Silero VAD silence that ends speech (library default 0.55)
     tts_gender: str = "Female"
+    frappe_url: str = "http://127.0.0.1:8080"   # Frappe origin the worker asks for assertions
+    frappe_api_key: str = ""                    # integration account (Agent Integration role); never logged
+    frappe_api_secret: str = ""
     filler: dict = None
     unreachable: dict = None
 
@@ -95,4 +98,7 @@ class VoiceSettings:
                    stream=env.get("VOICE_STREAM", "1") not in ("0", "false", "no"),
                    min_endpointing_s=_f(env, "VOICE_MIN_ENDPOINTING_S", d.min_endpointing_s),
                    vad_min_silence_s=_f(env, "VOICE_VAD_MIN_SILENCE_S", d.vad_min_silence_s),
-                   tts_gender=env.get("VOICE_TTS_GENDER", d.tts_gender))
+                   tts_gender=env.get("VOICE_TTS_GENDER", d.tts_gender),
+                   frappe_url=env.get("FRAPPE_URL", d.frappe_url),
+                   frappe_api_key=env.get("FRAPPE_API_KEY", d.frappe_api_key),
+                   frappe_api_secret=env.get("FRAPPE_API_SECRET", d.frappe_api_secret))

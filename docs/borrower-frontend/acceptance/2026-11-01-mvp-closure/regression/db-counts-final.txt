@@ -1,0 +1,30 @@
+# captured 2026-11-01T18:26:31Z — final state after the mvp1 fixture teardown
++-------------------------------+------------+
+| doctype                       | rows_total |
++-------------------------------+------------+
+| Loan Application              |         14 |
+| Loan Application Document     |         12 |
+| Loan Decision Evidence        |          1 |
+| Application State Log         |          8 |
+| Evidence Ingestion Log        |          1 |
+| Borrower Profile              |          7 |
+| Borrower Feedback             |          1 |
+| Voice Session                 |          2 |
+| Advisory Conversation         |         52 |
+| Advisory Message              |        128 |
+| Account Invitation            |          4 |
+| Account Invitation Redemption |          4 |
+| Customer                      |         15 |
+| User                          |         15 |
+| Version                       |        111 |
+| File                          |         14 |
+| Deleted Document              |        152 |
+| Loan                          |          0 |
+| Loan Disbursement             |          0 |
+| Loan Demand                   |          0 |
++-------------------------------+------------+
++--------------------+-----------------------------+----------------------------+---------------+-----------------+----------------+------------------+
+| s                  | name                        | consent_at                 | consent_terms | consent_privacy | terms_version  | privacy_version  |
++--------------------+-----------------------------+----------------------------+---------------+-----------------+----------------+------------------+
+| demo consent state | review.demo@example.invalid | 2026-10-31 18:13:36.000000 |             1 |               1 | portal-terms/1 | portal-privacy/1 |
++--------------------+-----------------------------+----------------------------+---------------+-----------------+----------------+------------------+

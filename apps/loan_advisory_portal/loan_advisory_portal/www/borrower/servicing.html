@@ -1,0 +1,157 @@
+{% extends "templates/portal/base.html" %}
+{% block title %}Repayments{% endblock %}
+{% block page_content %}
+{% if boot.get("demo") %}
+<div class="alert alert--warn" role="note">
+	<strong>Preview mode <span class="demo-flag">Demo</span></strong>
+	<span>This repayment schedule is a development fixture. No real loan, bank account or payment record is attached, and nothing on this page takes or confirms a payment.</span>
+</div>
+
+<div class="page-head mt">
+	<div>
+		<p class="eyebrow">Repayments</p>
+		<h1>Your current loan</h1>
+		<p>Track what is outstanding and what is due next. Payment actions are not connected in this preview.</p>
+	</div>
+	<div class="page-head__actions">
+		<a class="btn btn--ghost" href="/borrower">Back to applications</a>
+	</div>
+</div>
+
+<div class="servicing mt">
+	<div class="stack">
+		<section class="card card--accent" aria-labelledby="loan-summary-heading">
+			<div class="card__head">
+				<div>
+					<h2 id="loan-summary-heading">Repayment progress</h2>
+					<p class="tiny muted">Fixture loan. Not connected to a payment system.</p>
+				</div>
+				<span class="demo-flag">Demo</span>
+			</div>
+			<div class="grid-3">
+				<div class="metric">
+					<span class="metric__label">Outstanding</span>
+					<span class="metric__value">₹2,09,000</span>
+					<span class="small muted">of ₹2,50,000</span>
+				</div>
+				<div class="metric">
+					<span class="metric__label">Next instalment</span>
+					<span class="metric__value">₹8,544</span>
+					<span class="small muted">due {{ next_due }}</span>
+				</div>
+				<div class="metric">
+					<span class="metric__label">Paid so far</span>
+					<span class="metric__value">7</span>
+					<span class="small muted">of 36 instalments</span>
+				</div>
+			</div>
+			<div class="progress mt" role="img" aria-label="Loan repaid: 16 percent">
+				<div class="progress__bar" style="width:16%"></div>
+			</div>
+			<div class="card__foot">
+				<span class="small muted">16% of the principal has been repaid in this fixture.</span>
+				<span class="badge badge--neutral">Preview only</span>
+			</div>
+		</section>
+
+		<section class="card" aria-labelledby="schedule-heading">
+			<div class="card__head">
+				<div>
+					<h2 id="schedule-heading">Instalments</h2>
+					<p class="tiny muted">Previous, due and next instalments. Fixed monthly amount in this fixture.</p>
+				</div>
+				<span class="badge badge--neutral">4 instalments shown</span>
+			</div>
+			<div class="repayment-row">
+				<span class="repayment-row__month">{{ two_months_ago }}</span>
+				<div class="repayment-row__body">
+					<strong>Instalment 6 of 36</strong>
+					<span class="badge badge--ok">Paid</span>
+				</div>
+				<span class="repayment-row__amount">₹8,544</span>
+			</div>
+			<div class="repayment-row">
+				<span class="repayment-row__month">{{ last_month }}</span>
+				<div class="repayment-row__body">
+					<strong>Instalment 7 of 36</strong>
+					<span class="badge badge--ok">Paid</span>
+				</div>
+				<span class="repayment-row__amount">₹8,544</span>
+			</div>
+			<div class="repayment-row">
+				<span class="repayment-row__month">{{ next_due }}</span>
+				<div class="repayment-row__body">
+					<strong>Instalment 8 of 36</strong>
+					<span class="badge badge--warn">Due</span>
+				</div>
+				<span class="repayment-row__amount">₹8,544</span>
+			</div>
+			<div class="repayment-row">
+				<span class="repayment-row__month">{{ following_due }}</span>
+				<div class="repayment-row__body">
+					<strong>Instalment 9 of 36</strong>
+					<span class="badge badge--neutral">Upcoming</span>
+				</div>
+				<span class="repayment-row__amount">₹8,544</span>
+			</div>
+			<div class="card__foot">
+				<span class="small muted">Payment status is fixture data, not a bank confirmation.</span>
+				<button class="btn btn--ghost btn--sm" type="button" disabled title="Payments are not connected in this preview">Pay instalment</button>
+			</div>
+		</section>
+
+		<section class="card">
+			<h2>How payments would work</h2>
+			<p class="small muted mt">In a live account this page would show the amount due, the payment date and a receipt for each successful payment. This build has no payment gateway, no mandate and no receipt engine, so it cannot take money or confirm that a payment arrived.</p>
+			<p class="small muted mt">If you need to make a payment, speak to your loan advisor. Do not transfer funds based on this preview.</p>
+		</section>
+	</div>
+
+	<aside class="servicing__side" aria-label="Loan details and support">
+		<section class="card">
+			<div class="card__head">
+				<h2>Loan details</h2>
+				<span class="demo-flag">Demo</span>
+			</div>
+			<dl class="detail detail--rows">
+				<div><dt>Loan reference</dt><dd class="mono">LN-2026-0042</dd></div>
+				<div><dt>Product</dt><dd>Personal loan</dd></div>
+				<div><dt>Amount</dt><dd>₹2,50,000</dd></div>
+				<div><dt>Interest rate</dt><dd>14% per year</dd></div>
+				<div><dt>Tenure</dt><dd>36 months</dd></div>
+				<div><dt>Monthly instalment</dt><dd>₹8,544</dd></div>
+			</dl>
+		</section>
+
+		<section class="card">
+			<h2>Statements</h2>
+			<p class="small muted mt">Repayment statements and tax certificates are not generated in this preview.</p>
+			<button class="btn btn--quiet btn--sm mt" type="button" disabled title="Statements are not available in this preview">Download statement</button>
+		</section>
+
+		<section class="card">
+			<h2>Need help with a payment?</h2>
+			<p class="small muted mt">Ask the assistant what an instalment includes, or send feedback if something looks wrong. A person reads feedback.</p>
+			<a class="btn btn--quiet btn--sm mt" href="/borrower/assistant">Ask the assistant</a>
+			<a class="btn btn--quiet btn--sm" href="/borrower/feedback">Send feedback</a>
+		</section>
+	</aside>
+</div>
+{% else %}
+<div class="page-head">
+	<div>
+		<p class="eyebrow">Repayments</p>
+		<h1>Repayments</h1>
+		<p>Repayment schedules, statements and payment options appear here once a loan is disbursed.</p>
+	</div>
+</div>
+
+<div class="card empty">
+	<span class="empty__mark" aria-hidden="true">RP</span>
+	<h2>Repayments are not open yet</h2>
+	<p>This portal does not hold a loan for your account, and no payment system is connected. Nothing can be paid or confirmed here.</p>
+	<p class="small muted mt">Your loan advisor can share the current schedule and payment instructions. Do not send money based on this page alone.</p>
+	<a class="btn btn--ghost mt" href="/borrower/help">Read the help page</a>
+</div>
+{% endif %}
+{% endblock %}

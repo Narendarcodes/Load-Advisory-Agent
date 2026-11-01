@@ -1,0 +1,301 @@
+Starting test run with parameters: site=loanportal.local, app=loan_advisory_portal, verbose=False, tests=(), force=False, profile=False, failfast=False, skip_before_tests=False, debug=False, selected_categories=[]
+View detailed logs (using --verbose): /home/frappe/frappe-bench/logs/frappe.testing.log
+
+Running 179 old-frappe-test-class-category tests for loan_advisory_portal
+
+loan_advisory_portal.tests.test_limits.PortalLimitTest
+   [32m ✔ [0m test_a_budget_is_per_account_and_sets_retry_after
+   [32m ✔ [0m test_guests_are_not_counted
+
+loan_advisory_portal.tests.test_agent_bridge.AgentBridgeTest
+   [32m ✔ [0m test_another_borrower_cannot_read_a_transcript
+       ▸  /home/frappe/frappe-bench/apps/frappe/frappe/model/qb_query.py:163: V17FrappeDeprecationWarning: This codepath was marked (DATE: 2024-01-01) deprecated for removal (from v17 onwards); note:
+       ▸   The 'limit_page_length' parameter is deprecated. Use 'limit' instead.
+       ▸  
+       ▸    deprecation_warning(
+   [32m ✔ [0m test_assertion_is_scoped_to_borrower_and_application
+   [32m ✔ [0m test_conversation_is_recorded_once
+   [32m ✔ [0m test_foreign_application_is_not_found
+   [32m ✔ [0m test_foreign_thread_is_rejected
+   [32m ✔ [0m test_history_is_scoped_to_the_borrower_and_the_application
+   [32m ✔ [0m test_mint_without_a_selection_is_refused
+   [32m ✔ [0m test_mint_without_an_application_uses_the_session_selection
+   [32m ✔ [0m test_non_borrower_cannot_mint
+   [32m ✔ [0m test_oversized_thread_id_is_rejected
+   [32m ✔ [0m test_record_turn_needs_an_owned_existing_thread
+   [32m ✔ [0m test_record_turn_stores_the_transcript_and_the_title
+   [32m ✔ [0m test_relinked_profile_cannot_keep_the_old_thread
+   [32m ✔ [0m test_thread_cannot_be_rebound_to_another_application
+   [32m ✔ [0m test_transcript_drops_the_oldest_messages_beyond_the_buffer
+   [32m ✔ [0m test_transcript_text_is_capped
+
+loan_advisory_portal.tests.test_kyc_page.KycCopyTest
+   [32m ✔ [0m test_preview_copy_is_explicitly_a_preview
+   [32m ✔ [0m test_production_copy_does_not_ask_for_pan_or_aadhaar
+
+loan_advisory_portal.tests.test_assistant_page.AssistantPageTest
+   [32m ✔ [0m test_foreign_application_is_answered_as_missing
+   [32m ✔ [0m test_guest_is_sent_to_login
+   [32m ✔ [0m test_no_selection_shows_the_chooser
+   [32m ✔ [0m test_requested_application_scopes_the_island
+   [32m ✔ [0m test_selected_application_mounts_the_island
+   [32m ✔ [0m test_stale_selection_falls_back_to_the_chooser
+   [32m ✔ [0m test_unknown_application_is_answered_as_missing
+   [32m ✔ [0m test_voice_is_disabled_when_the_service_is_not_configured
+
+loan_advisory_portal.tests.test_permission_boundary.PermissionBoundaryTest
+   [32m ✔ [0m test_borrower_cannot_list_other_customers
+   [32m ✔ [0m test_no_generic_access_to_lending_doctypes
+
+loan_advisory_portal.tests.test_voice_assertion.VoiceAssertionTest
+   [32m ✔ [0m test_a_borrower_session_cannot_mint_for_the_worker
+   [32m ✔ [0m test_a_guest_cannot_mint_for_the_worker
+   [32m ✔ [0m test_a_service_session_is_exchanged_for_a_scoped_assertion
+   [32m ✔ [0m test_a_session_under_an_older_notice_is_refused
+   [32m ✔ [0m test_a_session_without_recorded_consent_is_refused
+   [32m ✔ [0m test_an_ended_session_is_refused
+   [32m ✔ [0m test_an_expired_session_is_refused_and_marked
+   [32m ✔ [0m test_another_identity_is_answered_like_a_missing_session
+   [32m ✔ [0m test_another_room_is_answered_like_a_missing_session
+   [32m ✔ [0m test_every_turn_gets_its_own_assertion
+   [32m ✔ [0m test_unknown_and_malformed_session_ids_are_not_found
+
+loan_advisory_portal.tests.test_documents.DocumentTest
+   [32m ✔ [0m test_attach_and_list
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_document_types_require_a_borrower
+   [32m ✔ [0m test_download_returns_owner_content
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_duplicate_attachment_conflict
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_foreign_application_is_not_found
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_foreign_file_rejected
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_public_file_rejected
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_remove_document
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_unsupported_extension_rejected
+
+loan_advisory_portal.tests.test_lifecycle.LifecycleTableTest
+   [32m ✔ [0m test_automated_review_collapses_the_intermediate_state_but_not_terminal_ones
+   [32m ✔ [0m test_every_state_has_an_explicit_native_status
+   [32m ✔ [0m test_only_the_unambiguous_native_statuses_map_back
+   [32m ✔ [0m test_reconciliation_states
+   [32m ✔ [0m test_the_select_options_are_the_canonical_states_in_order
+   [32m ✔ [0m test_transition_table
+
+loan_advisory_portal.tests.test_lifecycle.PortalTransitionTest
+   [32m ✔ [0m test_a_decided_application_cannot_be_withdrawn
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_a_submitted_application_cannot_be_submitted_again
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_a_withdrawn_draft_cannot_be_submitted
+   [32m ✔ [0m test_information_requested_can_be_corrected_and_resubmitted
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_resubmission_is_only_allowed_while_information_is_requested
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_submission_moves_draft_to_submitted_and_is_audited
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_the_borrower_timeline_is_the_state_log_in_order
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_withdrawing_a_draft_and_a_submitted_application
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+
+loan_advisory_portal.tests.test_profile.ProfileTest
+   [32m ✔ [0m test_accepting_a_notice_records_its_version
+   [32m ✔ [0m test_identity_fields_cannot_be_overridden
+   [32m ✔ [0m test_invalid_values_are_rejected
+   [32m ✔ [0m test_phone_can_be_cleared
+   [32m ✔ [0m test_unknown_field_is_rejected
+   [32m ✔ [0m test_update_saves_editable_fields
+   [32m ✔ [0m test_validation_message_reaches_the_browser
+
+loan_advisory_portal.tests.test_livekit.LiveKitTest
+   [32m ✔ [0m test_a_session_needs_explicit_consent
+   [32m ✔ [0m test_an_expired_session_is_reported_as_closed
+   [32m ✔ [0m test_another_borrower_cannot_end_the_session
+   [32m ✔ [0m test_consent_is_recorded_with_the_notice_version
+   [32m ✔ [0m test_foreign_application_is_not_found
+   [32m ✔ [0m test_missing_configuration_is_unavailable
+   [32m ✔ [0m test_the_borrower_ends_their_own_session
+   [32m ✔ [0m test_token_is_signed_and_scoped_to_the_room
+   [32m ✔ [0m test_unknown_and_malformed_session_ids_are_not_found
+
+loan_advisory_portal.tests.test_assertion.AssertionTest
+   [32m ✔ [0m test_expired_assertion_is_rejected
+   [32m ✔ [0m test_malformed_assertion_is_rejected
+   [32m ✔ [0m test_mint_carries_the_agent_vocabulary
+   [32m ✔ [0m test_mint_scopes_the_borrower
+   [32m ✔ [0m test_missing_secret_is_unavailable
+   [32m ✔ [0m test_round_trip
+   [32m ✔ [0m test_tampered_payload_is_rejected
+   [32m ✔ [0m test_unknown_preferences_fall_back
+   [32m ✔ [0m test_wrong_audience_is_rejected
+
+loan_advisory_portal.tests.test_transcript_contract.TranscriptContractTest
+   [32m ✔ [0m test_another_borrowers_thread_is_refused_indistinguishably
+   [32m ✔ [0m test_brand_new_thread_id_has_no_transcript
+   [32m ✔ [0m test_malformed_reference_is_refused_before_any_lookup
+   [32m ✔ [0m test_minted_thread_without_a_turn_comes_back_empty
+   [32m ✔ [0m test_non_string_reference_never_reaches_the_lookup
+   [32m ✔ [0m test_signed_out_reader_gets_no_transcript_and_no_list
+   [32m ✔ [0m test_thread_with_turns_returns_them_in_order
+   [32m ✔ [0m test_turns_are_never_added_to_a_thread_you_do_not_own
+
+loan_advisory_portal.tests.test_authorization_matrix.AuthorizationMatrixTest
+   [32m ✔ [0m test_every_application_method_hides_a_foreign_id
+   [32m ✔ [0m test_every_method_refuses_a_guest
+   [32m ✔ [0m test_every_method_refuses_an_account_without_the_borrower_role
+   [32m ✔ [0m test_request_fields_cannot_override_the_session_identity
+   [32m ✔ [0m test_selection_is_scoped_to_the_session_not_the_account
+   [32m ✔ [0m test_selection_needs_a_session_identifier
+   [32m ✔ [0m test_state_changing_methods_are_post_only
+   [32m ✔ [0m test_the_borrower_surface_is_fully_listed
+
+loan_advisory_portal.tests.test_feedback.FeedbackTest
+   [32m ✔ [0m test_borrowers_have_no_direct_doctype_access
+   [32m ✔ [0m test_feedback_identity_comes_from_the_session
+   [32m ✔ [0m test_foreign_application_is_rejected
+   [32m ✔ [0m test_other_borrowers_feedback_is_not_listed
+   [32m ✔ [0m test_rating_and_category_are_validated
+   [32m ✔ [0m test_submit_and_list_own_feedback
+
+loan_advisory_portal.tests.test_borrower_access.BorrowerAccessTest
+   [32m ✔ [0m test_amount_limits_are_enforced
+   [32m ✔ [0m test_application_list_is_scoped_to_customer
+   [32m ✔ [0m test_disabled_user_is_rejected
+   [32m ✔ [0m test_document_cannot_be_added_after_submission
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_foreign_application_is_not_found
+   [32m ✔ [0m test_guest_is_rejected
+   [32m ✔ [0m test_new_application_is_a_draft
+   [32m ✔ [0m test_own_application_is_returned
+   [32m ✔ [0m test_profile_defaults_feed_new_application
+   [32m ✔ [0m test_selection_rejects_foreign_application
+   [32m ✔ [0m test_selection_round_trip
+   [32m ✔ [0m test_submit_requires_a_document
+   [32m ✔ [0m test_submit_sets_lifecycle_and_submits
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_suspended_profile_is_rejected
+   [32m ✔ [0m test_unlinked_customer_is_rejected
+   [32m ✔ [0m test_user_without_borrower_role_is_rejected
+   [32m ✔ [0m test_withdraw_marks_lifecycle
+
+loan_advisory_portal.tests.test_preferences.PreferenceVocabularyTest
+   [32m ✔ [0m test_legacy_and_unknown_values_normalise_on_read
+   [32m ✔ [0m test_options_carry_labels_and_values_from_the_table
+   [32m ✔ [0m test_the_assertion_carries_canonical_values_only
+   [32m ✔ [0m test_the_offered_values_are_the_agent_vocabulary
+   [32m ✔ [0m test_the_profile_page_offers_exactly_the_vocabulary
+   [32m ✔ [0m test_unknown_values_are_still_rejected
+   [32m ✔ [0m test_updates_store_canonical_values
+
+loan_advisory_portal.tests.test_response_headers.ResponseHeadersTest
+   [32m ✔ [0m test_assets_and_api_get_the_baseline_but_not_the_page_csp
+   [32m ✔ [0m test_desk_is_untouched
+   [32m ✔ [0m test_existing_headers_are_not_replaced
+   [32m ✔ [0m test_hsts_only_for_tls
+   [32m ✔ [0m test_portal_pages_get_the_baseline_and_a_strict_csp
+   [32m ✔ [0m test_retry_after_is_added_to_a_limited_response
+   [32m ✔ [0m test_the_hook_is_registered
+
+loan_advisory_portal.tests.test_invitations.InvitationTest
+   [32m ✔ [0m test_application_must_belong_to_customer
+   [32m ✔ [0m test_customer_with_portal_account_is_conflict
+   [32m ✔ [0m test_duplicate_email_is_conflict
+   [32m ✔ [0m test_expired_token_is_rejected
+   [32m ✔ [0m test_explicit_username_is_kept
+   [32m ✔ [0m test_invalid_username_is_rejected
+   [32m ✔ [0m test_issue_requires_system_manager
+   [32m ✔ [0m test_password_and_consent_are_enforced
+   [32m ✔ [0m test_redeem_creates_bound_borrower
+   [32m ✔ [0m test_reissue_revokes_older_link
+   [32m ✔ [0m test_revoked_token_is_rejected
+   [32m ✔ [0m test_taken_username_is_rejected_not_reassigned
+   [32m ✔ [0m test_token_is_single_use
+   [32m ✔ [0m test_username_is_derived_from_the_email
+   [32m ✔ [0m test_wrong_secret_is_rejected
+
+loan_advisory_portal.tests.test_evidence_api.EvidenceIngestionTest
+   [32m ✔ [0m test_a_borrower_cannot_write_evidence
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_a_draft_cannot_be_decided
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_a_record_id_cannot_be_rebound_to_another_application
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_a_submitted_application_keeps_its_native_status
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_a_terminal_application_cannot_be_re_decided
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_admin_rights_are_not_required_for_the_allowed_path
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_evidence_for_an_unrelated_application_is_refused
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_guest_is_refused
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_native_status_is_written_only_before_submission
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_repeating_the_same_record_is_idempotent_and_audited
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_simulations_and_unlisted_values_are_refused
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_the_service_cannot_create_or_modify_borrower_records
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_the_service_cannot_modify_loan_decisions
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_the_service_holds_no_document_grants
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+   [32m ✔ [0m test_valid_evidence_persists_and_moves_the_application
+       ▸  incorrect startxref pointer(1)
+       ▸  parsing for Object Streams
+
+loan_advisory_portal.tests.test_screens.GuidanceTest
+   [32m ✔ [0m test_an_unknown_state_is_described_without_guessing
+   [32m ✔ [0m test_every_lifecycle_state_has_borrower_guidance
+   [32m ✔ [0m test_the_application_payload_carries_its_state_guidance
+
+loan_advisory_portal.tests.test_screens.PublicScreensTest
+   [32m ✔ [0m test_help_renders_the_same_status_vocabulary_as_the_application_page
+   [32m ✔ [0m test_notices_and_help_are_readable_without_an_account
+   [32m ✔ [0m test_notices_carry_the_versions_the_consent_records
+   [32m ✔ [0m test_products_page_reads_the_enabled_catalog
+----------------------------------------------------------------------
+Ran 179 tests in 46.065s
+
+OK
+
+

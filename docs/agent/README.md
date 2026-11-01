@@ -133,8 +133,9 @@ LiveKit Agents 1.8 worker:
 * **VAD:** Silero.
 * **STT:** the Hyperion asr-http sidecar (Hyperion PR #20): IndicConformer-600M ONNX on CPU for te/hi, Whisper
   large-v3-turbo for en.
-* **Reply:** `llm_node`, which POSTs `/api/chat` with the session token from the LiveKit participant metadata. It is
-  the same graph and the same authorization as text.
+* **Reply:** `llm_node`, which exchanges the participant's `session_id` for a fresh 60-second assertion
+  (`loan_advisory_portal.api.voice.voice_assertion`) and POSTs `/api/chat` with it. It is the same graph and the
+  same authorization as text.
 * **TTS:** kenpath/svara-tts-v1 (Apache-2.0) on vLLM (fp8, `--gpu-memory-utilization 0.025` plus an explicit
   768 MB KV cache, because utilization-based profiling is unreliable on the shared GPU) with a streaming SNAC sidecar.
   Measured Oct 14, 2026: STT 2.47 GB + TTS 6.87 GB + SNAC sidecar 1.08 GB = 10.4 GB, inside the 12 GB voice budget.

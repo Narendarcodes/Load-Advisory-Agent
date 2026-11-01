@@ -1,0 +1,6 @@
+# teardown started 2026-11-01T16:42:08Z
+## before
+  TCP    127.0.0.1:4200         0.0.0.0:0              LISTENING       36316
+  TCP    127.0.0.1:8081         0.0.0.0:0              LISTENING       23420
+  TCP    127.0.0.1:8096         0.0.0.0:0              LISTENING       34888
+LISTEN 0      128          0.0.0.0:8001       0.0.0.0:*    users:(("python",pid=8486,fd=7),("python",pid=8486,fd=6),("python",pid=8483,fd=6))
