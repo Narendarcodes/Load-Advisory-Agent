@@ -33,6 +33,7 @@ from loan_advisory.agent.streaming import JSONFieldStreamer, SentenceGate, remai
 from loan_advisory.agent.citations import labels_of as _labels_of, verify_citations
 from loan_advisory.agent.contracts import AgentRequest, AgentResponse, Session
 from loan_advisory.agent.llm import LLMError
+from loan_advisory.agent.progress import PUBLIC_STAGES
 from loan_advisory.agent.tools import (FrappeUnavailable, InvalidWhatIf, NotAuthorized, UnknownApplication)
 from loan_advisory.state_paths import AUDIT_LOG, append_private, resolve
 
@@ -105,6 +106,7 @@ class AdvisoryAgent:
         self.tools, self.llm, self.policy, self.handoff = decision_tools, llm, policy_tools, handoff
         self.settings = settings or AgentSettings.from_env()
         self._streams: dict = {}  # turn_key -> {"emit", "spoken", "first_ms"} for sentence streaming (not graph state)
+        self._stages: dict = {}  # turn_key -> on_stage listener for public progress (not graph state)
         self.profile = profile or {}
         self.audit_path = resolve(audit_path, "AGENT_AUDIT_LOG", AUDIT_LOG, "agent_out/turns.jsonl",
                                   legacy="agent_out/turns.jsonl")
@@ -112,9 +114,11 @@ class AdvisoryAgent:
         self.graph = self._build().compile(checkpointer=checkpointer or MemorySaver())
 
     # ------------------------------------------------------------------ public API
-    def run(self, request: AgentRequest, session: Session | None, trace_context=None, on_sentence=None) -> AgentResponse:
+    def run(self, request: AgentRequest, session: Session | None, trace_context=None, on_sentence=None,
+            on_stage=None) -> AgentResponse:
         """Run one turn. `on_sentence(text)` (optional) receives the answer sentence by sentence as soon as each one
-        has passed the deterministic guards; together the sentences are exactly the final answer to speak."""
+        has passed the deterministic guards; together the sentences are exactly the final answer to speak.
+        `on_stage(stage)` (optional) receives the name of each allowlisted graph node as it starts."""
         thread = f"{session.applicant_ref if session else 'anon'}::{request.conversation_id}"  # scoped per applicant
         sess_hash = hashlib.sha256(thread.encode()).hexdigest()[:16]
         corr_hash = hashlib.sha256(str(request.request_id).encode()).hexdigest()[:16]
@@ -133,6 +137,8 @@ class AdvisoryAgent:
                 self._trace_ctx[turn_key] = obs.current_context()
             if on_sentence is not None:
                 self._streams[turn_key] = {"emit": on_sentence, "spoken": [], "first_ms": None, "t0": time.perf_counter()}
+            if on_stage is not None:
+                self._stages[turn_key] = on_stage
             try:
                 out = self.graph.invoke({"request": request.model_dump(), "session": session.model_dump() if session else None,
                                          "turn_key": turn_key},
@@ -140,6 +146,7 @@ class AdvisoryAgent:
             finally:
                 self._trace_ctx.pop(turn_key, None)
                 self._streams.pop(turn_key, None)
+                self._stages.pop(turn_key, None)
             resp = AgentResponse(**out["response"])
             if root is not None:
                 resp.trace_id = format(root.get_span_context().trace_id, "032x")  # = Phoenix trace id
@@ -159,6 +166,7 @@ class AdvisoryAgent:
     def _node(self, name, fn):
         """Wrap a graph node in an OTel span parented to the turn's root span."""
         def wrapped(s):
+            self._stage(s.get("turn_key"), name)
             ctx = self._trace_ctx.get(s.get("turn_key"))
             with obs.span(f"node.{name}", kind="CHAIN", context=ctx, **{"graph.node": name}) as sp:
                 out = fn(s)
@@ -201,6 +209,16 @@ class AdvisoryAgent:
 
     def _stream(self, s):
         return self._streams.get(s.get("turn_key"))
+
+    def _stage(self, turn_key, name):
+        """Announce a node that just started, if it is in the public allowlist. Never its data."""
+        listener = self._stages.get(turn_key)
+        if listener is None or name not in PUBLIC_STAGES:
+            return
+        try:
+            listener(name)
+        except Exception:  # a broken listener must never break the turn
+            pass
 
     def _emit(self, s, text: str):
         st = self._stream(s)

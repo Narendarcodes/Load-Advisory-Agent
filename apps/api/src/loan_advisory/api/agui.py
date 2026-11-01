@@ -90,11 +90,16 @@ async def _sse(service, req: AgentRequest, claims: dict, headers, thread_id: str
     def emit(sentence: str):
         put(E.sentence_delta(message_id, sentence))
 
+    def emit_stage(stage: str):
+        event = E.progress_snapshot(stage)
+        if event is not None:
+            put(event)
+
     def work():
         try:
             from loan_advisory.agent import observability as obs
             resp = service.agent.run(req, Session(applicant_ref=claims["applicant_ref"]),
-                                     trace_context=obs.extract_context(headers), on_sentence=emit)
+                                     trace_context=obs.extract_context(headers), on_sentence=emit, on_stage=emit_stage)
             put(("final", resp.model_dump()))
         except Exception as e:  # generic client message; the detail stays in the server log
             sys.stderr.write(f"agui error {type(e).__name__}: {e}\n")

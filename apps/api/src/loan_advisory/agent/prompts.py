@@ -41,6 +41,7 @@ English, Hindi, Telugu or a mix. Labels:
 For what_if, also extract the hypothetical changes for these fields only: monthly_income, monthly_obligations
 (total monthly EMIs/fixed payments), credit_score, employment_months. Use {{"set": number}} for an absolute value and
 {{"delta": number}} for a relative change (negative = decrease). Convert "lakh" = 100000, "k" = 1000, years to months.
+Never invent an amount: if the message gives no numeric amount for the change, leave what_if_changes empty.
 Applicant's current recorded values (for context only): {values}
 Recent conversation: {history}
 Latest message: {message}

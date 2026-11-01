@@ -7,6 +7,8 @@ internal graph state, timings and raw model output never reach the browser.
 from ag_ui.core import (RunErrorEvent, RunFinishedEvent, RunStartedEvent, StateSnapshotEvent, TextMessageContentEvent,
                         TextMessageEndEvent, TextMessageStartEvent)
 
+from loan_advisory.agent.progress import PUBLIC_STAGES
+
 # Fields of AgentResponse a client may see. `timings` and internal graph state are deliberately absent.
 PUBLIC_STATE_FIELDS = ("request_id", "trace_id", "intent", "action", "answer", "abstained", "citations",
                        "evidence_refs", "missing_information", "handoff_ref", "decision_card",
@@ -33,6 +35,13 @@ def sentence_delta(message_id: str, sentence: str) -> TextMessageContentEvent:
 
 def state_snapshot(response: dict) -> StateSnapshotEvent:
     return StateSnapshotEvent(snapshot=public_state(response))
+
+
+def progress_snapshot(stage: str) -> StateSnapshotEvent | None:
+    """The start of one real graph node, as a safe stage id. Anything else is refused, not relabelled."""
+    if stage not in PUBLIC_STAGES:
+        return None
+    return StateSnapshotEvent(snapshot={"progress": {"stage": stage}})
 
 
 def message_end(message_id: str) -> TextMessageEndEvent:

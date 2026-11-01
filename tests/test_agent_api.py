@@ -17,7 +17,8 @@ from pydantic import TypeAdapter
 
 from loan_advisory.api import assertion
 from loan_advisory.api.app import create_app
-from loan_advisory.api.events import PUBLIC_STATE_FIELDS
+from loan_advisory.api.events import PUBLIC_STATE_FIELDS, progress_snapshot
+from loan_advisory.agent.progress import PUBLIC_STAGES
 from loan_advisory.agent import server as srv
 from loan_advisory.agent.runtime import build_offline_agent
 from tests.test_agent_graph import FakePolicy, ScriptedLLM
@@ -115,7 +116,9 @@ def test_agui_event_sequence_and_allowlisted_state(client):
     kinds = [event.type for event in events]
     assert kinds[0] == "RUN_STARTED" and kinds[1] == "TEXT_MESSAGE_START"
     assert kinds[-3:] == ["STATE_SNAPSHOT", "TEXT_MESSAGE_END", "RUN_FINISHED"]
-    assert set(kinds[2:-3]) == {"TEXT_MESSAGE_CONTENT"}
+    # Between the first delta and the final snapshot only sentences and safe progress snapshots occur.
+    assert set(kinds[2:-3]) <= {"TEXT_MESSAGE_CONTENT", "STATE_SNAPSHOT"}
+    assert "TEXT_MESSAGE_CONTENT" in kinds
     assert events[0].thread_id == "thread-a" and events[0].run_id == "run-a"
 
     deltas = [event.delta for event in events if event.type == "TEXT_MESSAGE_CONTENT"]
@@ -126,6 +129,27 @@ def test_agui_event_sequence_and_allowlisted_state(client):
     assert state["decision_card"]["application_ref"] == "APP-TEST-005"
     assert state["decision_card"]["decision"] == "REJECTED"
     assert state["trace_id"] and state["intent"] == "explain"
+
+
+def test_progress_snapshots_name_only_real_allowlisted_stages(client):
+    _, events = _agui(client, _input(), mint(thread="thread-a"))
+    frames = [event for event in events if event.type == "STATE_SNAPSHOT"]
+    progress = [frame for frame in frames[:-1] if "progress" in frame.snapshot]
+    assert progress, "an explain turn runs the authenticate/load_evidence/compose nodes"
+    stages = [frame.snapshot["progress"]["stage"] for frame in progress]
+    assert set(stages) <= set(PUBLIC_STAGES)
+    assert {"authenticate", "load_evidence", "compose"} <= set(stages)
+    # A progress frame never carries response data, timings, tool arguments or node internals.
+    for frame in progress:
+        assert set(frame.snapshot) == {"progress"}
+        assert set(frame.snapshot["progress"]) == {"stage"}
+    assert "progress" not in frames[-1].snapshot
+
+
+def test_progress_builder_refuses_a_stage_it_does_not_own():
+    assert progress_snapshot("retrieve_policy") is not None
+    assert progress_snapshot("validate") is None
+    assert progress_snapshot("../../../etc/passwd") is None
 
 
 def test_identity_and_language_come_from_the_assertion(client, service, monkeypatch):
