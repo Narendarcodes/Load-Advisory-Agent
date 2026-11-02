@@ -1,0 +1,42 @@
+---
+title: "Authentication and authorisation, including the assertion bridge"
+---
+sequenceDiagram
+  autonumber
+  actor B as Borrower browser
+  participant N as Same-origin proxy<br/>(:8081 front door)
+  participant F as Frappe portal + API
+  participant R as CopilotKit runtime<br/>(127.0.0.1:4200, private)
+  participant G as Advisory agent<br/>(127.0.0.1:8095, private)
+  participant L as LLM / RAG / bureau
+
+  B->>N: POST /api/method/login (email, password)
+  N->>F: forwarded, Host and X-Frappe-Site-Name pinned by the proxy
+  F-->>B: session cookie `sid` for this origin
+  Note over B,F: Website User with the Loan Borrower role.<br/>Identity is the Frappe session. There is no second account store.
+
+  B->>N: open /borrower/assistant?application=ACC-...
+  N->>F: GET page (session cookie)
+  F->>F: ownership: Customer.portal_users → this user
+  alt not the owner
+    F-->>B: 404 — existence is never confirmed
+  else owner
+    F-->>B: page + #portal-bootstrap (csrf token, application, preferences)
+  end
+
+  B->>N: POST /api/copilotkit/agent/advisory/run<br/>(question + application only, no Authorization header)
+  N->>R: same path, same origin
+  R->>F: POST /api/method/loan_advisory_portal.api.agent.mint_assertion<br/>(browser session cookie forwarded, CSRF header)
+  F->>F: mint: 60-second HMAC assertion signed with the site's<br/>agent_assertion_secret, bound to user + customer + application
+  F-->>R: assertion
+  R->>G: POST /api/agui<br/>with a Bearer assertion
+  G->>G: verify signature → reject expiry → spend single-use nonce<br/>(ASSERTION_REPLAY_BACKEND, shared Redis when there is more than one worker)
+  G->>G: derive identity FROM THE ASSERTION, never from the body<br/>threadId/runId are untrusted and echoed back unchanged
+  G->>F: read the authorised application with a least-privilege service token
+  G->>L: classify intent, load stored evidence, retrieve policy passages, compose
+  L-->>G: text + citations
+  G-->>R: AG-UI SSE events
+  R-->>B: streamed answer through the same proxy path
+  G->>F: record_turn → Advisory Conversation + messages<br/>(keyed by applicant_ref + conversation_id)
+
+  Note over B,G: THE BOUNDARY. The browser can only ever reach the runtime path on its own<br/>origin. It cannot call :8095, and it never holds a bearer token — the portal_security<br/>regressions assert both. The runtime is not an authority: it can only ask Frappe to mint<br/>for an already-authenticated session, and the agent still verifies the assertion itself.

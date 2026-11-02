@@ -1,0 +1,53 @@
+---
+title: "Borrower application sequence"
+---
+sequenceDiagram
+  autonumber
+  actor B as Borrower
+  participant P as Frappe portal page<br/>(www/borrower, JS in public/js/pages)
+  participant A as Portal API<br/>(loan_advisory_portal.api)
+  participant D as Database<br/>(MariaDB + private files)
+
+  Note over B,P: Account exists only by invitation. There is no self-signup, no<br/>password reset and no email verification.
+  B->>P: sign in with email + password
+  P->>A: POST /api/method/login
+  A->>D: verify credentials, create Frappe session
+  A-->>B: redirect to /borrower (session cookie, CSRF token in page bootstrap)
+  B->>P: open eligibility
+  P->>P: arithmetic estimate, marked "Demo data"
+  Note right of P: INDICATIVE ONLY. No bureau call, no score, not an approval.
+  B->>P: start an application (wizard step 1)
+  P->>A: create_application()
+  A->>D: insert Loan Application, custom_lifecycle_state = DRAFT, docstatus 0
+  loop steps 1-4, saved as you go
+    B->>P: enter details, press Continue
+    P->>P: validate before the server (required, numeric, ranges)
+    P->>A: save step
+    A->>D: update the draft
+  end
+  B->>P: open KYC workspace
+  P-->>B: masked identity values only
+  Note over P: NO verification here. No OTP, no camera, no biometrics,<br/>no Aadhaar or PAN check, no government system contacted.
+  B->>P: choose document type, pick a file
+  P->>A: attach_document(application, type, file)
+  A->>D: private File + child row (max 10 MB, max 12 per application)
+  A-->>P: attached
+  B->>P: review step, accept both consent boxes
+  P->>A: submit_application(name)
+  Note right of P: Without both boxes accepted the wizard refuses to submit.
+  A->>D: docstatus 1, custom_lifecycle_state = SUBMITTED
+  A->>D: Application State Log row (from DRAFT to SUBMITTED)
+  A-->>B: handed to /borrower/documents?name=...&created=1
+  opt evaluation, run by the pipeline and not by the browser
+    A->>D: decision recorded via the evidence sink (see diagram 09)
+    A->>D: lifecycle_state = EVALUATED, custom_latest_evidence set
+  end
+  B->>P: open the application
+  P->>A: get_application / get_decision
+  A->>D: read the STORED evidence only
+  A-->>B: status, timeline, and the customer-visible reasons
+  Note over A: Before an evaluation exists the page says the checks are queued.<br/>It never shows an invented outcome.
+  B->>P: withdraw (optional)
+  P->>A: withdraw_application(name)
+  A->>D: docstatus 2, lifecycle_state = WITHDRAWN
+  A-->>B: "Withdrawn", resubmit path offered

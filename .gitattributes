@@ -11,3 +11,10 @@ apps/loan_advisory_portal/loan_advisory_portal/public/fonts/** -whitespace -text
 # Acceptance evidence is captured machine output (axe results, probe transcripts, keyboard walks).
 # It is quoted, not authored, so the whitespace heuristic does not apply to it.
 docs/borrower-frontend/acceptance/** -whitespace -text linguist-generated=true
+
+# Shell scripts must keep LF. With core.autocrlf=true (the Windows default) a checkout rewrites every
+# tracked .sh file to CRLF, and `bash ./infra/frappe/bootstrap/create_site.sh` then fails on the shebang
+# with a message about `\r` -- the same trap applies to .githooks/pre-commit, which is why the hooks are
+# declared here too. Fixing this at checkout is the only place it can be fixed: the blobs are already LF.
+*.sh text eol=lf
+.githooks/* text eol=lf

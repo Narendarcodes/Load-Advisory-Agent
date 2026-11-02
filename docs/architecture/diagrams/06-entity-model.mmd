@@ -1,0 +1,150 @@
+---
+title: "Borrower platform entity model (DocTypes actually installed)"
+---
+erDiagram
+  USER ||--o| BORROWER_PROFILE : "has one profile"
+  CUSTOMER ||--o| BORROWER_PROFILE : "belongs to"
+  CUSTOMER ||--o{ LOAN_APPLICATION : "applies for"
+  CUSTOMER ||--o{ ADVISORY_CONVERSATION : "owns"
+  USER ||--o{ ADVISORY_CONVERSATION : "asks as"
+  LOAN_APPLICATION ||--o{ ADVISORY_CONVERSATION : "scoped to"
+  ADVISORY_CONVERSATION ||--o{ ADVISORY_MESSAGE : "contains"
+  LOAN_APPLICATION ||--o{ LOAN_APPLICATION_DOCUMENT : "attaches"
+  FILE ||--o{ LOAN_APPLICATION_DOCUMENT : "stored as private File"
+  LOAN_APPLICATION ||--o| LOAN_DECISION_EVIDENCE : "custom_latest_evidence"
+  LOAN_APPLICATION ||--o{ APPLICATION_STATE_LOG : "records transitions"
+  LOAN_APPLICATION ||--o{ EVIDENCE_INGESTION_LOG : "audits writes"
+  LOAN_APPLICATION ||--o{ BORROWER_FEEDBACK : "about"
+  LOAN_APPLICATION ||--o{ VOICE_SESSION : "if voice used"
+  LOAN_PRODUCT ||--o{ LOAN_APPLICATION : "product"
+  COMPANY ||--o{ LOAN_PRODUCT : "offers"
+  USER ||--o{ ACCOUNT_INVITATION : "issues"
+  ACCOUNT_INVITATION ||--o{ ACCOUNT_INVITATION_REDEMPTION : "redeemed by"
+  CUSTOMER ||--o{ ACCOUNT_INVITATION : "targets"
+  USER ||--o{ ACCOUNT_INVITATION_REDEMPTION : "redeemed as"
+
+  LOAN_APPLICATION {
+    string naming_series "ACC-LOAP-YYYY-NNNNN (Lending)"
+    Link customer "Lending field"
+    Link loan_product "Lending field"
+    Float loan_amount "Lending field"
+    Int tenure_months "Lending field"
+    int docstatus "0 draft, 1 submitted, 2 cancelled"
+    string custom_lifecycle_state "portal-added lifecycle"
+    Link custom_latest_evidence "Loan Decision Evidence"
+  }
+  LOAN_APPLICATION_DOCUMENT {
+    string document_type "child table on Loan Application"
+    Link file "private File"
+  }
+  BORROWER_PROFILE {
+    Link user
+    Link customer
+    string status "Active or inactive"
+    string onboarding_state "Profile Complete"
+    string full_name
+    string email
+    string phone
+    string employment_type
+    string employer
+    int employment_months
+    float monthly_income
+    float monthly_obligations
+    string literacy "answer register"
+    string preferred_locale
+    check consent_terms "accepted"
+    check consent_privacy "accepted"
+    datetime consent_at "moves only on a real acceptance"
+    datetime last_verified_at
+  }
+  LOAN_DECISION_EVIDENCE {
+    Link loan_application
+    string decision "APPROVED or REJECTED"
+    string lifecycle_state
+    string policy_id
+    string policy_version "synthetic-v1"
+    string engine
+    string jdm_sha256 "ruleset hash"
+    string policy_sha256
+    string input_sha256 "the inputs scored"
+    string record_id
+    check is_simulation "what-if runs are marked, never stored as a decision"
+    datetime evaluated_at
+  }
+  ADVISORY_CONVERSATION {
+    Link user
+    Link customer
+    Link application "one application per thread"
+    string thread_id
+    string title
+    string status
+    int turn_count
+    datetime last_activity
+  }
+  ADVISORY_MESSAGE {
+    string role "child table row"
+    text text
+  }
+  APPLICATION_STATE_LOG {
+    Link loan_application
+    string from_state
+    string to_state
+    Link actor "User, or System for a pipeline write"
+    string source
+    string native_status "Lending status seen at the time"
+    check native_written
+    string record_id
+  }
+  EVIDENCE_INGESTION_LOG {
+    Link loan_application
+    Link actor "Evidence Service account only"
+    string action
+    Link expected_application "the application the caller was authorised for"
+    string lifecycle_state
+    string record_id
+    string record_sha256
+    check wrote_native_status
+  }
+  BORROWER_FEEDBACK {
+    Link user
+    Link customer
+    Link application
+    string category
+    string message
+    int rating
+    string status
+    datetime submitted_at
+  }
+  VOICE_SESSION {
+    Link user
+    Link customer
+    Link application
+    string session_id
+    string room
+    string identity
+    string status
+    string consent_version "voice-consent/1"
+    datetime consent_at
+    datetime created_at
+    datetime expires_at
+    datetime ended_at
+  }
+  ACCOUNT_INVITATION {
+    string invitation_id
+    Link customer
+    Link application
+    Link issued_by
+    string email
+    string secret_hash "the plaintext token is never stored"
+    datetime expires_at
+    check redeemed
+    check revoked
+    string note
+  }
+  ACCOUNT_INVITATION_REDEMPTION {
+    Link invitation
+    Link user
+    Link customer
+    string email
+    datetime redeemed_at
+  }

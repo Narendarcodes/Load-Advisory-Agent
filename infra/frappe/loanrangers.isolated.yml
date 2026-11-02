@@ -1,0 +1,51 @@
+# Isolated second stack for testing, alongside a running one.
+#
+# Why this exists: infra/frappe/loanrangers.yml pins its volumes to fixed external names
+# (frappe_docker_db-data, frappe_docker_sites, frappe_docker_redis-queue-data). Those names do not
+# carry the compose project prefix, so `docker compose -f loanrangers.yml -p anything up` mounts the
+# SAME data directory as the stack already running. Observed consequence: a second MariaDB started
+# against the live database, hit `Can't lock aria control file`, and the existing db container was
+# restarted under the new project. Nothing was written, but the collision is silent until it is not.
+#
+# Use this override whenever a second, disposable stack is wanted next to a running one:
+#
+#   docker compose -f infra/frappe/loanrangers.yml -f infra/frappe/loanrangers.isolated.yml \
+#     -p reprostack up -d db redis-cache redis-queue configurator backend --pull missing
+#
+# The frontend is deliberately left out: it publishes host port 8080, which the primary stack
+# already owns. Reach a site in this stack with `bench serve` on an internal port plus your own
+# front door, the same way tests/e2e/nginx.loanportal.conf does for loanportal.local.
+#
+# Volumes declared here shadow the pinned names in the base file. Naming them explicitly is the only
+# thing that works: `name: null` is accepted by the parser but the base file's pinned name survives,
+# which is exactly the collision this file exists to prevent.
+volumes:
+  db-data:
+    name: frappe_isolated_db-data
+  sites:
+    name: frappe_isolated_sites
+  redis-queue-data:
+    name: frappe_isolated_redis-queue-data
+
+services:
+  db:
+    pull_policy: missing
+  backend:
+    pull_policy: missing
+  configurator:
+    pull_policy: missing
+  redis-cache:
+    pull_policy: missing
+  redis-queue:
+    pull_policy: missing
+  websocket:
+    pull_policy: missing
+  scheduler:
+    pull_policy: missing
+  queue-short:
+    pull_policy: missing
+  queue-long:
+    pull_policy: missing
+  frontend:
+    # Never publish 8080 from an isolated stack; it belongs to the primary one.
+    ports: !reset []

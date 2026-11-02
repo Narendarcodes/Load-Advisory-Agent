@@ -20,6 +20,32 @@ Design and rationale: [APPROACH.md](APPROACH.md). Diagrams: [docs/architecture/]
 
 ![System context](docs/architecture/diagrams/01-system-context.png)
 
+## Start here
+
+New to this repository? Work down this list; each row is the single authoritative document for that topic, so nothing
+is duplicated here.
+
+| # | Topic | Read |
+|---|---|---|
+| 1 | What the system is, who it serves, and how the parts relate | This page + [docs/architecture/README.md](docs/architecture/README.md) (11 diagrams, all with editable Mermaid sources) |
+| 2 | What is mandatory vs optional, per component and per version | [docs/reproducibility/dependency-matrix.md](docs/reproducibility/dependency-matrix.md) |
+| 3 | Install from a clean clone: OS, Python, Node, Docker, bench, site, migrations, seed | [docs/development/setup.md](docs/development/setup.md) |
+| 4 | Every environment variable: owner, required/optional, default, failure mode | [docs/development/environment-variables.md](docs/development/environment-variables.md) and [`.env.example`](.env.example) |
+| 5 | Day-to-day work: start/stop services, rebuild assets, migrate, read logs | [docs/development/local-development.md](docs/development/local-development.md) |
+| 6 | The full stack actually running on one machine, step by step | [docs/development/frappe-disposable-environment.md](docs/development/frappe-disposable-environment.md) |
+| 7 | Tests: unit, integration, Frappe, agent, assistant, E2E, fixtures, teardown | [docs/testing/README.md](docs/testing/README.md) |
+| 8 | Deploy: services, volumes, networking, reverse proxy, health checks, backup, rollback | [docs/deployment/README.md](docs/deployment/README.md) |
+| 9 | Something broke: routing, Host headers, Redis, DB, assets, runtime, assertions, AG-UI, models, GPU, tracing | [docs/troubleshooting/README.md](docs/troubleshooting/README.md) |
+| 10 | Manual QA of the borrower portal with synthetic accounts | [docs/borrower-frontend/manual-testing-guide.md](docs/borrower-frontend/manual-testing-guide.md) |
+| 11 | Can a stranger reproduce this? What was actually run and what was not | [docs/reproducibility/README.md](docs/reproducibility/README.md) |
+| 12 | Database state: schema, fixtures, seeds, what is deliberately not in Git | [docs/reproducibility/database-reproducibility.md](docs/reproducibility/database-reproducibility.md) |
+| 13 | Security posture and the tests behind it | [docs/reproducibility/security-audit.md](docs/reproducibility/security-audit.md) |
+| 14 | Honest limits of the current build and of this audit | [docs/reproducibility/known-limitations.md](docs/reproducibility/known-limitations.md) |
+| 15 | Release history and integration reports | [docs/release/](docs/release/) |
+
+The rest of this file is the developer reference: feature map, quick starts per subsystem, the configuration table,
+test inventory and known gaps.
+
 ## Features
 
 | Area | What it does | Where |
@@ -35,9 +61,10 @@ Design and rationale: [APPROACH.md](APPROACH.md). Diagrams: [docs/architecture/]
 | Observability | OpenTelemetry → self-hosted Arize Phoenix; optional self-hosted Langfuse on the same span tree; message text is not exported unless `AGENT_TRACE_CONTENT=1` (Phoenix) or `LANGFUSE_CAPTURE_CONTENT=1` (Langfuse) | `observability.py`, `langfuse_config.py`, `docs/observability/langfuse.md` |
 | Tooling | Ruff + pytest in GitHub Actions on pushes and PRs to `main`; optional pre-commit hook with staged ruff fixes and the test suite | `.github/workflows/ci.yml`, `.githooks/pre-commit` |
 
-The advisory server is Python standard library (`http.server`) with no LiteLLM, Hermes or multi-agent framework; the
-LLM is called with plain `requests`. The synthetic bureau (PR #17) is a separate, local-only **FastAPI** service under
-`apps/bureau/`; it is not part of the advisory server and never decides credit.
+The advisory server is FastAPI served with uvicorn (`apps/api/src/loan_advisory/api/app.py`); its AG-UI endpoint,
+assertion verification and request admission live there. It is reached only through the CopilotKit runtime, never
+from the browser. The synthetic bureau (PR #17) is a separate, local-only **FastAPI** service under `apps/bureau/`;
+it is not part of the advisory server and never decides credit.
 
 ## Quick start
 

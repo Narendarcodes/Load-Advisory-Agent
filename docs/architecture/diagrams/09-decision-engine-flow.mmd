@@ -1,0 +1,42 @@
+---
+title: "Deterministic decision flow (the LLM never decides)"
+---
+flowchart LR
+  subgraph FRAPPE["System of record"]
+    APP["Loan Application<br/>amount, tenure, income,<br/>obligations, employment,<br/>synthetic credit score"]
+    EV[("Loan Decision Evidence")]
+    SLOG[("Application State Log")]
+    ELOG[("Evidence Ingestion Log")]
+  end
+
+  subgraph PIPE["application/lifecycle.py :: process_application"]
+    CANON["canonical input schema<br/>decision_engine/schemas<br/>typed, bounded, validated"]
+    REG["policy registry<br/>decision_engine/policies/registry.json<br/>JDM: personal_loan_synthetic_v1.json<br/>lender profile: config/lender_profiles/*.yaml"]
+    ZEN["ZEN ruleset<br/>zen-engine 2.1.2 (imported as `zen`)<br/>income floor, FOIR ceiling,<br/>score floor, tenure floor"]
+    OUT["rule outcomes<br/>pass / fail per check,<br/>customer-visible reason per failure"]
+    SINK["FrappeEvidenceSink<br/>infrastructure/evidence_store.py"]
+  end
+
+  subgraph READ["Presentation, read-only"]
+    PAGE["/borrower/application<br/>decision card + timeline"]
+    AGENT["Advisory agent<br/>explains stored evidence only"]
+  end
+
+  APP --> CANON --> REG
+  REG --> ZEN
+  CANON --> ZEN
+  ZEN --> OUT
+  OUT --> SINK
+  SINK -->|"service token, Evidence Service role<br/>allowlist of writable fields, no DocType grants"| EV
+  SINK --> ELOG
+  SINK --> SLOG
+  EV --> PAGE
+  EV -->|"retrieved for the authorised application"| AGENT
+
+  SIM["what-if simulation<br/>run_what_if"] -.->|"same ruleset, marked is_simulation"| ZEN
+  SIM -.->|"REFUSED by the sink:<br/>a simulation is never stored as a decision"| SINK
+
+  LLM["Language model<br/>wording only"]:::wording
+  AGENT --- LLM
+
+  classDef wording fill:#eef6ff,stroke:#3b7fc4;
