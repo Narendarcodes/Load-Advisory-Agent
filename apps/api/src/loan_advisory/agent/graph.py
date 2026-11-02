@@ -37,6 +37,22 @@ from loan_advisory.agent.progress import PUBLIC_STAGES
 from loan_advisory.agent.tools import (FrappeUnavailable, InvalidWhatIf, NotAuthorized, UnknownApplication)
 from loan_advisory.state_paths import AUDIT_LOG, append_private, resolve
 
+EXCERPT_MAX_CHARS = 320  # source-chip excerpt: plain text, bounded
+
+
+def citation_excerpt(text) -> str | None:
+    """The opening of a cited passage for a source chip: whitespace collapsed, cut at a word, no markup added."""
+    if not isinstance(text, str):
+        return None
+    flat = " ".join(text.split())
+    if not flat:
+        return None
+    if len(flat) <= EXCERPT_MAX_CHARS:
+        return flat
+    cut = flat[:EXCERPT_MAX_CHARS].rsplit(" ", 1)[0].rstrip(" ,;:")
+    return cut + "…"
+
+
 INTENTS = ("explain", "improve", "what_if", "policy", "greeting", "other")
 DISPUTE = re.compile(r"\b(wrong|incorrect|mistake|error in|not correct|not mine|is false|dispute|outdated|old (data|salary|income))\b|"
                      r"గలత్|తప్పు|ग़लत|गलत", re.I)
@@ -627,7 +643,8 @@ class AdvisoryAgent:
         cites = []
         if intent == "policy" and not s.get("abstained"):
             by_label = {p["label"]: p for p in s.get("passages") or []}
-            cites = [by_label[c]["citation"] for c in s.get("cited") or [] if c in by_label]
+            cites = [{**by_label[c]["citation"], "excerpt": citation_excerpt(by_label[c].get("text"))}
+                     for c in s.get("cited") or [] if c in by_label]
         missing = []
         if s.get("status") in ("info_requested", "bureau_review"):
             missing = ((s.get("record") or {}).get("inputs") or {}).get("missing_fields") or []
