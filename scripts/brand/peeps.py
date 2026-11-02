@@ -1,62 +1,21 @@
-"""Compose the Saral portal illustrations from Open Peeps (Pablo Stanley, CC0 1.0).
+"""Compose the Saral portal illustrations (v4 cast) from Open Peeps (Pablo Stanley, CC0 1.0).
 
-Every slot is one Open Peeps figure, unchanged (black ink line, white fills), placed on a 320x240
-canvas with a soft coral-tint ground and, where the scene needs one, a simple prop drawn here
-(document, phone, clock, chat bubble, folder). Coral appears only on the props and the ground.
+Two people (the borrower and the advisor) are put together from fixed Open Peeps parts by
+scripts/brand/cast_parts.cjs (parts from react-peeps@0.1.10, MIT code, CC0 art). This file places those
+figures at one scale on a 320x240 canvas with a soft coral-tint ground and simple props in ink and coral.
+The assistant is never a person: it is the Saral mark. Some scenes are objects only.
 
+    NODE_PATH=/tmp/castdeps/node_modules node scripts/brand/cast_parts.cjs <cache-dir>
     python scripts/brand/peeps.py <cache-dir> <out-dir>
-    npx svgo --multipass --config scripts/brand/svgo.config.cjs <out-dir>/*.svg
+    svgo --multipass --config scripts/brand/svgo.config.cjs <out-dir>/*.svg
 
-Sources: openpeeps.com links these SVGs from cdn.prod.website-files.com. The exact URL of every
-figure used is in SOURCES below and in docs/ASSETS.md. CC0 allows scripted download and
-modification; no attribution is required (a courtesy credit is on the Help page).
+The cast, the parts and every source URL are in docs/ASSETS.md.
 """
 
 import os
 import re
 import sys
-import urllib.request
 
-SOURCES = {
-    "peep-46": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53570264109d16a7014c37_peep-46.svg",
-    "peep-10": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53515e2b568a43f515edd5_peep-10.svg",
-    "peep-39": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535637d87131637b0e4379_peep-39.svg",
-    "peep-60": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5358a764109d50aa01705d_peep-60.svg",
-    "peep-2": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e532a4c258ffe237b8ef2c1_peep-2.svg",
-    "peep-68": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535997e35d380ada67ad80_peep-68.svg",
-    "peep-80": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535b00550b76252bf719e6_peep-80.svg",
-    "peep-93": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535c7a550b76084df7d544_peep-93.svg",
-    "peep-102": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535d808becbf7162555033_peep-102.svg",
-    "peep-67": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53596f8e24933d7a06b0c7_peep-67.svg",
-    "peep-sitting-12": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535f438becbf2fab5619bb_peep-sitting-12.svg",
-    "peep-sitting-18": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e536006c67e7976719986dc_peep-sitting-18.svg",
-    "peep-standing-16": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53622ec67e7957fc9b32e0_peep-standing-16.svg",
-    "peep-standing-18": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e536266c99250fe47cebfc0_peep-standing-18.svg",
-    "peep-standing-17": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53624b9b55b0127f5851cf_peep-standing-17.svg",
-    "peep-standing-23": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5362fa8becbf1d50570b23_peep-standing-23.svg",
-    "peep-standing-24": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5363188becbffe8c57172c_peep-standing-24.svg",
-    "peep-standing-13": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5361ccd3992383f7595afc_peep-standing-13.svg",
-    "peep-105": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535dd92b568a729c1c42f5_peep-105.svg",
-    "peep-sitting-1": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e532c65d871315ee7fcae9e_peep-sitting-1.svg",
-    "peep-standing-25": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53633a7371bbe22da4c986_peep-standing-25.svg",
-    "peep-77": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535aa1d871310896104715_peep-77.svg",
-    "peep-standing-22": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5362e2f5fa1aefa7ffe47c_peep-standing-22.svg",
-    "peep-sitting-14": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535f7d9b55b097be57089f_peep-sitting-14.svg",
-    "peep-7": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5350f9d399238698511b2f_peep-7.svg",
-    "peep-103": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535da59588e079598123fc_peep-103.svg",
-    "peep-standing-19": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e536281c992503d98cecdc1_peep-standing-19.svg",
-    "peep-sitting-17": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535fd95197054606a88bd2_peep-sitting-17.svg",
-    "peep-sitting-6": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535e9fc992502f35cd7902_peep-sitting-6.svg",
-    "peep-sitting-15": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535f96c67e7961f5994532_peep-sitting-15.svg",
-    "peep-standing-10": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53613f9b55b0a5a457c452_peep-standing-10.svg",
-    "peep-38": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53560d9b55b04007535350_peep-38.svg",
-    "peep-26": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5353e82b568af2d916cbbd_peep-26.svg",
-    "peep-standing-14": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5361e9f3aa4be48230418f_peep-standing-14.svg",
-    "peep-8": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53510f2b568ad72715a304_peep-8.svg",
-    "peep-sitting-11": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535f2ad39923f7d558435b_peep-sitting-11.svg",
-    "peep-sitting-4": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535e658e24935b1b096148_peep-sitting-4.svg",
-    "peep-59": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5358878e2493fbea064dd9_peep-59.svg",
-}
 
 CORAL = "#FE7D6B"
 PEACH = "#FF8F68"
@@ -66,36 +25,6 @@ WHITE = "#FFFFFF"
 LINE = "#E3D8CF"
 
 W, H = 320, 240
-
-
-def fetch(cache: str, name: str) -> str:
-    path = os.path.join(cache, name + ".svg")
-    if not os.path.exists(path):
-        url = SOURCES[name]
-        if not url:
-            raise SystemExit(f"no source URL for {name}")
-        with urllib.request.urlopen(url, timeout=30) as response:  # noqa: S310 - fixed CC0 CDN URLs
-            data = response.read()
-        with open(path, "wb") as handle:
-            handle.write(data)
-    return open(path, encoding="utf-8").read()
-
-
-def figure(cache: str, name: str, x: float, y: float, height: float, prefix: str) -> str:
-    """The peep as a nested <svg>, scaled to `height`, ids prefixed so files stay self-contained."""
-    raw = fetch(cache, name)
-    match = re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', raw)
-    vw, vh = float(match.group(1)), float(match.group(2))
-    width = height * vw / vh
-    body = raw[raw.index(">", raw.index("<svg")) + 1 : raw.rindex("</svg>")]
-    body = re.sub(r"<title>.*?</title>|<desc>.*?</desc>|<!--.*?-->", "", body, flags=re.S)
-    body = re.sub(r'id="([^"]+)"', lambda m: f'id="{prefix}-{m.group(1)}"', body)
-    body = re.sub(r"url\(#([^)]+)\)", lambda m: f"url(#{prefix}-{m.group(1)})", body)
-    body = re.sub(r'xlink:href="#([^"]+)"', lambda m: f'xlink:href="#{prefix}-{m.group(1)}"', body)
-    return (
-        f'<svg x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" viewBox="0 0 {vw:g} {vh:g}">'
-        f"{body}</svg>"
-    )
 
 
 # ---------------------------------------------------------------- simple props (ink line + coral accent)
@@ -375,58 +304,230 @@ def id_tick(x, y, w=84, h=56):
     )
 
 
-# ---------------------------------------------------------------- slots
+# ---------------------------------------------------------------- the cast (v4)
+#
+# Figures come from scripts/brand/cast_parts.cjs as cast-<person>-<pose>[-<face>].svg. Every figure is
+# drawn at ONE scale (SCALE canvas px per Open Peeps unit), so heads, line weight and heights match
+# across scenes. Busts always sit behind a desk edge, so no figure is cut off in mid-air.
 
-# (file, title, peep, figure x, figure y, figure height, props builder)
+SCALE = 0.072
+BASE = 228  # floor line: feet of standing figures, desk legs
+
+
+def cast(cache: str, name: str, x: float, bottom: float = BASE, flip: bool = False, prefix: str = "f") -> str:
+    raw = open(os.path.join(cache, name + ".svg"), encoding="utf-8").read()
+    vb = [float(v) for v in re.search(r'viewBox="([^"]+)"', raw).group(1).split()]
+    width, height = vb[2] * SCALE, vb[3] * SCALE
+    body = raw[raw.index(">", raw.index("<svg")) + 1 : raw.rindex("</svg>")]
+    inner = (
+        f'<svg x="{x:.1f}" y="{bottom - height:.1f}" width="{width:.1f}" height="{height:.1f}" '
+        f'viewBox="{vb[0]:g} {vb[1]:g} {vb[2]:g} {vb[3]:g}">{body}</svg>'
+    )
+    if flip:
+        return f'<g transform="translate({2 * x + width:.1f} 0) scale(-1 1)">{inner}</g>'
+    return inner
+
+
+def bust_width(cache: str, name: str) -> float:
+    raw = open(os.path.join(cache, name + ".svg"), encoding="utf-8").read()
+    return float(re.search(r'viewBox="([^"]+)"', raw).group(1).split()[2]) * SCALE
+
+
+DESK_TOP = 150
+
+
+def desk(x, w):
+    """A desk edge in front of a bust: the slab hides where the bust ends."""
+    if not w:
+        return ""
+    return (
+        f'<rect x="{x}" y="{DESK_TOP}" width="{w}" height="12" rx="3" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>'
+        f'<path d="M{x + 14} {DESK_TOP + 12} V{BASE} M{x + w - 14} {DESK_TOP + 12} V{BASE}" stroke="{INK}" stroke-width="3" stroke-linecap="round"/>'
+    )
+
+
+def at_desk(cache, name, x, desk_x, desk_w, flip=False, chair=True):
+    """A bust on a chair whose lower edge is tucked behind the desk slab."""
+    w = bust_width(cache, name)
+    back = (
+        f'<rect x="{x + w * 0.12:.1f}" y="{DESK_TOP - 58}" width="{w * 0.76:.1f}" height="70" rx="12" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>'
+        if chair else ""
+    )
+    return back + cast(cache, name, x, bottom=DESK_TOP + 12, flip=flip) + desk(desk_x, desk_w)
+
+
+def scaled(svg, x, y, k):
+    """Draw a prop built at the origin, moved to (x, y) and scaled by k (keeps its inner proportions)."""
+    return f'<g transform="translate({x} {y}) scale({k})">{svg}</g>'
+
+
+def tick_badge(cx, cy, r=16):
+    return (
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{CORAL}" stroke="{INK}" stroke-width="3"/>'
+        f'<path d="M{cx - r * 0.45:.1f} {cy + r * 0.02:.1f} l{r * 0.32:.1f} {r * 0.32:.1f} l{r * 0.6:.1f} -{r * 0.66:.1f}" fill="none" stroke="{INK}" '
+        f'stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    )
+
+
+def checklist(x, y, w=74, h=92):
+    s = [f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="6" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>']
+    for i in range(3):
+        cy = y + 22 + i * 24
+        if i < 2:
+            s.append(f'<path d="M{x + 11} {cy} l4 4 l7 -8" fill="none" stroke="{INK}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>')
+        else:
+            s.append(f'<circle cx="{x + 17}" cy="{cy}" r="6.5" fill="{SOFT}" stroke="{CORAL}" stroke-width="3"/>')
+        s.append(f'<path d="M{x + 30} {cy} h{w - 42 - (i % 2) * 10}" stroke="{INK}" stroke-width="2.5" stroke-linecap="round"/>')
+    return "".join(s)
+
+
+def held_page(x, y, w=40, h=50, angle=-8, folder_=False):
+    """A page or folder held in front of crossed arms."""
+    fill = SOFT if folder_ else WHITE
+    s = [f'<g transform="rotate({angle} {x + w / 2} {y + h / 2})">',
+         f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="4" fill="{fill}" stroke="{INK}" stroke-width="2.6"/>']
+    if folder_:
+        s.append(f'<rect x="{x + 8}" y="{y + h / 2 - 5}" width="{w - 16}" height="10" rx="2.5" fill="{WHITE}" stroke="{INK}" stroke-width="2"/>')
+        s.append(f'<path d="M{x + 13} {y + h / 2} h{w - 26}" stroke="{CORAL}" stroke-width="2.6" stroke-linecap="round"/>')
+    else:
+        s.append(f'<rect x="{x + 7}" y="{y + 8}" width="{w * 0.45:.0f}" height="5" rx="2.5" fill="{CORAL}"/>')
+        for i in range(3):
+            s.append(f'<path d="M{x + 7} {y + 22 + i * 8} h{w - 14 - (i % 2) * 8}" stroke="{INK}" stroke-width="2" stroke-linecap="round"/>')
+    s.append("</g>")
+    return "".join(s)
+
+
+def map_pin(cx, cy, r=30):
+    return (
+        f'<ellipse cx="{cx}" cy="{cy + r * 2.05:.1f}" rx="{r * 0.9:.1f}" ry="{r * 0.22:.1f}" fill="{LINE}"/>'
+        f'<path d="M{cx} {cy + r * 2:.1f} C{cx - r * 0.35:.1f} {cy + r * 1.3:.1f} {cx - r} {cy + r * 0.75:.1f} {cx - r} {cy} '
+        f'a{r} {r} 0 0 1 {2 * r} 0 C{cx + r} {cy + r * 0.75:.1f} {cx + r * 0.35:.1f} {cy + r * 1.3:.1f} {cx} {cy + r * 2:.1f}z" '
+        f'fill="{CORAL}" stroke="{INK}" stroke-width="3.5" stroke-linejoin="round"/>'
+        f'<circle cx="{cx}" cy="{cy}" r="{r * 0.38:.1f}" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>'
+    )
+
+
+def saral_mark(x, y, size=64):
+    """The Saral mark (assistant): coral rounded square, ink path ending in a tick (from public/brand/saral-mark.svg)."""
+    k = size / 64
+    return (
+        f'<g transform="translate({x} {y}) scale({k:.3f})">'
+        f'<rect width="64" height="64" rx="16" fill="{CORAL}" stroke="{INK}" stroke-width="3"/>'
+        f'<path d="M11 39 Q17 34.5 22.5 38.5 L30 45 L52.5 19.5" fill="none" stroke="{INK}" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>'
+        "</g>"
+    )
+
+
+def chat_lines(x, y, w=118, h=64):
+    return (
+        f'<path d="M{x + 10} {y} h{w - 20} a10 10 0 0 1 10 10 v{h - 20} a10 10 0 0 1 -10 10 h-{w - 44} l-16 13 v-13 h-4 a10 10 0 0 1 -10 -10 v-{h - 20} a10 10 0 0 1 10 -10z" '
+        f'fill="{WHITE}" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+        f'<path d="M{x + 16} {y + 22} h{w - 40} M{x + 16} {y + 38} h{w - 60}" stroke="{INK}" stroke-width="2.6" stroke-linecap="round"/>'
+    )
+
+
+def empty_page(x, y, w=74, h=92):
+    return (
+        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="6" fill="{WHITE}" stroke="{INK}" stroke-width="3" stroke-dasharray="9 7"/>'
+        f'<path d="M{x + w / 2 - 11} {y + h / 2} h22 M{x + w / 2} {y + h / 2 - 11} v22" stroke="{CORAL}" stroke-width="4" stroke-linecap="round"/>'
+    )
+
+
+def open_folder(x, y, w=120, h=80):
+    """An empty folder: back, an empty front flap, nothing inside."""
+    return (
+        f'<path d="M{x} {y + 12} a6 6 0 0 1 6 -6 h30 l9 9 h{w - 51} a6 6 0 0 1 6 6 v{h - 21} h-{w}z" fill="{SOFT}" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+        f'<path d="M{x - 6} {y + 30} h{w + 12} l-10 {h - 30} h-{w - 8}z" fill="{WHITE}" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+        f'<path d="M{x + w / 2 - 14} {y + 52} h28" stroke="{CORAL}" stroke-width="4" stroke-linecap="round"/>'
+    )
+
+
+B = "cast-borrower-"
+A = "cast-advisor-"
+
+# (file, title, builder(cache) -> svg body). Titles name the scene; see docs/ASSETS.md for the table.
 SLOTS = [
-    ("login", "A person working on a laptop", "peep-46", 70, 20, 220, lambda: ground(160, 140, 135, 90) + bubble(214, 28, 76, 46)),
-    ("dashboard", "A person pointing at a rising chart", "peep-standing-16", 70, 8, 230, lambda: ground() + chart(186, 40)),
-    ("wizard-about", "A person beside their profile card", "peep-standing-18", 60, 8, 230, lambda: ground() + card_id(180, 70)),
-    ("wizard-loan", "A person working out a monthly amount on their phone", "peep-10", 64, 24, 216, lambda: ground() + coin(232, 70) + coin(258, 112, 14)),
-    ("wizard-documents", "A person pointing to a stack of documents", "peep-standing-17", 52, 8, 230, lambda: ground() + document(200, 88, 58, 74) + document(186, 100, 58, 74, accent=True)),
-    ("assistant", "A person asking a question", "peep-60", 54, 24, 216, lambda: ground() + bubble(200, 34, 92, 54)),
-    ("empty-applications", "A person with an empty folder", "peep-2", 30, 34, 206, lambda: ground() + folder(204, 120)),
-    ("empty-documents", "A person beside an empty tray", "peep-68", 30, 34, 206, lambda: ground() + tray(196, 160)),
-    ("assessment-pending", "A person waiting, with a clock", "peep-sitting-12", 34, 30, 204, lambda: ground() + clock(244, 74, 28) + floor()),
-    ("processing", "A person waiting with a cup while documents are checked", "peep-102", 40, 24, 216, lambda: ground() + document(212, 58, 54, 70, lines=3) + clock(270, 56, 18)),
-    ("submitted", "A person who has just sent their application", "peep-standing-23", 46, 8, 230, lambda: ground() + document(208, 70, 58, 74, mark="tick")),
-    ("missing-info", "A puzzled person and a form with a question", "peep-80", 40, 24, 216, lambda: ground() + document(206, 60, 58, 74, mark="question")),
-    ("service-unavailable", "A worried person and an unplugged cable", "peep-93", 30, 24, 216, lambda: ground() + plug(236, 96)),
-    ("documents-header", "A person sitting with their papers", "peep-sitting-18", 64, 26, 200, lambda: ground() + document(210, 70, 54, 70, lines=3) + floor()),
-    ("profile-header", "A person standing at ease", "peep-standing-13", 112, 8, 230, lambda: ground() + card_id(200, 60, 76, 52)),
-    ("help-header", "A person explaining something", "peep-standing-24", 64, 8, 230, lambda: ground() + bubble(194, 34, 86, 50)),
-    # v3: results, loading and the pages that had no scene
-    ("approved", "A delighted person with an approved letter", "peep-105", 40, 30, 210, lambda: ground() + confetti() + document(212, 52, 58, 74, mark="tick")),
-    ("not-approved", "A person sitting and thinking about what to do next", "peep-sitting-1", 34, 52, 186, lambda: ground() + signpost(214, 40) + floor()),
-    ("withdrawn", "A person walking on with a closed folder", "peep-standing-25", 60, 8, 230, lambda: ground() + closed_folder(184, 120)),
-    ("checking", "A person thinking while a document is checked under a magnifier", "peep-77", 30, 30, 210, lambda: ground() + document(204, 54, 58, 74, lines=4, accent=True) + magnifier(250, 120, 22)),
-    ("eligibility", "A person pointing at a borrowing range", "peep-standing-22", 44, 8, 230, lambda: ground() + range_bar(180, 66, 116)),
-    ("eligibility-result", "A person in a wheelchair pleased with an estimate", "peep-sitting-14", 30, 34, 200, lambda: ground() + range_bar(196, 44, 104) + floor()),
-    ("eligibility-outside", "A person shrugging at an estimate outside the range", "peep-7", 26, 30, 210, lambda: ground() + range_bar(206, 56, 96, marker=0.12, outside=True)),
-    ("calculating", "A person working something out on a phone beside a calculator", "peep-103", 34, 30, 210, lambda: ground() + calculator(222, 62)),
-    ("products", "A person looking over loan options", "peep-standing-19", 70, 8, 230, lambda: ground() + cards_stack(184, 60)),
-    ("kyc", "A person holding a phone next to an identity card", "peep-67", 34, 30, 210, lambda: ground() + phone(206, 52) + card_id(226, 120, 76, 52)),
-    ("repayments", "A person sitting beside a repayment calendar and a coin", "peep-sitting-17", 30, 40, 196, lambda: ground() + calendar(196, 40) + coin(270, 150, 16) + floor()),
-    ("repayments-empty", "A person beside an empty calendar", "peep-sitting-6", 30, 40, 196, lambda: ground() + calendar(196, 52, empty=True) + floor()),
-    ("feedback", "A person in a wheelchair sharing what they think", "peep-sitting-15", 24, 36, 198, lambda: ground() + star_bubble(198, 30) + floor()),
-    ("feedback-sent", "A person whose message has been sent", "peep-standing-10", 70, 8, 230, lambda: ground() + envelope(180, 86, mark="tick")),
-    ("privacy", "A person with a cup next to a shield and lock", "peep-38", 34, 30, 210, lambda: ground() + shield(250, 96, 1.15)),
-    ("terms", "A person reading terms with a pen nearby", "peep-26", 34, 30, 210, lambda: ground() + document(208, 46, 60, 78, lines=5) + pen(246, 150)),
-    ("invite", "A person with an invitation and a key", "peep-standing-14", 70, 8, 230, lambda: ground() + envelope(176, 88, mark="key")),
-    ("not-found", "A person looking for a page with a magnifier", "peep-8", 34, 30, 210, lambda: ground() + magnifier(246, 90, 28)),
-    ("assistant-thinking", "A person thinking, with a thought bubble", "peep-sitting-11", 24, 50, 186, lambda: ground() + thought(196, 24) + floor()),
-    ("handoff", "A person asking for a person to help", "peep-59", 40, 30, 210, lambda: ground() + person_bubble(206, 34, 88, 56)),
+    # sign in and apply
+    ("login", "The borrower working on a laptop at a desk",
+     lambda c: ground(160, 150, 135, 84) + at_desk(c, B + "Geek", 104, 70, 180) + shield(232, 92, 0.7)),
+    ("products", "The borrower pointing at loan options",
+     lambda c: ground() + cast(c, B + "PointingFingerWB", 56) + cards_stack(178, 64)),
+    ("dashboard", "The borrower pointing at a checklist with one step left",
+     lambda c: ground() + cast(c, B + "PointingFingerWB", 56) + checklist(196, 60)),
+    ("wizard-about", "The borrower beside her profile card",
+     lambda c: ground() + cast(c, B + "ShirtPantsWB", 74) + card_id(180, 84, 92, 62)),
+    ("wizard-loan", "The borrower working out a monthly amount on her phone",
+     lambda c: ground(160, 150, 135, 84) + at_desk(c, B + "Device", 98, 70, 180) + scaled(calculator(0, 0), 194, 98, 0.62)),
+    ("wizard-documents", "The borrower holding her documents",
+     lambda c: ground() + cast(c, B + "CrossedArmsWB", 62) + held_page(118, 64, 42, 52, -6) + document(200, 92, 54, 70) + document(214, 104, 54, 70)),
+    ("documents-header", "The borrower holding her documents",
+     lambda c: ground() + cast(c, B + "CrossedArmsWB", 62) + held_page(118, 64, 42, 52, -6) + document(200, 92, 54, 70) + document(214, 104, 54, 70)),
+    ("kyc", "The borrower checking her identity card on her phone",
+     lambda c: ground(160, 150, 135, 84) + at_desk(c, B + "Device", 98, 70, 180) + scaled(card_id(0, 0), 190, 110, 0.7)),
+    ("profile-header", "The borrower beside her profile card",
+     lambda c: ground() + cast(c, B + "ShirtPantsWB", 74) + card_id(180, 84, 92, 62)),
+    # results
+    ("submitted", "The borrower relaxed after sending her application",
+     lambda c: ground() + cast(c, B + "RestingWB", 46) + envelope(186, 92, 88, 60, mark="tick")),
+    ("checking", "The borrower waiting with a cup while a magnifier goes over her paper",
+     lambda c: ground(160, 150, 135, 84) + at_desk(c, B + "Coffee", 96, 70, 180) + scaled(document(0, 0, lines=3), 194, 94, 0.72) + magnifier(236, 128, 15)),
+    ("assessment-pending", "The borrower waiting with a cup, a clock on the wall",
+     lambda c: ground(160, 150, 135, 84) + at_desk(c, B + "Coffee", 96, 70, 180) + clock(222, 62, 24)),
+    ("processing", "The reviewer at a desk reading the application",
+     lambda c: ground(160, 150, 135, 84) + at_desk(c, A + "BlazerBlackTee", 96, 70, 180) + scaled(document(0, 0, lines=3), 194, 94, 0.72)),
+    ("missing-info", "The borrower looking at a form with a question on it",
+     lambda c: ground() + cast(c, B + "ShirtPantsWB", 74) + document(186, 70, 64, 82, mark="question")),
+    ("approved", "The borrower relaxed beside her letter with a tick",
+     lambda c: ground() + cast(c, B + "RestingWB", 46) + document(190, 66, 64, 82, mark="tick")),
+    ("not-approved", "The borrower reading her letter thoughtfully",
+     lambda c: ground() + cast(c, B + "CrossedArmsWB-Serious", 98) + held_page(154, 60, 46, 58, -10)),
+    ("withdrawn", "The borrower walking on with her folder closed",
+     lambda c: ground() + cast(c, B + "WalkingWB", 70) + closed_folder(184, 140)),
+    # eligibility
+    ("eligibility", "The borrower working out what she could borrow on her phone",
+     lambda c: ground(160, 150, 135, 84) + at_desk(c, B + "Device", 98, 70, 180) + scaled(range_bar(0, 0, 110), 188, 84, 0.72)),
+    ("eligibility-result", "An estimate inside the usual range",
+     lambda c: ground() + range_bar(98, 74, 124) + tick_badge(222, 74, 18)),
+    ("eligibility-outside", "An estimate outside the usual range",
+     lambda c: ground() + range_bar(98, 74, 124, marker=0.08, outside=True)),
+    # servicing
+    ("repayments", "The borrower sitting beside her repayment calendar",
+     lambda c: ground() + cast(c, B + "HandsBackWB", 46) + calendar(184, 74, 92, 82)),
+    ("repayments-empty", "An empty repayment calendar",
+     lambda c: ground() + calendar(112, 70, 96, 86, empty=True)),
+    # people: a reviewer or "talk to a person"
+    ("help-header", "The advisor and the borrower talking at a desk",
+     lambda c: ground(160, 150, 135, 84) + at_desk(c, A + "BlazerBlackTee", 74, 0, 0)
+     + at_desk(c, B + "Shirt-Calm", 168, 50, 220, flip=True)),
+    ("handoff", "The advisor and the borrower talking at a desk",
+     lambda c: ground(160, 150, 135, 84) + at_desk(c, A + "BlazerBlackTee", 74, 0, 0)
+     + at_desk(c, B + "Shirt-Calm", 168, 50, 220, flip=True)),
+    ("feedback", "The borrower telling the advisor what she thinks",
+     lambda c: ground() + cast(c, B + "PointingFingerWB", 40) + cast(c, A + "BlazerPantsWB", 196, flip=True) + star_bubble(124, 16, 70, 44)),
+    # objects only
+    ("feedback-sent", "A sent message with a tick", lambda c: ground() + envelope(110, 88, 100, 66, mark="tick")),
+    ("empty-applications", "An empty page waiting for an application", lambda c: ground() + empty_page(123, 70)),
+    ("empty-documents", "An empty folder", lambda c: ground() + open_folder(100, 80)),
+    ("service-unavailable", "An unplugged cable", lambda c: ground() + scaled(plug(46, 10), 86, 96, 1.6)),
+    ("not-found", "A map pin", lambda c: ground() + map_pin(160, 82, 32)),
+    ("privacy", "A shield with a lock", lambda c: ground() + shield(160, 112, 1.4)),
+    ("terms", "A page of terms and a pen", lambda c: ground() + document(124, 56, 72, 96, lines=5) + pen(186, 168)),
+    ("invite", "An invitation with a key", lambda c: ground() + envelope(110, 88, 100, 66, mark="key")),
+    ("assistant", "The Saral mark and a chat bubble",
+     lambda c: ground() + saral_mark(70, 92, 72) + chat_lines(156, 56, 118, 64)),
+    ("assistant-thinking", "The Saral mark with three dots",
+     lambda c: ground() + saral_mark(76, 84, 80) + bubble(170, 70, 90, 54)),
 ]
 
 
 def compose(cache: str, out: str) -> list[str]:
     os.makedirs(out, exist_ok=True)
     written = []
-    for name, title, peep, x, y, height, props in SLOTS:
+    for name, title, build in SLOTS:
         art = (
-            f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{W}" height="{H}" '
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
             f'viewBox="0 0 {W} {H}"><title>{title}. Open Peeps by Pablo Stanley, CC0.</title>'
-            f"{props()}{figure(cache, peep, x, y, height, name)}</svg>\n"
+            f"{build(cache)}</svg>\n"
         )
         path = os.path.join(out, name + ".svg")
         with open(path, "w", encoding="utf-8") as handle:

@@ -262,7 +262,8 @@
 		panel.setAttribute("aria-busy", "true");
 		panel.innerHTML =
 			'<div class="result-head">' +
-			'<img class="result-head__art" src="' + ART + 'calculating.svg" alt="" width="120" height="90">' +
+			/* No scene while it works: a quiet block holds the scene's place so nothing jumps. */
+			'<span class="skeleton result-head__art" aria-hidden="true"></span>' +
 			'<div class="result-head__text">' +
 			'<p class="result-head__status"><span class="badge badge--neutral">Working it out</span>' + demoFlag() + "</p>" +
 			"<h2>Working out your estimate</h2>" +
