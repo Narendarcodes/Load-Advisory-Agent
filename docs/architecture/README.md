@@ -89,3 +89,24 @@ index, plus the evaluation sets.
 ![Data and policy ingestion](diagrams/05-data-policy-ingestion.png)
 
 Source: [05-data-policy-ingestion.mmd](diagrams/05-data-policy-ingestion.mmd) · [SVG](diagrams/05-data-policy-ingestion.svg)
+
+## 6–11. Borrower platform diagrams (added by the reproducibility audit)
+
+Sections 1–5 predate the Frappe migration and describe the agent runtime. The six diagrams below describe the
+**platform as it is actually implemented now** — every node, DocType, field name, route and port in them was read out
+of the code in the clean clone, not from a proposal. They are shipped as Mermaid source plus rendered SVG; unlike 01–05
+there is no PNG twin yet, so reference the SVG.
+
+| # | Diagram | What it pins down |
+|---|---|---|
+| 6 | [Entity model](diagrams/06-entity-model.svg) · [source](diagrams/06-entity-model.mmd) | The 11 real `loan_advisory_portal` DocTypes and their links to Customer / Lending doctypes, with the actual field names (`custom_lifecycle_state`, `custom_latest_evidence`, `consent_at`, `turn_count`, `secret_hash`, `is_simulation`) |
+| 7 | [Infrastructure / deployment](diagrams/07-infrastructure-deployment.svg) · [source](diagrams/07-infrastructure-deployment.mmd) | Compose services and volumes, ports :8001/:8080/:8081, the Nginx acceptance proxy, the Node runtime (:4200), the agent (:8095), the stub (:8096), the synthetic bureau (:8011) and Langfuse (:3000) — with development-only surfaces marked as such |
+| 8 | [Borrower application sequence](diagrams/08-borrower-application-sequence.svg) · [source](diagrams/08-borrower-application-sequence.mmd) | Login → start → save → consent gate → submit → decision presentation → document download, exactly as `tests/e2e/portal_journeys.py` exercises it |
+| 9 | [Decision engine flow](diagrams/09-decision-engine-flow.svg) · [source](diagrams/09-decision-engine-flow.mmd) | Frappe application → canonical schema → ZEN 2.1.2 rules → rule-level PASS/FAIL evidence → the stored decision the agent is only allowed to explain. The LLM appears nowhere on the decision path |
+| 10 | [Consent lifecycle](diagrams/10-consent-lifecycle.svg) · [source](diagrams/10-consent-lifecycle.mmd) | First consent, unchanged consent, profile update, new consent version, revocation, re-consent and the timestamp the controller restamps on every save |
+| 11 | [Authentication and authorization](diagrams/11-authentication-authorization.svg) · [source](diagrams/11-authentication-authorization.mmd) | Frappe session → 60-second HMAC assertion minted by the site → runtime boundary → agent verification → single-use `jti` → borrower ownership and conversation isolation. The browser has no edge to the agent |
+
+Di 6–11 were rendered with `npx @mermaid-js/mermaid-cli@11` (same invocation as
+[`diagrams/render.sh`](diagrams/render.sh)); each file was re-read after rendering to confirm the labels and arrows
+match the code. The status of 01–05 against the post-migration implementation — and the exact edit needed to bring
+them current — is recorded in [../reproducibility/diagram-inventory.md](../reproducibility/diagram-inventory.md).
