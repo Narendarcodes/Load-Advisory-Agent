@@ -197,15 +197,21 @@
 	var ART = "/assets/loan_advisory_portal/illustrations/";
 
 	/* v3 result layout: illustration, status badge, one headline, then hairline sections. */
-	function head(art, badge, title, lead) {
+	function head(art, badge, title, lead, amount) {
 		return (
 			'<div class="result-head">' +
 			'<img class="result-head__art" src="' + ART + art + '.svg" alt="" width="120" height="90">' +
 			'<div class="result-head__text">' +
 			'<p class="result-head__status">' + badge + demoFlag() + "</p>" +
 			"<h2>" + title + "</h2>" +
-			(lead ? '<p class="small muted">' + lead + "</p>" : "") +
-			"</div></div>"
+			(amount ? "" : lead ? '<p class="small muted">' + lead + "</p>" : "") +
+			"</div>" +
+			// The range gets the full panel width so "₹4,80,000 – ₹5,70,000" stays on one line.
+			(amount
+				? '<div class="result-head__amount"><p class="result-card__amount">' + amount + "</p>" +
+				  (lead ? '<p class="small muted">' + lead + "</p>" : "") + "</div>"
+				: "") +
+			"</div>"
 		);
 	}
 
@@ -343,8 +349,9 @@
 			head(
 				"eligibility-result",
 				'<span class="badge ' + (within ? "badge--ok" : "badge--warn") + '">' + (within ? "Your request fits the range" : "Above the range") + "</span>",
-				'You may be able to borrow <span class="result-card__amount">' + inr(result.low) + " – " + inr(result.high) + "</span>",
-				"An indicative range from the details you entered. Not an approval and not a promise of this amount."
+				'You may be able to borrow',
+				"An indicative range from the details you entered. Not an approval and not a promise of this amount.",
+				'<span class="nowrap">' + inr(result.low) + '</span> – <span class="nowrap">' + inr(result.high) + "</span>"
 			) +
 			'<dl class="detail detail--rows result-section">' +
 			"<div><dt>Amount you asked for</dt><dd>" + inr(input.amount) + "</dd></div>" +

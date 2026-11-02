@@ -286,6 +286,17 @@
 		var lead = guidance.summary || "";
 		if (lifecycle === "UNDER_REVIEW") lead = "Your details are being checked against the lending policy. Nothing is needed from you right now.";
 		if (lifecycle === "SUBMITTED") lead = "The checks are queued and run without any action from you.";
+		if (lifecycle === "DRAFT") {
+			var ready = (application.documents || []).length > 0;
+			view = {
+				art: view.art,
+				badge: view.badge,
+				title: ready ? "Your application is ready to submit" : "Add a document before you submit",
+			};
+			lead = ready
+				? "It has not been assessed yet. Submitting sends it for the checks and fixes the loan request."
+				: "It has not been assessed yet. At least one document is needed before you can submit.";
+		}
 		var parts = [resultHead(view, lead, when)];
 
 		if (IN_FLIGHT.indexOf(lifecycle) !== -1) {

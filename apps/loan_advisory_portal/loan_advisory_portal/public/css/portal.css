@@ -6085,3 +6085,14 @@ h3 {
 	gap: 2px;
 	padding: var(--s3) 0;
 }
+
+.result-head__amount {
+	grid-column: 1 / -1;
+	display: grid;
+	gap: 4px;
+}
+
+.result-head__amount .result-card__amount {
+	margin: 0;
+	font-size: clamp(1.6rem, 1.3rem + 1vw, 2.1rem);
+}

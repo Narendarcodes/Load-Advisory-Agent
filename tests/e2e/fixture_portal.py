@@ -146,7 +146,7 @@ class Fixtures:
 		return {
 			"name": name, "status": "Open", "lifecycle": row["state"], "loan_product": "Personal Term Loan",
 			"loan_amount": row["amount"], "tenure_months": row["tenure"], "posting_date": row["posted"],
-			"submitted_at": row["posted"] + " 10:05:00", "purpose": row["purpose"],
+			"submitted_at": None if row["state"] == "DRAFT" else row["posted"] + " 10:05:00", "purpose": row["purpose"],
 			"policy_version": "synthetic-2026.1", "decision": self.evidence(name),
 		}
 

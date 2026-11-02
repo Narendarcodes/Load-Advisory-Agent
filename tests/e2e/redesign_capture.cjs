@@ -201,6 +201,155 @@ async function shots() {
   await browser.close();
 }
 
+// ---------------------------------------------------------------- v3: every page and state
+const DRAFT = "ACC-LOAP-2026-00025";
+const STATES = {
+  approved: APPROVED, rejected: REJECTED, "info-needed": "ACC-LOAP-2026-00018", submitted: PENDING,
+  "under-review": "ACC-LOAP-2026-00026", "manual-review": "ACC-LOAP-2026-00027", withdrawn: "ACC-LOAP-2026-00009",
+};
+
+async function slow(context, ms) {
+  const url = new URL(BASE);
+  if (ms) await context.addCookies([{ name: "fxslow", value: String(ms), domain: url.hostname, path: "/" }]);
+  else await context.clearCookies({ name: "fxslow" });
+}
+
+/** Photograph the page while its reads are still pending (fixture delays them via the fxslow cookie). */
+async function loading(page, context, name, route) {
+  await slow(context, 8000);
+  await page.goto(BASE + route, { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => document.fonts && document.fonts.ready).catch(() => {});
+  await sleep(700);
+  await shot(page, name, false);
+  await slow(context, 0);
+  await page.goto("about:blank");
+  await sleep(300);
+}
+
+async function eligibility(page, prefix, width) {
+  const go = async (q = "?demo=1") => {
+    await page.goto(`${BASE}/borrower/eligibility${q}`); await settle(page);
+    await page.waitForFunction(() => document.getElementById("el-income")?.value, null, { timeout: 8000 }).catch(() => {});
+  };
+  const panel = async (name) => {
+    await page.locator("#result-panel").scrollIntoViewIfNeeded().catch(() => {});
+    await page.evaluate(() => {
+      const el = document.getElementById("result-panel");
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior: "instant" });
+    });
+    await sleep(300);
+    await shot(page, name, false);
+  };
+  await go("");
+  await shot(page, `${prefix}eligibility-${width}`);
+  await go();
+  // Hold the 320 ms "working it out" state so it can be photographed (capture only).
+  await page.evaluate(() => { const o = window.setTimeout; window.setTimeout = (f, ms, ...a) => o(f, ms === 320 ? 600000 : ms, ...a); });
+  await page.click("#el-submit"); await sleep(400);
+  await panel(`${prefix}eligibility-calculating-${width}`);
+  await go(); await page.click("#el-submit"); await sleep(900);
+  await panel(`${prefix}eligibility-result-${width}`);
+  await shot(page, `${prefix}eligibility-result-full-${width}`);
+  await go(); await page.fill("#el-obligations", "52000"); await page.click("#el-submit"); await sleep(900);
+  await panel(`${prefix}eligibility-outside-${width}`);
+  await go(""); await page.click("#el-submit"); await sleep(900);
+  await panel(`${prefix}eligibility-unavailable-${width}`);
+}
+
+async function submitFlow(page, context, prefix, width) {
+  await page.goto(`${BASE}/borrower/application?name=${DRAFT}&fx=reset`); await settle(page);
+  await shot(page, `${prefix}result-draft-${width}`);
+  await page.evaluate(() => { window.__portalPollMs = 2000; });
+  await slow(context, 4000);
+  await page.click("#submit-app");
+  await sleep(600);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await shot(page, `${prefix}button-pending-${width}`, false);
+  await slow(context, 0);
+  await page.waitForFunction(() => /checking your application/i.test(document.getElementById("decision")?.textContent || ""), null, { timeout: 20000 }).catch(() => {});
+  await sleep(500);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await shot(page, `${prefix}processing-after-submit-${width}`, false);
+  await page.waitForFunction(() => /was approved/i.test(document.getElementById("decision")?.textContent || ""), null, { timeout: 30000 }).catch(() => {});
+  await sleep(500);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await shot(page, `${prefix}result-after-submit-${width}`, false);
+  await page.goto(`${BASE}/borrower?fx=reset`); await settle(page);
+}
+
+async function v3() {
+  const only = process.env.ONLY || "";
+  for (const width of WIDTHS) {
+    // A fresh browser per width keeps memory flat (one browser over every page was OOM-killed in v2).
+    const browser = await launch();
+    const context = await newContext(browser, width);
+    const page = await context.newPage();
+    page.setDefaultTimeout(15000);
+    page.on("pageerror", (e) => log.push({ width, pageerror: String(e) }));
+    const routes = [
+      ["login", "/login"],
+      ["invite", "/borrower/invite"],
+      ["dashboard", "/borrower?fx=full"],
+      ["dashboard-empty", "/borrower?fx=empty"],
+      ["products", "/borrower/products?fx=full"],
+      ["kyc", "/borrower/kyc"],
+      ["repayments", "/borrower/servicing"],
+      ["repayments-demo", "/borrower/servicing?demo=1"],
+      ["documents", `/borrower/documents?name=${REJECTED}`],
+      ["documents-empty", "/borrower/documents?fx=empty"],
+      ["profile", "/borrower/profile?fx=full"],
+      ["help", "/borrower/help"],
+      ["feedback", "/borrower/feedback"],
+      ["privacy", "/borrower/privacy"],
+      ["terms", "/borrower/terms"],
+      ["not-found", "/borrower/application?name=ACC-LOAP-2026-99999"],
+      ["assistant-choose", "/borrower/assistant"],
+      ...Object.entries(STATES).map(([state, name]) => [`result-${state}`, `/borrower/application?name=${name}`]),
+    ];
+    if (!only || only === "screens") {
+      for (const [name, route] of routes) {
+        await page.goto(BASE + route); await settle(page);
+        await shot(page, `${name}-${width}`);
+      }
+    }
+    if (!only || only === "loading") {
+      await loading(page, context, `loading-dashboard-${width}`, "/borrower?fx=full");
+      await loading(page, context, `loading-result-${width}`, `/borrower/application?name=${APPROVED}`);
+      await loading(page, context, `loading-documents-${width}`, `/borrower/documents?name=${REJECTED}`);
+    }
+    if (!only || only === "eligibility") await eligibility(page, "", width);
+    if (!only || only === "submit") await submitFlow(page, context, "", width);
+    if (!only || only === "wizard") await wizard(page, "", width);
+    if (!only || only === "assistant") {
+      await page.goto(`${BASE}/borrower/assistant?application=${REJECTED}`); await settle(page);
+      await page.waitForSelector(".composer", { timeout: 20000 });
+      await sleep(600);
+      await ask(page, "Why was this decision made?");
+      await page.waitForSelector(".msg__thinking", { timeout: 8000 }).catch(() => {});
+      await sleep(250);
+      await focusLatest(page, ".msg.user");
+      await shot(page, `assistant-thinking-${width}`, false);
+      await waitAnswer(page, 1);
+      await ask(page, "I want to talk to a person about this");
+      await waitAnswer(page, 2);
+      await focusLatest(page, ".msg.bot .handoff", 24);
+      await shot(page, `assistant-handoff-${width}`, false);
+      await assistant(page, "", width);
+    }
+    if (!only) {
+      await page.goto(`${BASE}/borrower?fx=full`); await settle(page);
+      const toggle = page.locator('[data-action="nav-toggle"]:visible').first();
+      if (await toggle.count()) {
+        await toggle.click({ timeout: 5000 }).catch((e) => log.push({ width, navToggle: String(e) }));
+        await sleep(500);
+        await shot(page, `nav-drawer-${width}`, false);
+      }
+    }
+    await context.close();
+    await browser.close();
+  }
+}
+
 async function before() {
   const browser = await launch();
   for (const width of WIDTHS) {
@@ -335,6 +484,7 @@ async function axe() {
   else if (MODE === "record-assistant") await record("assistant");
   else if (MODE === "record-wizard") await record("wizard");
   else if (MODE === "axe") await axe();
+  else if (MODE === "v3") await v3();
   if (log.length) fs.writeFileSync(path.join(OUT, `capture-${MODE}.json`), JSON.stringify(log, null, 2));
 })().catch((error) => {
   console.error(error);
