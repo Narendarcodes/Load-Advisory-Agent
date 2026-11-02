@@ -34,9 +34,9 @@ AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
 
 def login(page, base, email, password):
     page.goto(base + "/login", wait_until="domcontentloaded")
-    page.fill("#login_email", email)
-    page.fill("#login_password", password)
-    page.click("form.form-login button[type=submit]")
+    page.fill("#email", email)
+    page.fill("#password", password)
+    page.click("#login-button")
     page.wait_for_url(lambda url: "/login" not in url, timeout=20000)
 
 

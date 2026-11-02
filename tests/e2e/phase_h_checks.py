@@ -143,9 +143,9 @@ def browser_checks(results, base, seed, setup):
         )
 
         page.goto(base + "/login", wait_until="domcontentloaded")
-        page.fill("#login_email", seed["victim"]["user"])
-        page.fill("#login_password", seed["victim"]["password"])
-        page.click("form.form-login button[type=submit]")
+        page.fill("#email", seed["victim"]["user"])
+        page.fill("#password", seed["victim"]["password"])
+        page.click("#login-button")
         page.wait_for_url(lambda url: "/login" not in url, timeout=20000)
 
         page.goto(
