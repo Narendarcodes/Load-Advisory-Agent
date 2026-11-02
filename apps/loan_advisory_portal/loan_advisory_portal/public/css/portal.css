@@ -98,7 +98,6 @@
 	--radius-sm: 6px;
 	--radius-xs: 4px;
 	--shadow: 0 12px 28px rgba(36, 28, 27, 0.12); /* floating things only: menus, dialogs, sheets */
-	--shadow-sm: none;
 	--active: #ebe4dc; /* neutral selected fill (nav), one step from --paper-2 */
 
 	/* Spacing */
@@ -276,7 +275,6 @@ textarea {
 	background: var(--card);
 	border: 1px solid var(--line-2);
 	border-radius: var(--radius-sm);
-	box-shadow: var(--shadow-sm);
 	font-weight: 700;
 }
 
@@ -529,7 +527,6 @@ img.brand__mark {
 .rail__link[aria-current="page"] {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 .rail__link[aria-current="page"] .rail__abbr {
@@ -678,7 +675,6 @@ img.brand__mark {
 .topbar__nav a[aria-current="page"] {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 .nav-signout {
@@ -769,7 +765,6 @@ img.brand__mark {
 .site-nav a[aria-current="page"] {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 /* Footer */
@@ -977,7 +972,6 @@ img.brand__mark {
 	background: var(--card);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
-	box-shadow: var(--shadow-sm);
 	padding: 22px;
 }
 
@@ -1253,7 +1247,6 @@ img.brand__mark {
 .btn:hover {
 	background: var(--coral-2);
 	color: var(--ink);
-	box-shadow: 0 8px 20px rgba(178, 58, 46, 0.16);
 }
 
 .btn:active {
@@ -2016,7 +2009,6 @@ dl.detail--rows dd {
 .wizard-steps li[data-state="current"] button {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 .wizard-steps li[data-state="locked"] button {
@@ -2068,7 +2060,6 @@ dl.detail--rows dd {
 	background: var(--card);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
-	box-shadow: var(--shadow-sm);
 	padding: 26px;
 }
 
@@ -2095,7 +2086,6 @@ dl.detail--rows dd {
 	background: var(--card);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
-	box-shadow: var(--shadow-sm);
 	overflow: hidden;
 }
 
@@ -2557,7 +2547,6 @@ dialog.dialog::backdrop {
 .tabs a[aria-current="page"] {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 /* ---------- Upload ---------- */
@@ -2807,7 +2796,6 @@ dialog.dialog::backdrop {
 	border-radius: 16px;
 	background: rgb(255 255 255 / 92%);
 	border: 1px solid var(--line);
-	box-shadow: var(--shadow);
 }
 
 .plate__line {
@@ -2965,7 +2953,6 @@ dialog.dialog::backdrop {
 	border-radius: 14px;
 	background: var(--card);
 	border: 1px solid var(--line);
-	box-shadow: var(--shadow-sm);
 }
 
 .hero__art-note strong {
@@ -2987,7 +2974,6 @@ dialog.dialog::backdrop {
 	border-radius: var(--radius);
 	border: 1px solid var(--line);
 	background: var(--card);
-	box-shadow: var(--shadow-sm);
 }
 
 .product-card__mark {
@@ -3270,7 +3256,6 @@ dialog.dialog::backdrop {
 	border-radius: var(--radius);
 	border: 1px solid var(--peach);
 	background: var(--card);
-	box-shadow: var(--shadow);
 }
 
 .result-card__amount {
@@ -3365,7 +3350,6 @@ dialog.dialog::backdrop {
 	   and axe and every colour checker report those nodes as indeterminate rather than as a pass. */
 	background: var(--ink);
 	color: #f7f3ee;
-	box-shadow: var(--shadow);
 }
 
 .identity-card__top {
@@ -3389,7 +3373,7 @@ dialog.dialog::backdrop {
 .identity-card__masked {
 	font-family: var(--font-mono);
 	font-size: 1rem;
-	letter-spacing: 0.14em;
+	letter-spacing: 0.04em;
 	color: #ffd9cf;
 }
 
@@ -3601,7 +3585,6 @@ body .assistant {
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
 	background: var(--card);
-	box-shadow: var(--shadow);
 	overflow: hidden;
 }
 
@@ -6382,11 +6365,10 @@ dl.detail--stacked dd {
 	background: var(--surface);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
-	box-shadow: none;
 }
 
 .eligibility__form {
-	padding: 0 clamp(18px, 2.4vw, 28px) var(--s5);
+	padding: var(--s5) clamp(18px, 2.4vw, 28px);
 }
 
 .eligibility__form .form-section:first-child {
@@ -6399,13 +6381,6 @@ dl.detail--stacked dd {
 
 #result-panel {
 	padding: clamp(18px, 2.4vw, 24px);
-}
-
-/* Resting things never float */
-body .assistant,
-.identity-card,
-.plate__card {
-	box-shadow: none;
 }
 
 /* Hover and focus: tone, not glow */
@@ -6421,10 +6396,6 @@ textarea {
 		border-color var(--dur) var(--ease-out),
 		color var(--dur) var(--ease-out),
 		box-shadow var(--dur) var(--ease-out);
-}
-
-.btn:hover {
-	box-shadow: none;
 }
 
 .btn--ghost:hover {
@@ -6446,8 +6417,8 @@ textarea:focus-visible {
 	overflow: hidden;
 	border-radius: var(--radius);
 	background:
-		radial-gradient(90% 80% at 18% 12%, #fce6dc 0, rgb(252 230 220 / 0%) 60%),
-		radial-gradient(80% 90% at 88% 92%, #f8d3c3 0, rgb(248 211 195 / 0%) 62%),
+		radial-gradient(90% 80% at 18% 12%, #fce6dc 0, rgb(252 230 220 / 0%) 60%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		radial-gradient(80% 90% at 88% 92%, #f8d3c3 0, rgb(248 211 195 / 0%) 62%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
 		var(--paper);
 }
 
@@ -6515,4 +6486,42 @@ textarea:focus-visible {
 	textarea {
 		transition: none;
 	}
+}
+
+/* v4 critique pass: no tiny uppercase tracked labels anywhere (demo flag, identity summary,
+   repayment month), and plain lists instead of numbered circles. */
+.demo-flag,
+.identity-card__top,
+.repayment-row__month,
+.plate__badge,
+.doc-row__mark {
+	letter-spacing: normal;
+	text-transform: none;
+}
+
+.demo-flag {
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+.identity-card__top {
+	font-size: 0.8rem;
+}
+
+.repayment-row__month {
+	font-size: 0.8rem;
+}
+
+.plain-list {
+	display: grid;
+	gap: 6px;
+	margin-bottom: 0;
+	padding-left: 1.25rem;
+	color: var(--ink-2);
+	font-size: 0.92rem;
+	line-height: 1.5;
+}
+
+.plain-list li::marker {
+	color: var(--muted);
 }
