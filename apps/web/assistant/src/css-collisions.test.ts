@@ -66,3 +66,13 @@ describe("phone layout against the portal's tab bar", () => {
     expect(log).toMatch(/max-height:/);
   });
 });
+
+describe("card tables on narrow screens", () => {
+  it("wraps header cells, column and row, between words only (\"Monthl / y incom / e\" at 390px)", () => {
+    const rule = islandCss.match(/((?:\.assistant [a-z ]*th,?\s*)+)\{([^}]*)\}/g) ?? [];
+    const wordSafe = rule.filter((r) => /overflow-wrap:\s*normal/.test(r) && /word-break:\s*normal/.test(r));
+    const selectors = wordSafe.map((r) => r.split("{")[0]).join(",");
+    expect(selectors).toMatch(/\.assistant thead th/);
+    expect(selectors).toMatch(/\.assistant tbody th/);
+  });
+});

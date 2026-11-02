@@ -1271,9 +1271,11 @@
 	}
 }
 
-/* Table headers wrap between words only. `overflow-wrap: anywhere` (above) split "Requirement"
-   into "REQUIREMEN / T" in the decision card at 1280px; values may still break anywhere. */
-.assistant thead th {
+/* Table headers (column and row) wrap between words only. `overflow-wrap: anywhere` (above) split
+   "Requirement" into "REQUIREMEN / T" at 1280px and "Monthly income" into "Monthl / y incom / e" at
+   390px; values may still break anywhere. */
+.assistant thead th,
+.assistant tbody th {
 	overflow-wrap: normal;
 	word-break: normal;
 }
