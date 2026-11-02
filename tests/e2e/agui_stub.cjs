@@ -21,6 +21,9 @@ const http = require("node:http");
 const HOST = process.env.STUB_HOST || "127.0.0.1";
 const PORT = Number(process.env.STUB_PORT || 8096);
 const ANSWER_PREFIX = "Acceptance fixture response: ";
+// Recordings slow the stream down so stacked progress is visible; defaults keep tests fast.
+const STAGE_MS = Number(process.env.STUB_STAGE_MS || 120);
+const CHUNK_MS = Number(process.env.STUB_CHUNK_MS || 60);
 
 const APPLICATION = process.env.STUB_APPLICATION || "ACC-LOAP-2026-00018";
 
@@ -76,6 +79,36 @@ const DECISION_CARD = {
   missing_fields: ["monthly_income", "monthly_obligations", "credit_score"],
   flags: ["info_requested"],
 };
+
+// The rejected card the redesign screenshots use (fixture application ACC-LOAP-2026-00021).
+const REJECTED_CARD = {
+  ...DECISION_CARD,
+  application_ref: process.env.STUB_REJECTED_APPLICATION || "ACC-LOAP-2026-00021",
+  decision: "REJECTED",
+  recorded_outcome: "REJECTED",
+  lifecycle_state: "REJECTED",
+  rules: [
+    { rule_id: "FOIR_MAX_45", name: "Existing EMIs vs income (FOIR)", reason_code: "FOIR_TOO_HIGH",
+      result: "FAIL", actual: "50%", threshold: "\u2264 45%", threshold_source: "synthetic" },
+    { rule_id: "MIN_CREDIT_SCORE", name: "Credit score", reason_code: "CREDIT_SCORE_LOW",
+      result: "FAIL", actual: "612", threshold: "\u2265 650", threshold_source: "synthetic" },
+    { rule_id: "MIN_MONTHLY_INCOME", name: "Monthly income", reason_code: null,
+      result: "PASS", actual: "\u20b952,000", threshold: "\u2265 \u20b925,000", threshold_source: "synthetic" },
+  ],
+  failed_reason_codes: ["FOIR_TOO_HIGH", "CREDIT_SCORE_LOW"],
+  missing_fields: [],
+  flags: [],
+};
+
+const MARKDOWN_ANSWER =
+  "your application was **not approved** because two checks on the recorded decision did not pass.\n\n" +
+  "### What did not pass\n\n" +
+  "1. **Existing EMIs vs income:** your repayments are 50% of your income; the limit is 45%.\n" +
+  "2. **Credit score:** 612 is recorded; this product needs at least 650.\n\n" +
+  "### What you can do\n\n" +
+  "- Pay down or close one existing loan to bring EMIs under 45%.\n" +
+  "- Keep repayments on time for a few months, then check your score again.\n\n" +
+  "> A what-if never changes your application. A person makes the final decision.";
 
 const CITATIONS = [
   {
@@ -188,6 +221,32 @@ function stateFor(scenario) {
           "These passages are fixture text, not live policy.",
         citations: CITATIONS,
       };
+    case "markdown":
+      return {
+        ...base,
+        answer: ANSWER_PREFIX + MARKDOWN_ANSWER,
+        decision_card: REJECTED_CARD,
+      };
+    case "whatif":
+      return {
+        ...base,
+        intent: "what_if",
+        action: "simulate",
+        answer:
+          ANSWER_PREFIX +
+          "with a credit score of 720 the score check would pass, but the EMI check still would not, " +
+          "so the simulated outcome stays **not approved**. Your recorded decision is unchanged.",
+        decision_card: REJECTED_CARD,
+        what_if: {
+          changes: { credit_score: 720 },
+          simulated_decision: "REJECTED",
+          is_simulation: true,
+          rule_results: { MIN_CREDIT_SCORE: "PASS", FOIR_MAX_45: "FAIL", MIN_MONTHLY_INCOME: "PASS" },
+          failed_reason_codes: ["FOIR_TOO_HIGH"],
+          original_record_unchanged: true,
+          label: "Hypothetical - not your recorded decision",
+        },
+      };
     default:
       return {
         ...base,
@@ -212,6 +271,8 @@ function scenarioOf(text) {
   if (value.includes("very long")) return "longtext";
   if (value.includes("citation") || value.includes("policy source")) return "citations";
   if (value.includes("slow")) return "slow";
+  if (value.includes("what if")) return "whatif";
+  if (value.includes("why was this decision") || value.includes("markdown")) return "markdown";
   if (value.includes("missing")) return "valid";
   return "valid";
 }
@@ -262,9 +323,12 @@ async function run(res, input) {
   send({ type: "RUN_STARTED", threadId, runId });
   send({ type: "TEXT_MESSAGE_START", messageId, role: "assistant" });
 
-  for (const stage of ["authenticate", "load_evidence", "compose"]) {
+  const stages = scenario === "whatif"
+    ? ["authenticate", "load_evidence", "what_if", "compose"]
+    : ["authenticate", "load_evidence", "compose"];
+  for (const stage of stages) {
     if (!progress(stage)) return;
-    await sleep(slow ? 900 : 120);
+    await sleep(slow ? 900 : STAGE_MS);
   }
 
   if (scenario === "error") {
@@ -276,7 +340,7 @@ async function run(res, input) {
   const answer = answerText(scenario);
   for (const sentence of splitSentences(answer)) {
     if (!send({ type: "TEXT_MESSAGE_CONTENT", messageId, delta: sentence.trimEnd() + " " })) return;
-    await sleep(slow ? 500 : 60);
+    await sleep(slow ? 500 : CHUNK_MS);
   }
 
   send({ type: "STATE_SNAPSHOT", snapshot: { ...stateFor(scenario), request_id: runId } });
