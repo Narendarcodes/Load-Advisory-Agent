@@ -94,14 +94,21 @@ Paper). The licence and NOTICE ship beside them (`PAPER-SHADERS-LICENSE.txt`, `P
 
 | File (`public/js/vendor/`) | Contents | gzipped |
 | --- | --- | --- |
-| `saral-shader.js` | MeshGradient palettes (brand, approved, muted, orb) | 1.7 KB |
+| `saral-shader.js` | MeshGradient looks (v6): `wash`, `band`, `loading`, `orb`, `stream` | 1.8 KB |
 | `saral-chunk-*.js` | shared `ShaderMount` and colour helpers | 6.7 KB |
-| `saral-shader-extra.js` | GrainGradient (`calm`), PulsingBorder (`pulse`) and Paper's noise texture; loaded only where used | 22.7 KB |
+| `saral-shader-extra.js` | PulsingBorder (`ring`, `pulse`, `composer`), SmokeRing (`voice`, six states), GrainGradient (`calm`) and Paper's noise texture; loaded only where used | 24.5 KB |
 
 Source: `scripts/brand/shader_entry.mjs`, `scripts/brand/shader_extra.mjs`; build:
-`scripts/brand/build_shader.sh` (esbuild, code-split). `public/js/shader.js` (loader, 2.3 KB gzipped,
-linked from `base.html`) imports them lazily after load and idle; see `DESIGN_PRINCIPLES.md` §1
-"Shader zones (v5)" for where shaders may appear and the performance and accessibility rules.
+`scripts/brand/build_shader.sh` (esbuild, code-split). `public/js/shader.js` (loader, 3.3 KB gzipped,
+linked from `base.html`) imports them lazily after load and idle, keeps at most 2 live by on-screen
+priority, and leaves the static CSS look under reduced motion, Save-Data or no WebGL. Total ~36 KB
+gzipped. See `DESIGN_PRINCIPLES.md` §1 "Shader placement (v6)" for where shaders may appear (never under
+an illustration; wash, bands, rings; the assistant exception; the voice orb; the loading card).
+
+v6 placement changed no illustration files: the scenes are the same Open Peeps cast, now on the plain
+page instead of over a shader. The voice orb and the loading band are shaders only (no image assets).
+The fixture-only fake LiveKit module used for captures (`tests/e2e/fake_livekit.mjs`) is test code and
+never ships to the portal.
 
 ## Brand assets
 Original artwork for this project; see `docs/BRAND.md` and `scripts/brand/`.

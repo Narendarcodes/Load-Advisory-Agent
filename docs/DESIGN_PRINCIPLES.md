@@ -78,6 +78,49 @@ Rules:
 - Chromium under Xvfb (software GL, SwiftShader via ANGLE) renders the shaders without extra flags; the
   captures and `SHADERS.mp4` show the live canvases, not the fallback.
 
+### Shader placement (v6): flat surfaces, never under illustrations
+v6 supersedes the v5 zone table above for placement (palettes, loader, fallbacks and the plate rule still
+hold). Shaders behind illustrations fought the ink line and read as a coloured blob, so the art is back on
+the plain page and the shaders move to flat surfaces and to the assistant.
+
+**Placement rule: never under an illustration.** No shader sits behind any illustration (sign-in,
+dashboard, products, eligibility, result art), and still never behind form fields, tables, body text, the
+sidebar or the tab bar.
+
+| Where | Shader (Paper Shaders) | Look |
+| --- | --- | --- |
+| Page wash: the content area of every app page (not under the sidebar) | MeshGradient `wash` | near-cream `#F7F3EE` / blush `#FCE9DE` / lilac-grey `#F6EEF1`, speed 0.1, rendered at about 0.22 MP; quiet enough that body text is measured against cream |
+| Top band and footer band | MeshGradient `band` | 3 px (top) and 4 px (footer) strips of peach → coral → plum, speed 0.32 |
+| Glow rings on key cards: sign-in card, dashboard next step, decision card, eligibility estimate | PulsingBorder `ring` | a thin animated edge, 4 travelling spots; tone follows the outcome on the decision card (`brand`, `approved` warm, `muted` slow for not approved / withdrawn) |
+| Decision card while checks run (submitted / checks running / with a reviewer) | GrainGradient `calm` (wave) | a slim processing band inside the card under the status sentence; the card itself stays white |
+| Loading status card (slow first reads) | MeshGradient `loading` | a band in a small floating card, see §4 |
+
+**Assistant exception.** The assistant is the one place shaders sit close to content, because there they
+show state rather than decorate: the empty-state orb (MeshGradient `orb`, masked to a soft disc over a
+static halo, no canvas blur), the thinking ring (PulsingBorder `pulse`, thinner, 4 spots), a thin shader
+shimmer on the edge of a streaming answer (MeshGradient `stream`), a PulsingBorder edge on the composer
+only while it is focused (calm) or an answer is coming (faster), and a warm hover / focus glow on the
+suggested-question chips (CSS). Answers, the trail and the composer text stay on solid surfaces.
+
+**Voice orb.** The existing LiveKit voice drawer shows a Paper Shaders SmokeRing orb with six looks:
+idle, connecting, listening, thinking, speaking and microphone off (radius, thickness, colour weight and
+speed change per state). A pure state machine (`apps/web/assistant/src/voice-orb.ts`) drives it from the
+call status, mute and LiveKit's own speaker detection (ActiveSpeakersChanged + participant audioLevel);
+the level breathes the ring a little while listening or speaking. There is no second microphone tap and
+the page records nothing. A visible state label sits under the orb, so the orb is never the only cue.
+
+**Loader budget (v6).** Still at most **2 live shaders**, now chosen among the zones on screen by
+priority (voice > thinking ring > orb / stream / loading > calm band > composer > ring > wash > band); a
+higher-priority zone takes the slot of a lower one, and a zone that scrolls away or hides is disposed and
+returns to its static look. Rendering stays capped at 1.5× device pixels (the wash renders lower).
+Reduced motion, Save-Data and no WebGL keep every static CSS look. Added JS, gzipped: loader 3.3 KB,
+mesh core 1.8 KB + shared chunk 6.7 KB, extra chunk (GrainGradient, PulsingBorder, SmokeRing, noise
+texture; only on pages that use them) 24.5 KB: ~36 KB in total, under the 40 KB budget.
+
+Spot check of rendered text contrast (v6, worst-case background pixel): 66 items at 1280 and 77 items
+at 390 over sign-in, dashboard, approved, checks running, not approved, products, help and documents;
+all AA, lowest 4.84:1 at 390. `SHADERS_V6.mp4` and the v6 shots show the live canvases.
+
 ### Colour and emphasis
 - **One coral primary action per page.** Every other action is a ghost button, a quiet button or a
   `link-quiet` text link. In-flight result states (submitted, checks running, with a reviewer) show
@@ -161,6 +204,11 @@ These go against at least one of the three skills on purpose. Keep them unless t
 - **Assistant:** a thinking scene and a plain-language activity trail ("What I checked") while an
   answer streams; markdown is formatted while streaming; errors appear inline with Retry.
 - A load failure shows what failed and a "Try again" ghost button, never a blank column.
+- **Loading status card (v6).** When a page's first reads take longer than 300 ms, a small fixed card
+  floats above the page with the shader `loading` band and one sentence ("Getting your latest
+  details…"). It overlays rather than pushes, so nothing shifts when the data lands; on phones it sits
+  above the tab bar and never covers the page title. Skeletons stay in the content areas underneath.
+  Static band under reduced motion.
 
 ## 5. Result pattern
 
@@ -197,7 +245,9 @@ button back to "Recalculate" once a result shows, so one coral action remains.
 | v2 (e8a272d) | 1 FAIL / 85 WARN | 0 findings |
 | v3 (7d1dd12) | 1 FAIL / 87 WARN | 0 findings, 0 advisories |
 | v4 after illustration + depth, before the skill pass (4ee4eee) | 3 FAIL / 96 WARN | 0 findings |
-| v4 after the skill pass (this pass) | 1 FAIL / 77 WARN | 0 findings |
+| v4 after the skill pass | 1 FAIL / 77 WARN | 0 findings |
+| v5 shaders (3ddd035) | 2 FAIL / 77 WARN | 0 findings |
+| v6 shader placement + voice orb (this pass) | 2 FAIL / 85 WARN | 0 findings (42 files, static) |
 
 v4 notes:
 - The two new FAILs were the shader-zone fallback gradients (deliberate, now marked `taste-skill-ignore`).
@@ -232,3 +282,14 @@ v5 notes (shaders):
   `★` rating glyph in `feedback.js` (pre-existing, first included now that page scripts are linted). No
   `gradient` FAIL: every v5 fallback gradient line is marked `taste-skill-ignore`.
 - axe WCAG 2.2 AA: 0 violations (0 serious/critical) on all 29 pages at 1280 and at 390.
+
+v6 notes (shader placement, assistant polish, voice orb, loading card):
+- taste-skill lint `--app`, same 72 files as v5: 2 FAIL / 85 WARN. FAILs unchanged in kind: the reserved
+  `example.com` test address and the `★` rating glyph in `feedback.js` (both pre-existing). Two `gradient`
+  FAILs on the orb canvas `mask-image` lines were alpha masks, not fills, and are now marked
+  `taste-skill-ignore`; every v6 fallback gradient already was. WARNs rose 77 → 85, mostly `shadow`
+  (45: the floating loading card, the lifted orb mark and the overlay drawer are real overlays) and
+  `mono` (30, the Sora-backed token name).
+- impeccable detect (static, 42 files): 0 findings.
+- axe WCAG 2.2 AA, partial in v6 (memory limits): 0 violations on the slices run, 26 of 29 pages at 390
+  (routes 14–16 and 21–22 not re-run) and 13 of 29 at 1280; v5 had 0 violations on all 29 at both widths.
