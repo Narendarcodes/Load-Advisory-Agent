@@ -60,9 +60,8 @@
 		var tone = { ok: "badge--ok", bad: "badge--bad", warn: "badge--warn", info: "badge--info" }[status.tone] || "badge--neutral";
 		line.innerHTML =
 			"<span>" + Portal.esc(status.text) + "</span> " +
-			// Separator and outcome wrap together, so a narrow line never ends on a lone "·".
-			'<span class="status-line__outcome"><span aria-hidden="true">·</span> ' +
-			'<span class="badge ' + tone + '">' + Portal.esc(status.outcome) + "</span></span>";
+			// No "·" separator: the flex gap separates them, so a wrapped line never starts or ends on a lone dot.
+			'<span class="badge ' + tone + '">' + Portal.esc(status.outcome) + "</span>";
 	}
 
 	function renderActions(application) {

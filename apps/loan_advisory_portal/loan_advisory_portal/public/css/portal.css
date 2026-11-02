@@ -5183,12 +5183,6 @@ dl.detail--rows div {
 	font-size: 0.78rem;
 }
 
-.status-line__outcome {
-	display: inline-flex;
-	align-items: center;
-	gap: 10px;
-}
-
 /* Dated history, current state marked */
 .history-list {
 	position: relative;
@@ -5714,4 +5708,17 @@ body .msg.bot {
 	font-size: 0.86rem;
 	letter-spacing: 0;
 	text-transform: none;
+}
+
+/* v2 (impeccable straggler): no single-word last lines in body copy; balanced headings. */
+p,
+li,
+dd {
+	text-wrap: pretty;
+}
+
+h1,
+h2,
+h3 {
+	text-wrap: balance;
 }
