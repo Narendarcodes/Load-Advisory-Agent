@@ -282,6 +282,13 @@
 		panel.removeAttribute("aria-busy");
 	}
 
+	/* Once a result shows, its "Start a formal application" is the page's one coral action, so the
+	   form button steps back to a quiet Recalculate. Clear brings the original button back. */
+	function setRecalculate(on) {
+		submit.classList.toggle("btn--ghost", on);
+		submit.textContent = on ? "Recalculate" : "Estimate eligibility";
+	}
+
 	function renderUnavailable() {
 		done();
 		panel.innerHTML =
@@ -324,7 +331,7 @@
 	function renderDemoNote() {
 		if (!demo) return "";
 		return (
-			'<p class="result-note result-note--warn"><strong>Demo estimate.</strong> ' +
+			'<p class="demo-note"><strong>Demo estimate.</strong> ' +
 			"This figure comes from a development fixture using the values above. It is not a real eligibility decision, no credit bureau was contacted and no loan is promised. Production borrowers see the unavailable state instead.</p>"
 		);
 	}
@@ -381,6 +388,7 @@
 		if (timer) window.clearTimeout(timer);
 		timer = window.setTimeout(function () {
 			Portal.busy(submit, false);
+			setRecalculate(true);
 			if (!demo) {
 				renderUnavailable();
 				return;
@@ -446,6 +454,7 @@
 			updateEmploymentCopy();
 			clearStale();
 			hasResult = false;
+			setRecalculate(false);
 			panel.innerHTML = idleHtml();
 			prefill();
 		}, 0);

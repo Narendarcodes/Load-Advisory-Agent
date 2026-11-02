@@ -6105,3 +6105,65 @@ h3 {
 		display: none;
 	}
 }
+
+/* v3 eligibility: the form reads as one column of hairline-separated sections, like the result
+   beside it. No boxed cards, no resting shadow, no step numbering; the coral Estimate button stays
+   the page's one primary action. */
+.eligibility__form {
+	gap: 0;
+}
+
+.form-section {
+	padding: var(--s5) 0;
+	border: 0;
+	border-top: 1px solid var(--line);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.form-section:first-child {
+	padding-top: 0;
+	border-top: 0;
+}
+
+.form-section__head {
+	display: block;
+	margin-bottom: var(--s3);
+}
+
+.form-section__head h2 {
+	margin: 0;
+	font: 600 1.05rem/1.35 var(--font-display);
+}
+
+.eligibility .form-actions {
+	margin-top: 0;
+	padding-top: var(--s4);
+	border-top: 1px solid var(--line);
+}
+
+.eligibility .choice {
+	border-color: var(--line);
+	background: transparent;
+}
+
+.eligibility .choice:has(input:checked) {
+	border-color: var(--deep);
+	background: var(--paper-2);
+}
+
+/* The demo disclosure stays, as one quiet line inside the flow: no tint, no box. */
+.demo-note {
+	margin: 0;
+	padding: var(--s3) 0;
+	border-bottom: 1px solid var(--line);
+	color: var(--muted);
+	font-size: 0.82rem;
+	line-height: 1.5;
+}
+
+.demo-note strong {
+	color: var(--ink-2);
+	font-weight: 600;
+}
