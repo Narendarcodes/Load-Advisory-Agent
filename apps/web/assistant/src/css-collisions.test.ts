@@ -76,3 +76,11 @@ describe("card tables on narrow screens", () => {
     expect(selectors).toMatch(/\.assistant tbody th/);
   });
 });
+
+describe("decision card on phones", () => {
+  it("fits the four-column rules table inside the answer bubble (no sideways scroll hiding 'Not met')", () => {
+    const phone = mediaBlocks(islandCss, "max-width: 767px").join("");
+    expect(phone).toMatch(/\.msg__card thead th\s*\{[^}]*letter-spacing:\s*0/);
+    expect(phone).toMatch(/\.msg__card > \.card-block\s*\{[^}]*padding-left:\s*10px/);
+  });
+});

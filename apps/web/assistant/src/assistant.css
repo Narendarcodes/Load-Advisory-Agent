@@ -1326,6 +1326,26 @@
 	}
 }
 
+/* Phones: the decision card's rules table needed ~296px but had ~256px inside the answer bubble
+   and the card, so its Result column ('Not met') sat behind a sideways scroll (D-R15). Tighter
+   nesting and unspaced column headers ('REQUIREMENT' was 102px) let it fit. */
+@media (max-width: 767px) {
+	.assistant .msg.bot .msg__body {
+		padding-left: 12px;
+		padding-right: 12px;
+	}
+
+	.assistant .msg__card > .card-block {
+		padding-left: 10px;
+		padding-right: 10px;
+	}
+
+	.assistant .msg__card thead th {
+		letter-spacing: 0;
+		font-size: 0.68rem;
+	}
+}
+
 /* Below the desktop layout the log grew with every message and the page scrolled instead, so the
    island's scroll-to-newest did nothing: a new answer, an error and its Retry, and the composer
    ended up below the fold. Bound the log so it scrolls itself and the composer stays reachable. */
