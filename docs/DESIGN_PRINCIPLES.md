@@ -139,7 +139,7 @@ v3 notes:
 - The one FAIL is the reserved `example.com` test address (deviation above).
 - WARNs: 30 `mono` (the Sora-backed token name), 47 `shadow` (all are `none` resets, hover/focus
   rings, overlays such as the dialog, drawer and sheet, or shadows overridden later; two more than v2), 7 `glass`
-  (sticky bars and overlays), 1 `eyebrow` (a legacy selector no template uses), 1 `numbering` (`padStart` for
+  (the sticky top and tab bars, the dialog backdrop, and `none` resets), 1 `eyebrow` (a legacy selector no template uses), 1 `numbering` (`padStart` for
   date formatting in a test), 1 `em-dash`.
 - Live impeccable scan (products, dashboard, eligibility, info-needed and not-approved results):
   `cream-palette` on every page (accepted deviation) and `first-viewport-column-overflow` on the
