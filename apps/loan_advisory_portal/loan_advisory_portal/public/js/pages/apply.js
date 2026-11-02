@@ -251,8 +251,19 @@
 		submitButton.classList.toggle("hidden", current !== STEPS.length - 1);
 		var progressText = document.getElementById("wizard-progress-text");
 		var progressFill = document.getElementById("wizard-progress-fill");
+		// Three borrower-facing stages over the same five panels: About you (about, work, money),
+		// Loan details (loan, review), Documents (after the draft exists, on the documents page).
+		var stage = current <= 2 ? 0 : 1;
+		var STAGE_LABELS = ["About you", "Loan details", "Documents"];
+		document.querySelectorAll("#stage-stepper li[data-stage]").forEach(function (item) {
+			var index = Number(item.dataset.stage);
+			item.removeAttribute("aria-current");
+			item.dataset.state = index < stage ? "done" : index === stage ? "current" : "todo";
+			if (index === stage) item.setAttribute("aria-current", "step");
+		});
 		if (progressText) {
-			progressText.textContent = "Step " + (current + 1) + " of " + STEPS.length + ": " + STEP_LABELS[current];
+			progressText.textContent =
+				"Stage " + (stage + 1) + " of 3: " + STAGE_LABELS[stage] + (STEP_LABELS[current] !== STAGE_LABELS[stage] ? " · " + STEP_LABELS[current] : "");
 		}
 		if (progressFill) progressFill.style.width = ((current + 1) / STEPS.length) * 100 + "%";
 	}

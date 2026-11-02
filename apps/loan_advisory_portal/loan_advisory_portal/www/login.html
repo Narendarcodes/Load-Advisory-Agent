@@ -3,39 +3,12 @@
 {% block body_class %}public-shell auth-shell{% endblock %}
 {% block page_content %}
 <div class="auth">
-	<section class="auth__intro" aria-labelledby="auth-title">
-		<p class="eyebrow">Borrow with clarity</p>
-		<h1 id="auth-title">Your application, in one place.</h1>
-		<p class="lede">
-			Pick up where you left off, follow each step, and read the reasoning behind a decision in
-			plain language.
-		</p>
-		<ul class="auth__points">
-			<li>
-				<span class="auth__mark" aria-hidden="true">01</span>
-				<span><strong>Indicative checks only</strong> — checking eligibility does not affect your credit score.</span>
-			</li>
-			<li>
-				<span class="auth__mark" aria-hidden="true">02</span>
-				<span><strong>Your documents stay private</strong> — files are served only to you and the review team.</span>
-			</li>
-			<li>
-				<span class="auth__mark" aria-hidden="true">03</span>
-				<span><strong>Reasons, not just results</strong> — every recorded decision explains what mattered.</span>
-			</li>
-		</ul>
-		<p class="small muted">
-			New here? Accounts are created by invitation from your loan advisor.
-			<a href="/borrower/products">Read about the loan product</a> or
-			<a href="/borrower/help">see how it works</a>.
-		</p>
-	</section>
-
 	<section class="card auth__card" aria-labelledby="signin-heading">
 		<div class="card__head">
 			<div>
-				<p class="eyebrow">Welcome back</p>
-				<h2 id="signin-heading">Sign in</h2>
+				<img class="auth__logo" src="/assets/loan_advisory_portal/brand/saral-mark.svg" alt="" width="40" height="40">
+				<h1 id="signin-heading">Welcome back</h1>
+				<p class="small muted">Sign in to see your application and its decision.</p>
 			</div>
 		</div>
 
@@ -72,6 +45,35 @@
 		<p class="tiny muted auth__demo">Preview mode is on. This site uses synthetic accounts and data.</p>
 		{% endif %}
 	</section>
+	<section class="auth__intro" aria-labelledby="auth-title">
+		<img class="auth__art" src="/assets/loan_advisory_portal/illustrations/login.svg" alt="" width="320" height="240">
+		<p class="eyebrow">Borrow with clarity</p>
+		<h2 id="auth-title" class="auth__title">Your loan, made simple.</h2>
+		<p class="lede">
+			Pick up where you left off, follow each step, and read the reasoning behind a decision in
+			plain language.
+		</p>
+		<ul class="auth__points">
+			<li>
+				<span class="auth__mark" aria-hidden="true">01</span>
+				<span><strong>Indicative checks only</strong> — checking eligibility does not affect your credit score.</span>
+			</li>
+			<li>
+				<span class="auth__mark" aria-hidden="true">02</span>
+				<span><strong>Your documents stay private</strong> — files are served only to you and the review team.</span>
+			</li>
+			<li>
+				<span class="auth__mark" aria-hidden="true">03</span>
+				<span><strong>Reasons, not just results</strong> — every recorded decision explains what mattered.</span>
+			</li>
+		</ul>
+		<p class="small muted">
+			New here? Accounts are created by invitation from your loan advisor.
+			<a href="/borrower/products">Read about the loan product</a> or
+			<a href="/borrower/help">see how it works</a>.
+		</p>
+	</section>
+
 </div>
 
 <script src="/assets/loan_advisory_portal/js/pages/login.js" defer></script>

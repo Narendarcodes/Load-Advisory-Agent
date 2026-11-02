@@ -252,7 +252,25 @@
 				"The application was not approved, but no decision record is attached. Contact your loan advisor for the details.",
 			WITHDRAWN: "No decision was made because this application was withdrawn.",
 		};
-		return '<p class="muted small">' + Portal.esc(copy[lifecycle] || "No assessment has been recorded for this application.") + "</p>";
+		var art = {
+			SUBMITTED: "submitted",
+			UNDER_REVIEW: "processing",
+			MANUAL_REVIEW: "processing",
+			INFO_REQUESTED: "missing-info",
+		}[lifecycle] || "assessment-pending";
+		return (
+			'<div class="empty empty--compact decision-pending">' +
+			'<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/' + art + '.svg" alt="" width="180" height="135">' +
+			"<h3>Assessment not yet available</h3>" +
+			'<p class="small muted">' + Portal.esc(copy[lifecycle] || "No assessment has been recorded for this application.") + "</p>" +
+			"</div>"
+		);
+	}
+
+	function outcomeHeadline(decision) {
+		if (decision.decision === "APPROVED") return "Your application was approved";
+		if (decision.decision === "REJECTED") return "Your application was not approved";
+		return "No outcome has been recorded yet";
 	}
 
 	function decisionBadge(decision) {
@@ -275,7 +293,13 @@
 		}
 
 		var parts = [];
-		parts.push('<div class="decision-intro">' + decisionBadge(decision) + "</div>");
+		parts.push(
+			'<div class="decision-intro decision-outcome">' +
+				'<img class="decision-outcome__art" src="/assets/loan_advisory_portal/illustrations/decision.svg" alt="" width="120" height="90">' +
+				'<div><p class="decision-outcome__title">' + Portal.esc(outcomeHeadline(decision)) + "</p>" +
+				decisionBadge(decision) +
+				"</div></div>"
+		);
 
 		if (decision.provider_error) {
 			parts.push(
@@ -301,7 +325,7 @@
 		var reasons = decision.reasons || [];
 		if (reasons.length) {
 			parts.push(
-				'<div class="mt"><h3>What affected this outcome</h3><ul class="decision-reasons mt">' +
+				'<div class="mt"><h3>Why</h3><ul class="decision-reasons mt">' +
 					reasons
 						.map(function (reason) {
 							return "<li>" + Portal.esc(reason.text || reason.code) + "</li>";
@@ -330,6 +354,13 @@
 				'<p class="tiny muted mt">This was a what-if estimate, not a decision on your application.</p>'
 			);
 		}
+
+		parts.push(
+			'<div class="decision-next mt"><h3>What you can do next</h3><div class="form-actions">' +
+				'<a class="btn btn--sm" href="/borrower/assistant?application=' + encodeURIComponent(application.name) + '">Ask the assistant about this</a>' +
+				'<a class="btn btn--ghost btn--sm" href="/borrower/feedback?application=' + encodeURIComponent(application.name) + '">Talk to a person</a>' +
+				"</div></div>"
+		);
 
 		var meta = [];
 		if (decision.evaluated_at) meta.push("Assessed " + Portal.esc(Portal.date(decision.evaluated_at)));

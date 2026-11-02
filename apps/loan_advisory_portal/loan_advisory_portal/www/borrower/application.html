@@ -33,6 +33,17 @@
 
 <div class="application-grid mt">
 	<div class="stack">
+		<section class="card" aria-labelledby="decision-heading">
+			<div class="card__head">
+				<div>
+					<h2 id="decision-heading">Your decision</h2>
+					<p class="tiny muted">Only checks recorded on this application appear here.</p>
+				</div>
+			</div>
+			<div id="decision" aria-live="polite">
+				<p class="muted small">Loading…</p>
+			</div>
+		</section>
 		<section class="card" aria-labelledby="status-heading">
 			<div class="card__head">
 				<h2 id="status-heading">Status</h2>
@@ -49,17 +60,6 @@
 			</div>
 		</section>
 
-		<section class="card" aria-labelledby="decision-heading">
-			<div class="card__head">
-				<div>
-					<h2 id="decision-heading">Decision and reasoning</h2>
-					<p class="tiny muted">Only checks recorded on this application appear here.</p>
-				</div>
-			</div>
-			<div id="decision" aria-live="polite">
-				<p class="muted small">Loading…</p>
-			</div>
-		</section>
 
 		<section id="info-request" class="card hidden" aria-labelledby="info-heading">
 			<div class="card__head">

@@ -13,6 +13,11 @@
 </div>
 
 {% if created %}
+<ol class="stage-stepper" aria-label="Application stages">
+	<li data-state="done"><span class="stage-stepper__num" aria-hidden="true">✓</span><span class="stage-stepper__label">About you<span class="sr-only"> (done)</span></span></li>
+	<li data-state="done"><span class="stage-stepper__num" aria-hidden="true">✓</span><span class="stage-stepper__label">Loan details<span class="sr-only"> (done)</span></span></li>
+	<li data-state="current" aria-current="step"><span class="stage-stepper__num" aria-hidden="true">3</span><span class="stage-stepper__label">Documents</span></li>
+</ol>
 <div class="alert alert--success" role="status">
 	<strong>Draft application created</strong>
 	<span>Add at least one document here, then open the application page to submit it for review.</span>
@@ -39,7 +44,7 @@
 
 		<div class="card hidden" id="no-application">
 			<div class="empty">
-				<span class="empty__mark" aria-hidden="true">DO</span>
+				<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-documents.svg" alt="" width="180" height="135">
 				<h2 id="no-app-title">Choose an application</h2>
 				<p id="no-app-text">Documents belong to a single application. Open one to add or review its documents.</p>
 				<div class="stack mt" id="application-choices"></div>
@@ -67,7 +72,7 @@
 					<input id="doc-file" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
 				</label>
 				<p class="upload-status" id="upload-status" role="status" aria-live="polite">No file chosen</p>
-				<p class="small muted">Up to 12 documents per application. Files are stored privately and are not used to train any model.</p>
+				<p class="small muted">Up to 12 documents per application. Files are stored privately and are never used to train AI.</p>
 			</form>
 		</section>
 
@@ -80,7 +85,8 @@
 				<strong>Documents are locked</strong>
 				<span>This application has been submitted, so documents cannot be added or removed now.</span>
 			</div>
-			<div class="empty hidden" id="doc-empty">
+			<div class="empty empty--compact hidden" id="doc-empty">
+				<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-documents.svg" alt="" width="180" height="135">
 				<p class="muted">No documents attached yet. Choose a document type and upload a file above.</p>
 			</div>
 			<ul class="doc-list" id="doc-list"></ul>
