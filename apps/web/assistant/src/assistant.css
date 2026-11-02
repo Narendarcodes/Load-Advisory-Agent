@@ -594,6 +594,16 @@
 
 .assistant .whatif-form .field {
 	margin: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Labels take the spare height in their row, so the inputs line up even when one label
+   ("Months in current employment") wraps to two lines at 1280 px. */
+.assistant .whatif-form .field > label {
+	flex: 1 0 auto;
+	display: flex;
+	align-items: flex-end;
 }
 
 .assistant .whatif-form .hint {
@@ -957,7 +967,7 @@
 	height: 7px;
 	border-radius: 50%;
 	background: var(--muted);
-	animation: saral-bounce 1.2s infinite ease-in-out;
+	animation: saral-typing 1.2s infinite cubic-bezier(0.22, 1, 0.36, 1); /* fade only, no bounce */
 }
 
 .assistant .typing span:nth-child(2) {
@@ -975,15 +985,13 @@
 	}
 }
 
-@keyframes saral-bounce {
+@keyframes saral-typing {
 	0%,
 	80%,
 	100% {
-		transform: translateY(0);
-		opacity: 0.5;
+		opacity: 0.35;
 	}
 	40% {
-		transform: translateY(-4px);
 		opacity: 1;
 	}
 }
@@ -1768,12 +1776,17 @@
 	max-width: 100%;
 }
 
+.assistant .source-chip {
+	min-width: 0;
+	max-width: 100%;
+}
+
 .assistant .source-chips li:has(details[open]) {
 	flex-basis: 100%;
 }
 
 .assistant .source-chip summary {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
 	gap: 8px;
 	max-width: 100%;
@@ -1801,6 +1814,7 @@
 }
 
 .assistant .source-chip__title {
+	min-width: 0; /* a flex item: without this the nowrap title set the chip's width and the 390 page scrolled sideways */
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -2084,4 +2098,15 @@
 		gap: 22px;
 		padding-top: 16px;
 	}
+}
+
+/* v2 (390 px): a card in the answer is a grid item, so its auto minimum width followed the longest
+   source chip title ("Fixed obligation to income ratio (synthetic policy excerpt)") and pushed the
+   phone page 58 px sideways; the tools sheet and composer then shifted with it. */
+.assistant .msg__cards {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.assistant .msg__card {
+	min-width: 0;
 }
