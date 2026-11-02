@@ -5,7 +5,7 @@
 	<div>
 		<p class="eyebrow">Documents</p>
 		<h1>Add the documents for your application</h1>
-		<p>Upload private copies of the documents you are asked for. A person reviews them. Keep any originals until your application is complete.</p>
+		<p>Upload private copies of the documents you are asked for. Optional local OCR can suggest fields for you to review; a person reviews the submitted documents. Keep any originals until your application is complete.</p>
 	</div>
 	<div class="page-head__actions">
 		<a class="btn btn--quiet" href="/borrower">Back to applications</a>
@@ -68,6 +68,7 @@
 				</label>
 				<p class="upload-status" id="upload-status" role="status" aria-live="polite">No file chosen</p>
 				<p class="small muted">Up to 12 documents per application. Files are stored privately and are not used to train any model.</p>
+				<p class="small muted" id="ocr-privacy-note">Read fields runs on this server. Check every suggestion before confirming; it will not update your application automatically, and the original is not sent to an LLM.</p>
 			</form>
 		</section>
 
@@ -88,11 +89,11 @@
 
 		<section class="card hidden" id="preview-card" aria-labelledby="preview-heading">
 			<div class="card__head">
-				<h2 id="preview-heading">Document preview</h2>
+				<h2 id="preview-heading">Document review</h2>
 				<button type="button" class="btn btn--quiet btn--sm hidden" id="preview-close">Close preview</button>
 			</div>
-			<div id="preview-body">
-				<p class="small muted">Choose Preview on a document to see what a checking view would show.</p>
+			<div id="preview-body" aria-live="polite">
+				<p class="small muted">Choose Preview for a person-review note, or Read fields to run local OCR on an attached document.</p>
 			</div>
 		</section>
 	</div>
