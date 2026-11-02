@@ -38,6 +38,23 @@ export function formattedAnswer(streamed: string, finalAnswer: unknown): string 
   return words(finalAnswer) === words(streamed) ? finalAnswer : streamed;
 }
 
+/**
+ * The streamed answer arrives with its line breaks collapsed (the server guards it sentence by
+ * sentence), so while it is still streaming its markdown showed as raw "###" and run-on lists until
+ * the final answer replaced it. Put headings, list items and quotes back on their own lines.
+ * Whitespace only: the words are exactly what was streamed. Text that already has line breaks is
+ * returned unchanged.
+ */
+export function liveText(streamed: string): string {
+  if (streamed.includes("\n")) return streamed;
+  return streamed
+    .replace(/\s+(#{1,6} )/g, "\n\n$1")
+    .replace(/(\n#{1,6} [^\n]*?)\s+(?=(?:\d+\.|-|>) )/g, "$1\n")
+    .replace(/([.!?:;)*])\s+(>\s)/g, "$1\n\n$2")
+    .replace(/([.!?:;)*])\s+(\d+\. |- )/g, "$1\n$2")
+    .trim();
+}
+
 /** What to render for one answer, given the meta stored with it. */
 export function displayText(meta: TurnMeta | undefined, streamed: string): string {
   return meta?.text ? formattedAnswer(streamed, meta.text) : streamed;

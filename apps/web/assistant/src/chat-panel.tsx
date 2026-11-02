@@ -13,6 +13,7 @@ import {
   displayText,
   followUps,
   formattedAnswer,
+  liveText,
   keptState,
   loadTurns,
   metaFor,
@@ -320,7 +321,7 @@ export function ChatPanel({
           <Avatar />
           <div className="msg__body">
             <LiveSteps stages={runStages} />
-            {text ? <Markdown text={text} /> : <Typing />}
+            {text ? <Markdown text={liveText(text)} /> : <Typing />}
           </div>
         </div>
       );

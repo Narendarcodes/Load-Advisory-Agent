@@ -36673,32 +36673,35 @@ function vN(e) {
 function yN(e, t) {
 	return typeof t != "string" || !t.trim() || t.length > _N ? e : vN(t) === vN(e) ? t : e;
 }
-function bN(e, t) {
+function bN(e) {
+	return e.includes("\n") ? e : e.replace(/\s+(#{1,6} )/g, "\n\n$1").replace(/(\n#{1,6} [^\n]*?)\s+(?=(?:\d+\.|-|>) )/g, "$1\n").replace(/([.!?:;)*])\s+(>\s)/g, "$1\n\n$2").replace(/([.!?:;)*])\s+(\d+\. |- )/g, "$1\n$2").trim();
+}
+function xN(e, t) {
 	return e?.text ? yN(t, e.text) : t;
 }
-function xN(e) {
+function SN(e) {
 	return e.replace(/\s+/g, " ").trim().slice(0, gN);
 }
-function SN(e, t) {
+function CN(e, t) {
 	return typeof t != "string" || !PM(t) || e.includes(t) ? [...e] : [...e, t];
 }
-function CN(e) {
+function wN(e) {
 	let t = {};
 	return e.decision_card && (t.decision_card = e.decision_card), e.what_if && (t.what_if = e.what_if), e.missing_information?.length && (t.missing_information = e.missing_information), e.handoff_ref && (t.handoff_ref = e.handoff_ref), e.citations?.length && (t.citations = e.citations), e.improvement_plan?.length && (t.improvement_plan = e.improvement_plan), e.abstained && (t.abstained = !0), Object.keys(t).length ? t : void 0;
 }
-function wN() {
+function TN() {
 	try {
 		return window.sessionStorage;
 	} catch {
 		return null;
 	}
 }
-function TN(e, t, n) {
+function EN(e, t, n) {
 	return `loan-advisory:turns:${e}:${t}:${n}`;
 }
-function EN(e) {
+function DN(e) {
 	if (!e) return [];
-	let t = wN()?.getItem(e);
+	let t = TN()?.getItem(e);
 	if (!t) return [];
 	try {
 		let e = JSON.parse(t);
@@ -36706,7 +36709,7 @@ function EN(e) {
 			if (!e || typeof e != "object") return [];
 			let t = e;
 			if (typeof t.answer != "string") return [];
-			let n = Array.isArray(t.stages) ? t.stages.reduce(SN, []) : [], r = t.state ? CN(wM(t.state)) : void 0, i = typeof t.text == "string" && t.text.length <= _N ? t.text : void 0;
+			let n = Array.isArray(t.stages) ? t.stages.reduce(CN, []) : [], r = t.state ? wN(wM(t.state)) : void 0, i = typeof t.text == "string" && t.text.length <= _N ? t.text : void 0;
 			return [{
 				answer: t.answer.slice(0, gN),
 				stages: n,
@@ -36718,44 +36721,44 @@ function EN(e) {
 		return [];
 	}
 }
-function DN(e, t) {
+function ON(e, t) {
 	if (e) try {
-		wN()?.setItem(e, JSON.stringify(t.slice(-40)));
+		TN()?.setItem(e, JSON.stringify(t.slice(-40)));
 	} catch {}
 }
-function ON(e, t, n) {
-	let r = xN(n);
+function kN(e, t, n) {
+	let r = SN(n);
 	if (!r) return;
 	let i = e[t];
 	return i && i.answer === r ? i : e.find((e) => e.answer === r);
 }
-function kN(e) {
+function AN(e) {
 	let t = [], n = e?.decision_card, r = n?.rules.some((e) => e.result === "FAIL");
 	return e?.what_if && t.push("How is this different from my recorded decision?"), (r || n?.recorded_outcome === "REJECTED") && t.push("What can I do to improve before reapplying?"), e?.missing_information?.length && t.push("How do I provide the missing information?"), t.length || t.push("Why was this decision made?"), t.push("How do I talk to a person about this?"), Array.from(new Set(t)).slice(0, 3);
 }
 // src/chat-panel.tsx
-var AN = [
+var jN = [
 	"Why was this decision made?",
 	"What can I do to improve before reapplying?",
 	"What if my credit score was 720?"
-], jN = "Understand your loan decision. A person decides.", MN = "/assets/loan_advisory_portal/illustrations/assistant.svg";
-function NN(e) {
+], MN = "Understand your loan decision. A person decides.", NN = "/assets/loan_advisory_portal/illustrations/assistant.svg";
+function PN(e) {
 	let t = e.content;
 	return typeof t == "string" ? t : Array.isArray(t) ? t.map((e) => e && typeof e == "object" && "text" in e ? String(e.text ?? "") : "").join("") : "";
 }
-function PN(e) {
+function FN(e) {
 	return /401|sign in|session expired|invalid session|malformed session/i.test(e);
 }
-function FN(e) {
+function IN(e) {
 	return /403|another application|another account|does not match the signed-in session/i.test(e);
 }
-function IN(e) {
-	return PN(e) ? "Your session is no longer valid. Sign in again to continue." : FN(e) ? "That conversation can't be continued here. A new one has been started — please ask again." : /409|select an application/i.test(e) ? "Choose an application before asking about it." : /503|busy|unavailable/i.test(e) ? "Saral is busy or unavailable right now. Wait a moment and try again." : "Something went wrong and your question was not answered. Please try again.";
-}
 function LN(e) {
+	return FN(e) ? "Your session is no longer valid. Sign in again to continue." : IN(e) ? "That conversation can't be continued here. A new one has been started — please ask again." : /409|select an application/i.test(e) ? "Choose an application before asking about it." : /503|busy|unavailable/i.test(e) ? "Saral is busy or unavailable right now. Wait a moment and try again." : "Something went wrong and your question was not answered. Please try again.";
+}
+function RN(e) {
 	return e.filter((e) => e.role === "assistant").length;
 }
-function RN(e, t) {
+function zN(e, t) {
 	if (!e) return [];
 	let n = rN(e, t);
 	return e.improvement_plan?.length && n.push({
@@ -36763,7 +36766,7 @@ function RN(e, t) {
 		plan: e.improvement_plan
 	}), n;
 }
-function zN() {
+function BN() {
 	return /* @__PURE__ */ (0, R.jsx)("span", {
 		className: "msg__avatar",
 		"aria-hidden": "true",
@@ -36788,7 +36791,7 @@ function zN() {
 		})
 	});
 }
-function BN({ stages: e }) {
+function VN({ stages: e }) {
 	return /* @__PURE__ */ (0, R.jsx)("ol", {
 		className: "progress",
 		role: "status",
@@ -36823,7 +36826,7 @@ function BN({ stages: e }) {
 		})
 	});
 }
-function VN({ stages: e }) {
+function HN({ stages: e }) {
 	return e.length ? /* @__PURE__ */ (0, R.jsxs)("details", {
 		className: "run-steps",
 		children: [/* @__PURE__ */ (0, R.jsxs)("summary", { children: [
@@ -36842,7 +36845,7 @@ function VN({ stages: e }) {
 		] }, e)) })]
 	}) : null;
 }
-function HN() {
+function UN() {
 	return /* @__PURE__ */ (0, R.jsxs)("span", {
 		className: "typing",
 		"aria-hidden": "true",
@@ -36853,18 +36856,18 @@ function HN() {
 		]
 	});
 }
-function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: i, onAnswered: a, onConversationReset: o, storageKey: s, csrfToken: c }) {
-	let [l, u] = (0, L.useState)(""), [d, f] = (0, L.useState)(!1), [p, m] = (0, L.useState)(null), [h, g] = (0, L.useState)([]), [_, v] = (0, L.useState)(0), [y, b] = (0, L.useState)(() => EN(s)), [x, S] = (0, L.useState)(!1), [C, w] = (0, L.useState)({}), T = (0, L.useRef)([]), E = (0, L.useRef)(null), D = (0, L.useRef)(null);
+function WN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: i, onAnswered: a, onConversationReset: o, storageKey: s, csrfToken: c }) {
+	let [l, u] = (0, L.useState)(""), [d, f] = (0, L.useState)(!1), [p, m] = (0, L.useState)(null), [h, g] = (0, L.useState)([]), [_, v] = (0, L.useState)(0), [y, b] = (0, L.useState)(() => DN(s)), [x, S] = (0, L.useState)(!1), [C, w] = (0, L.useState)({}), T = (0, L.useRef)([]), E = (0, L.useRef)(null), D = (0, L.useRef)(null);
 	(0, L.useEffect)(() => {
-		b(EN(s)), m(null), w({});
+		b(DN(s)), m(null), w({});
 	}, [s]);
-	let O = e.messages.filter((e) => e.role === "user" || e.role === "assistant"), k = `${O.map((e) => `${e.id}:${NN(e).length}`).join("|")}#${h.length}#${d}#${+!!p}`;
+	let O = e.messages.filter((e) => e.role === "user" || e.role === "assistant"), k = `${O.map((e) => `${e.id}:${PN(e).length}`).join("|")}#${h.length}#${d}#${+!!p}`;
 	(0, L.useEffect)(() => {
 		let e = E.current;
 		e && (e.scrollTop = e.scrollHeight);
 	}, [k]);
 	let A = (0, L.useCallback)((e) => {
-		let t = SN(T.current, e);
+		let t = CN(T.current, e);
 		t.length !== T.current.length && (T.current = t, g(t));
 	}, []), ee = r.progress?.stage;
 	(0, L.useEffect)(() => {
@@ -36877,16 +36880,16 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 	async function j(r, c) {
 		let l = r.trim();
 		if (!l || d || !t) return;
-		m(null), f(!0), S(!1), T.current = [], g([]), v(LN(e.messages)), c && e.addMessage({
+		m(null), f(!0), S(!1), T.current = [], g([]), v(RN(e.messages)), c && e.addMessage({
 			id: crypto.randomUUID(),
 			role: "user",
 			content: l
 		});
 		let u = !1, p = !1, h = (e) => {
 			u = !0, m({
-				text: IN(e),
+				text: LN(e),
 				question: l
-			}), PN(e) ? i("Your session is no longer valid. Sign in again to continue.") : FN(e) && o();
+			}), FN(e) ? i("Your session is no longer valid. Sign in again to continue.") : IN(e) && o();
 		};
 		try {
 			await e.runAgent({
@@ -36908,12 +36911,12 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 			f(!1), D.current?.focus();
 		}
 		if (u) return;
-		let _ = e.messages.filter((e) => e.role === "assistant"), y = _.length ? NN(_[_.length - 1]) : "";
+		let _ = e.messages.filter((e) => e.role === "assistant"), y = _.length ? PN(_[_.length - 1]) : "";
 		if (!y) return;
 		let x = p ? wM(e.state) : void 0, C = yN(y, x?.answer), w = {
-			answer: xN(y),
+			answer: SN(y),
 			stages: T.current,
-			state: x ? CN(x) : void 0,
+			state: x ? wN(x) : void 0,
 			...C === y ? {} : { text: C }
 		};
 		b((e) => {
@@ -36922,7 +36925,7 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 				answer: "",
 				stages: []
 			});
-			return t[_.length - 1] = w, DN(s, t), t;
+			return t[_.length - 1] = w, ON(s, t), t;
 		}), a(l, C);
 	}
 	function te(e) {
@@ -36950,8 +36953,8 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 		application: n,
 		busy: N,
 		onAsk: (e) => void j(e, !0)
-	}, re = LN(O), ie = d && re <= _, ae = O.length === 0 && !d, P = -1, F = O.map((e) => {
-		let t = NN(e);
+	}, re = RN(O), ie = d && re <= _, ae = O.length === 0 && !d, P = -1, F = O.map((e) => {
+		let t = PN(e);
 		if (e.role === "user") return t ? /* @__PURE__ */ (0, R.jsxs)("div", {
 			className: "msg user",
 			children: [/* @__PURE__ */ (0, R.jsx)("span", {
@@ -36963,21 +36966,21 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 		let n = P;
 		if (d && n >= _) return /* @__PURE__ */ (0, R.jsxs)("div", {
 			className: "msg bot msg--live",
-			children: [/* @__PURE__ */ (0, R.jsx)(zN, {}), /* @__PURE__ */ (0, R.jsxs)("div", {
+			children: [/* @__PURE__ */ (0, R.jsx)(BN, {}), /* @__PURE__ */ (0, R.jsxs)("div", {
 				className: "msg__body",
-				children: [/* @__PURE__ */ (0, R.jsx)(BN, { stages: h }), t ? /* @__PURE__ */ (0, R.jsx)(mN, { text: t }) : /* @__PURE__ */ (0, R.jsx)(HN, {})]
+				children: [/* @__PURE__ */ (0, R.jsx)(VN, { stages: h }), t ? /* @__PURE__ */ (0, R.jsx)(mN, { text: bN(t) }) : /* @__PURE__ */ (0, R.jsx)(UN, {})]
 			})]
 		}, e.id);
 		if (!t) return null;
-		let r = ON(y, n, t), i = RN(r?.state, ne), a = n === re - 1 && !d && !p, o = C[n];
+		let r = kN(y, n, t), i = zN(r?.state, ne), a = n === re - 1 && !d && !p, o = C[n];
 		return /* @__PURE__ */ (0, R.jsxs)("div", {
 			className: "msg bot",
-			children: [/* @__PURE__ */ (0, R.jsx)(zN, {}), /* @__PURE__ */ (0, R.jsxs)("div", {
+			children: [/* @__PURE__ */ (0, R.jsx)(BN, {}), /* @__PURE__ */ (0, R.jsxs)("div", {
 				className: "msg__body",
 				children: [
-					/* @__PURE__ */ (0, R.jsx)(VN, { stages: r?.stages ?? [] }),
+					/* @__PURE__ */ (0, R.jsx)(HN, { stages: r?.stages ?? [] }),
 					/* @__PURE__ */ (0, R.jsx)(mN, {
-						text: bN(r, t),
+						text: xN(r, t),
 						citations: r?.state?.citations ?? []
 					}),
 					i.length ? /* @__PURE__ */ (0, R.jsx)("div", {
@@ -37024,7 +37027,7 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					a ? /* @__PURE__ */ (0, R.jsx)("div", {
 						className: "followups",
 						"aria-label": "Suggested follow-ups",
-						children: kN(r?.state).map((e) => /* @__PURE__ */ (0, R.jsx)("button", {
+						children: AN(r?.state).map((e) => /* @__PURE__ */ (0, R.jsx)("button", {
 							type: "button",
 							className: "chip",
 							disabled: N,
@@ -37067,7 +37070,7 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 						children: [
 							/* @__PURE__ */ (0, R.jsx)("img", {
 								className: "chat-empty__art",
-								src: MN,
+								src: NN,
 								alt: "",
 								width: 160,
 								height: 120
@@ -37076,7 +37079,7 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 							/* @__PURE__ */ (0, R.jsx)("p", { children: "Ask why, what to fix, or try a what-if." }),
 							/* @__PURE__ */ (0, R.jsx)("div", {
 								className: "chips",
-								children: AN.map((e) => /* @__PURE__ */ (0, R.jsx)("button", {
+								children: jN.map((e) => /* @__PURE__ */ (0, R.jsx)("button", {
 									type: "button",
 									className: "chip",
 									disabled: N,
@@ -37088,15 +37091,15 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					}) : F,
 					ie ? /* @__PURE__ */ (0, R.jsxs)("div", {
 						className: "msg bot msg--live",
-						children: [/* @__PURE__ */ (0, R.jsx)(zN, {}), /* @__PURE__ */ (0, R.jsxs)("div", {
+						children: [/* @__PURE__ */ (0, R.jsx)(BN, {}), /* @__PURE__ */ (0, R.jsxs)("div", {
 							className: "msg__body",
-							children: [/* @__PURE__ */ (0, R.jsx)(BN, { stages: h }), /* @__PURE__ */ (0, R.jsx)(HN, {})]
+							children: [/* @__PURE__ */ (0, R.jsx)(VN, { stages: h }), /* @__PURE__ */ (0, R.jsx)(UN, {})]
 						})]
 					}) : null,
 					p && !d ? /* @__PURE__ */ (0, R.jsxs)("div", {
 						className: "msg bot msg--error",
 						role: "alert",
-						children: [/* @__PURE__ */ (0, R.jsx)(zN, {}), /* @__PURE__ */ (0, R.jsxs)("div", {
+						children: [/* @__PURE__ */ (0, R.jsx)(BN, {}), /* @__PURE__ */ (0, R.jsxs)("div", {
 							className: "msg__body",
 							children: [/* @__PURE__ */ (0, R.jsx)("p", { children: p.text }), /* @__PURE__ */ (0, R.jsx)("button", {
 								type: "button",
@@ -37113,7 +37116,7 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 				className: "whatif-panel",
 				children: [nN({
 					type: "what_if_form",
-					card: WN(y, r)
+					card: GN(y, r)
 				}, ne), /* @__PURE__ */ (0, R.jsx)("button", {
 					type: "button",
 					className: "btn btn--quiet btn--sm",
@@ -37164,7 +37167,7 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					}),
 					/* @__PURE__ */ (0, R.jsx)("p", {
 						className: "trust-line",
-						children: jN
+						children: MN
 					}),
 					t ? null : /* @__PURE__ */ (0, R.jsx)("p", {
 						className: "note",
@@ -37175,7 +37178,7 @@ function UN({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 		]
 	});
 }
-function WN(e, t) {
+function GN(e, t) {
 	for (let t = e.length - 1; t >= 0; --t) {
 		let n = e[t].state?.decision_card;
 		if (n) return n;
@@ -37183,7 +37186,7 @@ function WN(e, t) {
 	return t.decision_card;
 }
 // src/plan-panel.tsx
-function GN({ plan: e }) {
+function KN({ plan: e }) {
 	return /* @__PURE__ */ (0, R.jsxs)("section", {
 		className: "plan",
 		"aria-labelledby": "plan-heading",
@@ -37201,21 +37204,21 @@ function GN({ plan: e }) {
 	});
 }
 // src/voice.ts
-var KN = class extends Error {
+var qN = class extends Error {
 	status;
 	constructor(e, t) {
 		super(e), this.status = t, this.name = "VoiceError";
 	}
-}, qN = "/api/method/loan_advisory_portal.api.livekit.";
-function JN(e) {
+}, JN = "/api/method/loan_advisory_portal.api.livekit.";
+function YN(e) {
 	if (!e || typeof e != "object") return;
 	let t = e;
 	if (typeof t._error_message == "string" && t._error_message) return t._error_message;
 	if (typeof t.exc_type == "string" && t.exc_type) return t.exc_type;
 	if (typeof t.message == "string" && t.message) return t.message;
 }
-async function YN(e, t, n, r = {}) {
-	let i = await fetch(`${qN}${e}`, {
+async function XN(e, t, n, r = {}) {
+	let i = await fetch(`${JN}${e}`, {
 		method: "POST",
 		credentials: "same-origin",
 		keepalive: r.keepalive,
@@ -37227,33 +37230,33 @@ async function YN(e, t, n, r = {}) {
 		body: JSON.stringify(n),
 		signal: r.signal
 	});
-	if (i.redirected) throw new KN("sign in again", 401);
+	if (i.redirected) throw new qN("sign in again", 401);
 	let a;
 	try {
 		a = await i.json();
 	} catch {
 		a = void 0;
 	}
-	if (!i.ok) throw new KN(JN(a) ?? `request failed (${i.status})`, i.status);
+	if (!i.ok) throw new qN(YN(a) ?? `request failed (${i.status})`, i.status);
 	return a?.message;
 }
-function XN(e, t) {
-	return YN("create_voice_session", e, {
+function ZN(e, t) {
+	return XN("create_voice_session", e, {
 		application: e.application,
 		consent: 1
 	}, { signal: t });
 }
-function ZN(e, t, n = {}) {
-	return YN("end_voice_session", e, { session_id: t }, n);
-}
-function QN(e) {
-	return e instanceof KN && e.status === 401;
+function QN(e, t, n = {}) {
+	return XN("end_voice_session", e, { session_id: t }, n);
 }
 function $N(e) {
-	return QN(e) ? "Your session is no longer valid. Sign in again to start voice." : e instanceof KN && e.status === 409 ? "That voice session has already ended. Start a new one." : e instanceof KN && e.status === 503 ? "The voice service is not available right now. You can still ask by text." : "Voice could not start. Check the connection and try again, or ask by text.";
+	return e instanceof qN && e.status === 401;
+}
+function eP(e) {
+	return $N(e) ? "Your session is no longer valid. Sign in again to start voice." : e instanceof qN && e.status === 409 ? "That voice session has already ended. Start a new one." : e instanceof qN && e.status === 503 ? "The voice service is not available right now. You can still ask by text." : "Voice could not start. Check the connection and try again, or ask by text.";
 }
 // src/voice-transport.ts
-async function eP() {
+async function tP() {
 	let { ConnectionState: e, Room: t, RoomEvent: n, Track: r } = await import("./chunks/livekit-client.esm-CSxzrXF5.js"), i = new t(), a = /* @__PURE__ */ new Set(), o = /* @__PURE__ */ new Set(), s = (e) => {
 		for (let t of a) t(e);
 	};
@@ -37302,23 +37305,23 @@ async function eP() {
 	};
 }
 // src/voice-panel.tsx
-var tP = {
+var nP = {
 	idle: "Not started",
 	connecting: "Connecting…",
 	connected: "Connected — the assistant is listening.",
 	reconnecting: "Connection lost. Reconnecting…",
 	ended: "Voice session ended.",
 	failed: "Voice could not start."
-}, nP = [
+}, rP = [
 	"connecting",
 	"connected",
 	"reconnecting"
 ];
-function rP(e) {
+function iP(e) {
 	let t = e?.name;
 	return t === "NotAllowedError" || t === "SecurityError" ? "The microphone is blocked. Allow microphone access for this site and try again." : t === "NotFoundError" ? "No microphone was found on this device. You can still ask by text." : t === "NotSupportedError" ? "This browser cannot start a voice call. You can still ask by text." : "The voice session could not connect. Check the connection and try again, or ask by text.";
 }
-function iP({ context: e, createTransport: t, onSessionExpired: n }) {
+function aP({ context: e, createTransport: t, onSessionExpired: n }) {
 	let [r, i] = (0, L.useState)(!1), [a, o] = (0, L.useState)("idle"), [s, c] = (0, L.useState)(null), [l, u] = (0, L.useState)(!1), [d, f] = (0, L.useState)([]), [p, m] = (0, L.useState)(!0), [h, g] = (0, L.useState)(null), _ = (0, L.useRef)(null), v = (0, L.useRef)(null), y = (0, L.useRef)([]), b = (0, L.useCallback)(async () => {
 		for (let e of y.current) e();
 		y.current = [];
@@ -37328,9 +37331,9 @@ function iP({ context: e, createTransport: t, onSessionExpired: n }) {
 		} catch {}
 		let r = _.current;
 		if (_.current = null, r) try {
-			await ZN(e, r.session_id, { keepalive: !0 });
+			await QN(e, r.session_id, { keepalive: !0 });
 		} catch (e) {
-			QN(e) && n?.();
+			$N(e) && n?.();
 		}
 	}, [e, n]), x = (0, L.useRef)(b);
 	x.current = b, (0, L.useEffect)(() => () => {
@@ -37339,18 +37342,18 @@ function iP({ context: e, createTransport: t, onSessionExpired: n }) {
 	let S = (0, L.useCallback)(async () => {
 		o("ended"), u(!1), g(null), await b();
 	}, [b]), C = (0, L.useCallback)(async () => {
-		if (!r || !e.voice.enabled || nP.includes(a)) return;
+		if (!r || !e.voice.enabled || rP.includes(a)) return;
 		c(null), f([]), m(!0), o("connecting"), g(null);
 		let i;
 		try {
-			i = await XN(e);
+			i = await ZN(e);
 		} catch (e) {
-			QN(e) && n?.(), c($N(e)), o("failed");
+			$N(e) && n?.(), c(eP(e)), o("failed");
 			return;
 		}
 		_.current = i, g(new Date(i.expires_at.replace(" ", "T")));
 		try {
-			let e = await (t ?? eP)();
+			let e = await (t ?? tP)();
 			if (_.current !== i) {
 				await e.disconnect();
 				return;
@@ -37358,7 +37361,7 @@ function iP({ context: e, createTransport: t, onSessionExpired: n }) {
 			if (v.current = e, y.current = [e.onStatus((e) => o(e)), e.onUtterance((e) => f((t) => [...t, e]))], await e.connect(i.url, i.token), v.current !== e) return;
 			await e.setMicrophoneEnabled(!0), u(!1), o("connected");
 		} catch (e) {
-			await b(), g(null), o("failed"), c(rP(e));
+			await b(), g(null), o("failed"), c(iP(e));
 		}
 	}, [
 		r,
@@ -37372,13 +37375,13 @@ function iP({ context: e, createTransport: t, onSessionExpired: n }) {
 		if (e) try {
 			await e.setMicrophoneEnabled(l), u(!l);
 		} catch (e) {
-			c(rP(e));
+			c(iP(e));
 		}
 	}, [l]), T = (0, L.useCallback)(() => {
 		o("idle"), c(null), f([]), g(null);
 	}, []);
 	if ((0, L.useEffect)(() => {
-		if (!h || !nP.includes(a)) return;
+		if (!h || !rP.includes(a)) return;
 		let e = h.getTime() - Date.now();
 		if (!Number.isFinite(e)) return;
 		let t = window.setTimeout(() => {
@@ -37401,7 +37404,7 @@ function iP({ context: e, createTransport: t, onSessionExpired: n }) {
 			children: "Voice is not available on this site. You can still ask by text."
 		})]
 	});
-	let E = nP.includes(a), D = a === "ended" || a === "failed";
+	let E = rP.includes(a), D = a === "ended" || a === "failed";
 	return /* @__PURE__ */ (0, R.jsxs)("section", {
 		className: "voice",
 		"aria-labelledby": "voice-heading",
@@ -37445,7 +37448,7 @@ function iP({ context: e, createTransport: t, onSessionExpired: n }) {
 				children: [/* @__PURE__ */ (0, R.jsx)("span", {
 					className: "voice__dot",
 					"aria-hidden": "true"
-				}), tP[a]]
+				}), nP[a]]
 			}),
 			s ? /* @__PURE__ */ (0, R.jsx)("div", {
 				className: "error",
@@ -37517,21 +37520,21 @@ function iP({ context: e, createTransport: t, onSessionExpired: n }) {
 	});
 }
 // src/history.ts
-var aP = class extends Error {
+var oP = class extends Error {
 	status;
 	constructor(e, t) {
 		super(e), this.status = t, this.name = "HistoryError";
 	}
-}, oP = "/api/method/loan_advisory_portal.api.agent.";
-function sP(e) {
+}, sP = "/api/method/loan_advisory_portal.api.agent.";
+function cP(e) {
 	if (!e || typeof e != "object") return;
 	let t = e;
 	if (typeof t._error_message == "string" && t._error_message) return t._error_message;
 	if (typeof t.exc_type == "string" && t.exc_type) return t.exc_type;
 	if (typeof t.message == "string" && t.message) return t.message;
 }
-async function cP(e, t, n = {}) {
-	let r = n.method ?? (n.body ? "POST" : "GET"), i = new URLSearchParams(n.query ?? {}).toString(), a = await fetch(`${oP}${e}${i ? `?${i}` : ""}`, {
+async function lP(e, t, n = {}) {
+	let r = n.method ?? (n.body ? "POST" : "GET"), i = new URLSearchParams(n.query ?? {}).toString(), a = await fetch(`${sP}${e}${i ? `?${i}` : ""}`, {
 		method: r,
 		credentials: "same-origin",
 		headers: {
@@ -37544,100 +37547,100 @@ async function cP(e, t, n = {}) {
 		body: r === "POST" ? JSON.stringify(n.body ?? {}) : void 0,
 		signal: n.signal
 	});
-	if (a.redirected) throw new aP("sign in again", 401);
+	if (a.redirected) throw new oP("sign in again", 401);
 	let o;
 	try {
 		o = await a.json();
 	} catch {
 		o = void 0;
 	}
-	if (!a.ok) throw new aP(sP(o) ?? `request failed (${a.status})`, a.status);
+	if (!a.ok) throw new oP(cP(o) ?? `request failed (${a.status})`, a.status);
 	return o?.message;
 }
-function lP(e, t) {
-	return cP("list_conversations", e, {
+function uP(e, t) {
+	return lP("list_conversations", e, {
 		query: { application: e.application },
 		signal: t
 	});
 }
-function uP(e, t, n) {
-	return cP("conversation_messages", e, {
+function dP(e, t, n) {
+	return lP("conversation_messages", e, {
 		query: { thread_id: t },
 		signal: n
 	});
 }
-function dP(e, t, n, r) {
-	return cP("record_turn", e, { body: {
+function fP(e, t, n, r) {
+	return lP("record_turn", e, { body: {
 		thread_id: t,
 		question: n,
 		answer: r
 	} });
 }
 // src/thread.ts
-var fP = /^[A-Za-z0-9._:-]{1,128}$/;
-function pP() {
+var pP = /^[A-Za-z0-9._:-]{1,128}$/;
+function mP() {
 	try {
 		return window.sessionStorage;
 	} catch {
 		return;
 	}
 }
-function mP(e, t) {
+function hP(e, t) {
 	return `loan-advisory:thread:${e}:${t}`;
 }
-function hP(e, t) {
-	return `${mP(e, t)}:pending`;
-}
 function gP(e, t) {
+	return `${hP(e, t)}:pending`;
+}
+function _P(e, t) {
 	try {
 		return e?.getItem(t) || null;
 	} catch {
 		return null;
 	}
 }
-function _P(e, t, n) {
+function vP(e, t, n) {
 	try {
 		e?.setItem(t, n);
 	} catch {}
 }
-function vP(e, t, n = pP()) {
-	let r = gP(n, mP(e, t));
-	return r && fP.test(r) ? r : null;
+function yP(e, t, n = mP()) {
+	let r = _P(n, hP(e, t));
+	return r && pP.test(r) ? r : null;
 }
-function yP(e, t, n = pP()) {
-	return gP(n, hP(e, t));
+function bP(e, t, n = mP()) {
+	return _P(n, gP(e, t));
 }
-function bP(e, t, n, r = pP()) {
-	yP(e, t, r) === n && _P(r, hP(e, t), "");
+function xP(e, t, n, r = mP()) {
+	bP(e, t, r) === n && vP(r, gP(e, t), "");
 }
-function xP(e, t, n = pP()) {
-	return vP(e, t, n) ?? SP(e, t, n);
+function SP(e, t, n = mP()) {
+	return yP(e, t, n) ?? CP(e, t, n);
 }
-function SP(e, t, n = pP()) {
+function CP(e, t, n = mP()) {
 	let r = crypto.randomUUID();
-	return _P(n, mP(e, t), r), _P(n, hP(e, t), r), r;
+	return vP(n, hP(e, t), r), vP(n, gP(e, t), r), r;
 }
 // src/island.tsx
-var CP = {
+var wP = {
 	en: "English",
 	hi: "हिन्दी",
 	te: "తెలుగు"
-}, wP = {
+}, TP = {
 	low: "new to loans",
 	medium: "knows the basics",
 	high: "very familiar"
-}, TP = 8;
-function EP() {
+}, EP = 8;
+function DP() {
 	window.location.assign(`/login?redirect-to=${encodeURIComponent(window.location.pathname + window.location.search)}`);
 }
-function DP(e) {
+function OP(e) {
 	return e.messages.filter((e) => e.text).map((e, t) => ({
 		id: `stored-${t}`,
 		role: e.role,
 		content: e.text
 	}));
 }
-function OP({ context: e }) {
+function kP({ context: e }) {
 	let { agent: t, isReady: n } = dk({
 		agentId: "advisory",
 		updates: [
@@ -37646,13 +37649,13 @@ function OP({ context: e }) {
 			lk.OnRunStatusChanged
 		],
 		throttleMs: 60
-	}), [r, i] = (0, L.useState)(() => xP(e.user, e.application)), [a, o] = (0, L.useState)([]), [s, c] = (0, L.useState)(null), [l, u] = (0, L.useState)(null), d = (0, L.useCallback)(async (t) => {
+	}), [r, i] = (0, L.useState)(() => SP(e.user, e.application)), [a, o] = (0, L.useState)([]), [s, c] = (0, L.useState)(null), [l, u] = (0, L.useState)(null), d = (0, L.useCallback)(async (t) => {
 		try {
-			let n = await lP(e, t);
+			let n = await uP(e, t);
 			t?.aborted || (o(n), c(null));
 		} catch (e) {
 			if (t?.aborted || e?.name === "AbortError") return;
-			e instanceof aP && e.status === 401 ? EP() : t?.aborted || c("Earlier conversations could not be loaded.");
+			e instanceof oP && e.status === 401 ? DP() : t?.aborted || c("Earlier conversations could not be loaded.");
 		}
 	}, [e]);
 	(0, L.useEffect)(() => {
@@ -37661,12 +37664,12 @@ function OP({ context: e }) {
 	}, [d]), (0, L.useEffect)(() => {
 		if (!n) return;
 		let i = !1;
-		if (t.setMessages([]), t.setState({}), t.threadId = r, yP(e.user, e.application) !== r) return uP(e, r).then((e) => {
+		if (t.setMessages([]), t.setState({}), t.threadId = r, bP(e.user, e.application) !== r) return dP(e, r).then((e) => {
 			if (i || e.thread_id !== r) return;
-			let n = DP(e);
+			let n = OP(e);
 			n.length && t.messages.length === 0 && t.setMessages(n);
 		}).catch((e) => {
-			i || e instanceof aP && e.status === 401 && EP();
+			i || e instanceof oP && e.status === 401 && DP();
 		}), () => {
 			i = !0;
 		};
@@ -37678,17 +37681,17 @@ function OP({ context: e }) {
 	]);
 	let f = (0, L.useCallback)(async (t, n) => {
 		try {
-			await dP(e, r, t, n), bP(e.user, e.application, r), await d();
+			await fP(e, r, t, n), xP(e.user, e.application, r), await d();
 		} catch (e) {
-			e instanceof aP && e.status === 401 && EP();
+			e instanceof oP && e.status === 401 && DP();
 		}
 	}, [
 		e,
 		d,
 		r
-	]), p = (0, L.useCallback)(() => i(SP(e.user, e.application)), [e]), m = (0, L.useCallback)(() => {
+	]), p = (0, L.useCallback)(() => i(CP(e.user, e.application)), [e]), m = (0, L.useCallback)(() => {
 		p();
-	}, [p]), h = wM(t.state), g = a.slice(0, TP), _ = TN(e.user, e.application, r), v = (e) => u((t) => t === e ? null : e), y = (e, t) => /* @__PURE__ */ (0, R.jsx)("button", {
+	}, [p]), h = wM(t.state), g = a.slice(0, EP), _ = EN(e.user, e.application, r), v = (e) => u((t) => t === e ? null : e), y = (e, t) => /* @__PURE__ */ (0, R.jsx)("button", {
 		type: "button",
 		className: `drawer-tab${l === e ? " drawer-tab--on" : ""}`,
 		"aria-expanded": l === e,
@@ -37717,12 +37720,12 @@ function OP({ context: e }) {
 					})
 				]
 			}),
-			/* @__PURE__ */ (0, R.jsx)(UN, {
+			/* @__PURE__ */ (0, R.jsx)(WN, {
 				agent: t,
 				isReady: n,
 				application: e.application,
 				state: h,
-				onSessionExpired: EP,
+				onSessionExpired: DP,
 				onAnswered: f,
 				onConversationReset: m,
 				storageKey: _,
@@ -37748,9 +37751,9 @@ function OP({ context: e }) {
 					/* @__PURE__ */ (0, R.jsx)("div", {
 						id: "drawer-voice",
 						hidden: l !== "voice",
-						children: /* @__PURE__ */ (0, R.jsx)(iP, {
+						children: /* @__PURE__ */ (0, R.jsx)(aP, {
 							context: e,
-							onSessionExpired: EP
+							onSessionExpired: DP
 						})
 					}),
 					/* @__PURE__ */ (0, R.jsxs)("section", {
@@ -37798,9 +37801,9 @@ function OP({ context: e }) {
 								className: "note",
 								children: [
 									"Answers use your profile settings — ",
-									CP[e.locale],
+									wP[e.locale],
 									", ",
-									wP[e.literacy],
+									TP[e.literacy],
 									". Change them in ",
 									/* @__PURE__ */ (0, R.jsx)("a", {
 										href: "/borrower/profile",
@@ -37814,7 +37817,7 @@ function OP({ context: e }) {
 					/* @__PURE__ */ (0, R.jsx)("div", {
 						id: "drawer-plan",
 						hidden: l !== "plan",
-						children: /* @__PURE__ */ (0, R.jsx)(GN, { plan: h.improvement_plan ?? [] })
+						children: /* @__PURE__ */ (0, R.jsx)(KN, { plan: h.improvement_plan ?? [] })
 					})
 				]
 			})
@@ -37822,13 +37825,13 @@ function OP({ context: e }) {
 	});
 }
 // src/main.tsx
-var kP = document.getElementById("assistant-root");
-if (!kP) throw Error("missing #assistant-root");
-var AP = dM(document);
-(0, oM.createRoot)(kP).render(/* @__PURE__ */ (0, R.jsx)(L.StrictMode, { children: /* @__PURE__ */ (0, R.jsx)(RO, {
+var AP = document.getElementById("assistant-root");
+if (!AP) throw Error("missing #assistant-root");
+var jP = dM(document);
+(0, oM.createRoot)(AP).render(/* @__PURE__ */ (0, R.jsx)(L.StrictMode, { children: /* @__PURE__ */ (0, R.jsx)(RO, {
 	runtimeUrl: "/api/copilotkit",
 	agentId: "advisory",
-	headers: () => ({ "x-frappe-csrf-token": AP.csrfToken }),
+	headers: () => ({ "x-frappe-csrf-token": jP.csrfToken }),
 	enableInspector: !1,
-	children: /* @__PURE__ */ (0, R.jsx)(OP, { context: AP })
+	children: /* @__PURE__ */ (0, R.jsx)(kP, { context: jP })
 }) }));

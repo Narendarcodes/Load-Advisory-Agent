@@ -7,6 +7,7 @@ import {
   followUps,
   formattedAnswer,
   keptState,
+  liveText,
   loadTurns,
   metaFor,
   saveTurns,
@@ -135,5 +136,40 @@ describe("formatted answer text", () => {
   it("finds the cards of a restored answer whose text kept its line breaks", () => {
     const meta = { answer: answerKey(streamed), stages: ["compose"] };
     expect(metaFor([meta], 0, final)).toBe(meta);
+  });
+});
+
+describe("live (still streaming) answer text", () => {
+  const streamed =
+    "Your application was **not approved** because two checks did not pass. ### What did not pass " +
+    "1. **Existing EMIs:** 50% of income; the limit is 45%. 2. **Credit score:** 612 is recorded. " +
+    "### What you can do - Pay down one loan. - Keep repayments on time. > A what-if never changes your application.";
+
+  it("puts headings, list items and quotes back on their own lines so they render while streaming", () => {
+    const text = liveText(streamed);
+    expect(text).toContain("\n\n### What did not pass\n");
+    expect(text).toContain("\n1. **Existing EMIs:**");
+    expect(text).toContain("\n2. **Credit score:**");
+    expect(text).toContain("\n\n### What you can do\n");
+    expect(text).toContain("\n- Pay down one loan.");
+    expect(text).toContain("\n- Keep repayments on time.");
+    expect(text).toContain("\n\n> A what-if never changes");
+  });
+
+  it("only changes whitespace, never the words", () => {
+    expect(liveText(streamed).replace(/\s+/g, " ")).toBe(streamed.replace(/\s+/g, " "));
+  });
+
+  it("leaves prose with numbers and hyphens alone", () => {
+    const prose = "Your EMI is 12,500 per month for 24 months - about 3. 5% of the total.";
+    expect(liveText("The limit is 45% of income and a well-kept record helps.")).toBe(
+      "The limit is 45% of income and a well-kept record helps.",
+    );
+    expect(liveText(prose).replace(/\s+/g, " ")).toBe(prose);
+  });
+
+  it("keeps text that already has line breaks as it is", () => {
+    const formatted = "Intro.\n\n### Heading\n\n1. One\n2. Two";
+    expect(liveText(formatted)).toBe(formatted);
   });
 });
