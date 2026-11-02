@@ -168,6 +168,14 @@ describe("live (still streaming) answer text", () => {
     expect(liveText(prose).replace(/\s+/g, " ")).toBe(prose);
   });
 
+  it("also fixes a stream whose chunks keep some of their own line breaks", () => {
+    // How the stream really arrives: split at sentence ends, each chunk trimmed at its end only.
+    const mixed = "did not pass. ### What did not pass\n\n1. **EMIs:** 50%; the limit is 45%. 2. **Score:** 612. ";
+    const text = liveText(mixed);
+    expect(text).toContain("\n\n### What did not pass\n");
+    expect(text).toContain("\n2. **Score:**");
+  });
+
   it("keeps text that already has line breaks as it is", () => {
     const formatted = "Intro.\n\n### Heading\n\n1. One\n2. Two";
     expect(liveText(formatted)).toBe(formatted);

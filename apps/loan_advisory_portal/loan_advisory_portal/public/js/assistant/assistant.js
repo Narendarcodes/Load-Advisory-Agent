@@ -36674,7 +36674,7 @@ function yN(e, t) {
 	return typeof t != "string" || !t.trim() || t.length > _N ? e : vN(t) === vN(e) ? t : e;
 }
 function bN(e) {
-	return e.includes("\n") ? e : e.replace(/\s+(#{1,6} )/g, "\n\n$1").replace(/(\n#{1,6} [^\n]*?)\s+(?=(?:\d+\.|-|>) )/g, "$1\n").replace(/([.!?:;)*])\s+(>\s)/g, "$1\n\n$2").replace(/([.!?:;)*])\s+(\d+\. |- )/g, "$1\n$2").trim();
+	return e.replace(/([^\n])[ \t]+(#{1,6} )/g, "$1\n\n$2").replace(/((?:^|\n)#{1,6} [^\n]*?)[ \t]+(?=(?:\d+\.|-|>) )/g, "$1\n").replace(/([.!?:;)*])[ \t]+(>[ \t])/g, "$1\n\n$2").replace(/([.!?:;)*])[ \t]+(\d+\. |- )/g, "$1\n$2").trim();
 }
 function xN(e, t) {
 	return e?.text ? yN(t, e.text) : t;
