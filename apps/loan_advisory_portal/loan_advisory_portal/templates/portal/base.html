@@ -64,6 +64,7 @@
 	<link rel="stylesheet" href="/assets/loan_advisory_portal/css/portal.css">
 	<script id="portal-bootstrap" type="application/json">{{ boot | tojson }}</script>
 	<script src="/assets/loan_advisory_portal/js/portal.js" defer></script>
+	<script src="/assets/loan_advisory_portal/js/shader.js" defer></script>
 	{% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{{ 'app-shell' if app_frame else 'public-shell' }}{% endblock %}" data-signed-in="{{ 'true' if signed_in else 'false' }}">

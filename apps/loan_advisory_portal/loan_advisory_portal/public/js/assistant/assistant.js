@@ -36998,12 +36998,16 @@ var YN = [
 function eP({ stages: e }) {
 	return /* @__PURE__ */ (0, R.jsxs)("div", {
 		className: "msg__thinking",
-		children: [/* @__PURE__ */ (0, R.jsx)("img", {
-			className: "msg__thinking-art",
-			src: $N,
-			alt: "",
-			width: 96,
-			height: 72
+		children: [/* @__PURE__ */ (0, R.jsx)("div", {
+			className: "msg__thinking-mark shader-zone",
+			"data-shader": "pulse",
+			children: /* @__PURE__ */ (0, R.jsx)("img", {
+				className: "msg__thinking-art",
+				src: $N,
+				alt: "",
+				width: 96,
+				height: 72
+			})
 		}), /* @__PURE__ */ (0, R.jsxs)("div", {
 			className: "msg__thinking-body",
 			children: [/* @__PURE__ */ (0, R.jsx)(cP, { stages: e }), /* @__PURE__ */ (0, R.jsx)(dP, {})]
@@ -37345,12 +37349,16 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					P ? /* @__PURE__ */ (0, R.jsxs)("div", {
 						className: "chat-empty",
 						children: [
-							/* @__PURE__ */ (0, R.jsx)("img", {
-								className: "chat-empty__art",
-								src: ZN,
-								alt: "",
-								width: 160,
-								height: 120
+							/* @__PURE__ */ (0, R.jsx)("div", {
+								className: "chat-empty__mark shader-zone",
+								"data-shader": "orb",
+								children: /* @__PURE__ */ (0, R.jsx)("img", {
+									className: "chat-empty__art",
+									src: ZN,
+									alt: "",
+									width: 160,
+									height: 120
+								})
 							}),
 							/* @__PURE__ */ (0, R.jsx)("h3", { children: "Ask about your decision" }),
 							/* @__PURE__ */ (0, R.jsx)("p", { children: "Ask why, what to fix, or try a what-if." }),

@@ -1,15 +1,23 @@
 {% extends "templates/portal/base.html" %}
 {% block page_content %}
-<div class="page-head">
-	<div>
-		<h1>Dashboard</h1>
-		<p>Every application, document and decision in one place.</p>
+{%- set first_name = ((boot.get('full_name') or '').split(' ') | first) -%}
+<section class="dash-hero shader-zone" data-shader="brand" aria-labelledby="dash-title">
+	<div class="shader-plate dash-hero__plate">
+		<h1 id="dash-title">{{ 'Hello, ' ~ first_name if first_name else 'Dashboard' }}</h1>
+		<p class="dash-hero__lede">Every application, document and decision in one place.</p>
+		<div class="next-step" id="next-step" aria-live="polite">
+			<h2 id="next-step-heading"><span class="skeleton skeleton--title" aria-hidden="true"></span><span class="sr-only">Loading your next step</span></h2>
+			<p class="small" id="next-step-body"><span class="skeleton skeleton--line skeleton--w80" aria-hidden="true"></span></p>
+			<p class="small muted hidden" id="latest-status"></p>
+			<div class="dash-hero__actions">
+				<div id="next-step-action"></div>
+				<a class="btn btn--ghost btn--sm" href="/borrower/eligibility">Check eligibility</a>
+				<a class="btn btn--sm" href="/borrower/apply">Start an application</a>
+			</div>
+		</div>
 	</div>
-	<div class="page-head__actions">
-		<a class="btn btn--ghost" href="/borrower/eligibility">Check eligibility</a>
-		<a class="btn" href="/borrower/apply">Start an application</a>
-	</div>
-</div>
+	<img class="dash-hero__art" src="/assets/loan_advisory_portal/illustrations/dashboard.svg" alt="" width="200" height="150">
+</section>
 
 <dl class="summary-strip" id="summary" aria-label="At a glance">
 	<div>
@@ -83,14 +91,6 @@
 	</div>
 
 	<aside class="dashboard__side" aria-label="Next steps and support">
-		<section class="next-step" id="next-step" aria-labelledby="next-step-heading" aria-live="polite">
-			<img class="next-step__art" src="/assets/loan_advisory_portal/illustrations/dashboard.svg" alt="" width="160" height="120">
-			<h2 id="next-step-heading"><span class="skeleton skeleton--title" aria-hidden="true"></span><span class="sr-only">Loading your next step</span></h2>
-			<p class="small" id="next-step-body"><span class="skeleton skeleton--line skeleton--w80" aria-hidden="true"></span></p>
-			<p class="small muted hidden" id="latest-status"></p>
-			<div id="next-step-action"></div>
-		</section>
-
 		<section class="card" aria-labelledby="ask-heading">
 			<h2 id="ask-heading">Ask about your application</h2>
 			<p class="small muted mt">Ask why a decision was made, what to fix, or try a what-if.</p>

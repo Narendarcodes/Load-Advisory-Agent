@@ -6525,3 +6525,246 @@ textarea:focus-visible {
 .plain-list li::marker {
 	color: var(--muted);
 }
+
+/* ==========================================================================================
+   v5 shaders: a deliberate, visible part of the brand (DESIGN_PRINCIPLES §1 "Shader zones (v5)"
+   and §2 deviations). Paper Shaders canvases are mounted by js/shader.js over these static
+   gradients, which are also the reduced-motion / no-WebGL look. Shaders appear only in hero
+   bands, result banners, the sign-in panel and the assistant mark; never behind form fields,
+   tables, body text or the sidebar. Any text on a shader sits on .shader-plate (near-solid
+   cream, so contrast is measured against the plate, not the moving colour).
+   ========================================================================================== */
+.shader-zone {
+	--shader-radius: 18px;
+	border: 0;
+	border-radius: var(--shader-radius);
+}
+
+.shader-zone > :not(.shader-zone__canvas) {
+	position: relative;
+	z-index: 1;
+}
+
+.shader-zone__canvas {
+	border-radius: inherit;
+	overflow: hidden;
+}
+
+/* Static looks, one per palette (fallback and first paint). */
+[data-shader="brand"],
+[data-shader="warm"] {
+	background:
+		radial-gradient(60% 70% at 85% 85%, rgb(78 36 64 / 85%) 0, rgb(78 36 64 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		radial-gradient(70% 80% at 70% 20%, #ff8f68 0, rgb(255 143 104 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		radial-gradient(60% 70% at 15% 75%, #e25f4b 0, rgb(226 95 75 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		#ffe9dc;
+}
+
+[data-shader="approved"] {
+	background:
+		radial-gradient(55% 65% at 88% 88%, rgb(126 53 80 / 75%) 0, rgb(126 53 80 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		radial-gradient(70% 80% at 75% 15%, #ffc98c 0, rgb(255 201 140 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		radial-gradient(60% 70% at 15% 70%, #ff8f68 0, rgb(255 143 104 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		#fff3e0;
+}
+
+[data-shader="calm"] {
+	background:
+		radial-gradient(70% 80% at 80% 30%, #f6c9b3 0, rgb(246 201 179 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		radial-gradient(60% 70% at 20% 80%, #e9c3cf 0, rgb(233 195 207 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		#f7efe7;
+}
+
+[data-shader="muted"] {
+	background:
+		radial-gradient(70% 80% at 80% 25%, #e7dad3 0, rgb(231 218 211 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		radial-gradient(60% 70% at 15% 85%, #d8c8cb 0, rgb(216 200 203 / 0%) 70%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+		#f4eee9;
+}
+
+/* The plate text sits on: near-solid cream with a light frost, so AA holds over any colour. */
+.shader-plate {
+	position: relative;
+	z-index: 1;
+	padding: clamp(16px, 2.2vw, 28px);
+	border: 1px solid rgb(255 255 255 / 55%);
+	border-radius: 12px;
+	background: rgb(255 252 249 / 94%);
+	backdrop-filter: blur(14px) saturate(1.1);
+	-webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+
+/* Illustrations on a shader get a soft frosted tile so the ink line stays readable. */
+.shader-art {
+	padding: 10px;
+	border-radius: 14px;
+	background: rgb(255 251 247 / 72%);
+}
+
+/* ---- Sign in: the whole right half is one tall animated panel ---- */
+.auth {
+	align-items: stretch;
+}
+
+.auth__card {
+	align-self: start;
+}
+
+.auth__panel {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: clamp(16px, 3vh, 28px);
+	min-height: min(780px, calc(100vh - 150px));
+	padding: clamp(20px, 3.4vw, 44px);
+}
+
+.auth__panel .auth__art {
+	width: min(300px, 70%);
+	max-width: none;
+	margin: 0 auto;
+	padding: 12px;
+	border-radius: 16px;
+	background: rgb(255 251 247 / 72%);
+}
+
+.auth__plate .auth__title {
+	margin: 0 0 6px;
+}
+
+.auth__plate .auth__points {
+	margin: var(--s3) 0;
+}
+
+.auth__plate > p:last-child {
+	margin-bottom: 0;
+}
+
+/* ---- Dashboard hero band: greeting and the next step ---- */
+.dash-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: clamp(16px, 3vw, 40px);
+	margin-bottom: var(--s5);
+	padding: clamp(14px, 2.4vw, 32px);
+}
+
+.dash-hero__plate {
+	max-width: 660px;
+}
+
+.dash-hero h1 {
+	margin: 0;
+	font-size: clamp(1.7rem, 1.3rem + 1.4vw, 2.3rem);
+}
+
+.dash-hero__lede {
+	margin: 4px 0 var(--s4);
+	color: var(--ink-2);
+}
+
+.dash-hero .next-step {
+	gap: 6px;
+	padding-top: var(--s3);
+	border-top: 1px solid var(--line);
+}
+
+.dash-hero .next-step h2 {
+	margin: 0;
+	font-size: 1.15rem;
+}
+
+.dash-hero__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: var(--s2);
+}
+
+.dash-hero__actions #next-step-action:empty {
+	display: none;
+}
+
+.dash-hero__art {
+	width: clamp(150px, 16vw, 210px);
+	height: auto;
+	padding: 10px;
+	border-radius: 16px;
+	background: rgb(255 251 247 / 72%);
+}
+
+/* ---- Result banners (application result and eligibility estimate) ---- */
+.result-banner {
+	margin-bottom: var(--s5);
+	padding: clamp(12px, 1.8vw, 22px);
+	border-bottom: 0;
+}
+
+.result-banner.result-head--lg {
+	padding-bottom: clamp(12px, 1.8vw, 22px);
+}
+
+.result-banner .result-head__art {
+	padding: 8px;
+	border-radius: 12px;
+	background: rgb(255 251 247 / 72%);
+}
+
+.result-banner .shader-plate {
+	padding: clamp(14px, 1.8vw, 22px);
+}
+
+.result-banner .result-head__amount {
+	grid-column: 1 / -1;
+}
+
+/* ---- Products hero ---- */
+.shader-hero {
+	padding: clamp(16px, 3vw, 40px);
+}
+
+.shader-hero .hero__art img {
+	padding: 12px;
+	border-radius: 16px;
+	background: rgb(255 251 247 / 72%);
+}
+
+@media (max-width: 899px) {
+	.auth__panel {
+		min-height: 0;
+	}
+}
+
+@media (max-width: 640px) {
+	.shader-zone {
+		--shader-radius: 14px;
+	}
+
+	.dash-hero {
+		grid-template-columns: minmax(0, 1fr);
+		padding: 12px;
+	}
+
+	.dash-hero__art {
+		grid-row: 1;
+		justify-self: end;
+		width: 112px;
+		padding: 6px;
+	}
+
+	.result-banner,
+	.result-banner.result-head--lg {
+		grid-template-columns: minmax(0, 1fr);
+		padding: 12px;
+	}
+
+	.result-banner .result-head__art {
+		width: 112px;
+		justify-self: end;
+	}
+
+	.auth__panel .auth__art {
+		width: 200px;
+	}
+}

@@ -155,9 +155,8 @@
 			title.textContent = "Start with a quick check";
 			body.textContent =
 				"See an indicative amount before you fill in a full application. It does not affect your credit score.";
-			action.innerHTML =
-				'<a class="btn btn--ghost btn--sm" href="/borrower/eligibility">Check eligibility</a> ' +
-				'<a class="btn btn--quiet btn--sm" href="/borrower/apply">Start an application</a>';
+			// The hero already carries "Check eligibility" and "Start an application".
+			action.innerHTML = "";
 			return;
 		}
 

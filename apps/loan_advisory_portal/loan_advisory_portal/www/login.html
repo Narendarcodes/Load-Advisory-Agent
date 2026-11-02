@@ -1,7 +1,7 @@
 {% extends "templates/portal/base.html" %}
 {% block title %}Sign in{% endblock %}
 {% block body_class %}public-shell auth-shell{% endblock %}
-{% block head %}<script src="/assets/loan_advisory_portal/js/shader.js" defer></script>{% endblock %}
+
 {% block page_content %}
 <div class="auth">
 	<section class="auth__card" aria-labelledby="signin-heading">
@@ -43,31 +43,31 @@
 		<p class="tiny muted auth__demo">Preview mode is on. This site uses synthetic accounts and data.</p>
 		{% endif %}
 	</section>
-	<section class="auth__intro" aria-labelledby="auth-title">
-		<div class="auth__visual shader-zone" data-shader="warm">
-			<img class="auth__art" src="/assets/loan_advisory_portal/illustrations/login.svg" alt="" width="320" height="240">
+	<section class="auth__intro auth__panel shader-zone" data-shader="brand" aria-labelledby="auth-title">
+		<img class="auth__art" src="/assets/loan_advisory_portal/illustrations/login.svg" alt="" width="320" height="240">
+		<div class="shader-plate auth__plate">
+			<h2 id="auth-title" class="auth__title">Your loan, made simple.</h2>
+			<p class="lede">
+				Pick up where you left off, follow each step, and read the reasoning behind a decision in
+				plain language.
+			</p>
+			<ul class="auth__points">
+				<li>
+					<strong>Indicative checks only.</strong> Checking eligibility does not affect your credit score.
+				</li>
+				<li>
+					<strong>Your documents stay private.</strong> Files are served only to you and the review team.
+				</li>
+				<li>
+					<strong>Reasons, not just results.</strong> Every recorded decision explains what mattered.
+				</li>
+			</ul>
+			<p class="small muted">
+				New here? Accounts are created by invitation from your loan advisor.
+				<a href="/borrower/products">Read about the loan product</a> or
+				<a href="/borrower/help">see how it works</a>.
+			</p>
 		</div>
-		<h2 id="auth-title" class="auth__title">Your loan, made simple.</h2>
-		<p class="lede">
-			Pick up where you left off, follow each step, and read the reasoning behind a decision in
-			plain language.
-		</p>
-		<ul class="auth__points">
-			<li>
-				<strong>Indicative checks only.</strong> Checking eligibility does not affect your credit score.
-			</li>
-			<li>
-				<strong>Your documents stay private.</strong> Files are served only to you and the review team.
-			</li>
-			<li>
-				<strong>Reasons, not just results.</strong> Every recorded decision explains what mattered.
-			</li>
-		</ul>
-		<p class="small muted">
-			New here? Accounts are created by invitation from your loan advisor.
-			<a href="/borrower/products">Read about the loan product</a> or
-			<a href="/borrower/help">see how it works</a>.
-		</p>
 	</section>
 
 </div>

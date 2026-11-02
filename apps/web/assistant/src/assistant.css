@@ -2213,3 +2213,78 @@
 		transition: none;
 	}
 }
+
+/* v5 shaders (portal js/shader.js mounts Paper Shaders into these zones; portal.css has the base
+   .shader-zone rules and the static fallbacks). Decorative only. */
+.assistant .chat-empty__mark.shader-zone {
+	display: grid;
+	place-items: center;
+	width: 210px;
+	height: 210px;
+	margin: 0 auto 8px;
+	overflow: visible;
+	border-radius: 50%;
+	background: transparent;
+}
+
+.assistant .chat-empty__mark .shader-zone__canvas {
+	inset: 12px;
+	border-radius: 50%;
+	filter: blur(14px);
+}
+
+.assistant .chat-empty__mark::before {
+	content: "";
+	position: absolute;
+	inset: 26px;
+	z-index: 0;
+	border-radius: 50%;
+	background: #ffd2bd;
+	filter: blur(10px);
+}
+
+.assistant .chat-empty__mark .chat-empty__art {
+	width: 120px;
+	height: auto;
+}
+
+.assistant .msg__thinking-mark.shader-zone {
+	display: grid;
+	place-items: center;
+	width: 96px;
+	height: 96px;
+	overflow: visible;
+	border-radius: 50%;
+	background: transparent;
+}
+
+.assistant .msg__thinking-mark .msg__thinking-art {
+	width: 64px;
+}
+
+@media (max-width: 560px) {
+	.assistant .chat-empty__mark.shader-zone {
+		width: 168px;
+		height: 168px;
+	}
+
+	.assistant .chat-empty__mark .chat-empty__art {
+		width: 96px;
+	}
+
+	.assistant .msg__thinking-mark.shader-zone {
+		width: 72px;
+		height: 72px;
+	}
+
+	.assistant .msg__thinking-mark .msg__thinking-art {
+		width: 48px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.assistant .chat-empty__mark .shader-zone__canvas,
+	.assistant .msg__thinking-mark .shader-zone__canvas {
+		display: none;
+	}
+}

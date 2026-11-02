@@ -37,7 +37,10 @@ const THINKING_ILLUSTRATION = "/assets/loan_advisory_portal/illustrations/assist
 function Thinking({ stages }: { stages: string[] }) {
   return (
     <div className="msg__thinking">
-      <img className="msg__thinking-art" src={THINKING_ILLUSTRATION} alt="" width={96} height={72} />
+      {/* v5: a soft Paper Shaders pulsing ring behind the scene while Saral works (decorative; portal js/shader.js mounts it). */}
+      <div className="msg__thinking-mark shader-zone" data-shader="pulse">
+        <img className="msg__thinking-art" src={THINKING_ILLUSTRATION} alt="" width={96} height={72} />
+      </div>
       <div className="msg__thinking-body">
         <LiveSteps stages={stages} />
         <Typing />
@@ -429,7 +432,10 @@ export function ChatPanel({
       <div className="log" ref={logRef} role="log" aria-live="polite" aria-relevant="additions text" tabIndex={0}>
         {empty ? (
           <div className="chat-empty">
-            <img className="chat-empty__art" src={ILLUSTRATION} alt="" width={160} height={120} />
+            {/* v5: a slow mesh-gradient orb glows behind the Saral mark (decorative; portal js/shader.js mounts it). */}
+            <div className="chat-empty__mark shader-zone" data-shader="orb">
+              <img className="chat-empty__art" src={ILLUSTRATION} alt="" width={160} height={120} />
+            </div>
             <h3>Ask about your decision</h3>
             <p>Ask why, what to fix, or try a what-if.</p>
             <div className="chips">

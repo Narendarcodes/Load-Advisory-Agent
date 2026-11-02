@@ -176,13 +176,26 @@
 		WITHDRAWN: { art: "withdrawn", title: "You withdrew this application", badge: ["badge--neutral", "Withdrawn"] },
 	};
 
-	function resultHead(view, lead, when) {
+	/* Which shader banner each outcome gets (decorative; the badge and heading carry the meaning).
+	   Approved is warm and bright, in-flight states are calm and slowly moving (the motion doubles as the
+	   "checks running" cue), not approved and withdrawn are muted and nearly still. */
+	var BANNER = {
+		DRAFT: "calm",
+		SUBMITTED: "calm",
+		UNDER_REVIEW: "calm",
+		MANUAL_REVIEW: "calm",
+		INFO_REQUESTED: "calm",
+		APPROVED: "approved",
+		REJECTED: "muted",
+		WITHDRAWN: "muted",
+	};
+
+	function resultHead(view, lead, when, lifecycle) {
+		var tone = BANNER[lifecycle] || "calm";
 		return (
-			'<div class="result-head result-head--lg">' +
-			(view.art === "approved"
-				? '<div class="result-head__art shader-zone" data-shader="approved"><img src="' + ART + view.art + '.svg" alt="" width="160" height="120"></div>'
-				: '<img class="result-head__art" src="' + ART + view.art + '.svg" alt="" width="160" height="120">') +
-			'<div class="result-head__text">' +
+			'<div class="result-head result-head--lg result-banner shader-zone" data-shader="' + tone + '" data-tone="' + tone + '">' +
+			'<img class="result-head__art" src="' + ART + view.art + '.svg" alt="" width="160" height="120">' +
+			'<div class="result-head__text shader-plate">' +
 			'<p class="result-head__status"><span class="badge ' + view.badge[0] + '">' + Portal.esc(view.badge[1]) + "</span>" +
 			(when ? '<span class="tiny muted">' + Portal.esc(when) + "</span>" : "") +
 			"</p>" +
@@ -301,7 +314,7 @@
 				? "It has not been assessed yet. Submitting sends it for the checks and fixes the loan request."
 				: "It has not been assessed yet. At least one document is needed before you can submit.";
 		}
-		var parts = [resultHead(view, lead, when)];
+		var parts = [resultHead(view, lead, when, lifecycle)];
 
 		if (IN_FLIGHT.indexOf(lifecycle) !== -1) {
 			parts.push(progressFor(application));
