@@ -169,7 +169,7 @@ describe("what-if result", () => {
       },
     });
     const markup = renderToStaticMarkup(<>{buildBlocks(state, context).map((block, index) => <div key={index}>{renderBlock(block, context)}</div>)}</>);
-    expect(markup).toContain("Hypothetical simulation, not a decision");
+    expect(markup).toContain("Simulation, not your decision");
     expect(markup).toContain("credit score = 720");
     expect(markup).toContain("Recorded");
     expect(markup).toContain("Not met");

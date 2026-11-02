@@ -45,7 +45,7 @@ afterEach(async () => {
   container = undefined;
 });
 
-async function mount(agent: AbstractAgent, onSessionExpired = vi.fn(), state: PublicState = {}) {
+async function mount(agent: AbstractAgent, onSessionExpired = vi.fn(), state: PublicState = {}, extra: { storageKey?: string; csrfToken?: string } = {}) {
   container = document.createElement("div");
   document.body.append(container);
   const onAnswered = vi.fn();
@@ -61,6 +61,7 @@ async function mount(agent: AbstractAgent, onSessionExpired = vi.fn(), state: Pu
         onSessionExpired={onSessionExpired}
         onAnswered={onAnswered}
         onConversationReset={onConversationReset}
+        {...extra}
       />,
     );
   });
@@ -134,7 +135,7 @@ describe("ChatPanel", () => {
     expect(element.querySelector('[role="alert"]')?.textContent).toMatch(/new one has been started/i);
   });
 
-  it("suggests questions and disables them while the agent answers", async () => {
+  it("offers starters while empty and swaps them for a typing bubble while the agent answers", async () => {
     let release: (() => void) | undefined;
     const agent = {
       messages: [],
@@ -147,18 +148,21 @@ describe("ChatPanel", () => {
     const { container: element } = await mount(agent);
 
     const chips = element.querySelectorAll<HTMLButtonElement>(".chips button");
-    expect(chips.length).toBeGreaterThan(1);
+    expect(chips.length).toBe(3);
 
     await act(async () => {
       chips[0].click();
     });
-    expect(chips[0].disabled).toBe(true);
+    expect(element.querySelector(".chat-empty")).toBeNull();
+    expect(element.querySelector(".msg--live .typing")).not.toBeNull();
+    expect((element.querySelector("#question") as HTMLInputElement).disabled).toBe(true);
 
     await act(async () => {
       release?.();
       await Promise.resolve();
     });
-    expect(chips[0].disabled).toBe(false);
+    // No answer arrived (the fake never adds one), so the empty state comes back, enabled.
+    expect(element.querySelector<HTMLButtonElement>(".chips button")?.disabled).toBe(false);
   });
 
   it("shows the application this conversation is about", async () => {
@@ -166,28 +170,6 @@ describe("ChatPanel", () => {
     const { container: element } = await mount(agent);
     expect(element.querySelector(".appctx")?.textContent).toContain("LA-2026-00001");
     expect(element.querySelector('.appctx a[href="/borrower/documents?name=LA-2026-00001"]')).not.toBeNull();
-  });
-
-  it("renders the recorded decision card from the validated state snapshot", async () => {
-    const { agent } = fakeAgent();
-    const state = parsePublicState({
-      decision_card: {
-        application_ref: "LA-2026-00001",
-        decision: "REJECTED",
-        recorded_outcome: "REJECTED",
-        policy_synthetic: true,
-        rules: [{ rule_id: "MIN_CREDIT_SCORE", name: "Credit score", result: "FAIL", actual: "640", threshold: "≥ 700" }],
-        failed_reason_codes: ["MIN_CREDIT_SCORE"],
-        missing_fields: [],
-        flags: [],
-        answer_html: "<img src=x onerror=alert(1)>",
-      },
-    });
-    const { container: element } = await mount(agent, vi.fn(), state);
-    expect(element.textContent).toContain("Recorded decision");
-    expect(element.textContent).toContain("Not approved");
-    expect(element.textContent).toContain("Reason codes on the record: MIN_CREDIT_SCORE");
-    expect(element.querySelector("img")).toBeNull();
   });
 
   it("shows a real server stage only while the turn is running", async () => {
@@ -218,5 +200,186 @@ describe("ChatPanel", () => {
       await Promise.resolve();
     });
     expect(element.querySelector(".progress")).toBeNull();
+  });
+});
+
+const CARD = {
+  application_ref: "LA-2026-00001",
+  decision: "REJECTED",
+  recorded_outcome: "REJECTED",
+  policy_synthetic: true,
+  rules: [{ rule_id: "MIN_CREDIT_SCORE", name: "Credit score", result: "FAIL", actual: "640", threshold: "≥ 700" }],
+  failed_reason_codes: ["MIN_CREDIT_SCORE"],
+  missing_fields: [],
+  flags: [],
+  answer_html: "<img src=x onerror=alert(1)>",
+};
+
+type Subscriber = { onStateSnapshotEvent?: (p: { event: { snapshot: unknown } }) => void };
+
+/** An agent that replays the server's event order: progress snapshots, then the final state. */
+function scriptedAgent(turns: { stages: string[]; final: Record<string, unknown>; answer: string }[]) {
+  let turn = 0;
+  let release: (() => void) | undefined;
+  const agent = {
+    messages: [] as { id: string; role: string; content: string }[],
+    state: {} as Record<string, unknown>,
+    addMessage: vi.fn((message: { id: string; role: string; content: string }) => agent.messages.push(message)),
+    setMessages: vi.fn(),
+    setState: vi.fn(),
+    runAgent: vi.fn(async (_parameters: RunCall, subscriber?: Subscriber) => {
+      const script = turns[turn++];
+      for (const stage of script.stages) {
+        agent.state = { progress: { stage } };
+        subscriber?.onStateSnapshotEvent?.({ event: { snapshot: agent.state } });
+      }
+      await new Promise<void>((resolve) => (release = resolve));
+      agent.state = script.final;
+      subscriber?.onStateSnapshotEvent?.({ event: { snapshot: script.final } });
+      agent.messages.push({ id: `a${turn}`, role: "assistant", content: script.answer });
+    }),
+  };
+  return { agent: agent as unknown as AbstractAgent, finish: async () => act(async () => { release?.(); await Promise.resolve(); }) };
+}
+
+async function ask(element: HTMLElement, question: string) {
+  await act(async () => {
+    type(element.querySelector("#question") as HTMLInputElement, question);
+  });
+  await act(async () => {
+    element.querySelector("form.row")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  });
+}
+
+describe("ChatPanel conversation surface", () => {
+  afterEach(() => window.sessionStorage.clear());
+
+  it("shows a typing bubble at once and stacks progress steps instead of replacing them", async () => {
+    const { agent, finish } = scriptedAgent([
+      { stages: ["authenticate", "load_evidence", "compose"], final: {}, answer: "Done." },
+    ]);
+    const { container: element } = await mount(agent);
+    await ask(element, "Why?");
+
+    const steps = element.querySelectorAll(".msg--live .progress li");
+    expect(element.querySelector(".msg--live .typing")).not.toBeNull();
+    expect(Array.from(steps).map((step) => step.textContent)).toEqual([
+      "✓Checking your application (done)",
+      "✓Loading the decision record (done)",
+      "Preparing the explanation",
+    ]);
+
+    await finish();
+    expect(element.querySelector(".progress")).toBeNull();
+    expect(element.querySelector(".msg.bot .steps summary")?.textContent).toBe("Checked 3 steps");
+  });
+
+  it("renders the answer's cards inside its own bubble and keeps them after the next turn", async () => {
+    const { agent, finish } = scriptedAgent([
+      { stages: ["load_evidence"], final: { decision_card: CARD }, answer: "Your **credit score** was below the minimum." },
+      { stages: ["what_if"], final: { what_if: { changes: { credit_score: 720 }, simulated_decision: "APPROVED", is_simulation: true, rule_results: { MIN_CREDIT_SCORE: "PASS" } } }, answer: "In the simulation it passes." },
+    ]);
+    const { container: element } = await mount(agent);
+    await ask(element, "Why was I rejected?");
+    await finish();
+    await ask(element, "What if my score was 720?");
+    await finish();
+
+    const bubbles = element.querySelectorAll(".msg.bot");
+    expect(bubbles).toHaveLength(2);
+    expect(bubbles[0].querySelector(".decision")?.textContent).toContain("Not approved");
+    expect(bubbles[0].querySelector("strong")?.textContent).toBe("credit score");
+    expect(bubbles[1].querySelector(".whatif")?.textContent).toContain("Simulation, not your decision");
+    expect(bubbles[1].querySelector(".decision")).toBeNull();
+    expect(element.querySelector("img[onerror], img[src='x']")).toBeNull();
+    expect(element.textContent).not.toContain("About the latest answer");
+  });
+
+  it("restores cards for a transcript reloaded in the same tab", async () => {
+    const storageKey = "loan-advisory:turns:u:LA-2026-00001:t1";
+    const first = scriptedAgent([{ stages: ["load_evidence"], final: { decision_card: CARD }, answer: "Recorded reasons." }]);
+    const { container: element } = await mount(first.agent, vi.fn(), {}, { storageKey });
+    await ask(element, "Why?");
+    await first.finish();
+    await act(async () => root?.unmount());
+    container?.remove();
+
+    const restored = {
+      messages: [
+        { id: "stored-0", role: "user", content: "Why?" },
+        { id: "stored-1", role: "assistant", content: "Recorded reasons." },
+      ],
+      state: {},
+      addMessage: vi.fn(),
+      setMessages: vi.fn(),
+      setState: vi.fn(),
+      runAgent: vi.fn(),
+    } as unknown as AbstractAgent;
+    const { container: again } = await mount(restored, vi.fn(), {}, { storageKey });
+    expect(again.querySelector(".msg.bot .decision")?.textContent).toContain("Not approved");
+    expect(again.querySelector(".msg.bot .steps summary")?.textContent).toBe("Checked 1 step");
+  });
+
+  it("offers follow-ups after an answer and starters only while empty", async () => {
+    const { agent, finish } = scriptedAgent([{ stages: [], final: { decision_card: CARD }, answer: "Reasons." }]);
+    const { container: element } = await mount(agent);
+    expect(element.querySelectorAll(".chat-empty .chips button")).toHaveLength(3);
+    await ask(element, "Why?");
+    await finish();
+    expect(element.querySelector(".chat-empty")).toBeNull();
+    const followups = Array.from(element.querySelectorAll(".followups button")).map((b) => b.textContent);
+    expect(followups).toContain("What can I do to improve before reapplying?");
+  });
+
+  it("opens the what-if form only on request", async () => {
+    const { agent } = fakeAgent();
+    const { container: element } = await mount(agent);
+    expect(element.querySelector(".whatif-form")).toBeNull();
+    const toggle = Array.from(element.querySelectorAll<HTMLButtonElement>(".composer__tools button")).find(
+      (button) => button.textContent === "Try a what-if",
+    )!;
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await act(async () => toggle.click());
+    expect(element.querySelector(".whatif-form")).not.toBeNull();
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("shows a failure inside the bot bubble with a Retry that re-asks without duplicating the question", async () => {
+    const { agent, calls } = fakeAgent(new Error("503 busy"));
+    const { container: element } = await mount(agent);
+    await ask(element, "Why?");
+    const bubble = element.querySelector(".msg.bot.msg--error");
+    expect(bubble?.getAttribute("role")).toBe("alert");
+    expect(bubble?.textContent).toMatch(/busy or unavailable/);
+    const addMessage = (agent as unknown as { addMessage: ReturnType<typeof vi.fn> }).addMessage;
+    expect(addMessage).toHaveBeenCalledTimes(1);
+    await act(async () => (bubble!.querySelector("button") as HTMLButtonElement).click());
+    expect(calls).toHaveLength(2);
+    expect(addMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows feedback thumbs only when the page can post feedback", async () => {
+    const without = scriptedAgent([{ stages: [], final: {}, answer: "A." }]);
+    const { container: element } = await mount(without.agent);
+    await ask(element, "Q?");
+    await without.finish();
+    expect(element.querySelector(".feedback")).toBeNull();
+  });
+
+  it("posts a thumbs-up to the existing feedback endpoint without the answer text", async () => {
+    const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const scripted = scriptedAgent([{ stages: [], final: {}, answer: "A private answer." }]);
+    const { container: element } = await mount(scripted.agent, vi.fn(), {}, { csrfToken: "tok" });
+    await ask(element, "Q?");
+    await scripted.finish();
+    await act(async () => (element.querySelector('.feedback button[aria-label="Helpful"]') as HTMLButtonElement).click());
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/method/loan_advisory_portal.api.feedback.submit_feedback");
+    expect(JSON.parse(String(init.body))).toMatchObject({ rating: 5, category: "assistant", application: "LA-2026-00001" });
+    expect(String(init.body)).not.toContain("private answer");
+    expect(element.querySelector(".feedback")?.textContent).toContain("Thanks");
+    vi.unstubAllGlobals();
   });
 });

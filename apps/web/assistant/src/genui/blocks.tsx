@@ -179,7 +179,7 @@ export function WhatIfResultBlock({ whatIf, card }: { whatIf: WhatIf; card?: Dec
   return (
     <div className="whatif">
       <h3>
-        What-if <span className="badge badge--warn">Hypothetical simulation, not a decision</span>
+        What-if <span className="badge badge--warn">Simulation, not your decision</span>
       </h3>
       {changes.length ? (
         <p className="note">
@@ -245,8 +245,8 @@ export function ImprovementPlanBlock({ plan, showHeading = true }: { plan: Impro
         ))}
       </ol>
       <p className="note">
-        Targets are arithmetic on the synthetic thresholds, re-checked by the decision engine as a what-if. Not a
-        guarantee: a lender decides on a new application.
+        Targets are worked out from the recorded thresholds and re-checked as a what-if. Not a guarantee: a person
+        decides on a new application.
       </p>
     </section>
   );
