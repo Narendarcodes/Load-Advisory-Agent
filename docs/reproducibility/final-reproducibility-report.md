@@ -231,9 +231,9 @@ Definition-of-done scorecard:
 
 - The clone directory `Documents/Projects/reproducibility-audit/frappe-clean-clone` with its `.venv-repro` and
   three `node_modules` — kept until this PR merges, then it can be deleted without losing anything.
-- Site `repro.local` on the shared Frappe container, with its synthetic rows, and the container
-  `repro-acceptance-proxy` (stopped). Both are audit artefacts; neither is referenced by the manual-testing
-  environment, and `p1loan.local` and `loanportal.local` were not modified by the audit's data work.
+- Site `repro.local` on the shared Frappe container, with its synthetic rows. The audit's own front-door
+  container and the two never-used second-stack containers were removed afterwards; no volume was touched and
+  neither `p1loan.local` nor `loanportal.local` was modified by the audit's data work.
 - The manual-testing environment is **still running** as required: portal `:8081`, agent `:8095` with the policy
   retriever loaded, runtime `:4200`, synthetic bureau `:8011`, Langfuse `:3000`, `p1loan.local` on `:8080`.
 - Launcher scripts and credential files for both environments live outside the repository, in temp
