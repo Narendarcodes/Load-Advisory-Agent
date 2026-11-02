@@ -442,51 +442,62 @@ async function record(kind) {
   await browser.close();
 }
 
+// v3: page by page with a fresh browser per small batch (one browser over every page was OOM-killed).
+//   MODE=axe AXE_WIDTH=1280 ROUTE_SLICE=0:6 OUT=<dir>  -> <dir>/axe-1280-0-6.json
+const AXE_ROUTES = [
+  ["login", "/login"], ["invite", "/borrower/invite"], ["dashboard", "/borrower?fx=full"], ["dashboard-empty", "/borrower?fx=empty"],
+  ["products", "/borrower/products?fx=full"], ["eligibility", "/borrower/eligibility"], ["eligibility-result", "/borrower/eligibility?demo=1"],
+  ["apply", "/borrower/apply"], ["kyc", "/borrower/kyc"], ["repayments", "/borrower/servicing"], ["repayments-demo", "/borrower/servicing?demo=1"],
+  ["documents", `/borrower/documents?name=${REJECTED}`], ["documents-empty", "/borrower/documents?fx=empty"],
+  ["profile", "/borrower/profile?fx=full"], ["help", "/borrower/help"], ["feedback", "/borrower/feedback"],
+  ["privacy", "/borrower/privacy"], ["terms", "/borrower/terms"], ["not-found", "/borrower/application?name=ACC-LOAP-2026-99999"],
+  ["result-approved", `/borrower/application?name=${APPROVED}`], ["result-rejected", `/borrower/application?name=${REJECTED}`],
+  ["result-info-needed", "/borrower/application?name=ACC-LOAP-2026-00018"], ["result-submitted", `/borrower/application?name=${PENDING}`],
+  ["result-under-review", "/borrower/application?name=ACC-LOAP-2026-00026"], ["result-manual-review", "/borrower/application?name=ACC-LOAP-2026-00027"],
+  ["result-withdrawn", "/borrower/application?name=ACC-LOAP-2026-00009"], ["result-draft", "/borrower/application?name=ACC-LOAP-2026-00025&fx=reset"],
+  ["assistant-choose", "/borrower/assistant"], ["assistant", `/borrower/assistant?application=${REJECTED}`],
+];
+
 async function axe() {
   const { AxeBuilder } = require("@axe-core/playwright");
+  const width = Number(process.env.AXE_WIDTH || 1280);
+  const [a, b] = (process.env.ROUTE_SLICE || "0:999").split(":").map(Number);
   const browser = await launch();
   const results = [];
-  for (const width of [1280, 390]) {
-    const context = await newContext(browser, width);
-    const page = await context.newPage();
-    const routes = [
-      ["login", "/login"], ["dashboard", "/borrower?fx=full"], ["dashboard-empty", "/borrower?fx=empty"],
-      ["apply", "/borrower/apply"], ["documents-empty", "/borrower/documents?fx=empty"],
-      ["help", "/borrower/help?fx=full"],
-      ["profile", "/borrower/profile"],
-      ["documents", `/borrower/documents?name=${REJECTED}`],
-      ["decision-rejected", `/borrower/application?name=${REJECTED}`],
-      ["decision-approved", `/borrower/application?name=${APPROVED}`],
-      ["decision-pending", `/borrower/application?name=${PENDING}`],
-      ["assistant", `/borrower/assistant?application=${REJECTED}`],
-    ];
-    for (const [name, route] of routes) {
-      await page.goto(BASE + route);
-      await settle(page);
-      if (name === "assistant") {
-        await page.waitForSelector(".composer", { timeout: 20000 });
-        await ask(page, "Why was this decision made?");
-        await waitAnswer(page, 1);
-        await ask(page, "Which policy source sets these limits?");
-        await waitAnswer(page, 2);
-        await page.locator(".source-chip summary").first().click().catch(() => {});
-        await ask(page, "What if my credit score was 720?");
-        await waitAnswer(page, 3);
-      }
-      const result = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-        .analyze();
-      const violations = result.violations.map((v) => ({
-        id: v.id, impact: v.impact, help: v.help,
-        nodes: v.nodes.slice(0, 6).map((n) => ({ target: n.target.join(" "), summary: n.failureSummary })),
-      }));
-      results.push({ width, name, violations, incomplete: result.incomplete.length });
-      console.log(width, name, violations.map((v) => `${v.impact}:${v.id}(${v.nodes.length})`).join(" ") || "clean");
+  const context = await newContext(browser, width);
+  const page = await context.newPage();
+  page.setDefaultTimeout(20000);
+  for (const [name, route] of AXE_ROUTES.slice(a, b)) {
+    await page.goto(BASE + route);
+    await settle(page);
+    if (name === "eligibility-result") {
+      await page.waitForFunction(() => document.getElementById("el-income")?.value, null, { timeout: 8000 }).catch(() => {});
+      await page.click("#el-submit");
+      await page.waitForSelector("#result-panel .result-actions", { timeout: 8000 }).catch(() => {});
     }
-    await context.close();
+    if (name === "assistant") {
+      await page.waitForSelector(".composer", { timeout: 20000 });
+      await ask(page, "Why was this decision made?");
+      await waitAnswer(page, 1);
+      await ask(page, "Which policy source sets these limits?");
+      await waitAnswer(page, 2);
+      await page.locator(".source-chip summary").first().click().catch(() => {});
+      await ask(page, "What if my credit score was 720?");
+      await waitAnswer(page, 3);
+    }
+    const result = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .analyze();
+    const violations = result.violations.map((v) => ({
+      id: v.id, impact: v.impact, help: v.help,
+      nodes: v.nodes.slice(0, 6).map((n) => ({ target: n.target.join(" "), summary: n.failureSummary })),
+    }));
+    results.push({ width, name, route, violations, incomplete: result.incomplete.map((i) => i.id) });
+    console.log(width, name, violations.map((v) => `${v.impact}:${v.id}(${v.nodes.length})`).join(" ") || "clean");
   }
+  await context.close();
   await browser.close();
-  fs.writeFileSync(path.join(OUT, "axe.json"), JSON.stringify(results, null, 2));
+  fs.writeFileSync(path.join(OUT, `axe-${width}-${a}-${Math.min(b, AXE_ROUTES.length)}.json`), JSON.stringify(results, null, 2));
 }
 
 (async () => {
