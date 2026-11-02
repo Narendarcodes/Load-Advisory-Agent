@@ -6096,3 +6096,12 @@ h3 {
 	margin: 0;
 	font-size: clamp(1.6rem, 1.3rem + 1vw, 2.1rem);
 }
+
+/* v3 (390 px): one scene per screen. When an empty state with its own scene is showing, the
+   page-head and next-step scenes step aside on phones so two drawings never stack in one view. */
+@media (max-width: 640px) {
+	body:has(:not(.hidden) > .empty:not(.hidden) > .empty__art) .page-head__art,
+	body:has(:not(.hidden) > .empty:not(.hidden) > .empty__art) .next-step__art {
+		display: none;
+	}
+}

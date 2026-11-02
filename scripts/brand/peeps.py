@@ -384,7 +384,6 @@ SLOTS = [
     ("wizard-about", "A person beside their profile card", "peep-standing-18", 60, 8, 230, lambda: ground() + card_id(180, 70)),
     ("wizard-loan", "A person working out a monthly amount on their phone", "peep-10", 64, 24, 216, lambda: ground() + coin(232, 70) + coin(258, 112, 14)),
     ("wizard-documents", "A person pointing to a stack of documents", "peep-standing-17", 52, 8, 230, lambda: ground() + document(200, 88, 58, 74) + document(186, 100, 58, 74, accent=True)),
-    ("decision", "A person reading a decision letter", "peep-39", 70, 24, 216, lambda: ground() + document(212, 46, 58, 74, mark="tick")),
     ("assistant", "A person asking a question", "peep-60", 54, 24, 216, lambda: ground() + bubble(200, 34, 92, 54)),
     ("empty-applications", "A person with an empty folder", "peep-2", 30, 34, 206, lambda: ground() + folder(204, 120)),
     ("empty-documents", "A person beside an empty tray", "peep-68", 30, 34, 206, lambda: ground() + tray(196, 160)),
