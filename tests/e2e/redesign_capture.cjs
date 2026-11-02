@@ -239,7 +239,10 @@ async function eligibility(page, prefix, width) {
     await page.locator("#result-panel").scrollIntoViewIfNeeded().catch(() => {});
     await page.evaluate(() => {
       const el = document.getElementById("result-panel");
-      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior: "instant" });
+      const bar = document.querySelector(".topbar");
+      const pos = bar ? getComputedStyle(bar).position : "";
+      const barH = bar && (pos === "sticky" || pos === "fixed") ? bar.getBoundingClientRect().height : 0;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24 - barH, behavior: "instant" });
     });
     await sleep(300);
     await shot(page, name, false);
