@@ -6725,11 +6725,29 @@ textarea:focus-visible {
 }
 
 /* ---- Page loading: a calm shader band and one sentence; content areas keep their skeletons. ---- */
+/* A floating status (a layer above the page, so it carries the floating shadow) that never shifts the
+   content under it. */
 .page-loading {
+	position: fixed;
+	top: 18px;
+	right: clamp(16px, 3vw, 32px);
+	z-index: 40;
 	display: grid;
 	gap: 8px;
-	max-width: 420px;
-	margin: 0 0 var(--s4);
+	width: min(320px, calc(100vw - 32px));
+	padding: 12px 14px 11px;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background: var(--surface);
+	box-shadow: var(--shadow);
+}
+
+@media (max-width: 767px) {
+	.page-loading {
+		top: 74px;
+		right: 50%;
+		transform: translateX(50%);
+	}
 }
 
 .page-loading[hidden] {
@@ -6737,7 +6755,7 @@ textarea:focus-visible {
 }
 
 .page-loading__band.shader-zone {
-	height: 10px;
+	height: 8px;
 	border-radius: 999px;
 	background: linear-gradient(90deg, #ffd9c4, #ff8f68 35%, #e25f4b 65%, #f2a65a); /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
 	animation: saral-breathe 1.6s var(--ease-out) infinite alternate;
