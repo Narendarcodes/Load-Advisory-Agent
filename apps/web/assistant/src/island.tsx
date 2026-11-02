@@ -153,7 +153,7 @@ export function Island({ context }: { context: AssistantContext }) {
         storageKey={turnsStorage}
         csrfToken={context.csrfToken}
       />
-      <aside className="assistant__aside drawer" aria-label="Conversation controls" hidden={!drawer}>
+      <aside className="assistant__aside tools-drawer" aria-label="Conversation controls" hidden={!drawer}>
         <div className="drawer__head">
           <span className="drawer__grip" aria-hidden="true" />
           <button type="button" className="btn btn--quiet btn--sm drawer__close" onClick={() => setDrawer(null)}>

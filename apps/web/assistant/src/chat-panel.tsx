@@ -7,7 +7,18 @@ import { parsePublicState } from "./genui/schema";
 import { progressLabel } from "./genui/catalog";
 import { Markdown } from "./markdown";
 import { sendAnswerFeedback } from "./feedback";
-import { addStage, answerKey, followUps, keptState, loadTurns, metaFor, saveTurns, type TurnMeta } from "./turns";
+import {
+  addStage,
+  answerKey,
+  displayText,
+  followUps,
+  formattedAnswer,
+  keptState,
+  loadTurns,
+  metaFor,
+  saveTurns,
+  type TurnMeta,
+} from "./turns";
 
 /** Starters shown only while the conversation is empty. */
 export const STARTERS = [
@@ -108,7 +119,7 @@ function LiveSteps({ stages }: { stages: string[] }) {
 function DoneSteps({ stages }: { stages: string[] }) {
   if (!stages.length) return null;
   return (
-    <details className="steps">
+    <details className="run-steps">
       <summary>
         Checked {stages.length} {stages.length === 1 ? "step" : "steps"}
       </summary>
@@ -247,10 +258,13 @@ export function ChatPanel({
     const answers = agent.messages.filter((message) => message.role === "assistant");
     const answer = answers.length ? textOf(answers[answers.length - 1]) : "";
     if (!answer) return;
+    const finalState = snapshotSeen ? parsePublicState(agent.state) : undefined;
+    const formatted = formattedAnswer(answer, finalState?.answer);
     const meta: TurnMeta = {
       answer: answerKey(answer),
       stages: stagesRef.current,
-      state: snapshotSeen ? keptState(parsePublicState(agent.state)) : undefined,
+      state: finalState ? keptState(finalState) : undefined,
+      ...(formatted !== answer ? { text: formatted } : {}),
     };
     setTurns((previous) => {
       const next = [...previous];
@@ -259,7 +273,7 @@ export function ChatPanel({
       saveTurns(storageKey, next);
       return next;
     });
-    onAnswered(trimmed, answer);
+    onAnswered(trimmed, formatted);
   }
 
   function submit(event: FormEvent) {
@@ -321,7 +335,7 @@ export function ChatPanel({
         <Avatar />
         <div className="msg__body">
           <DoneSteps stages={meta?.stages ?? []} />
-          <Markdown text={text} citations={meta?.state?.citations ?? []} />
+          <Markdown text={displayText(meta, text)} citations={meta?.state?.citations ?? []} />
           {blocks.length ? (
             <div className="msg__cards">
               {blocks.map((block, blockIndex) => (

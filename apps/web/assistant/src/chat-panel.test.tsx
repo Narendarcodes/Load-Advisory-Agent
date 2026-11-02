@@ -271,7 +271,7 @@ describe("ChatPanel conversation surface", () => {
 
     await finish();
     expect(element.querySelector(".progress")).toBeNull();
-    expect(element.querySelector(".msg.bot .steps summary")?.textContent).toBe("Checked 3 steps");
+    expect(element.querySelector(".msg.bot .run-steps summary")?.textContent).toBe("Checked 3 steps");
   });
 
   it("renders the answer's cards inside its own bubble and keeps them after the next turn", async () => {
@@ -317,7 +317,7 @@ describe("ChatPanel conversation surface", () => {
     } as unknown as AbstractAgent;
     const { container: again } = await mount(restored, vi.fn(), {}, { storageKey });
     expect(again.querySelector(".msg.bot .decision")?.textContent).toContain("Not approved");
-    expect(again.querySelector(".msg.bot .steps summary")?.textContent).toBe("Checked 1 step");
+    expect(again.querySelector(".msg.bot .run-steps summary")?.textContent).toBe("Checked 1 step");
   });
 
   it("offers follow-ups after an answer and starters only while empty", async () => {
