@@ -1312,3 +1312,23 @@
 		overflow-y: auto;
 	}
 }
+
+/* Phones: the portal's bottom tab bar is shown below 768px (portal.css). The tools sheet sat on
+   top of it and hid the navigation; it now opens just above the bar. */
+@media (max-width: 767px) {
+	.assistant__aside.tools-drawer {
+		bottom: calc(62px + env(safe-area-inset-bottom));
+		max-height: calc(100dvh - 62px - 120px - env(safe-area-inset-bottom));
+		border-radius: 20px;
+		margin: 0 6px 6px;
+	}
+}
+
+/* Below the desktop layout the log grew with every message and the page scrolled instead, so the
+   island's scroll-to-newest did nothing: a new answer, an error and its Retry, and the composer
+   ended up below the fold. Bound the log so it scrolls itself and the composer stays reachable. */
+@media (max-width: 900px) {
+	.assistant .log {
+		max-height: max(260px, calc(100dvh - 330px));
+	}
+}

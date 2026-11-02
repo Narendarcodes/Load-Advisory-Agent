@@ -4747,4 +4747,11 @@ body .assistant__head h2 {
 	.table-wrap--stack td[data-empty]::before {
 		content: none;
 	}
+
+	/* Badges and buttons keep their own width; as grid items they stretched across the row. */
+	.table-wrap--stack td > .badge,
+	.table-wrap--stack td > .btn {
+		justify-self: end;
+		width: auto;
+	}
 }

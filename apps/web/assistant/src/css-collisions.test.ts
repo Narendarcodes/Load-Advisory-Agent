@@ -31,3 +31,38 @@ describe("portal stylesheet collisions", () => {
     expect(rules(portalCss, ".run-steps")).toEqual([]);
   });
 });
+
+/** Bodies of every `@media (<query>) { ... }` block (one level of nesting). */
+function mediaBlocks(css: string, query: string): string[] {
+  const out: string[] = [];
+  const head = `@media (${query})`;
+  let at = css.indexOf(head);
+  while (at !== -1) {
+    let i = css.indexOf("{", at) + 1;
+    const start = i;
+    let depth = 1;
+    while (depth > 0 && i < css.length) {
+      if (css[i] === "{") depth += 1;
+      else if (css[i] === "}") depth -= 1;
+      i += 1;
+    }
+    out.push(css.slice(start, i - 1));
+    at = css.indexOf(head, i);
+  }
+  return out;
+}
+
+describe("phone layout against the portal's tab bar", () => {
+  it("opens the tools sheet above the bottom tab bar, which portal.css shows below 768px", () => {
+    expect(mediaBlocks(portalCss, "max-width: 767px").join("")).toMatch(/\.tabbar[^{]*\{\s*display:\s*grid/);
+    const phone = mediaBlocks(islandCss, "max-width: 767px").join("");
+    const sheet = phone.match(/\.assistant__aside\.tools-drawer\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(sheet).toMatch(/bottom:\s*calc\(62px/);
+  });
+
+  it("bounds the conversation log below the desktop layout so scroll-to-newest has something to scroll", () => {
+    const narrow = mediaBlocks(islandCss, "max-width: 900px").join("");
+    const log = narrow.match(/\.assistant \.log\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(log).toMatch(/max-height:/);
+  });
+});
