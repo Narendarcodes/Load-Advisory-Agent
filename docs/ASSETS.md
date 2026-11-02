@@ -86,6 +86,16 @@ Every scene side by side: `illustrations_sheet.png` in the v4 evidence folder at
 Removed in v4: `calculating.svg` (loading has no scene). The v3 per-slot figures (`peep-46`, `peep-2`, …)
 are no longer used.
 
+## Hero shader: Paper Shaders (Apache-2.0)
+
+`public/js/vendor/saral-shader.js` (22.5 KB minified, **7.2 KB gzipped**) is a tree-shaken bundle of
+`ShaderMount` and the mesh-gradient fragment shader from **`@paper-design/shaders@0.0.82`** (vanilla build,
+https://github.com/paper-design/shaders, https://shaders.paper.design; Apache License 2.0, copyright 2026
+Paper). The licence and NOTICE ship beside it (`PAPER-SHADERS-LICENSE.txt`, `PAPER-SHADERS-NOTICE.txt`).
+Source: `scripts/brand/shader_entry.mjs`; build: `scripts/brand/build_shader.sh` (esbuild).
+`public/js/shader.js` (loader, ~1 KB gzipped) imports it lazily after load and idle, only on the sign-in
+page, the loan products page and the application result; see `DESIGN_PRINCIPLES.md` for where it may appear.
+
 ## Brand assets
 Original artwork for this project; see `docs/BRAND.md` and `scripts/brand/`.
 

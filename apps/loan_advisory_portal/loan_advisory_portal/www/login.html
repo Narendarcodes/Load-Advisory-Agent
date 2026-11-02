@@ -1,6 +1,7 @@
 {% extends "templates/portal/base.html" %}
 {% block title %}Sign in{% endblock %}
 {% block body_class %}public-shell auth-shell{% endblock %}
+{% block head %}<script src="/assets/loan_advisory_portal/js/shader.js" defer></script>{% endblock %}
 {% block page_content %}
 <div class="auth">
 	<section class="auth__card" aria-labelledby="signin-heading">
@@ -43,7 +44,9 @@
 		{% endif %}
 	</section>
 	<section class="auth__intro" aria-labelledby="auth-title">
-		<img class="auth__art" src="/assets/loan_advisory_portal/illustrations/login.svg" alt="" width="320" height="240">
+		<div class="auth__visual shader-zone" data-shader="warm">
+			<img class="auth__art" src="/assets/loan_advisory_portal/illustrations/login.svg" alt="" width="320" height="240">
+		</div>
 		<h2 id="auth-title" class="auth__title">Your loan, made simple.</h2>
 		<p class="lede">
 			Pick up where you left off, follow each step, and read the reasoning behind a decision in

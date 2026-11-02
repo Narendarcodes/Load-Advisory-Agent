@@ -6356,3 +6356,163 @@ dl.detail--stacked dd {
 .landing .card h3 + ul {
 	margin-top: var(--s2);
 }
+
+/* ---------- v4: restrained depth ----------
+   Three levels, no more:
+   - page: cream --paper, flat. Most content sits here, split by hairlines.
+   - raised surface: white --surface with a 1px --line border, no shadow. Only the primary work areas:
+     sign-in form, apply and eligibility forms, the application result, the assistant panel.
+   - floating: --shadow (one soft, low shadow). Only things above the page: the composer, menus,
+     the mobile sheet and drawer, dialogs and toasts.
+   Motion: --dur (180ms) with --ease-out for hover, focus and fades. Reduced motion stops it. */
+:root {
+	--surface: #ffffff;
+	--shadow: 0 1px 2px rgb(36 28 27 / 5%), 0 10px 24px -10px rgb(36 28 27 / 16%);
+	--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--dur: 180ms;
+	--ring: 0 0 0 3px rgb(178 58 46 / 18%);
+}
+
+/* Raised surfaces (primary work areas only) */
+.auth__card,
+.wizard-panel,
+.eligibility__form,
+.result,
+#result-panel {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	box-shadow: none;
+}
+
+.eligibility__form {
+	padding: 0 clamp(18px, 2.4vw, 28px) var(--s5);
+}
+
+.eligibility__form .form-section:first-child {
+	border-top: 0;
+}
+
+.result {
+	padding: clamp(18px, 2.4vw, 28px);
+}
+
+#result-panel {
+	padding: clamp(18px, 2.4vw, 24px);
+}
+
+/* Resting things never float */
+body .assistant,
+.identity-card,
+.plate__card {
+	box-shadow: none;
+}
+
+/* Hover and focus: tone, not glow */
+.btn,
+.btn--ghost,
+.btn--quiet,
+.link-quiet,
+input,
+select,
+textarea {
+	transition:
+		background-color var(--dur) var(--ease-out),
+		border-color var(--dur) var(--ease-out),
+		color var(--dur) var(--ease-out),
+		box-shadow var(--dur) var(--ease-out);
+}
+
+.btn:hover {
+	box-shadow: none;
+}
+
+.btn--ghost:hover {
+	border-color: var(--line-2);
+	background: var(--surface);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+	box-shadow: var(--ring);
+}
+
+/* Shader zones: decorative art panels only, never behind text. The static gradient is the
+   no-WebGL and reduced-motion fallback; js/shader.js fades a slow mesh gradient in over it. */
+.shader-zone {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+	border-radius: var(--radius);
+	background:
+		radial-gradient(90% 80% at 18% 12%, #fce6dc 0, rgb(252 230 220 / 0%) 60%),
+		radial-gradient(80% 90% at 88% 92%, #f8d3c3 0, rgb(248 211 195 / 0%) 62%),
+		var(--paper);
+}
+
+.shader-zone > img {
+	position: relative;
+	z-index: 1;
+}
+
+.shader-zone__canvas {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	opacity: 0;
+	transition: opacity 700ms var(--ease-out);
+}
+
+.shader-zone.is-live .shader-zone__canvas {
+	opacity: 1;
+}
+
+.shader-zone__canvas canvas {
+	display: block;
+	width: 100% !important;
+	height: 100% !important;
+}
+
+.auth__visual {
+	max-width: 420px;
+	margin: 0 0 var(--s5);
+	padding: clamp(12px, 2vw, 24px);
+	border: 1px solid var(--line);
+}
+
+.auth__visual .auth__art {
+	max-width: 100%;
+	margin: 0 auto;
+}
+
+.hero__art.shader-zone {
+	padding: clamp(12px, 2vw, 28px);
+	border: 1px solid var(--line);
+}
+
+.result-head__art.shader-zone {
+	padding: 6px;
+}
+
+.result-head__art.shader-zone img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.shader-zone__canvas {
+		display: none;
+	}
+
+	.btn,
+	.btn--ghost,
+	.btn--quiet,
+	.link-quiet,
+	input,
+	select,
+	textarea {
+		transition: none;
+	}
+}

@@ -179,7 +179,9 @@
 	function resultHead(view, lead, when) {
 		return (
 			'<div class="result-head result-head--lg">' +
-			'<img class="result-head__art" src="' + ART + view.art + '.svg" alt="" width="160" height="120">' +
+			(view.art === "approved"
+				? '<div class="result-head__art shader-zone" data-shader="approved"><img src="' + ART + view.art + '.svg" alt="" width="160" height="120"></div>'
+				: '<img class="result-head__art" src="' + ART + view.art + '.svg" alt="" width="160" height="120">') +
 			'<div class="result-head__text">' +
 			'<p class="result-head__status"><span class="badge ' + view.badge[0] + '">' + Portal.esc(view.badge[1]) + "</span>" +
 			(when ? '<span class="tiny muted">' + Portal.esc(when) + "</span>" : "") +
@@ -363,6 +365,7 @@
 
 		host.removeAttribute("aria-busy");
 		host.innerHTML = parts.join("");
+		if (window.saralShader) window.saralShader.scan();
 		var submit = document.getElementById("submit-app");
 		if (submit) submit.addEventListener("click", submitApplication);
 		schedulePoll(lifecycle);

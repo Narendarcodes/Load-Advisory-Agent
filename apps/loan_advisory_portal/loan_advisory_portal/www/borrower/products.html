@@ -1,5 +1,6 @@
 {% extends "templates/portal/base.html" %}
 {% block title %}Loans explained in plain language{% endblock %}
+{% block head %}<script src="/assets/loan_advisory_portal/js/shader.js" defer></script>{% endblock %}
 {% block page_content %}
 {%- set signed_in = boot.get("user") and boot.get("user") != "Guest" -%}
 <div class="landing">
@@ -23,7 +24,7 @@
 				<span>Clear reasons for every decision</span>
 			</div>
 		</div>
-		<div class="hero__art">
+		<div class="hero__art shader-zone" data-shader="warm">
 			<img class="hero__img" src="/assets/loan_advisory_portal/illustrations/products.svg" alt="" width="320" height="240">
 		</div>
 	</section>

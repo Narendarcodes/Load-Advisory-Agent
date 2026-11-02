@@ -2171,3 +2171,45 @@
 		width: 72px;
 	}
 }
+
+/* v4 depth: the composer is the assistant's one floating surface (white, one soft shadow from
+   portal.css --shadow). The input sits borderless inside it; focus rings the whole composer. */
+.assistant .composer form.row {
+	align-items: center;
+	padding: 6px;
+	border: 1px solid var(--line-2);
+	border-radius: calc(var(--radius) + 4px);
+	background: var(--surface, #fff);
+	box-shadow: var(--shadow);
+	transition:
+		border-color var(--dur, 180ms) var(--ease-out, ease-out),
+		box-shadow var(--dur, 180ms) var(--ease-out, ease-out);
+}
+
+.assistant .composer form.row:focus-within {
+	border-color: var(--deep);
+	box-shadow: var(--shadow), var(--ring, 0 0 0 3px rgb(178 58 46 / 18%));
+}
+
+.assistant .composer form.row input {
+	min-height: 44px;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.assistant .composer form.row input:focus,
+.assistant .composer form.row input:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.assistant .composer form.row .btn {
+	min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.assistant .composer form.row {
+		transition: none;
+	}
+}
