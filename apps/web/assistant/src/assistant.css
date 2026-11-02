@@ -2132,3 +2132,42 @@
 	letter-spacing: 0;
 	font-size: 0.9rem;
 }
+
+/* v3: thinking state and handoff scenes (decorative; text beside them says what is happening). */
+.assistant .msg__thinking {
+	display: grid;
+	grid-template-columns: 96px minmax(0, 1fr);
+	gap: 12px;
+	align-items: center;
+}
+
+.assistant .msg__thinking-art,
+.assistant .handoff__art {
+	display: block;
+	width: 96px;
+	height: auto;
+}
+
+.assistant .msg__thinking-body {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+}
+
+.assistant .handoff__head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 6px;
+}
+
+@media (max-width: 560px) {
+	.assistant .msg__thinking {
+		grid-template-columns: 72px minmax(0, 1fr);
+	}
+
+	.assistant .msg__thinking-art,
+	.assistant .handoff__art {
+		width: 72px;
+	}
+}

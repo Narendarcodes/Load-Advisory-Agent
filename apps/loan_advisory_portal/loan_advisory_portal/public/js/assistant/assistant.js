@@ -36437,9 +36437,18 @@ function aN({ handoffRef: e }) {
 	return /* @__PURE__ */ (0, R.jsxs)("section", {
 		className: "handoff",
 		"aria-labelledby": "handoff-heading",
-		children: [/* @__PURE__ */ (0, R.jsx)("h3", {
-			id: "handoff-heading",
-			children: "Human help requested"
+		children: [/* @__PURE__ */ (0, R.jsxs)("div", {
+			className: "handoff__head",
+			children: [/* @__PURE__ */ (0, R.jsx)("img", {
+				className: "handoff__art",
+				src: "/assets/loan_advisory_portal/illustrations/handoff.svg",
+				alt: "",
+				width: 96,
+				height: 72
+			}), /* @__PURE__ */ (0, R.jsx)("h3", {
+				id: "handoff-heading",
+				children: "Human help requested"
+			})]
 		}), /* @__PURE__ */ (0, R.jsx)("ul", {
 			className: "action-rows",
 			children: /* @__PURE__ */ (0, R.jsxs)("li", {
@@ -36985,24 +36994,39 @@ var YN = [
 	"Why was this decision made?",
 	"What can I do to improve before reapplying?",
 	"What if my credit score was 720?"
-], XN = "Understand your loan decision. A person decides.", ZN = "/assets/loan_advisory_portal/illustrations/assistant.svg", QN = "/assets/loan_advisory_portal/illustrations/service-unavailable.svg";
-function $N(e) {
+], XN = "Understand your loan decision. A person decides.", ZN = "/assets/loan_advisory_portal/illustrations/assistant.svg", QN = "/assets/loan_advisory_portal/illustrations/service-unavailable.svg", $N = "/assets/loan_advisory_portal/illustrations/assistant-thinking.svg";
+function eP({ stages: e }) {
+	return /* @__PURE__ */ (0, R.jsxs)("div", {
+		className: "msg__thinking",
+		children: [/* @__PURE__ */ (0, R.jsx)("img", {
+			className: "msg__thinking-art",
+			src: $N,
+			alt: "",
+			width: 96,
+			height: 72
+		}), /* @__PURE__ */ (0, R.jsxs)("div", {
+			className: "msg__thinking-body",
+			children: [/* @__PURE__ */ (0, R.jsx)(cP, { stages: e }), /* @__PURE__ */ (0, R.jsx)(dP, {})]
+		})]
+	});
+}
+function tP(e) {
 	let t = e.content;
 	return typeof t == "string" ? t : Array.isArray(t) ? t.map((e) => e && typeof e == "object" && "text" in e ? String(e.text ?? "") : "").join("") : "";
 }
-function eP(e) {
+function nP(e) {
 	return /401|sign in|session expired|invalid session|malformed session/i.test(e);
 }
-function tP(e) {
+function rP(e) {
 	return /403|another application|another account|does not match the signed-in session/i.test(e);
 }
-function nP(e) {
-	return eP(e) ? "Your session is no longer valid. Sign in again to continue." : tP(e) ? "That conversation can't be continued here. A new one has been started — please ask again." : /409|select an application/i.test(e) ? "Choose an application before asking about it." : /503|busy|unavailable/i.test(e) ? "Saral is busy or unavailable right now. Wait a moment and try again." : "Something went wrong and your question was not answered. Please try again.";
+function iP(e) {
+	return nP(e) ? "Your session is no longer valid. Sign in again to continue." : rP(e) ? "That conversation can't be continued here. A new one has been started — please ask again." : /409|select an application/i.test(e) ? "Choose an application before asking about it." : /503|busy|unavailable/i.test(e) ? "Saral is busy or unavailable right now. Wait a moment and try again." : "Something went wrong and your question was not answered. Please try again.";
 }
-function rP(e) {
+function aP(e) {
 	return e.filter((e) => e.role === "assistant").length;
 }
-function iP(e, t) {
+function oP(e, t) {
 	if (!e) return [];
 	let n = gN(e, t);
 	return e.improvement_plan?.length && n.push({
@@ -37010,7 +37034,7 @@ function iP(e, t) {
 		plan: e.improvement_plan
 	}), n;
 }
-function aP() {
+function sP() {
 	return /* @__PURE__ */ (0, R.jsx)("svg", {
 		className: "trail__icon",
 		viewBox: "0 0 16 16",
@@ -37028,7 +37052,7 @@ function aP() {
 		})
 	});
 }
-function oP({ stages: e }) {
+function cP({ stages: e }) {
 	let t = e.filter((e) => vN(e, !0));
 	return /* @__PURE__ */ (0, R.jsx)("ol", {
 		className: "progress trail",
@@ -37049,7 +37073,7 @@ function oP({ stages: e }) {
 					r ? /* @__PURE__ */ (0, R.jsx)("span", {
 						className: "progress__dot",
 						"aria-hidden": "true"
-					}) : /* @__PURE__ */ (0, R.jsx)(aP, {}),
+					}) : /* @__PURE__ */ (0, R.jsx)(sP, {}),
 					/* @__PURE__ */ (0, R.jsx)("span", { children: vN(e, !r) }),
 					r ? null : /* @__PURE__ */ (0, R.jsx)("span", {
 						className: "sr-only",
@@ -37060,7 +37084,7 @@ function oP({ stages: e }) {
 		})
 	});
 }
-function sP({ stages: e, state: t, open: n }) {
+function lP({ stages: e, state: t, open: n }) {
 	let r = [...e.map((e) => vN(e, !0)).filter((e) => !!e), ...bN(t?.decision_card)];
 	return r.length ? /* @__PURE__ */ (0, R.jsxs)("details", {
 		className: "run-steps trail",
@@ -37072,13 +37096,13 @@ function sP({ stages: e, state: t, open: n }) {
 			r.length === 1 ? "step" : "steps",
 			")"
 		] }), /* @__PURE__ */ (0, R.jsx)("ol", { children: r.map((e) => /* @__PURE__ */ (0, R.jsxs)("li", { children: [
-			/* @__PURE__ */ (0, R.jsx)(aP, {}),
+			/* @__PURE__ */ (0, R.jsx)(sP, {}),
 			" ",
 			e
 		] }, e)) })]
 	}) : null;
 }
-function cP({ down: e }) {
+function uP({ down: e }) {
 	return /* @__PURE__ */ (0, R.jsx)("svg", {
 		viewBox: "0 0 20 20",
 		width: "16",
@@ -37095,7 +37119,7 @@ function cP({ down: e }) {
 		})
 	});
 }
-function lP() {
+function dP() {
 	return /* @__PURE__ */ (0, R.jsxs)("span", {
 		className: "typing",
 		"aria-hidden": "true",
@@ -37106,12 +37130,12 @@ function lP() {
 		]
 	});
 }
-function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: i, onAnswered: a, onConversationReset: o, storageKey: s, csrfToken: c }) {
+function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: i, onAnswered: a, onConversationReset: o, storageKey: s, csrfToken: c }) {
 	let [l, u] = (0, L.useState)(""), [d, f] = (0, L.useState)(!1), [p, m] = (0, L.useState)(null), [h, g] = (0, L.useState)([]), [_, v] = (0, L.useState)(0), [y, b] = (0, L.useState)(() => GN(s)), [x, S] = (0, L.useState)(!1), [C, w] = (0, L.useState)({}), T = (0, L.useRef)([]), E = (0, L.useRef)(null), D = (0, L.useRef)(null), O = (0, L.useRef)(null);
 	(0, L.useEffect)(() => {
 		b(GN(s)), m(null), w({});
 	}, [s]);
-	let k = e.messages.filter((e) => e.role === "user" || e.role === "assistant"), ee = `${k.map((e) => `${e.id}:${$N(e).length}`).join("|")}#${h.length}#${d}#${+!!p}`;
+	let k = e.messages.filter((e) => e.role === "user" || e.role === "assistant"), ee = `${k.map((e) => `${e.id}:${tP(e).length}`).join("|")}#${h.length}#${d}#${+!!p}`;
 	(0, L.useEffect)(() => {
 		let e = D.current;
 		e && typeof e.scrollIntoView == "function" && k.length && e.scrollIntoView({ block: "end" });
@@ -37132,16 +37156,16 @@ function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 	async function ne(r, c) {
 		let l = r.trim();
 		if (!l || d || !t) return;
-		m(null), f(!0), S(!1), T.current = [], g([]), v(rP(e.messages)), c && e.addMessage({
+		m(null), f(!0), S(!1), T.current = [], g([]), v(aP(e.messages)), c && e.addMessage({
 			id: crypto.randomUUID(),
 			role: "user",
 			content: l
 		});
 		let u = !1, p = !1, h = (e) => {
 			u = !0, m({
-				text: nP(e),
+				text: iP(e),
 				question: l
-			}), eP(e) ? i("Your session is no longer valid. Sign in again to continue.") : tP(e) && o();
+			}), nP(e) ? i("Your session is no longer valid. Sign in again to continue.") : rP(e) && o();
 		};
 		try {
 			await e.runAgent({
@@ -37163,7 +37187,7 @@ function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 			f(!1), O.current?.focus();
 		}
 		if (u) return;
-		let _ = e.messages.filter((e) => e.role === "assistant"), y = _.length ? $N(_[_.length - 1]) : "";
+		let _ = e.messages.filter((e) => e.role === "assistant"), y = _.length ? tP(_[_.length - 1]) : "";
 		if (!y) return;
 		let x = p ? EM(e.state) : void 0, C = LN(y, x?.answer), w = {
 			answer: BN(y),
@@ -37206,8 +37230,8 @@ function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 		busy: re,
 		onAsk: (e) => void ne(e, !0),
 		onOpenWhatIf: () => S(!0)
-	}, N = rP(k), ae = d && N <= _, P = k.length === 0 && !d, F = -1, oe = k.map((e) => {
-		let t = $N(e);
+	}, N = aP(k), ae = d && N <= _, P = k.length === 0 && !d, F = -1, oe = k.map((e) => {
+		let t = tP(e);
 		if (e.role === "user") return t ? /* @__PURE__ */ (0, R.jsxs)("div", {
 			className: "msg user",
 			children: [/* @__PURE__ */ (0, R.jsx)("span", {
@@ -37219,19 +37243,19 @@ function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 		let n = F;
 		if (d && n >= _) return /* @__PURE__ */ (0, R.jsx)("div", {
 			className: "msg bot msg--live",
-			children: /* @__PURE__ */ (0, R.jsxs)("div", {
+			children: /* @__PURE__ */ (0, R.jsx)("div", {
 				className: "msg__body",
-				children: [/* @__PURE__ */ (0, R.jsx)(oP, { stages: h }), t ? /* @__PURE__ */ (0, R.jsx)(MN, { text: RN(t) }) : /* @__PURE__ */ (0, R.jsx)(lP, {})]
+				children: t ? /* @__PURE__ */ (0, R.jsxs)(R.Fragment, { children: [/* @__PURE__ */ (0, R.jsx)(cP, { stages: h }), /* @__PURE__ */ (0, R.jsx)(MN, { text: RN(t) })] }) : /* @__PURE__ */ (0, R.jsx)(eP, { stages: h })
 			})
 		}, e.id);
 		if (!t) return null;
-		let r = qN(y, n, t), i = iP(r?.state, ie), a = n === N - 1 && !d && !p, o = C[n];
+		let r = qN(y, n, t), i = oP(r?.state, ie), a = n === N - 1 && !d && !p, o = C[n];
 		return /* @__PURE__ */ (0, R.jsx)("div", {
 			className: "msg bot",
 			children: /* @__PURE__ */ (0, R.jsxs)("div", {
 				className: "msg__body",
 				children: [
-					/* @__PURE__ */ (0, R.jsx)(sP, {
+					/* @__PURE__ */ (0, R.jsx)(lP, {
 						stages: r?.stages ?? [],
 						state: r?.state,
 						open: n === N - 1
@@ -37264,7 +37288,7 @@ function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 									"aria-label": "Helpful",
 									title: "Helpful",
 									onClick: () => void M(n, !0),
-									children: /* @__PURE__ */ (0, R.jsx)(cP, {})
+									children: /* @__PURE__ */ (0, R.jsx)(uP, {})
 								}),
 								/* @__PURE__ */ (0, R.jsx)("button", {
 									type: "button",
@@ -37272,7 +37296,7 @@ function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 									"aria-label": "Not helpful",
 									title: "Not helpful",
 									onClick: () => void M(n, !1),
-									children: /* @__PURE__ */ (0, R.jsx)(cP, { down: !0 })
+									children: /* @__PURE__ */ (0, R.jsx)(uP, { down: !0 })
 								}),
 								o === "failed" ? /* @__PURE__ */ (0, R.jsx)("span", {
 									className: "feedback__thanks",
@@ -37344,9 +37368,9 @@ function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					}) : oe,
 					ae ? /* @__PURE__ */ (0, R.jsx)("div", {
 						className: "msg bot msg--live",
-						children: /* @__PURE__ */ (0, R.jsxs)("div", {
+						children: /* @__PURE__ */ (0, R.jsx)("div", {
 							className: "msg__body",
-							children: [/* @__PURE__ */ (0, R.jsx)(oP, { stages: h }), /* @__PURE__ */ (0, R.jsx)(lP, {})]
+							children: /* @__PURE__ */ (0, R.jsx)(eP, { stages: h })
 						})
 					}) : null,
 					p && !d ? /* @__PURE__ */ (0, R.jsx)("div", {
@@ -37383,7 +37407,7 @@ function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 						className: "whatif-panel",
 						children: [hN({
 							type: "what_if_form",
-							card: dP(y, r)
+							card: pP(y, r)
 						}, ie), /* @__PURE__ */ (0, R.jsx)("button", {
 							type: "button",
 							className: "btn btn--quiet btn--sm",
@@ -37452,7 +37476,7 @@ function uP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 		]
 	});
 }
-function dP(e, t) {
+function pP(e, t) {
 	for (let t = e.length - 1; t >= 0; --t) {
 		let n = e[t].state?.decision_card;
 		if (n) return n;
@@ -37460,7 +37484,7 @@ function dP(e, t) {
 	return t.decision_card;
 }
 // src/plan-panel.tsx
-function fP({ plan: e }) {
+function mP({ plan: e }) {
 	return /* @__PURE__ */ (0, R.jsxs)("section", {
 		className: "plan",
 		"aria-labelledby": "plan-heading",
@@ -37478,21 +37502,21 @@ function fP({ plan: e }) {
 	});
 }
 // src/voice.ts
-var pP = class extends Error {
+var hP = class extends Error {
 	status;
 	constructor(e, t) {
 		super(e), this.status = t, this.name = "VoiceError";
 	}
-}, mP = "/api/method/loan_advisory_portal.api.livekit.";
-function hP(e) {
+}, gP = "/api/method/loan_advisory_portal.api.livekit.";
+function _P(e) {
 	if (!e || typeof e != "object") return;
 	let t = e;
 	if (typeof t._error_message == "string" && t._error_message) return t._error_message;
 	if (typeof t.exc_type == "string" && t.exc_type) return t.exc_type;
 	if (typeof t.message == "string" && t.message) return t.message;
 }
-async function gP(e, t, n, r = {}) {
-	let i = await fetch(`${mP}${e}`, {
+async function vP(e, t, n, r = {}) {
+	let i = await fetch(`${gP}${e}`, {
 		method: "POST",
 		credentials: "same-origin",
 		keepalive: r.keepalive,
@@ -37504,33 +37528,33 @@ async function gP(e, t, n, r = {}) {
 		body: JSON.stringify(n),
 		signal: r.signal
 	});
-	if (i.redirected) throw new pP("sign in again", 401);
+	if (i.redirected) throw new hP("sign in again", 401);
 	let a;
 	try {
 		a = await i.json();
 	} catch {
 		a = void 0;
 	}
-	if (!i.ok) throw new pP(hP(a) ?? `request failed (${i.status})`, i.status);
+	if (!i.ok) throw new hP(_P(a) ?? `request failed (${i.status})`, i.status);
 	return a?.message;
 }
-function _P(e, t) {
-	return gP("create_voice_session", e, {
+function yP(e, t) {
+	return vP("create_voice_session", e, {
 		application: e.application,
 		consent: 1
 	}, { signal: t });
 }
-function vP(e, t, n = {}) {
-	return gP("end_voice_session", e, { session_id: t }, n);
+function bP(e, t, n = {}) {
+	return vP("end_voice_session", e, { session_id: t }, n);
 }
-function yP(e) {
-	return e instanceof pP && e.status === 401;
+function xP(e) {
+	return e instanceof hP && e.status === 401;
 }
-function bP(e) {
-	return yP(e) ? "Your session is no longer valid. Sign in again to start voice." : e instanceof pP && e.status === 409 ? "That voice session has already ended. Start a new one." : e instanceof pP && e.status === 503 ? "The voice service is not available right now. You can still ask by text." : "Voice could not start. Check the connection and try again, or ask by text.";
+function SP(e) {
+	return xP(e) ? "Your session is no longer valid. Sign in again to start voice." : e instanceof hP && e.status === 409 ? "That voice session has already ended. Start a new one." : e instanceof hP && e.status === 503 ? "The voice service is not available right now. You can still ask by text." : "Voice could not start. Check the connection and try again, or ask by text.";
 }
 // src/voice-transport.ts
-async function xP() {
+async function CP() {
 	let { ConnectionState: e, Room: t, RoomEvent: n, Track: r } = await import("./chunks/livekit-client.esm-CSxzrXF5.js"), i = new t(), a = /* @__PURE__ */ new Set(), o = /* @__PURE__ */ new Set(), s = (e) => {
 		for (let t of a) t(e);
 	};
@@ -37579,23 +37603,23 @@ async function xP() {
 	};
 }
 // src/voice-panel.tsx
-var SP = {
+var wP = {
 	idle: "Not started",
 	connecting: "Connecting…",
 	connected: "Connected — the assistant is listening.",
 	reconnecting: "Connection lost. Reconnecting…",
 	ended: "Voice session ended.",
 	failed: "Voice could not start."
-}, CP = [
+}, TP = [
 	"connecting",
 	"connected",
 	"reconnecting"
 ];
-function wP(e) {
+function EP(e) {
 	let t = e?.name;
 	return t === "NotAllowedError" || t === "SecurityError" ? "The microphone is blocked. Allow microphone access for this site and try again." : t === "NotFoundError" ? "No microphone was found on this device. You can still ask by text." : t === "NotSupportedError" ? "This browser cannot start a voice call. You can still ask by text." : "The voice session could not connect. Check the connection and try again, or ask by text.";
 }
-function TP({ context: e, createTransport: t, onSessionExpired: n }) {
+function DP({ context: e, createTransport: t, onSessionExpired: n }) {
 	let [r, i] = (0, L.useState)(!1), [a, o] = (0, L.useState)("idle"), [s, c] = (0, L.useState)(null), [l, u] = (0, L.useState)(!1), [d, f] = (0, L.useState)([]), [p, m] = (0, L.useState)(!0), [h, g] = (0, L.useState)(null), _ = (0, L.useRef)(null), v = (0, L.useRef)(null), y = (0, L.useRef)([]), b = (0, L.useCallback)(async () => {
 		for (let e of y.current) e();
 		y.current = [];
@@ -37605,9 +37629,9 @@ function TP({ context: e, createTransport: t, onSessionExpired: n }) {
 		} catch {}
 		let r = _.current;
 		if (_.current = null, r) try {
-			await vP(e, r.session_id, { keepalive: !0 });
+			await bP(e, r.session_id, { keepalive: !0 });
 		} catch (e) {
-			yP(e) && n?.();
+			xP(e) && n?.();
 		}
 	}, [e, n]), x = (0, L.useRef)(b);
 	x.current = b, (0, L.useEffect)(() => () => {
@@ -37616,18 +37640,18 @@ function TP({ context: e, createTransport: t, onSessionExpired: n }) {
 	let S = (0, L.useCallback)(async () => {
 		o("ended"), u(!1), g(null), await b();
 	}, [b]), C = (0, L.useCallback)(async () => {
-		if (!r || !e.voice.enabled || CP.includes(a)) return;
+		if (!r || !e.voice.enabled || TP.includes(a)) return;
 		c(null), f([]), m(!0), o("connecting"), g(null);
 		let i;
 		try {
-			i = await _P(e);
+			i = await yP(e);
 		} catch (e) {
-			yP(e) && n?.(), c(bP(e)), o("failed");
+			xP(e) && n?.(), c(SP(e)), o("failed");
 			return;
 		}
 		_.current = i, g(new Date(i.expires_at.replace(" ", "T")));
 		try {
-			let e = await (t ?? xP)();
+			let e = await (t ?? CP)();
 			if (_.current !== i) {
 				await e.disconnect();
 				return;
@@ -37635,7 +37659,7 @@ function TP({ context: e, createTransport: t, onSessionExpired: n }) {
 			if (v.current = e, y.current = [e.onStatus((e) => o(e)), e.onUtterance((e) => f((t) => [...t, e]))], await e.connect(i.url, i.token), v.current !== e) return;
 			await e.setMicrophoneEnabled(!0), u(!1), o("connected");
 		} catch (e) {
-			await b(), g(null), o("failed"), c(wP(e));
+			await b(), g(null), o("failed"), c(EP(e));
 		}
 	}, [
 		r,
@@ -37649,13 +37673,13 @@ function TP({ context: e, createTransport: t, onSessionExpired: n }) {
 		if (e) try {
 			await e.setMicrophoneEnabled(l), u(!l);
 		} catch (e) {
-			c(wP(e));
+			c(EP(e));
 		}
 	}, [l]), T = (0, L.useCallback)(() => {
 		o("idle"), c(null), f([]), g(null);
 	}, []);
 	if ((0, L.useEffect)(() => {
-		if (!h || !CP.includes(a)) return;
+		if (!h || !TP.includes(a)) return;
 		let e = h.getTime() - Date.now();
 		if (!Number.isFinite(e)) return;
 		let t = window.setTimeout(() => {
@@ -37678,7 +37702,7 @@ function TP({ context: e, createTransport: t, onSessionExpired: n }) {
 			children: "Voice is not available on this site. You can still ask by text."
 		})]
 	});
-	let E = CP.includes(a), D = a === "ended" || a === "failed";
+	let E = TP.includes(a), D = a === "ended" || a === "failed";
 	return /* @__PURE__ */ (0, R.jsxs)("section", {
 		className: "voice",
 		"aria-labelledby": "voice-heading",
@@ -37722,7 +37746,7 @@ function TP({ context: e, createTransport: t, onSessionExpired: n }) {
 				children: [/* @__PURE__ */ (0, R.jsx)("span", {
 					className: "voice__dot",
 					"aria-hidden": "true"
-				}), SP[a]]
+				}), wP[a]]
 			}),
 			s ? /* @__PURE__ */ (0, R.jsx)("div", {
 				className: "error",
@@ -37794,21 +37818,21 @@ function TP({ context: e, createTransport: t, onSessionExpired: n }) {
 	});
 }
 // src/history.ts
-var EP = class extends Error {
+var OP = class extends Error {
 	status;
 	constructor(e, t) {
 		super(e), this.status = t, this.name = "HistoryError";
 	}
-}, DP = "/api/method/loan_advisory_portal.api.agent.";
-function OP(e) {
+}, kP = "/api/method/loan_advisory_portal.api.agent.";
+function AP(e) {
 	if (!e || typeof e != "object") return;
 	let t = e;
 	if (typeof t._error_message == "string" && t._error_message) return t._error_message;
 	if (typeof t.exc_type == "string" && t.exc_type) return t.exc_type;
 	if (typeof t.message == "string" && t.message) return t.message;
 }
-async function kP(e, t, n = {}) {
-	let r = n.method ?? (n.body ? "POST" : "GET"), i = new URLSearchParams(n.query ?? {}).toString(), a = await fetch(`${DP}${e}${i ? `?${i}` : ""}`, {
+async function jP(e, t, n = {}) {
+	let r = n.method ?? (n.body ? "POST" : "GET"), i = new URLSearchParams(n.query ?? {}).toString(), a = await fetch(`${kP}${e}${i ? `?${i}` : ""}`, {
 		method: r,
 		credentials: "same-origin",
 		headers: {
@@ -37821,100 +37845,100 @@ async function kP(e, t, n = {}) {
 		body: r === "POST" ? JSON.stringify(n.body ?? {}) : void 0,
 		signal: n.signal
 	});
-	if (a.redirected) throw new EP("sign in again", 401);
+	if (a.redirected) throw new OP("sign in again", 401);
 	let o;
 	try {
 		o = await a.json();
 	} catch {
 		o = void 0;
 	}
-	if (!a.ok) throw new EP(OP(o) ?? `request failed (${a.status})`, a.status);
+	if (!a.ok) throw new OP(AP(o) ?? `request failed (${a.status})`, a.status);
 	return o?.message;
 }
-function AP(e, t) {
-	return kP("list_conversations", e, {
+function MP(e, t) {
+	return jP("list_conversations", e, {
 		query: { application: e.application },
 		signal: t
 	});
 }
-function jP(e, t, n) {
-	return kP("conversation_messages", e, {
+function NP(e, t, n) {
+	return jP("conversation_messages", e, {
 		query: { thread_id: t },
 		signal: n
 	});
 }
-function MP(e, t, n, r) {
-	return kP("record_turn", e, { body: {
+function PP(e, t, n, r) {
+	return jP("record_turn", e, { body: {
 		thread_id: t,
 		question: n,
 		answer: r
 	} });
 }
 // src/thread.ts
-var NP = /^[A-Za-z0-9._:-]{1,128}$/;
-function PP() {
+var FP = /^[A-Za-z0-9._:-]{1,128}$/;
+function IP() {
 	try {
 		return window.sessionStorage;
 	} catch {
 		return;
 	}
 }
-function FP(e, t) {
+function LP(e, t) {
 	return `loan-advisory:thread:${e}:${t}`;
 }
-function IP(e, t) {
-	return `${FP(e, t)}:pending`;
+function RP(e, t) {
+	return `${LP(e, t)}:pending`;
 }
-function LP(e, t) {
+function zP(e, t) {
 	try {
 		return e?.getItem(t) || null;
 	} catch {
 		return null;
 	}
 }
-function RP(e, t, n) {
+function BP(e, t, n) {
 	try {
 		e?.setItem(t, n);
 	} catch {}
 }
-function zP(e, t, n = PP()) {
-	let r = LP(n, FP(e, t));
-	return r && NP.test(r) ? r : null;
+function VP(e, t, n = IP()) {
+	let r = zP(n, LP(e, t));
+	return r && FP.test(r) ? r : null;
 }
-function BP(e, t, n = PP()) {
-	return LP(n, IP(e, t));
+function HP(e, t, n = IP()) {
+	return zP(n, RP(e, t));
 }
-function VP(e, t, n, r = PP()) {
-	BP(e, t, r) === n && RP(r, IP(e, t), "");
+function UP(e, t, n, r = IP()) {
+	HP(e, t, r) === n && BP(r, RP(e, t), "");
 }
-function HP(e, t, n = PP()) {
-	return zP(e, t, n) ?? UP(e, t, n);
+function WP(e, t, n = IP()) {
+	return VP(e, t, n) ?? GP(e, t, n);
 }
-function UP(e, t, n = PP()) {
+function GP(e, t, n = IP()) {
 	let r = crypto.randomUUID();
-	return RP(n, FP(e, t), r), RP(n, IP(e, t), r), r;
+	return BP(n, LP(e, t), r), BP(n, RP(e, t), r), r;
 }
 // src/island.tsx
-var WP = {
+var KP = {
 	en: "English",
 	hi: "हिन्दी",
 	te: "తెలుగు"
-}, GP = {
+}, qP = {
 	low: "new to loans",
 	medium: "knows the basics",
 	high: "very familiar"
-}, KP = 8;
-function qP() {
+}, JP = 8;
+function YP() {
 	window.location.assign(`/login?redirect-to=${encodeURIComponent(window.location.pathname + window.location.search)}`);
 }
-function JP(e) {
+function XP(e) {
 	return e.messages.filter((e) => e.text).map((e, t) => ({
 		id: `stored-${t}`,
 		role: e.role,
 		content: e.text
 	}));
 }
-function YP({ context: e }) {
+function ZP({ context: e }) {
 	let { agent: t, isReady: n } = dk({
 		agentId: "advisory",
 		updates: [
@@ -37923,13 +37947,13 @@ function YP({ context: e }) {
 			lk.OnRunStatusChanged
 		],
 		throttleMs: 60
-	}), [r, i] = (0, L.useState)(() => HP(e.user, e.application)), [a, o] = (0, L.useState)([]), [s, c] = (0, L.useState)(null), [l, u] = (0, L.useState)(null), d = (0, L.useCallback)(async (t) => {
+	}), [r, i] = (0, L.useState)(() => WP(e.user, e.application)), [a, o] = (0, L.useState)([]), [s, c] = (0, L.useState)(null), [l, u] = (0, L.useState)(null), d = (0, L.useCallback)(async (t) => {
 		try {
-			let n = await AP(e, t);
+			let n = await MP(e, t);
 			t?.aborted || (o(n), c(null));
 		} catch (e) {
 			if (t?.aborted || e?.name === "AbortError") return;
-			e instanceof EP && e.status === 401 ? qP() : t?.aborted || c("Earlier conversations could not be loaded.");
+			e instanceof OP && e.status === 401 ? YP() : t?.aborted || c("Earlier conversations could not be loaded.");
 		}
 	}, [e]);
 	(0, L.useEffect)(() => {
@@ -37938,12 +37962,12 @@ function YP({ context: e }) {
 	}, [d]), (0, L.useEffect)(() => {
 		if (!n) return;
 		let i = !1;
-		if (t.setMessages([]), t.setState({}), t.threadId = r, BP(e.user, e.application) !== r) return jP(e, r).then((e) => {
+		if (t.setMessages([]), t.setState({}), t.threadId = r, HP(e.user, e.application) !== r) return NP(e, r).then((e) => {
 			if (i || e.thread_id !== r) return;
-			let n = JP(e);
+			let n = XP(e);
 			n.length && t.messages.length === 0 && t.setMessages(n);
 		}).catch((e) => {
-			i || e instanceof EP && e.status === 401 && qP();
+			i || e instanceof OP && e.status === 401 && YP();
 		}), () => {
 			i = !0;
 		};
@@ -37955,17 +37979,17 @@ function YP({ context: e }) {
 	]);
 	let f = (0, L.useCallback)(async (t, n) => {
 		try {
-			await MP(e, r, t, n), VP(e.user, e.application, r), await d();
+			await PP(e, r, t, n), UP(e.user, e.application, r), await d();
 		} catch (e) {
-			e instanceof EP && e.status === 401 && qP();
+			e instanceof OP && e.status === 401 && YP();
 		}
 	}, [
 		e,
 		d,
 		r
-	]), p = (0, L.useCallback)(() => i(UP(e.user, e.application)), [e]), m = (0, L.useCallback)(() => {
+	]), p = (0, L.useCallback)(() => i(GP(e.user, e.application)), [e]), m = (0, L.useCallback)(() => {
 		p();
-	}, [p]), h = EM(t.state), g = a.slice(0, KP), _ = WN(e.user, e.application, r), v = (e) => u((t) => t === e ? null : e), y = (e, t) => /* @__PURE__ */ (0, R.jsx)("button", {
+	}, [p]), h = EM(t.state), g = a.slice(0, JP), _ = WN(e.user, e.application, r), v = (e) => u((t) => t === e ? null : e), y = (e, t) => /* @__PURE__ */ (0, R.jsx)("button", {
 		type: "button",
 		className: `drawer-tab${l === e ? " drawer-tab--on" : ""}`,
 		"aria-expanded": l === e,
@@ -37994,12 +38018,12 @@ function YP({ context: e }) {
 					})
 				]
 			}),
-			/* @__PURE__ */ (0, R.jsx)(uP, {
+			/* @__PURE__ */ (0, R.jsx)(fP, {
 				agent: t,
 				isReady: n,
 				application: e.application,
 				state: h,
-				onSessionExpired: qP,
+				onSessionExpired: YP,
 				onAnswered: f,
 				onConversationReset: m,
 				storageKey: _,
@@ -38025,9 +38049,9 @@ function YP({ context: e }) {
 					/* @__PURE__ */ (0, R.jsx)("div", {
 						id: "drawer-voice",
 						hidden: l !== "voice",
-						children: /* @__PURE__ */ (0, R.jsx)(TP, {
+						children: /* @__PURE__ */ (0, R.jsx)(DP, {
 							context: e,
-							onSessionExpired: qP
+							onSessionExpired: YP
 						})
 					}),
 					/* @__PURE__ */ (0, R.jsxs)("section", {
@@ -38075,9 +38099,9 @@ function YP({ context: e }) {
 								className: "note",
 								children: [
 									"Answers use your profile settings — ",
-									WP[e.locale],
+									KP[e.locale],
 									", ",
-									GP[e.literacy],
+									qP[e.literacy],
 									". Change them in ",
 									/* @__PURE__ */ (0, R.jsx)("a", {
 										href: "/borrower/profile",
@@ -38091,7 +38115,7 @@ function YP({ context: e }) {
 					/* @__PURE__ */ (0, R.jsx)("div", {
 						id: "drawer-plan",
 						hidden: l !== "plan",
-						children: /* @__PURE__ */ (0, R.jsx)(fP, { plan: h.improvement_plan ?? [] })
+						children: /* @__PURE__ */ (0, R.jsx)(mP, { plan: h.improvement_plan ?? [] })
 					})
 				]
 			})
@@ -38099,13 +38123,13 @@ function YP({ context: e }) {
 	});
 }
 // src/main.tsx
-var XP = document.getElementById("assistant-root");
-if (!XP) throw Error("missing #assistant-root");
-var ZP = dM(document);
-(0, oM.createRoot)(XP).render(/* @__PURE__ */ (0, R.jsx)(L.StrictMode, { children: /* @__PURE__ */ (0, R.jsx)(RO, {
+var QP = document.getElementById("assistant-root");
+if (!QP) throw Error("missing #assistant-root");
+var $P = dM(document);
+(0, oM.createRoot)(QP).render(/* @__PURE__ */ (0, R.jsx)(L.StrictMode, { children: /* @__PURE__ */ (0, R.jsx)(RO, {
 	runtimeUrl: "/api/copilotkit",
 	agentId: "advisory",
-	headers: () => ({ "x-frappe-csrf-token": ZP.csrfToken }),
+	headers: () => ({ "x-frappe-csrf-token": $P.csrfToken }),
 	enableInspector: !1,
-	children: /* @__PURE__ */ (0, R.jsx)(YP, { context: ZP })
+	children: /* @__PURE__ */ (0, R.jsx)(ZP, { context: $P })
 }) }));

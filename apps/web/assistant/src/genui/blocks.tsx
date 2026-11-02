@@ -406,7 +406,10 @@ export function MissingInformationBlock({ items }: { items: MissingInformationIt
 export function HumanAssistanceBlock({ handoffRef }: { handoffRef: string }) {
   return (
     <section className="handoff" aria-labelledby="handoff-heading">
-      <h3 id="handoff-heading">Human help requested</h3>
+      <div className="handoff__head">
+        <img className="handoff__art" src="/assets/loan_advisory_portal/illustrations/handoff.svg" alt="" width={96} height={72} />
+        <h3 id="handoff-heading">Human help requested</h3>
+      </div>
       <ul className="action-rows">
         <li className="action-row">
           <div className="action-row__text">

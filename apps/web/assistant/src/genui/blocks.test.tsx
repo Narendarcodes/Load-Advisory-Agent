@@ -120,6 +120,12 @@ describe("human assistance", () => {
     expect(markup).toContain("no external ticket has been created");
     expect(markup).toContain('href="/borrower/help"');
   });
+
+  it("shows the handoff scene as decoration only (empty alt; the heading says what happened)", () => {
+    const markup = html({ type: "human_assistance", handoffRef: "HO-1" });
+    expect(markup).toMatch(/<img[^>]*src="\/assets\/loan_advisory_portal\/illustrations\/handoff\.svg"[^>]*>/);
+    expect(markup).toMatch(/<img[^>]*alt=""/);
+  });
 });
 
 describe("missing information", () => {

@@ -1,7 +1,7 @@
 {% extends "templates/portal/base.html" %}
 {% block title %}Identity check{% endblock %}
 {% block page_content %}
-<div class="page-head">
+<div class="page-head page-head--art">
 	<div>
 		<h1>Confirm who you are</h1>
 		<p>Identity checks protect you and meet lending rules. They are separate from the loan decision: a check that fails does not reject your application.</p>
@@ -9,6 +9,7 @@
 	<div class="page-head__actions">
 		<a class="btn btn--quiet" href="/borrower/help">How this works</a>
 	</div>
+	<img class="page-head__art" src="/assets/loan_advisory_portal/illustrations/kyc.svg" alt="" width="160" height="120">
 </div>
 
 {% if boot.get("demo") %}
@@ -62,7 +63,6 @@
 		{% if not boot.get("demo") %}
 		<div class="card">
 			<div class="empty">
-				<span class="empty__mark" aria-hidden="true">ID</span>
 				<h2>Not available online</h2>
 				<p>Identity verification is handled by your loan advisor for now. Nothing is pending on this page.</p>
 				<a class="btn btn--ghost" href="/borrower/help">Read the help page</a>

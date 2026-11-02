@@ -31,6 +31,20 @@ export const STARTERS = [
 export const TRUST_LINE = "Understand your loan decision. A person decides.";
 const ILLUSTRATION = "/assets/loan_advisory_portal/illustrations/assistant.svg";
 const ERROR_ILLUSTRATION = "/assets/loan_advisory_portal/illustrations/service-unavailable.svg";
+const THINKING_ILLUSTRATION = "/assets/loan_advisory_portal/illustrations/assistant-thinking.svg";
+
+/** Before the first words arrive: a quiet scene beside the live steps (decorative; the steps say what is happening). */
+function Thinking({ stages }: { stages: string[] }) {
+  return (
+    <div className="msg__thinking">
+      <img className="msg__thinking-art" src={THINKING_ILLUSTRATION} alt="" width={96} height={72} />
+      <div className="msg__thinking-body">
+        <LiveSteps stages={stages} />
+        <Typing />
+      </div>
+    </div>
+  );
+}
 
 function textOf(message: Message): string {
   const content = (message as { content?: unknown }).content;
@@ -338,8 +352,14 @@ export function ChatPanel({
       return (
         <div key={message.id} className="msg bot msg--live">
           <div className="msg__body">
-            <LiveSteps stages={runStages} />
-            {text ? <Markdown text={liveText(text)} /> : <Typing />}
+            {text ? (
+              <>
+                <LiveSteps stages={runStages} />
+                <Markdown text={liveText(text)} />
+              </>
+            ) : (
+              <Thinking stages={runStages} />
+            )}
           </div>
         </div>
       );
@@ -426,8 +446,7 @@ export function ChatPanel({
         {waiting ? (
           <div className="msg bot msg--live">
             <div className="msg__body">
-              <LiveSteps stages={runStages} />
-              <Typing />
+              <Thinking stages={runStages} />
             </div>
           </div>
         ) : null}

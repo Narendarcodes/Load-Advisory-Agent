@@ -257,6 +257,16 @@ function stateFor(scenario) {
           label: "Hypothetical - not your recorded decision",
         },
       };
+    case "handoff":
+      return {
+        ...base,
+        intent: "human_help",
+        action: "handoff",
+        answer:
+          ANSWER_PREFIX +
+          "I have recorded that you want a person to look at this decision. The reference is below.",
+        handoff_ref: "HO-FIXTURE-0001",
+      };
     default:
       return {
         ...base,
@@ -273,6 +283,7 @@ function answerText(scenario) {
 function scenarioOf(text) {
   const value = String(text || "").toLowerCase();
   if (value.includes("upstream failure") || value.includes("simulate failure")) return "error";
+  if (value.includes("talk to a person") || value.includes("human review")) return "handoff";
   if (value.includes("malformed")) return "malformed";
   if (value.includes("unknown component")) return "unknown";
   if (value.includes("required fields") && value.includes("absent")) return "absent_fields";

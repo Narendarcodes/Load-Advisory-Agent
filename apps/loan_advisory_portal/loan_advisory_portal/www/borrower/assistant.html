@@ -11,7 +11,7 @@
 {% include "templates/portal/_not_found.html" %}
 {% else %}
 {% if not application %}
-<div class="page-head">
+<div class="page-head page-head--art">
 	<div>
 		<h1>Ask about your decision</h1>
 		<p>Pick the application you want to talk about. Saral answers about one application at a time.</p>
@@ -19,6 +19,7 @@
 	<div class="page-head__actions">
 		<a class="btn btn--ghost" href="/borrower">Back to applications</a>
 	</div>
+	<img class="page-head__art" src="/assets/loan_advisory_portal/illustrations/assistant.svg" alt="" width="160" height="120">
 </div>
 
 <section class="card" aria-labelledby="choose-heading">
@@ -43,6 +44,7 @@
 	</ul>
 	{% else %}
 	<div class="empty empty--compact">
+		<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-applications.svg" alt="" width="180" height="135">
 		<h2>No applications yet</h2>
 		<p>Start an application and the assistant can explain its decision here.</p>
 		<a class="btn" href="/borrower/apply">Start an application</a>

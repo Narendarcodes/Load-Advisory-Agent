@@ -70,8 +70,14 @@
 				</div>
 				<a class="small" href="/borrower/profile">Update your profile</a>
 			</div>
-			<div id="applications" aria-live="polite">
-				<p class="muted small">Loading your applications…</p>
+			<div id="applications" aria-live="polite" aria-busy="true">
+				<p class="sr-only">Loading your applications</p>
+				<div class="skeleton-table" aria-hidden="true">
+					<span class="skeleton skeleton--row"></span>
+					<span class="skeleton skeleton--row skeleton--w80"></span>
+					<span class="skeleton skeleton--row"></span>
+					<span class="skeleton skeleton--row skeleton--w70"></span>
+				</div>
 			</div>
 		</section>
 	</div>
@@ -79,8 +85,8 @@
 	<aside class="dashboard__side" aria-label="Next steps and support">
 		<section class="next-step" id="next-step" aria-labelledby="next-step-heading" aria-live="polite">
 			<img class="next-step__art" src="/assets/loan_advisory_portal/illustrations/dashboard.svg" alt="" width="160" height="120">
-			<h2 id="next-step-heading">Loading…</h2>
-			<p class="small" id="next-step-body">&nbsp;</p>
+			<h2 id="next-step-heading"><span class="skeleton skeleton--title" aria-hidden="true"></span><span class="sr-only">Loading your next step</span></h2>
+			<p class="small" id="next-step-body"><span class="skeleton skeleton--line skeleton--w80" aria-hidden="true"></span></p>
 			<p class="small muted hidden" id="latest-status"></p>
 			<div id="next-step-action"></div>
 		</section>

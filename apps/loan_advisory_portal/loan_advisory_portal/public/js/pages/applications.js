@@ -85,6 +85,7 @@
 
 	function renderTable(applications) {
 		if (!applications.length) {
+			host.removeAttribute("aria-busy");
 			host.innerHTML =
 				'<div class="empty">' +
 				'<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-applications.svg" alt="" width="180" height="135">' +
@@ -125,6 +126,7 @@
 			})
 			.join("");
 
+		host.removeAttribute("aria-busy");
 		host.innerHTML =
 			'<div class="table-wrap table-wrap--stack">' +
 			'<table><caption class="sr-only">Your applications, newest first</caption>' +
@@ -185,6 +187,7 @@
 			renderActiveLoan();
 		} catch (error) {
 			if (error.status === 401 || error.status === 403) return;
+			host.removeAttribute("aria-busy");
 			host.innerHTML =
 				'<div class="empty empty--compact">' +
 				"<h2>We could not load your applications</h2>" +
