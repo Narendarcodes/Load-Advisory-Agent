@@ -134,7 +134,7 @@
 		<section class="card card--accent">
 			<p class="eyebrow">Assistant</p>
 			<h2>{{ "Understand this decision" if decided else "Ask about this application" }}</h2>
-			<p class="small mt">{{ "The assistant explains policy and the recorded reasons in plain language. It never approves or rejects an application." if decided else "The assistant explains policy and what happens next in plain language. It never approves or rejects an application." }}</p>
+			<p class="small mt">{{ "Ask why this was decided, what to fix, or try a what-if." if decided else "Ask what happens next and what the lender will check." }}</p>
 			<a class="btn btn--sm mt" href="/borrower/assistant?application={{ application.name | urlencode }}">Ask the assistant</a>
 		</section>
 
