@@ -4755,3 +4755,21 @@ body .assistant__head h2 {
 		width: auto;
 	}
 }
+
+/* Apply: the three stage pills follow the form column's width, not the page's. Beside the step
+   list and the summary at 1280px the column is ~340px, and "Documents" pushed its pill past the
+   card's edge; below 480px of column the number sits above the label, as on phones. */
+.stage-stepper {
+	container-type: inline-size;
+}
+
+@container (max-width: 480px) {
+	.stage-stepper li {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 6px;
+		padding: 8px;
+		font-size: 0.78rem;
+		min-width: 0;
+	}
+}
