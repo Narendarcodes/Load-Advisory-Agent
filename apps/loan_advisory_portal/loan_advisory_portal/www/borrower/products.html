@@ -39,15 +39,14 @@
 		</div>
 
 		{% if products %}
-		<div class="product-grid">
+		<div class="product-list">
 			{% for product in products %}
-			<article class="product-card">
-				<span class="product-card__mark" aria-hidden="true">TL</span>
-				<div>
+			<article class="product-row">
+				<div class="product-row__copy">
 					<h3>{{ product.name | e }}</h3>
 					<p>Term loan with a fixed repayment schedule. The amount and terms you are offered depend on your application.</p>
 				</div>
-				<dl>
+				<dl class="def-rows">
 					<div>
 						<dt>Maximum amount</dt>
 						<dd>₹{{ "{:,.0f}".format(product.maximum_loan_amount or 0) }}</dd>
@@ -81,9 +80,8 @@
 				<h2 id="calculator-heading">Indicative monthly repayment</h2>
 				<p class="small muted">An estimate using the product rate. It is not an offer.</p>
 			</div>
-			<span class="badge badge--brand">Estimate only</span>
 		</div>
-		<div class="card calculator">
+		<div class="calculator">
 			<div class="stack">
 				<div class="field">
 					<label for="calc-amount">Amount you want to borrow (₹)</label>
@@ -128,23 +126,23 @@
 	<section class="section" aria-labelledby="process-heading">
 		<div class="section__head">
 			<div>
-				<h2 id="process-heading">Three steps, no surprises</h2>
+				<h2 id="process-heading">How it works</h2>
 			</div>
 		</div>
-		<div class="process">
-			<article class="process__step">
-				<h3>Check what fits</h3>
-				<p>Answer a few questions about income and commitments. You get an indicative range, not a promise.</p>
-			</article>
-			<article class="process__step">
-				<h3>Apply with the details you know</h3>
-				<p>Tell us what the loan is for, add your documents, and review everything before you submit.</p>
-			</article>
-			<article class="process__step">
-				<h3>Read the decision</h3>
-				<p>You see the outcome, the reasons that shaped it and what to do next. Our team can talk it through.</p>
-			</article>
-		</div>
+		<dl class="def-list">
+			<div>
+				<dt>Check what fits</dt>
+				<dd>Answer a few questions about income and commitments. You get an indicative range, not a promise.</dd>
+			</div>
+			<div>
+				<dt>Apply with the details you know</dt>
+				<dd>Tell us what the loan is for, add your documents, and review everything before you submit.</dd>
+			</div>
+			<div>
+				<dt>Read the decision</dt>
+				<dd>You see the outcome, the reasons that shaped it and what to do next. Our team can talk it through.</dd>
+			</div>
+		</dl>
 	</section>
 
 	<section class="section" aria-labelledby="trust-heading">
@@ -153,32 +151,24 @@
 				<h2 id="trust-heading">Built to be understood</h2>
 			</div>
 		</div>
-		<div class="assurance">
-			<div class="assurance__item">
-				<div>
-					<strong>Plain language</strong>
-					<p>No abbreviations invented for the file. If a term matters, it is explained where you meet it.</p>
-				</div>
+		<dl class="def-list">
+			<div>
+				<dt>Plain language</dt>
+				<dd>No abbreviations invented for the file. If a term matters, it is explained where you meet it.</dd>
 			</div>
-			<div class="assurance__item">
-				<div>
-					<strong>Reasons, not just results</strong>
-					<p>Whenever a decision is made, you can read which parts of your application mattered.</p>
-				</div>
+			<div>
+				<dt>Reasons, not just results</dt>
+				<dd>Whenever a decision is made, you can read which parts of your application mattered.</dd>
 			</div>
-			<div class="assurance__item">
-				<div>
-					<strong>Your data stays yours</strong>
-					<p>Documents are private to you and the review team. The assistant never reads raw identity numbers.</p>
-				</div>
+			<div>
+				<dt>Your data stays yours</dt>
+				<dd>Documents are private to you and the review team. The assistant never reads raw identity numbers.</dd>
 			</div>
-			<div class="assurance__item">
-				<div>
-					<strong>A person is accountable</strong>
-					<p>The assistant explains. A human reviews and decides. You can ask for the decision to be looked at again.</p>
-				</div>
+			<div>
+				<dt>A person is accountable</dt>
+				<dd>The assistant explains. A human reviews and decides. You can ask for the decision to be looked at again.</dd>
 			</div>
-		</div>
+		</dl>
 	</section>
 
 	<section class="section grid-2" aria-label="Costs and questions">
@@ -218,17 +208,17 @@
 		</div>
 	</section>
 
-	<section class="section card card--accent" aria-labelledby="cta-heading">
+	<section class="section closing" aria-labelledby="cta-heading">
 		<div class="row row--between">
 			<div>
 				<h2 id="cta-heading">Ready to see where you stand?</h2>
 				<p class="small muted mt">The check takes a few minutes and does not affect your credit score.</p>
 			</div>
 			<div class="row">
-				<a class="btn" href="{{ '/borrower/eligibility' if signed_in else '/login?redirect-to=%2Fborrower%2Feligibility' }}">
+				<a class="btn btn--ghost" href="{{ '/borrower/eligibility' if signed_in else '/login?redirect-to=%2Fborrower%2Feligibility' }}">
 					{{ 'Check indicative eligibility' if signed_in else 'Sign in' }}
 				</a>
-				<a class="btn btn--ghost" href="/borrower/help">How decisions work</a>
+				<a class="link-arrow" href="/borrower/help">How decisions work</a>
 			</div>
 		</div>
 	</section>

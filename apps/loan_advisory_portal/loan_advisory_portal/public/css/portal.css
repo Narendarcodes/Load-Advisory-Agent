@@ -6208,3 +6208,151 @@ dl.detail--stacked dd {
 #application-choices > .btn:only-child {
 	justify-self: center;
 }
+
+/* v3 products page: hairline-separated sections, no boxed cards, no step numbers. Each product,
+   step and assurance is a definition row on the page paper; the hero keeps the page's one coral
+   action and the closing invitation repeats it as a ghost button. */
+.product-list {
+	display: grid;
+	border-top: 1px solid var(--line);
+}
+
+.product-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+	gap: var(--s3) var(--s6);
+	padding: var(--s4) 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.product-row h3 {
+	margin: 0 0 4px;
+	font-size: 1.05rem;
+}
+
+.product-row p {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+	max-width: 52ch;
+}
+
+.def-rows {
+	display: grid;
+	margin: 0;
+	font-size: 0.9rem;
+}
+
+.def-rows > div {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s3);
+	padding: 8px 0;
+	border-top: 1px solid var(--line);
+}
+
+.def-rows > div:first-child {
+	border-top: 0;
+	padding-top: 0;
+}
+
+.def-rows dt {
+	color: var(--muted);
+}
+
+.def-rows dd {
+	margin: 0;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.def-list {
+	display: grid;
+	margin: 0;
+	border-top: 1px solid var(--line);
+}
+
+.def-list > div {
+	display: grid;
+	grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+	gap: var(--s1) var(--s5);
+	padding: var(--s3) 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.def-list dt {
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.def-list dd {
+	margin: 0;
+	color: var(--ink-2);
+	max-width: 62ch;
+}
+
+.calculator {
+	align-items: start;
+	padding-top: var(--s4);
+	border-top: 1px solid var(--line);
+}
+
+.calculator__result {
+	padding: 0 0 0 var(--s5);
+	border: 0;
+	border-left: 1px solid var(--line);
+	border-radius: 0;
+	background: transparent;
+}
+
+.faq {
+	gap: 0;
+	border-top: 1px solid var(--line);
+	align-self: start;
+}
+
+.faq details {
+	padding: 0;
+	border: 0;
+	border-bottom: 1px solid var(--line);
+	border-radius: 0;
+	background: transparent;
+}
+
+.closing {
+	padding-top: var(--s5);
+	border-top: 1px solid var(--line);
+}
+
+@media (max-width: 900px) {
+	.product-row,
+	.def-list > div {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.calculator__result {
+		padding: var(--s4) 0 0;
+		border-left: 0;
+		border-top: 1px solid var(--line);
+	}
+
+	.calculator__rows {
+		max-width: 30rem;
+	}
+}
+
+/* The next section opens with its own hairline, so a list never closes with one (no double rules). */
+.product-row:last-child,
+.def-list > div:last-child,
+.faq details:last-child {
+	border-bottom: 0;
+}
+
+.landing .grid-2 > .card {
+	padding-top: var(--s3);
+}
+
+.landing .card h3 + ul {
+	margin-top: var(--s2);
+}
