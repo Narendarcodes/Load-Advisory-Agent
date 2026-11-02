@@ -227,12 +227,35 @@
 		logout: logout,
 	};
 
+	function setNav(open) {
+		document.body.classList.toggle("nav-open", open);
+		var scrim = document.querySelector(".nav-scrim");
+		if (scrim) scrim.hidden = !open;
+		document.querySelectorAll("[data-action='nav-toggle']").forEach(function (button) {
+			button.setAttribute("aria-expanded", open ? "true" : "false");
+		});
+		if (open) {
+			var first = document.querySelector("#portal-rail a, #portal-rail button");
+			if (first) first.focus();
+		}
+	}
+
 	document.addEventListener("click", function (event) {
 		var target = event.target.closest("[data-action='logout']");
 		if (target) {
 			event.preventDefault();
 			logout();
+			return;
 		}
+		if (event.target.closest("[data-action='nav-toggle']")) {
+			setNav(!document.body.classList.contains("nav-open"));
+			return;
+		}
+		if (event.target.closest("[data-action='nav-close']")) setNav(false);
+	});
+
+	document.addEventListener("keydown", function (event) {
+		if (event.key === "Escape" && document.body.classList.contains("nav-open")) setNav(false);
 	});
 
 	if (boot.user && boot.user !== "Guest") {

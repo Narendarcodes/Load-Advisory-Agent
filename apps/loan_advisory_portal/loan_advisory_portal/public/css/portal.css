@@ -4298,3 +4298,183 @@ body .assistant__head h2 {
 		padding: 0;
 	}
 }
+
+/* ======================================================================
+   Saral shell (2026-11 redesign)
+   Desktop: fixed sidebar with labels. 768-1100px: icon rail (labels become
+   tooltips). <=767px: top bar with Menu, bottom quick links, and the same
+   sidebar as an off-canvas drawer. Comes last on purpose.
+   ====================================================================== */
+
+.nav-icon {
+	display: block;
+	width: 20px;
+	height: 20px;
+}
+
+.rail__abbr .nav-icon,
+.tabbar__abbr .nav-icon {
+	width: 18px;
+	height: 18px;
+}
+
+.rail__abbr {
+	color: var(--ink-2);
+	background: transparent;
+}
+
+.rail__link:hover .rail__abbr {
+	background: var(--paper);
+}
+
+.rail__user {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 8px;
+	color: var(--ink);
+}
+
+.rail__link[data-action="logout"] {
+	width: 100%;
+}
+
+.tabbar a,
+.tabbar button {
+	display: grid;
+	justify-items: center;
+	gap: 3px;
+	min-height: 48px;
+	padding: 5px 2px;
+	border: 0;
+	border-radius: var(--radius-xs);
+	background: transparent;
+	color: var(--muted);
+	font: 700 0.66rem/1.2 var(--font-body);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.tabbar button[aria-expanded="true"] {
+	background: var(--peach-soft);
+	color: var(--deep);
+}
+
+.nav-menu {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 40px;
+	padding: 6px 12px;
+	border: 1px solid var(--line-2);
+	border-radius: 999px;
+	background: var(--card);
+	color: var(--ink);
+	font: 600 0.86rem/1 var(--font-body);
+	cursor: pointer;
+}
+
+.nav-scrim {
+	position: fixed;
+	inset: 0;
+	z-index: 70;
+	background: rgb(36 28 27 / 38%);
+}
+
+.nav-scrim[hidden] {
+	display: none;
+}
+
+/* Tablet keeps the icon rail instead of falling back to the top bar. */
+@media (min-width: 768px) and (max-width: 900px) {
+	.shell {
+		grid-template-columns: var(--rail) minmax(0, 1fr);
+	}
+
+	.rail {
+		display: flex;
+	}
+
+	.topbar {
+		display: none;
+	}
+}
+
+@media (max-width: 767px) {
+	.shell {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.topbar {
+		display: flex;
+	}
+
+	.rail {
+		display: none;
+	}
+
+	/* Off-canvas drawer: the full sidebar with its labels. */
+	body.nav-open .rail {
+		display: flex;
+		position: fixed;
+		inset: 0 auto 0 0;
+		z-index: 80;
+		width: min(300px, 86vw);
+		height: 100dvh;
+		align-items: stretch;
+		padding: 22px 16px calc(20px + env(safe-area-inset-bottom));
+		box-shadow: 0 0 48px rgb(36 28 27 / 28%);
+	}
+
+	body.nav-open .rail .rail__brand-text,
+	body.nav-open .rail .rail__label,
+	body.nav-open .rail .rail__text,
+	body.nav-open .rail .rail__user-text {
+		position: static;
+		width: auto;
+		height: auto;
+		overflow: visible;
+		clip: auto;
+		white-space: normal;
+	}
+
+	body.nav-open .rail .rail__link {
+		justify-content: flex-start;
+		width: auto;
+		padding-inline: 10px;
+	}
+
+	body.nav-open .rail .rail__brand,
+	body.nav-open .rail .rail__user {
+		justify-content: flex-start;
+		padding-inline: 8px;
+	}
+
+	body.nav-open {
+		overflow: hidden;
+	}
+}
+
+/* Page pattern: title, context, primary action, then cards. */
+.page-head p {
+	max-width: 62ch;
+}
+
+.page-art {
+	display: block;
+	width: 100%;
+	max-width: 220px;
+	height: auto;
+}
+
+.empty__art {
+	display: block;
+	width: 180px;
+	max-width: 70%;
+	height: auto;
+	margin: 0 auto var(--s3);
+}
+
+.site-footer__credit {
+	font-size: 0.78rem;
+}
