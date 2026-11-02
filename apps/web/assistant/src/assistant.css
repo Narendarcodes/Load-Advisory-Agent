@@ -2243,8 +2243,8 @@
 .assistant .chat-empty__mark .shader-zone__canvas {
 	inset: 6px;
 	border-radius: 50%;
-	-webkit-mask-image: radial-gradient(closest-side, #000 52%, rgb(0 0 0 / 60%) 72%, transparent 100%);
-	mask-image: radial-gradient(closest-side, #000 52%, rgb(0 0 0 / 60%) 72%, transparent 100%);
+	-webkit-mask-image: radial-gradient(closest-side, #000 52%, rgb(0 0 0 / 60%) 72%, transparent 100%); /* taste-skill-ignore: alpha mask that rounds the orb canvas, not a fill */
+	mask-image: radial-gradient(closest-side, #000 52%, rgb(0 0 0 / 60%) 72%, transparent 100%); /* taste-skill-ignore: alpha mask that rounds the orb canvas, not a fill */
 	transition: opacity 900ms var(--ease-out, ease-out);
 }
 
