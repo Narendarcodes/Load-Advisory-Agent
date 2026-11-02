@@ -69,7 +69,11 @@ async function focusLatest(page, selector = ".msg.bot", offset = 72) {
   await page.evaluate(([sel, off]) => {
     const items = document.querySelectorAll(sel);
     const last = items[items.length - 1];
-    if (last) window.scrollTo({ top: last.getBoundingClientRect().top + window.scrollY - off, behavior: "instant" });
+    // A sticky/fixed top bar (phones, tablets) covers the top of the viewport: clear it too.
+    const bar = document.querySelector(".topbar");
+    const pos = bar ? getComputedStyle(bar).position : "";
+    const barH = bar && (pos === "sticky" || pos === "fixed") ? bar.getBoundingClientRect().height : 0;
+    if (last) window.scrollTo({ top: last.getBoundingClientRect().top + window.scrollY - off - barH, behavior: "instant" });
   }, [selector, offset]);
   await sleep(300);
 }
