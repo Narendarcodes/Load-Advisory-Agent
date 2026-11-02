@@ -250,6 +250,16 @@ class Fixtures:
 			           privacy_version=self.legal.PRIVACY_VERSION, updated=self.legal.UPDATED,
 			           states=[self.guidance.for_state(s) for s in self.lifecycle.STATES])
 			return "www/borrower/help.html", ctx
+		if path == "/borrower/profile":
+			# Same context as www/borrower/profile.py: the canonical preference vocabulary.
+			try:
+				from loan_advisory_portal.portal import preferences as vocabulary  # noqa: E402  (pure module)
+			except Exception:  # pragma: no cover - older trees
+				return None
+			ctx.update(active_page="profile", title="Your profile",
+			           locale_options=vocabulary.locale_options(), literacy_options=vocabulary.literacy_options(),
+			           current_locale="en", current_literacy="low")
+			return "www/borrower/profile.html", ctx
 		if path == "/borrower/assistant":
 			name = get("application")
 			ctx.update(active_page="assistant", title="Assistant")

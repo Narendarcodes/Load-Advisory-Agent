@@ -43,8 +43,17 @@ async function settle(page) {
 
 async function shot(page, name, full = true) {
   const file = path.join(OUT, `${name}.png`);
+  // Full-page captures stitch the viewport, so sticky/fixed bars were painted mid-page. Pin them to
+  // the flow for the capture only (the page itself is unchanged).
+  const pin = full
+    ? await page.addStyleTag({ content: ".topbar,.tabbar{position:static !important}" }).catch(() => null)
+    : null;
   await page.screenshot({ path: file, fullPage: full });
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  if (pin) await pin.evaluate((n) => n.remove()).catch(() => {});
+  // Compare with the viewport we asked for: with isMobile a too-wide page widens window.innerWidth too,
+  // so scrollWidth - innerWidth read 0 while the 390 page was scrolling sideways.
+  const vw = page.viewportSize().width;
+  const overflow = await page.evaluate((w) => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - w, vw);
   log.push({ name, file, horizontalOverflowPx: overflow });
   console.log(`${name} overflow=${overflow}`);
 }
@@ -154,6 +163,7 @@ async function shots() {
   for (const width of WIDTHS) {
     const context = await newContext(browser, width);
     const page = await context.newPage();
+    page.setDefaultTimeout(15000);
     page.on("pageerror", (e) => log.push({ width, pageerror: String(e) }));
     const routes = [
       ["login", "/login"],
@@ -176,8 +186,13 @@ async function shots() {
     if (process.env.ONLY === "screens") { await context.close(); continue; }
     if (process.env.ONLY !== "assistant") await wizard(page, "", width);
     await assistant(page, "", width);
-    if (width <= 420) {
-      await page.locator('[data-action="nav-toggle"]').last().click().catch(() => {});
+    // Nav drawer: shoot it on a fresh dashboard so no assistant sheet or overlay is in the way.
+    // Bounded click timeout: an unbounded click on a covered toggle hung the 390 run forever.
+    await page.goto(`${BASE}/borrower?fx=full`);
+    await settle(page);
+    const toggle = page.locator('[data-action="nav-toggle"]:visible').first();
+    if (await toggle.count()) {
+      await toggle.click({ timeout: 5000 }).catch((e) => log.push({ width, navToggle: String(e) }));
       await sleep(500);
       await shot(page, `nav-drawer-${width}`, false);
     }
