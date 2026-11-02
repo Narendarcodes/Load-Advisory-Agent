@@ -1290,6 +1290,11 @@
 		overflow: hidden;
 	}
 
+	/* The island's own `.assistant__grid { height: auto }` won over the page's 100%. */
+	.assistant-layout__main .assistant__body > .assistant__grid {
+		height: 100%;
+	}
+
 	.assistant .chat {
 		min-height: 0;
 		overflow: hidden;
