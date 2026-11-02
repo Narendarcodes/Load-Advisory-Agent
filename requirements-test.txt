@@ -1,0 +1,25 @@
+# Test and browser-harness dependencies the application manifest does not carry.
+#
+# Why this file exists: `pytest -q` on a machine that installed only requirements.txt failed to
+# collect three test modules (No module named 'rank_bm25') and silently skipped a fourth
+# (pymupdf). CI had been patching over this with an inline `pip install beautifulsoup4 pyyaml
+# rank-bm25 qdrant-client`, which is invisible to a developer running the suite locally and does
+# not match what the tests actually import.
+#
+#   python -m pip install -r requirements.txt -r requirements-test.txt
+#   python -m pytest -q
+#
+# The RAG-backed tests need these because rag/ and the policy corpus are exercised through them.
+beautifulsoup4>=4.12
+pyyaml>=6
+rank-bm25>=0.2.2
+qdrant-client>=1.12
+# PDF ingestion under test (rag/corpus.py imports pymupdf); without it the test skips instead of running.
+pymupdf>=1.24
+
+# Browser harness (tests/e2e/*.py, run manually against a seeded disposable site, not by pytest).
+# Playwright also needs its browser binary: `python -m playwright install chromium` or use the
+# Edge/Chromium already installed, which the harnesses do by default.
+pypdf>=4
+playwright>=1.40
+urllib3>=2

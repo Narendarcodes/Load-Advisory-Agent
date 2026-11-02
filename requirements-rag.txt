@@ -3,6 +3,11 @@ beautifulsoup4>=4.12
 pyyaml>=6
 rank-bm25>=0.2.2
 qdrant-client>=1.12
+# rag/corpus.py imports pymupdf for PDF ingestion. It was declared nowhere, so ingestion of a PDF
+# source worked only on machines that happened to have it installed for other reasons.
+pymupdf>=1.24
 # GPU container only (rocm:latest torch 2.11):
 transformers==5.19.0  # first release with embedding_gemma2
 sentence-transformers>=6.1
+# agent/runtime.py imports torch directly (device selection, VRAM fraction, cache release).
+torch>=2.11
