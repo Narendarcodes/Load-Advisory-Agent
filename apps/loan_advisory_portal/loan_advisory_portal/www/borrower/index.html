@@ -1,11 +1,12 @@
 {% extends "templates/portal/base.html" %}
 {% block page_content %}
 {%- set first_name = ((boot.get('full_name') or '').split(' ') | first) -%}
-<section class="dash-hero shader-zone" data-shader="brand" aria-labelledby="dash-title">
-	<div class="shader-plate dash-hero__plate">
+<section class="dash-hero" aria-labelledby="dash-title">
+	<div class="dash-hero__main">
 		<h1 id="dash-title">{{ 'Hello, ' ~ first_name if first_name else 'Dashboard' }}</h1>
 		<p class="dash-hero__lede">Every application, document and decision in one place.</p>
-		<div class="next-step" id="next-step" aria-live="polite">
+		{#- v6: the next step is the key card; a Paper Shaders glow ring sits on its edge (decorative). #}
+		<div class="next-step next-card shader-ring" id="next-step" data-shader="ring" aria-live="polite">
 			<h2 id="next-step-heading"><span class="skeleton skeleton--title" aria-hidden="true"></span><span class="sr-only">Loading your next step</span></h2>
 			<p class="small" id="next-step-body"><span class="skeleton skeleton--line skeleton--w80" aria-hidden="true"></span></p>
 			<p class="small muted hidden" id="latest-status"></p>
@@ -16,6 +17,7 @@
 			</div>
 		</div>
 	</div>
+	{#- The illustration sits on the plain page: never on a shader. #}
 	<img class="dash-hero__art" src="/assets/loan_advisory_portal/illustrations/dashboard.svg" alt="" width="200" height="150">
 </section>
 

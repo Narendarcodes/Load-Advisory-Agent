@@ -360,7 +360,9 @@ class Fixtures:
 				          "decision_label": labels.get(row["decision"], "No assessment recorded")},
 				assistant={"application": name, "user": BORROWER["user"], "csrf_token": "fixture-csrf",
 				           "literacy": "low", "locale": "en",
-				           "voice": {"enabled": False, "consent_version": "fixture"}},
+				           # ?voice=1 turns the voice drawer on so its states can be captured with a fake
+				           # LiveKit module (redesign_capture.cjs routes the chunk). Fixture only.
+				           "voice": {"enabled": get("voice") == "1", "consent_version": "fixture"}},
 			)
 			return "www/borrower/assistant.html", ctx
 		return None
@@ -468,6 +470,16 @@ def make_handler(app_root: Path, fixtures: Fixtures, env: jinja2.Environment, ru
 				import time
 
 				time.sleep(min(int(jar["fxslow"].value or 0), 20000) / 1000)
+			if method.endswith("api.livekit.create_voice_session"):
+				# Fixture only: a fake room grant; the capture swaps livekit-client for a scripted fake.
+				from datetime import datetime, timedelta
+
+				expires = (datetime.now() + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S")
+				result = {"token": "fixture-token", "url": "wss://fixture.invalid", "room": "fixture-room",
+				          "identity": "fixture-borrower", "session_id": "VOICE-FIXTURE-0001", "expires_at": expires}
+				return self._send(200, json.dumps({"message": result}).encode(), "application/json")
+			if method.endswith("api.livekit.end_voice_session"):
+				return self._send(200, json.dumps({"message": {"ended": True}}).encode(), "application/json")
 			result = fixtures.method(method, merged, scenario)
 			if result is None and not method.endswith(("logout", "submit_feedback")):
 				return self._send(404, json.dumps({"exc_type": "DoesNotExistError"}).encode(), "application/json")

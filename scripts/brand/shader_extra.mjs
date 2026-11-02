@@ -1,16 +1,25 @@
 /*
- * Saral shaders, extra chunk: Paper Shaders GrainGradient ("calm") and PulsingBorder ("pulse"), Apache-2.0,
- * https://shaders.paper.design. These need Paper's noise texture, so they load only on pages that show them.
+ * Saral shaders, extra chunk (Paper Shaders, Apache-2.0, https://shaders.paper.design). These need Paper's noise
+ * texture, so they load only on pages that show one of them:
+ *   ring      PulsingBorder glow ring on the edge of a key card (sign-in, next step, decision, estimate)
+ *   pulse     PulsingBorder ring around the assistant while it is thinking
+ *   composer  PulsingBorder thin animated edge on the assistant composer while focused or sending
+ *   voice     SmokeRing orb for the voice call; states idle | connecting | listening | thinking | speaking | muted
+ *   calm      GrainGradient processing band (an application whose checks are running)
+ * All are transparent outside their shape, so the card or page underneath shows through.
  */
 import { ShaderMount } from "paper-shaders-dist/shader-mount.js";
 import { grainGradientFragmentShader, GrainGradientShapes } from "paper-shaders-dist/shaders/grain-gradient.js";
 import { pulsingBorderFragmentShader } from "paper-shaders-dist/shaders/pulsing-border.js";
+import { smokeRingFragmentShader } from "paper-shaders-dist/shaders/smoke-ring.js";
 import { getShaderNoiseTexture } from "paper-shaders-dist/get-shader-noise-texture.js";
 import { getShaderColorFromString } from "paper-shaders-dist/get-shader-color-from-string.js";
 import { ShaderFitOptions } from "paper-shaders-dist/shader-sizing.js";
 
 const sizing = { u_fit: ShaderFitOptions.cover, u_scale: 1, u_rotation: 0, u_offsetX: 0, u_offsetY: 0, u_originX: 0.5, u_originY: 0.5, u_worldWidth: 0, u_worldHeight: 0 };
 const rgba = (list) => list.map(getShaderColorFromString);
+const CLEAR = [0, 0, 0, 0];
+const GL_ALPHA = { alpha: true, premultipliedAlpha: true };
 
 /* Paper's noise texture is a data-URI image; ShaderMount needs it decoded before mounting. */
 const noise = getShaderNoiseTexture();
@@ -20,10 +29,133 @@ export const ready = noise.decode
 			noise.onload = resolve;
 	  });
 
-/* Calm, neutral-warm and slow: shown while an application is submitted or its checks are running. */
+const BRAND = ["#FF8F68", "#E25F4B", "#7E3550", "#FFC4A8", "#F2A65A"];
+/* Ring tones by outcome (data-shader-state): warm for approved, muted and slow for not approved/withdrawn. */
+const RING_TONE = {
+	brand: { colors: BRAND, speed: 0.45 },
+	approved: { colors: ["#FFC98C", "#FF8F68", "#F2A65A", "#7E3550", "#FFE3D3"], speed: 0.5 },
+	muted: { colors: ["#D8C8CB", "#C9B6BC", "#E7DAD3", "#B9A3AE"], speed: 0.15 },
+};
+
+/* Border looks. `edge` is the distance in CSS px from the layer's edge to the ring (the layer bleeds past
+   the card by that much in CSS, so the ring lands on the card's border and the glow falls outside it). */
+const BORDER = {
+	ring: { colors: BRAND, edge: 14, inset: 3, thickness: 0.012, softness: 0.4, intensity: 0.12, bloom: 0.1, spots: 4, spotSize: 0.5, pulse: 0.06, smoke: 0.05, smokeSize: 0.3, speed: 0.4, roundness: 0.08 },
+	composer: { colors: BRAND, edge: 10, thickness: 0.05, softness: 0.7, intensity: 0.28, bloom: 0.3, spots: 4, spotSize: 0.45, pulse: 0.1, smoke: 0.15, smokeSize: 0.4, speed: 0.7, roundness: 0.35 },
+	pulse: { colors: ["#FF8F68", "#E25F4B", "#7E3550", "#FFC4A8"], edge: 0, thickness: 0.1, softness: 0.85, intensity: 0.32, bloom: 0.4, spots: 3, spotSize: 0.42, pulse: 0.45, smoke: 0.4, smokeSize: 0.6, speed: 0.7, roundness: 1, square: true, margin: 0.14 },
+};
+
+function borderUniforms(p, el) {
+	const w = Math.max(1, el.clientWidth);
+	const h = Math.max(1, el.clientHeight);
+	// The CSS bleed (a negative inset on the layer) is the distance from the layer's edge to the card's edge.
+	const bleed = (Math.abs(parseFloat(getComputedStyle(el).top)) || p.edge) + (p.inset || 0);
+	const mx = p.margin != null ? p.margin : bleed / w;
+	const my = p.margin != null ? p.margin : bleed / h;
+	return { u_marginLeft: mx, u_marginRight: mx, u_marginTop: my, u_marginBottom: my };
+}
+
+function border(el, name, opts) {
+	const p = BORDER[name];
+	const colors = rgba(p.colors);
+	const m = new ShaderMount(
+		el,
+		pulsingBorderFragmentShader,
+		{
+			u_colorBack: CLEAR,
+			u_colors: colors,
+			u_colorsCount: colors.length,
+			u_roundness: p.roundness,
+			u_thickness: p.thickness,
+			u_softness: p.softness,
+			...borderUniforms(p, el),
+			u_aspectRatio: p.square ? 1 : 0,
+			u_intensity: p.intensity,
+			u_bloom: p.bloom,
+			u_spots: p.spots,
+			u_spotSize: p.spotSize,
+			u_pulse: p.pulse,
+			u_smoke: p.smoke,
+			u_smokeSize: p.smokeSize,
+			u_noiseTexture: noise,
+			...sizing,
+		},
+		GL_ALPHA,
+		p.speed,
+		opts.frame,
+		1,
+		opts.maxPixels,
+	);
+	return {
+		dispose: () => m.dispose(),
+		setMaxPixelCount: (n) => {
+			m.setMaxPixelCount(n);
+			m.setUniforms(borderUniforms(p, el));
+		},
+		setState: (state) => {
+			if (name !== "ring") return;
+			const tone = RING_TONE[state] || RING_TONE.brand;
+			const next = rgba(tone.colors);
+			m.setUniforms({ u_colors: next, u_colorsCount: next.length });
+			m.setSpeed(tone.speed);
+		},
+	};
+}
+
+/* Voice orb: a soft smoke ring. Each state changes radius, thickness, colour weight and speed; the
+   listening level (0..1, from the call's own speaker detection) breathes the ring outward a little. */
+const VOICE = {
+	idle: { radius: 0.3, thickness: 0.5, inner: 0.7, speed: 0.25, colors: ["#FFC4A8", "#FF8F68", "#E9C3CF"] },
+	connecting: { radius: 0.26, thickness: 0.35, inner: 0.5, speed: 0.9, colors: ["#FFC4A8", "#FF8F68", "#C9A3B8"] },
+	listening: { radius: 0.32, thickness: 0.55, inner: 0.8, speed: 0.5, colors: ["#FFE3D3", "#FF8F68", "#E25F4B", "#F2A65A"] },
+	thinking: { radius: 0.27, thickness: 0.4, inner: 0.55, speed: 1.1, colors: ["#FFC4A8", "#E25F4B", "#7E3550", "#C9A3D8"] },
+	speaking: { radius: 0.36, thickness: 0.7, inner: 1, speed: 0.75, colors: ["#FFE3D3", "#FF8F68", "#E25F4B", "#7E3550", "#F2A65A"] },
+	muted: { radius: 0.28, thickness: 0.4, inner: 0.6, speed: 0.15, colors: ["#E7DAD3", "#D8C8CB", "#C9A3B8"] },
+};
+
+function voiceUniforms(state, level) {
+	const v = VOICE[state] || VOICE.idle;
+	const colors = rgba(v.colors);
+	const lift = state === "listening" || state === "speaking" ? Math.min(1, Math.max(0, level || 0)) : 0;
+	return {
+		speed: v.speed + lift * 0.4,
+		uniforms: {
+			u_colors: colors,
+			u_colorsCount: colors.length,
+			u_radius: v.radius + lift * 0.05,
+			u_thickness: v.thickness + lift * 0.15,
+			u_innerShape: v.inner,
+		},
+	};
+}
+
+function voice(el, opts) {
+	const first = voiceUniforms(opts.state || "idle", 0);
+	const m = new ShaderMount(
+		el,
+		smokeRingFragmentShader,
+		{ u_colorBack: CLEAR, ...first.uniforms, u_noiseScale: 2.6, u_noiseIterations: 6, u_noiseTexture: noise, ...sizing, u_scale: 0.95 },
+		GL_ALPHA,
+		first.speed,
+		opts.frame,
+		1,
+		opts.maxPixels,
+	);
+	return {
+		dispose: () => m.dispose(),
+		setMaxPixelCount: (n) => m.setMaxPixelCount(n),
+		setState: (state, level) => {
+			const next = voiceUniforms(state, level);
+			m.setUniforms(next.uniforms);
+			m.setSpeed(next.speed);
+		},
+	};
+}
+
+/* Calm, neutral-warm and slow: the band shown while an application's checks are running. */
 function calm(el, opts) {
 	const colors = rgba(["#F6C9B3", "#E9C3CF", "#FFAE8C", "#C9A3B8"]);
-	return new ShaderMount(
+	const m = new ShaderMount(
 		el,
 		grainGradientFragmentShader,
 		{
@@ -31,58 +163,25 @@ function calm(el, opts) {
 			u_colors: colors,
 			u_colorsCount: colors.length,
 			u_softness: 0.85,
-			u_intensity: 0.3,
-			u_noise: 0.22,
+			u_intensity: 0.35,
+			u_noise: 0.2,
 			u_shape: GrainGradientShapes.wave,
 			u_noiseTexture: noise,
 			...sizing,
 		},
 		{ alpha: false, premultipliedAlpha: false },
-		0.55,
+		0.6,
 		opts.frame,
 		1,
-		opts.maxPixels,
+		Math.min(opts.maxPixels, 120000),
 	);
+	return { dispose: () => m.dispose(), setMaxPixelCount: (n) => m.setMaxPixelCount(Math.min(n, 120000)), setState: () => {} };
 }
 
-/* A soft pulsing ring for the assistant thinking state. Transparent outside the ring. */
-function pulse(el, opts) {
-	const colors = rgba(["#FF8F68", "#E25F4B", "#7E3550", "#FFC4A8"]);
-	return new ShaderMount(
-		el,
-		pulsingBorderFragmentShader,
-		{
-			u_colorBack: [0, 0, 0, 0],
-			u_colors: colors,
-			u_colorsCount: colors.length,
-			u_roundness: 1,
-			u_thickness: 0.12,
-			u_softness: 0.8,
-			u_marginLeft: 0.12,
-			u_marginRight: 0.12,
-			u_marginTop: 0.12,
-			u_marginBottom: 0.12,
-			u_aspectRatio: 1,
-			u_intensity: 0.3,
-			u_bloom: 0.3,
-			u_spots: 3,
-			u_spotSize: 0.45,
-			u_pulse: 0.35,
-			u_smoke: 0.35,
-			u_smokeSize: 0.55,
-			u_noiseTexture: noise,
-			...sizing,
-		},
-		{ alpha: true, premultipliedAlpha: true },
-		0.8,
-		opts.frame,
-		1,
-		opts.maxPixels,
-	);
-}
-
-/** Mount "calm" (GrainGradient) or "pulse" (PulsingBorder) into el. */
+/** Mount ring | pulse | composer | voice | calm into el. opts: { maxPixels, frame, state }. */
 export function mount(el, name, opts = {}) {
-	const o = { maxPixels: opts.maxPixels || 1280 * 720, frame: opts.frame || 0 };
-	return name === "pulse" ? pulse(el, o) : calm(el, o);
+	const o = { maxPixels: opts.maxPixels || 1280 * 720, frame: opts.frame || 0, state: opts.state };
+	if (BORDER[name]) return border(el, name, o);
+	if (name === "voice") return voice(el, o);
+	return calm(el, o);
 }

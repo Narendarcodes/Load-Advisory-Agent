@@ -196,22 +196,21 @@
 
 	var ART = "/assets/loan_advisory_portal/illustrations/";
 
-	/* v3 result layout: illustration, status badge, one headline, then hairline sections. */
-	/* v5: the result head is a shader banner (decorative): the warm brand gradient when there is an
-	   estimate, a muted one otherwise. Its text sits on a solid plate. */
+	/* v3 result layout: illustration, status badge, one headline, then hairline sections.
+	   v6: the illustration sits on the plain surface (no shader under it); the estimate itself is the key card
+	   and carries a Paper Shaders glow ring on its edge (decorative; the words carry the result). */
 	function head(art, badge, title, lead, amount) {
-		var tone = amount ? "brand" : "muted";
 		return (
-			'<div class="result-head result-banner shader-zone" data-shader="' + tone + '" data-tone="' + tone + '">' +
+			'<div class="result-head">' +
 			'<img class="result-head__art" src="' + ART + art + '.svg" alt="" width="120" height="90">' +
-			'<div class="result-head__text shader-plate">' +
+			'<div class="result-head__text">' +
 			'<p class="result-head__status">' + badge + demoFlag() + "</p>" +
 			"<h2>" + title + "</h2>" +
 			(amount ? "" : lead ? '<p class="small muted">' + lead + "</p>" : "") +
 			"</div>" +
 			// The range gets the full panel width so "₹4,80,000 – ₹5,70,000" stays on one line.
 			(amount
-				? '<div class="result-head__amount shader-plate"><p class="result-card__amount">' + amount + "</p>" +
+				? '<div class="result-head__amount estimate-card shader-ring" data-shader="ring"><p class="result-card__amount">' + amount + "</p>" +
 				  (lead ? '<p class="small muted">' + lead + "</p>" : "") + "</div>"
 				: "") +
 			"</div>"

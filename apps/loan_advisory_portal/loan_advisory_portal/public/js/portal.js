@@ -73,7 +73,77 @@
 	 * Call a whitelisted method. Resolves with `message`; rejects with an Error
 	 * carrying `.status` and `.payload` so pages can react to 401 vs validation.
 	 */
+	/*
+	 * v6 page loading: while the page's first reads are still out after a short grace period, the loading
+	 * band at the top of the page (base.html #page-loading; a Paper Shaders "loading" band, static under
+	 * reduced motion) shows with one status sentence. Content areas keep their own skeletons. Reads that a
+	 * borrower starts later (a save, a refresh) have their own busy states, so they do not show it.
+	 */
+	var loading = { inflight: 0, settled: false, timer: 0, settle: 0, shownAt: 0 };
+
+	function loadingHost() {
+		return document.getElementById("page-loading");
+	}
+
+	function setLoading(show) {
+		var host = loadingHost();
+		if (!host) return;
+		if (show) {
+			if (!host.hidden) return;
+			host.hidden = false;
+			loading.shownAt = Date.now();
+			document.body.setAttribute("data-page-loading", "");
+			return;
+		}
+		var wait = Math.max(0, 450 - (Date.now() - loading.shownAt));
+		window.setTimeout(function () {
+			host.hidden = true;
+			document.body.removeAttribute("data-page-loading");
+		}, host.hidden ? 0 : wait);
+	}
+
+	function trackStart() {
+		if (loading.settled) return false;
+		if (loading.settle) {
+			// A follow-up read right after the first ones is still part of the page load.
+			window.clearTimeout(loading.settle);
+			loading.settle = 0;
+		}
+		loading.inflight += 1;
+		if (!loading.timer) {
+			loading.timer = window.setTimeout(function () {
+				loading.timer = 0;
+				if (loading.inflight > 0 && !loading.settled) setLoading(true);
+			}, 300);
+		}
+		return true;
+	}
+
+	function trackEnd() {
+		loading.inflight = Math.max(0, loading.inflight - 1);
+		if (loading.inflight > 0) return;
+		loading.settle = window.setTimeout(function () {
+			loading.settle = 0;
+			if (loading.inflight > 0) return;
+			loading.settled = true;
+			if (loading.timer) {
+				window.clearTimeout(loading.timer);
+				loading.timer = 0;
+			}
+			setLoading(false);
+		}, 150);
+	}
+
 	async function call(method, args) {
+		var tracked = trackStart();
+		try {
+			return await request(method, args);
+		} finally {
+			if (tracked) trackEnd();
+		}
+	}
+
+	async function request(method, args) {
 		var response = await fetch("/api/method/" + method, {
 			method: "POST",
 			credentials: "same-origin",
@@ -225,6 +295,7 @@
 		openDialog: openDialog,
 		closeDialog: closeDialog,
 		logout: logout,
+		loading: setLoading,
 	};
 
 	function setNav(open) {

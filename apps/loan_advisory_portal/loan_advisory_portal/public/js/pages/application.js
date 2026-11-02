@@ -176,31 +176,29 @@
 		WITHDRAWN: { art: "withdrawn", title: "You withdrew this application", badge: ["badge--neutral", "Withdrawn"] },
 	};
 
-	/* Which shader banner each outcome gets (decorative; the badge and heading carry the meaning).
-	   Approved is warm and bright, in-flight states are calm and slowly moving (the motion doubles as the
-	   "checks running" cue), not approved and withdrawn are muted and nearly still. */
-	var BANNER = {
-		DRAFT: "calm",
-		SUBMITTED: "calm",
-		UNDER_REVIEW: "calm",
-		MANUAL_REVIEW: "calm",
-		INFO_REQUESTED: "calm",
+	/* v6: the decision card carries a Paper Shaders glow ring on its edge (decorative; the badge and heading
+	   carry the meaning). The illustration sits beside it on the plain page, never on a shader. Approved gets
+	   the warm ring, in-flight and draft states the brand ring, not approved and withdrawn a muted, almost
+	   still one. While checks are running a calm GrainGradient band inside the card is the processing cue. */
+	var RING = {
 		APPROVED: "approved",
 		REJECTED: "muted",
 		WITHDRAWN: "muted",
 	};
 
 	function resultHead(view, lead, when, lifecycle) {
-		var tone = BANNER[lifecycle] || "calm";
+		var ring = RING[lifecycle] || "brand";
+		var processing = IN_FLIGHT.indexOf(lifecycle) !== -1;
 		return (
-			'<div class="result-head result-head--lg result-banner shader-zone" data-shader="' + tone + '" data-tone="' + tone + '">' +
+			'<div class="result-head result-head--lg result-v6">' +
 			'<img class="result-head__art" src="' + ART + view.art + '.svg" alt="" width="160" height="120">' +
-			'<div class="result-head__text shader-plate">' +
+			'<div class="result-head__text decision-card shader-ring" data-shader="ring" data-shader-state="' + ring + '">' +
 			'<p class="result-head__status"><span class="badge ' + view.badge[0] + '">' + Portal.esc(view.badge[1]) + "</span>" +
 			(when ? '<span class="tiny muted">' + Portal.esc(when) + "</span>" : "") +
 			"</p>" +
 			'<h2 id="decision-heading">' + Portal.esc(view.title) + "</h2>" +
 			(lead ? '<p class="result-head__lead">' + Portal.esc(lead) + "</p>" : "") +
+			(processing ? '<div class="process-band shader-zone" data-shader="calm" aria-hidden="true"></div>' : "") +
 			"</div></div>"
 		);
 	}

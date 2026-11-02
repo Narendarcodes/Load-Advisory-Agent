@@ -15,5 +15,7 @@ NODE_PATH=/tmp/castdeps/node_modules /tmp/castdeps/node_modules/.bin/esbuild \
 	--chunk-names=saral-chunk-[hash] \
 	--banner:js="/* Saral shaders. Paper Shaders (c) 2026 Paper, Apache-2.0, https://shaders.paper.design */" \
 	--outdir=$OUT
+# GLSL template strings carry trailing spaces; strip them so `git diff --check` stays clean (harmless in GLSL).
+sed -i 's/[[:space:]]*$//' $OUT/saral-shader*.js $OUT/saral-chunk-*.js
 for f in $OUT/saral-shader*.js $OUT/saral-chunk-*.js; do echo "$(gzip -9 -c $f | wc -c) gz  $(wc -c < $f) raw  $f"; done
 cat $OUT/saral-shader*.js $OUT/saral-chunk-*.js | gzip -9 -c | wc -c | xargs echo "all shader bundles gzipped bytes:"

@@ -4,7 +4,7 @@
 
 {% block page_content %}
 <div class="auth">
-	<section class="auth__card" aria-labelledby="signin-heading">
+	<section class="auth__card signin-card shader-ring" data-shader="ring" aria-labelledby="signin-heading">
 		<div class="auth__head">
 			<h1 id="signin-heading">Sign in</h1>
 			<p class="muted">See your application and the reasons behind its decision.</p>
@@ -43,9 +43,9 @@
 		<p class="tiny muted auth__demo">Preview mode is on. This site uses synthetic accounts and data.</p>
 		{% endif %}
 	</section>
-	<section class="auth__intro auth__panel shader-zone" data-shader="brand" aria-labelledby="auth-title">
+	<section class="auth__intro auth__panel" aria-labelledby="auth-title">
 		<img class="auth__art" src="/assets/loan_advisory_portal/illustrations/login.svg" alt="" width="320" height="240">
-		<div class="shader-plate auth__plate">
+		<div class="auth__plate">
 			<h2 id="auth-title" class="auth__title">Your loan, made simple.</h2>
 			<p class="lede">
 				Pick up where you left off, follow each step, and read the reasoning behind a decision in

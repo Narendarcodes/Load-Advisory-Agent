@@ -1,10 +1,10 @@
 /* Saral shaders. Paper Shaders (c) 2026 Paper, Apache-2.0, https://shaders.paper.design */
-import{a,b as e,c as l,d as n,f as s,k as c}from"./saral-chunk-VO66JKRS.js";var f={maxColorCount:10},u=`#version 300 es
+import{a as n,b as c,c as u,d as f,f as v,k as g}from"./saral-chunk-VO66JKRS.js";var m={maxColorCount:10},d=`#version 300 es
 precision mediump float;
 
 uniform float u_time;
 
-uniform vec4 u_colors[${f.maxColorCount}];
+uniform vec4 u_colors[${m.maxColorCount}];
 uniform float u_colorsCount;
 
 uniform float u_distortion;
@@ -15,9 +15,9 @@ uniform float u_grainOverlay;
 in vec2 v_objectUV;
 out vec4 fragColor;
 
-${l}
-${n}
-${s}
+${u}
+${f}
+${v}
 
 float valueNoise(vec2 st) {
   vec2 i = floor(st);
@@ -77,7 +77,7 @@ void main() {
   float opacity = 0.;
   float totalWeight = 0.;
 
-  for (int i = 0; i < ${f.maxColorCount}; i++) {
+  for (int i = 0; i < ${m.maxColorCount}; i++) {
     if (i >= int(u_colorsCount)) break;
 
     vec2 pos = getPosition(i, t) + mixerGrain;
@@ -113,4 +113,4 @@ void main() {
 
   fragColor = vec4(color, opacity);
 }
-`;var g={u_fit:e.cover,u_scale:1,u_rotation:0,u_offsetX:0,u_offsetY:0,u_originX:.5,u_originY:.5,u_worldWidth:0,u_worldHeight:0},m=t=>t.map(c),v={brand:{colors:["#FFF1E6","#FFB089","#FF8F68","#E25F4B","#4E2440"],distortion:.85,swirl:.45,grain:.16,speed:.38},approved:{colors:["#FFF3E0","#FFC98C","#FF8F68","#F2A65A","#7E3550"],distortion:.9,swirl:.55,grain:.14,speed:.42},muted:{colors:["#F4EEE9","#E7DAD3","#D8C8CB","#EFE2D8"],distortion:.6,swirl:.15,grain:.12,speed:.12},orb:{colors:["#FFE3D3","#FF8F68","#E25F4B","#6A2C52","#FFC4A8"],distortion:1,swirl:.7,grain:0,speed:.5}};function d(t,o,r){let i=m(o.colors);return new a(t,u,{u_colors:i,u_colorsCount:i.length,u_distortion:o.distortion,u_swirl:o.swirl,u_grainMixer:0,u_grainOverlay:o.grain,...g},{alpha:!1,premultipliedAlpha:!1},o.speed,r.frame,1,r.maxPixels)}function O(t,o,r={}){let i={maxPixels:r.maxPixels||921600,frame:r.frame||0};return d(t,v[o==="warm"?"brand":o]||v.brand,i)}export{O as mount};
+`;var F={u_fit:c.cover,u_scale:1,u_rotation:0,u_offsetX:0,u_offsetY:0,u_originX:.5,u_originY:.5,u_worldWidth:0,u_worldHeight:0},h=t=>t.map(g),p={wash:{colors:["#F7F3EE","#FCE9DE","#F7F3EE","#F6EEF1","#FAEEE2"],distortion:.9,swirl:.35,grain:.03,speed:.1,scale:.75,pixels:22e4},band:{colors:["#FFB089","#FF8F68","#E25F4B","#7E3550","#FFC4A8"],distortion:.9,swirl:.6,grain:.08,speed:.32,scale:1.4,pixels:9e4},loading:{colors:["#FFD9C4","#FF8F68","#E25F4B","#F2A65A","#7E3550"],distortion:1,swirl:.8,grain:.06,speed:.7,scale:1.2,pixels:9e4},orb:{colors:["#FFE3D3","#FFB089","#FF8F68","#E25F4B","#6A2C52","#C9A3D8"],distortion:1,swirl:.85,grain:0,speed:.34,scale:.9},stream:{colors:["#FFC4A8","#FF8F68","#E25F4B","#7E3550","#FFE3D3"],distortion:1,swirl:.9,grain:0,speed:.9,scale:1.6,pixels:3e4}};function _(t){return{dispose:()=>t.dispose(),setMaxPixelCount:i=>t.setMaxPixelCount(i),setState:()=>{}}}function S(t,i,e={}){let o=p[i]||p.wash,x=o.pixels?Math.min(o.pixels,e.maxPixels||o.pixels):e.maxPixels||1280*720,a=h(o.colors),r=new n(t,d,{u_colors:a,u_colorsCount:a.length,u_distortion:o.distortion,u_swirl:o.swirl,u_grainMixer:0,u_grainOverlay:o.grain,...F,u_scale:o.scale||1},{alpha:!1,premultipliedAlpha:!1},o.speed,e.frame||0,1,x),l=_(r);return l.setMaxPixelCount=s=>r.setMaxPixelCount(o.pixels?Math.min(o.pixels,s):s),l}export{S as mount};
