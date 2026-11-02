@@ -5690,3 +5690,28 @@ body .msg.bot {
 	background: var(--paper);
 	backdrop-filter: none;
 }
+
+/* v2: dates in the applications table stay on one line ("30 Oct" / "2026" split at 1280 px beside
+   the side column); the reference may still break after "ACC-LOAP-", which reads as two parts. */
+.table-wrap--stack td[data-label="Started"] {
+	white-space: nowrap;
+}
+
+/* v2 (impeccable side-tab, taste micro-label): alerts carry their tone in the tinted surface and
+   the text colour, not a 4px coloured stripe; wizard captions are sentence-case body type. */
+.alert {
+	border-left-width: 1px;
+}
+
+.alert--error { border-left-color: #e5c2bc; }
+.alert--success { border-left-color: #c8dccd; }
+.alert--warn { border-left-color: #e6d3ae; }
+.alert--info { border-left-color: #ccd9e2; }
+
+.wizard__rail-title,
+.wizard-progress {
+	font-family: var(--font-body);
+	font-size: 0.86rem;
+	letter-spacing: 0;
+	text-transform: none;
+}
