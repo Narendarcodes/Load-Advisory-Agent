@@ -1,0 +1,36 @@
+---
+title: "Consent lifecycle (the corrected behaviour)"
+---
+stateDiagram-v2
+  [*] --> NoConsent: invitation redeemed,<br/>Borrower Profile created
+
+  NoConsent --> ConsentHeld: accept terms + privacy<br/>in the wizard review step
+  note right of ConsentHeld
+    consent_terms = 1, consent_privacy = 1
+    consent_at = now  first real acceptance
+  end note
+
+  ConsentHeld --> ConsentHeld: ordinary profile edit<br/>(income, employer, locale, literacy)
+  note right of ConsentHeld
+    THE FIX: an unrelated save leaves consent_at alone.
+    Before it, every save of the document restamped
+    consent_at, so "last save" masqueraded as consent.
+    Regression tests: test_consent.py, and the browser
+    check tests/e2e/consent_regression_e2e.cjs
+  end note
+
+  ConsentHeld --> ConsentHeld: resending the same checkboxes,<br/>unchanged
+  note right of ConsentHeld: not a new consent event
+
+  ConsentHeld --> Revoked: borrower withdraws an agreement
+  Revoked --> ConsentHeld: re-accept<br/>consent_at moves, deliberately
+
+  ConsentHeld --> ConsentHeld: new notice version published<br/>(e.g. voice-consent/1)
+  note right of ConsentHeld
+    A new version is a separate acceptance. The voice
+    notice stores its own consent_version and consent_at
+    on VoiceSession, so agreeing to voice is visible and
+    dated independently of the account-level consent.
+  end note
+
+  ConsentHeld --> [*]: profile closed

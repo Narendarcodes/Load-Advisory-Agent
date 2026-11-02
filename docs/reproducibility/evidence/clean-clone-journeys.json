@@ -1,0 +1,182 @@
+[
+ {
+  "name": "guest is sent to the login page",
+  "ok": true,
+  "detail": "http://127.0.0.1:8082/login | Sign in \u00b7 Loan Advisory"
+ },
+ {
+  "name": "sign-in lands on the borrower dashboard",
+  "ok": true,
+  "detail": "http://127.0.0.1:8082/borrower"
+ },
+ {
+  "name": "welcome heading renders",
+  "ok": true,
+  "detail": "Welcome back, Repro1"
+ },
+ {
+  "name": "dashboard lists the seeded application",
+  "ok": true,
+  "detail": "Your applications, newest first\nAPPLICATION\tAMOUNT\tPURPOSE\tSTARTED\tSTATUS\tACTION\n\nACC-LOAP-2026-00005\nTerm loan\n\t\u20b92,00,000\n24 months\n\tEducation\t2 Nov "
+ },
+ {
+  "name": "dashboard shows the recorded outcome",
+  "ok": true,
+  "detail": "Your applications, newest first\nAPPLICATION\tAMOUNT\tPURPOSE\tSTARTED\tSTATUS\tACTION\n\nACC-LOAP-2026-00005\nTerm loan\n\t\u20b92,00,000\n24 months\n\tEducation\t2 Nov 2026\tWithdrawn\tView\n\nACC-LOAP-2026-00004\nTerm loan"
+ },
+ {
+  "name": "decision card shows the recorded rejection",
+  "ok": true,
+  "detail": "Not approved\nWhat affected this outcome\nFixed-Obligation-to-Income Ratio (monthly_obligations / monthly_income) must not"
+ },
+ {
+  "name": "customer-visible reasons are listed",
+  "ok": true,
+  "detail": "2"
+ },
+ {
+  "name": "timeline records the evaluation",
+  "ok": true,
+  "detail": "Started\n2 Nov 2026\nSubmitted\n2 Nov 2026\nEvaluated (REJECTED)\n2 Nov 2026 \u00b7 policy synthetic-v1\nNot approved\n2 Nov 2026"
+ },
+ {
+  "name": "seeded document is attached",
+  "ok": true,
+  "detail": "1 document"
+ },
+ {
+  "name": "private document downloads for its owner",
+  "ok": true,
+  "detail": "b'%PDF-1.3'"
+ },
+ {
+  "name": "assistant island mounts",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "explain answers about the recorded decision",
+  "ok": true,
+  "detail": "Your application was **rejected** under a synthetic prototype policy (synthetic\u2011v1) \u2013 the thresholds are team assumptions, not a real lender\u2019s policy. "
+ },
+ {
+  "name": "what-if runs as a simulation",
+  "ok": true,
+  "detail": "- Under the synthetic prototype policy (team\u2011assumed thresholds, not a real lender\u2019s rules), your monthly income of\u202f\u20b940,000 still meets the income check. "
+ },
+ {
+  "name": "simulation is labelled hypothetical",
+  "ok": true,
+  "detail": "What-if\nHypothetical simulation, not a decision\n\nWith monthly obligations = 10,000:\n\nSimulated outcome: Not approved (simulation only)\n\nHypothetical rule result"
+ },
+ {
+  "name": "the recorded decision is unchanged by the what-if",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "guarantee requests are refused",
+  "ok": true,
+  "detail": "I can't promise or predict approval. I don't make lending decisions, and any lender decides on a new application using its own policy. What I can do is show which recorded reasons would need to change"
+ },
+ {
+  "name": "refusal still renders its details",
+  "ok": true,
+  "detail": "1"
+ },
+ {
+  "name": "a new conversation starts empty",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "wizard prefills the profile",
+  "ok": true,
+  "detail": "Repro1 Borrower"
+ },
+ {
+  "name": "empty steps are rejected before the server",
+  "ok": true,
+  "detail": "['Enter a whole number of months between 0 and 720.']"
+ },
+ {
+  "name": "review step summarises the request",
+  "ok": true,
+  "detail": "About you\nEdit\nName\nRepro1 Borrower\nEmail\nrepro1-borrower@example.invalid\nPhone\n+919876543210\nEmployment\nEdit\nType\nSalaried\nEmployer\nNot provided\nMonths in curr"
+ },
+ {
+  "name": "submission is gated on consent",
+  "ok": true,
+  "detail": "['Accept both agreements to create the application.']"
+ },
+ {
+  "name": "wizard creates a draft",
+  "ok": true,
+  "detail": "Draft"
+ },
+ {
+  "name": "document upload attaches a private file",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "submitting moves the application out of draft",
+  "ok": true,
+  "detail": "Submitted"
+ },
+ {
+  "name": "timeline records the submission",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "no assessment is invented before review",
+  "ok": true,
+  "detail": "The checks have been queued. The outcome and its reasons appear here when they finish."
+ },
+ {
+  "name": "withdrawing closes the application",
+  "ok": true,
+  "detail": "Withdrawn"
+ },
+ {
+  "name": "profile saves",
+  "ok": true,
+  "detail": "Profile saved\nNew applications will use these details."
+ },
+ {
+  "name": "saved profile value persists",
+  "ok": true,
+  "detail": "13000"
+ },
+ {
+  "name": "the browser never calls the agent directly",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "no browser request carries an authorization header",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "no browser console errors",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "signed-out pages redirect to login",
+  "ok": true,
+  "detail": "http://127.0.0.1:8082/login?redirect-to=%2Fborrower"
+ },
+ {
+  "name": "no signed-in page overflows a 390px viewport",
+  "ok": true,
+  "detail": "{'/borrower': 0, '/borrower/apply': 0, '/borrower/application?name=ACC-LOAP-2026-00001': 0, '/borrower/profile': 0, '/borrower/feedback': 0, '/borrower/assistant?application=ACC-LOAP-2026-00001': 0}"
+ },
+ {
+  "name": "the portal nav stays usable on a narrow viewport",
+  "ok": true,
+  "detail": "5"
+ }
+]
