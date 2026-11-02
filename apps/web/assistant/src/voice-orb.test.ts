@@ -9,7 +9,7 @@ function run(start: OrbState, inputs: Partial<OrbInput>[]): OrbState[] {
   let state = start;
   let previous: OrbInput["speaker"] = null;
   for (const input of inputs) {
-    const full = { ...base, ...input, previous };
+    const full: OrbInput = { ...base, ...input, previous };
     state = nextOrbState(state, full);
     previous = full.speaker;
     seen.push(state);
