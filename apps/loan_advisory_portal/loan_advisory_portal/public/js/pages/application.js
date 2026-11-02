@@ -259,7 +259,9 @@
 					? '<button class="btn" type="button" id="submit-app">Submit application</button>' + quiet(documentsUrl, "Check documents")
 					: '<a class="btn" href="' + documentsUrl + '">Add documents to continue</a>';
 			case "INFO_REQUESTED":
-				return '<a class="btn" href="#info-request">Update details</a>' + quiet(assistant, "Ask what is needed");
+				// The coral action on this page is "Resubmit application" inside the form below; the
+				// jump link to that form is a ghost so the page keeps one primary.
+				return '<a class="btn btn--ghost" href="#info-request">Update details</a>' + quiet(assistant, "Ask what is needed");
 			case "APPROVED":
 				return '<a class="btn" href="' + assistant + '">Ask what happens next</a>' + quiet(feedback, "Talk to a person");
 			case "REJECTED":
