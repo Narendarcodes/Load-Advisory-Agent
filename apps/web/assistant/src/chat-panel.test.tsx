@@ -165,6 +165,35 @@ describe("ChatPanel", () => {
     expect(element.querySelector<HTMLButtonElement>(".chips button")?.disabled).toBe(false);
   });
 
+  it("marks the decorative shader zones: an orb behind the mark while empty, a pulse ring while thinking (v5)", async () => {
+    let release: (() => void) | undefined;
+    const agent = {
+      messages: [],
+      state: {},
+      addMessage: vi.fn(),
+      setMessages: vi.fn(),
+      setState: vi.fn(),
+      runAgent: vi.fn(() => new Promise<void>((resolve) => (release = resolve))),
+    } as unknown as AbstractAgent;
+    const { container: element } = await mount(agent);
+    const orb = element.querySelector(".chat-empty [data-shader]");
+    expect(orb?.getAttribute("data-shader")).toBe("orb");
+    expect(orb?.querySelector("img")?.getAttribute("alt")).toBe("");
+    expect(element.querySelector('[data-shader="pulse"]')).toBeNull();
+
+    await act(async () => {
+      element.querySelector<HTMLButtonElement>(".chips button")?.click();
+    });
+    // Only one shader zone at a time in the log: the orb leaves with the empty state.
+    expect(element.querySelector('[data-shader="orb"]')).toBeNull();
+    expect(element.querySelector('.msg--live [data-shader="pulse"]')).not.toBeNull();
+
+    await act(async () => {
+      release?.();
+      await Promise.resolve();
+    });
+  });
+
   it("leaves the application facts to the page's header strip instead of repeating them in the log", async () => {
     // v2: assistant.html renders the slim "This application" strip with the decision and documents links.
     const { agent } = fakeAgent();
