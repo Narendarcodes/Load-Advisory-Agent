@@ -13,6 +13,41 @@ COMPANY = "LAP Test NBFC"
 PRODUCT_CODE = "LAP-TEST-001"
 DOCUMENT_TYPE = "Identity Proof"
 
+VOICE_CONFIG_KEYS = ("livekit_url", "livekit_api_key", "livekit_api_secret")
+
+# Neither a URL that is dialled nor a credential: the voice tests sign and verify an HS256 token
+# in-process, and no LiveKit server is contacted.
+TEST_VOICE_CONFIG = {
+	"livekit_url": "ws://127.0.0.1:7880",
+	"livekit_api_key": "test-key",
+	"livekit_api_secret": "test-secret-not-a-credential-0123456789",
+}
+
+
+def configure_voice_for_tests() -> dict:
+	"""Give the voice suite the LiveKit trio the service insists on, and return the previous values.
+
+	`livekit_token.configuration()` raises `ServiceUnavailable` unless the site carries `livekit_url`,
+	`livekit_api_key` and `livekit_api_secret`. That fail-closed behaviour is right for production and
+	wrong for a test run, because the site the documented bootstrap creates has none of them: 17 of the
+	193 portal tests errored out on a freshly created site. The suite therefore supplies its own
+	deterministic values for the duration of the class and restores the site afterwards;
+	`test_missing_configuration_is_unavailable` still exercises the guard by blanking one key itself.
+	"""
+	previous = {key: frappe.conf.get(key) for key in VOICE_CONFIG_KEYS}
+	for key, value in TEST_VOICE_CONFIG.items():
+		frappe.conf[key] = value
+	return previous
+
+
+def restore_voice_config(previous: dict) -> None:
+	for key in VOICE_CONFIG_KEYS:
+		value = (previous or {}).get(key)
+		if value is None:
+			frappe.conf.pop(key, None)
+		else:
+			frappe.conf[key] = value
+
 
 def unique(prefix: str) -> str:
 	return f"{prefix}-{uuid.uuid4().hex[:10]}"
