@@ -6167,3 +6167,44 @@ h3 {
 	color: var(--ink-2);
 	font-weight: 600;
 }
+
+/* Documents: quiet skeleton rows while the workspace loads, instead of an empty column. It steps
+   aside as soon as the application, the no-application state or an error is showing. */
+.doc-loading {
+	display: grid;
+	gap: var(--s3);
+	padding: var(--s4) 0;
+}
+
+.doc-main:has(> #application-head:not(.hidden)) > .doc-loading,
+.doc-main:has(> #no-application:not(.hidden)) > .doc-loading,
+.doc-main:has(> #workspace-error:not(.hidden)) > .doc-loading {
+	display: none;
+}
+
+/* Help: status names sit above their meaning, so a half-width column never squeezes the
+   explanation into three-word lines. */
+dl.detail--stacked {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 2px;
+}
+
+dl.detail--stacked dt {
+	margin-top: var(--s3);
+	color: var(--ink);
+	font-weight: 600;
+}
+
+dl.detail--stacked dt:first-child {
+	margin-top: 0;
+}
+
+dl.detail--stacked dd {
+	font-weight: 400;
+	color: var(--ink-2);
+}
+
+/* Documents with no application: the one start action keeps its own width. */
+#application-choices > .btn:only-child {
+	justify-self: center;
+}

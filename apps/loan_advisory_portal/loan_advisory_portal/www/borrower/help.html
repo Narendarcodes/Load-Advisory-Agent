@@ -27,7 +27,7 @@
 		<div class="card__head">
 			<h2 id="status-heading">What the status means</h2>
 		</div>
-		<dl class="detail">
+		<dl class="detail detail--stacked">
 			{% for entry in states %}
 			<dt>{{ entry.title | e }}</dt><dd>{{ entry.summary | e }}</dd>
 			{% endfor %}

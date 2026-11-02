@@ -307,7 +307,9 @@ async function v3() {
       ...Object.entries(STATES).map(([state, name]) => [`result-${state}`, `/borrower/application?name=${name}`]),
     ];
     if (!only || only === "screens") {
-      for (const [name, route] of routes) {
+      // ROUTE_SLICE=a:b shoots part of the list, so a slow sandbox can finish it in pieces.
+      const [a, b] = (process.env.ROUTE_SLICE || "0:999").split(":").map(Number);
+      for (const [name, route] of routes.slice(a, b)) {
         await page.goto(BASE + route); await settle(page);
         await shot(page, `${name}-${width}`);
       }
@@ -320,7 +322,9 @@ async function v3() {
     if (!only || only === "eligibility") await eligibility(page, "", width);
     if (!only || only === "submit") await submitFlow(page, context, "", width);
     if (!only || only === "wizard") await wizard(page, "", width);
-    if (!only || only === "assistant") {
+    // ASSIST_PART=1 shoots thinking + handoff only, ASSIST_PART=2 the main conversation only.
+    const part = process.env.ASSIST_PART || "";
+    if ((!only || only === "assistant") && part !== "2") {
       await page.goto(`${BASE}/borrower/assistant?application=${REJECTED}`); await settle(page);
       await page.waitForSelector(".composer", { timeout: 20000 });
       await sleep(600);
@@ -334,8 +338,8 @@ async function v3() {
       await waitAnswer(page, 2);
       await focusLatest(page, ".msg.bot .handoff", 24);
       await shot(page, `assistant-handoff-${width}`, false);
-      await assistant(page, "", width);
     }
+    if ((!only || only === "assistant") && part !== "1") await assistant(page, "", width);
     if (!only) {
       await page.goto(`${BASE}/borrower?fx=full`); await settle(page);
       const toggle = page.locator('[data-action="nav-toggle"]:visible').first();
