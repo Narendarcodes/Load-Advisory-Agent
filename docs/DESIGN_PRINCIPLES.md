@@ -9,7 +9,8 @@ Scope: `apps/loan_advisory_portal/loan_advisory_portal/{www,templates,public/css
 
 ## 1. Rules applied
 
-Three public design skills were used as checklists during the Saral redesign (v2 and v3 passes):
+This is the **final** Saral system. Three public design skills were used as checklists during the
+redesign (v2 and v3 passes):
 [pbakaus/impeccable](https://github.com/pbakaus/impeccable),
 [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) and
 [heydamir/unslop](https://github.com/heydamir/unslop) (CC BY 4.0, Damir Sokolovsky). Where they
@@ -28,98 +29,44 @@ disagree, the brand sheet and the borrower's task win.
      application result, and the assistant panel.
   3. *Floating*: `--shadow`, one soft, low shadow (`0 1px 2px` + `0 10px 24px -10px`, ink at 5–16%),
      only on things above the page: the assistant composer, menus, the mobile sheet and drawer,
-     dialogs and toasts.
+     dialogs, toasts and the loading status card.
+- **Key cards** (`.key-card`): the sign-in form, the dashboard next step, the application decision and
+  the eligibility estimate are white with a 1 px `--line` hairline and a 12 px radius. No glow, no ring,
+  no shadow: they sit on the page, they do not float.
+  On the application result and the eligibility result the key card sits inside the raised work area:
+  the one deliberate card-in-a-surface, kept so the decision or estimate reads first.
 - **Radii 8 / 6 / 4** (`--radius`, `--radius-sm`, `--radius-xs`) by element size. Only buttons,
   badges and status pills are fully round (see deviations).
 - **Hover and focus are tone, not glow.** Buttons darken (`--coral-2`) or gain a white surface (ghost);
   inputs get `--ring` (3 px deep-coral at 18%). The coral hover glow was removed. Transitions are
   `--dur` 180 ms with `--ease-out`; all of it stops under `prefers-reduced-motion`.
-- **Gradients only inside shader zones** (see below and deviations). No glass cards, no glows, no blobs,
-  no emoji, no sparkle for "AI". The one frosted surface is the text plate on a shader zone.
+- **No decorative gradients, no animated art.** Flat cream, white and hairlines. No glass cards, no
+  glows, no blobs, no emoji, no sparkle for "AI".
 - **No coloured side stripes** on alerts or list items (impeccable "side-stripe borders"); alerts use a
   quiet tint and a full hairline.
 
-### Shader zones (v5): shaders are part of the brand
-v4 put a pale mesh gradient behind three illustrations; it read as flat colour. In v5 the shaders are a
-visible, intentional part of Saral, in the style of the shadcn shader blocks (Paper Shaders), and still
-kept out of the work itself.
+### Calm states (final)
+Work in progress and the assistant's states are shown with plain CSS, never with animated art. Each
+treatment is decorative (`aria-hidden`); a sentence or label next to it always says what is happening.
 
-| Where | Shader (Paper Shaders) | Palette / motion |
-| --- | --- | --- |
-| Sign in: the whole right half, one tall panel | MeshGradient `brand` | cream `#FFF1E6` → peach `#FF8F68` → coral `#E25F4B` → deep plum `#4E2440`; speed 0.38, light grain |
-| Dashboard: hero band with the greeting and the next step | MeshGradient `brand` | as above |
-| Loan products hero | MeshGradient `brand` | as above |
-| Eligibility estimate result head | MeshGradient `brand` (an estimate) / `muted` (none) | as above / muted |
-| Application result banner, approved | MeshGradient `approved` | cream, apricot `#FFC98C`, peach, plum `#7E3550`; warm and a little brighter, not flashy |
-| Application result banner, submitted / checks running / with a reviewer / information needed / draft | GrainGradient `calm` (wave) | neutral-warm cream, blush and lilac; slow drift that doubles as the "checks running" cue |
-| Application result banner, not approved / withdrawn | MeshGradient `muted` | soft greige and rose, almost still (speed 0.12) |
-| Assistant empty state | MeshGradient `orb`, blurred into a soft glow behind the Saral mark | peach, coral, plum |
-| Assistant thinking | PulsingBorder `pulse`, a soft ring around the thinking scene | coral, peach, plum |
+| State | Treatment |
+| --- | --- |
+| Application checks running (submitted / checks running / with a reviewer) | `.status-bar` inside the decision key card: a 4 px `--paper-2` track with a short `--coral-3` segment sliding across (1.8 s); a still, 45%-tint full bar under reduced motion |
+| Page loading (slow first reads) | the floating status card: the same status bar + "Getting your latest details…", with skeletons in the content underneath (§4) |
+| Assistant empty state | the Saral mark scene on a plain, soft coral-tinted circle (`#FDEBE4`), no halo or glow |
+| Assistant thinking | the thinking scene on a small soft circle with a gentle opacity + hairline-ring pulse, the three typing dots and the live activity trail; still under reduced motion |
+| Assistant streaming | a 3 px CSS progress bar under the answer that is still arriving; still under reduced motion |
+| Composer | the plain floating surface (the one soft shadow); keyboard focus shows the standard `--ring` |
+| Voice drawer | a clean CSS circle that scales gently (up to 8%) with LiveKit's audio level, a solid coral core whose tone follows the state, and a static state label under it (Ready when you are, Connecting, Listening, Thinking, Speaking, Microphone off); no scaling under reduced motion |
 
-Rules:
-- **Never behind work.** No shader behind form fields, tables, body text, the sidebar or the tab bar.
-- **Text on a shader sits on a plate** (`.shader-plate`: cream at 94% with a light frost), so contrast is
-  measured against the plate. Illustrations on a shader sit on a frosted tile so the ink line stays clear.
-  Spot check of the rendered pixels (55 text items, 6 pages, 1280 and 390): lowest 4.99:1, all AA.
-- **One loader** (`public/js/shader.js`, linked once from `base.html`). It imports Paper Shaders with
-  `import()` only after `load` + idle (first paint is the static gradient), mounts at most **2 live
-  shaders per page** (first in document order; the rest keep their static look), caps rendering at
-  **1.5× device pixels** (`maxPixelCount` follows each zone's size), and relies on Paper's `ShaderMount`
-  to pause off-screen and in hidden tabs. It watches the DOM, so zones that React or page scripts add
-  later are mounted and zones that leave are disposed (the orb and the thinking ring never pile up).
-- **Static fallback.** Every palette has a CSS radial-gradient look (`[data-shader="…"]` in portal.css)
-  that is also what shows with reduced motion, Save-Data or no WebGL. Switching reduced motion on while
-  a page is open disposes every shader.
-- **Weight.** Bundled from `@paper-design/shaders@0.0.82` (Apache-2.0, the latest release; licence and
-  notice in `public/js/vendor/`) by `scripts/brand/build_shader.sh`: the mesh core (`saral-shader.js` +
-  shared chunk) is 8.4 KB gzipped; the extra chunk with GrainGradient, PulsingBorder and Paper's noise
-  texture is 22.7 KB gzipped and loads only on pages that show `calm` or `pulse`. Loader 2.3 KB.
-  All added JS: ~33 KB gzipped, under the 40 KB budget.
-- Chromium under Xvfb (software GL, SwiftShader via ANGLE) renders the shaders without extra flags; the
-  captures and `SHADERS.mp4` show the live canvases, not the fallback.
+The voice state machine (`apps/web/assistant/src/voice-orb.ts`) is kept: it turns the call status, mute
+and LiveKit's own speaker detection (ActiveSpeakersChanged + participant audioLevel) into the state and
+its label. There is no second microphone tap and the page records nothing.
 
-### Shader placement (v6): flat surfaces, never under illustrations
-v6 supersedes the v5 zone table above for placement (palettes, loader, fallbacks and the plate rule still
-hold). Shaders behind illustrations fought the ink line and read as a coloured blob, so the art is back on
-the plain page and the shaders move to flat surfaces and to the assistant.
-
-**Placement rule: never under an illustration.** No shader sits behind any illustration (sign-in,
-dashboard, products, eligibility, result art), and still never behind form fields, tables, body text, the
-sidebar or the tab bar.
-
-| Where | Shader (Paper Shaders) | Look |
-| --- | --- | --- |
-| Page wash: the content area of every app page (not under the sidebar) | MeshGradient `wash` | near-cream `#F7F3EE` / blush `#FCE9DE` / lilac-grey `#F6EEF1`, speed 0.1, rendered at about 0.22 MP; quiet enough that body text is measured against cream |
-| Top band and footer band | MeshGradient `band` | 3 px (top) and 4 px (footer) strips of peach → coral → plum, speed 0.32 |
-| Glow rings on key cards: sign-in card, dashboard next step, decision card, eligibility estimate | PulsingBorder `ring` | a thin animated edge, 4 travelling spots; tone follows the outcome on the decision card (`brand`, `approved` warm, `muted` slow for not approved / withdrawn) |
-| Decision card while checks run (submitted / checks running / with a reviewer) | GrainGradient `calm` (wave) | a slim processing band inside the card under the status sentence; the card itself stays white |
-| Loading status card (slow first reads) | MeshGradient `loading` | a band in a small floating card, see §4 |
-
-**Assistant exception.** The assistant is the one place shaders sit close to content, because there they
-show state rather than decorate: the empty-state orb (MeshGradient `orb`, masked to a soft disc over a
-static halo, no canvas blur), the thinking ring (PulsingBorder `pulse`, thinner, 4 spots), a thin shader
-shimmer on the edge of a streaming answer (MeshGradient `stream`), a PulsingBorder edge on the composer
-only while it is focused (calm) or an answer is coming (faster), and a warm hover / focus glow on the
-suggested-question chips (CSS). Answers, the trail and the composer text stay on solid surfaces.
-
-**Voice orb.** The existing LiveKit voice drawer shows a Paper Shaders SmokeRing orb with six looks:
-idle, connecting, listening, thinking, speaking and microphone off (radius, thickness, colour weight and
-speed change per state). A pure state machine (`apps/web/assistant/src/voice-orb.ts`) drives it from the
-call status, mute and LiveKit's own speaker detection (ActiveSpeakersChanged + participant audioLevel);
-the level breathes the ring a little while listening or speaking. There is no second microphone tap and
-the page records nothing. A visible state label sits under the orb, so the orb is never the only cue.
-
-**Loader budget (v6).** Still at most **2 live shaders**, now chosen among the zones on screen by
-priority (voice > thinking ring > orb / stream / loading > calm band > composer > ring > wash > band); a
-higher-priority zone takes the slot of a lower one, and a zone that scrolls away or hides is disposed and
-returns to its static look. Rendering stays capped at 1.5× device pixels (the wash renders lower).
-Reduced motion, Save-Data and no WebGL keep every static CSS look. Added JS, gzipped: loader 3.3 KB,
-mesh core 1.8 KB + shared chunk 6.7 KB, extra chunk (GrainGradient, PulsingBorder, SmokeRing, noise
-texture; only on pages that use them) 24.5 KB: ~36 KB in total, under the 40 KB budget.
-
-Spot check of rendered text contrast (v6, worst-case background pixel): 66 items at 1280 and 77 items
-at 390 over sign-in, dashboard, approved, checks running, not approved, products, help and documents;
-all AA, lowest 4.84:1 at 390. `SHADERS_V6.mp4` and the v6 shots show the live canvases.
+**Iteration note.** Animated WebGL shaders (Paper Shaders: mesh-gradient washes and bands, glow rings
+on key cards, a grain band for processing, an assistant orb, a smoke-ring voice orb) were tried in v4–v6.
+They were **dropped at the user's request** on 2026-11-03 in favour of this calm, non-animated system;
+the vendored bundles, the loader, their licence copies and the build scripts were removed with them.
 
 ### Colour and emphasis
 - **One coral primary action per page.** Every other action is a ghost button, a quiet button or a
@@ -142,7 +89,8 @@ all AA, lowest 4.84:1 at 390. `SHADERS_V6.mp4` and the v6 shots show the live ca
 
 ### Motion
 - No bounce or elastic easing (the old `saral-bounce` was removed after impeccable flagged it).
-- Loading motion is a slow opacity breath, never a sliding shimmer band. Everything stops under
+- Skeletons breathe by opacity only. The only sliding motion is the thin indeterminate status bar
+  (checks running, page loading) and the assistant's streaming bar. Everything stops under
   `prefers-reduced-motion: reduce`.
 
 ### Responsive
@@ -163,9 +111,7 @@ These go against at least one of the three skills on purpose. Keep them unless t
 | `--font-mono` token resolves to **Sora** | taste-skill "no monospace outside code" (the lint still WARNs on the token name) | The token is a legacy name for "figures and references". No monospace face ships; the WARNs are on the variable name, not on monospace type. |
 | `example.com` in test data (`apps/web/assistant/src/turns.test.ts`) | taste-skill `placeholder-data` (the only remaining FAIL) | `example.com` is reserved by RFC 2606 for documentation and tests, so it can never reach a real inbox. It is test-only and never rendered to a borrower. |
 | Hairline dividers between sections | taste-skill "no thin rules, no hairline dividers" | Kept by user request: hairlines replaced the boxed cards and read as calm structure on cream paper. |
-| v5 shaders as a brand surface: animated gradients in hero bands, result banners, the sign-in panel and the assistant mark (and their static CSS fallbacks) | taste-skill `gradient` FAIL ("flat colour or a real image"); impeccable/unslop "no decorative gradients" | The user asked for a visibly premium, shader-rich look (shadcn shader blocks / Paper Shaders) after v4's low-contrast version read as flat. Kept out of forms, tables, body text and the sidebar; text sits on a solid plate; lazy, capped at 2 live per page, still under reduced motion. Every fallback gradient line carries `taste-skill-ignore`. |
-| Frosted text plate on shader zones (`backdrop-filter` on `.shader-plate`) | taste-skill `glass` WARN ("glass cards are a tell") | It is 94% opaque cream, used only where text must sit on a moving shader, so AA holds over any colour. Both lines carry `taste-skill-ignore`. |
-| One soft shadow on floating layers | taste-skill `shadow` WARN ("elements at rest carry none") | Only floating things carry it (composer, menus, sheet, drawer, dialogs, toasts), which is what the rule allows. The remaining `shadow` WARNs are those, focus rings, and `none` resets. |
+| One soft shadow on floating layers | taste-skill `shadow` WARN ("elements at rest carry none") | Only floating things carry it (composer, menus, sheet, drawer, dialogs, toasts, the loading status card), which is what the rule allows. The remaining `shadow` WARNs are those, focus rings, and `none` resets. |
 | The assistant shown as the Saral mark in its illustrations | BRAND "don't use the mark next to an outcome" | Used only for the assistant itself (empty state, thinking), never beside a decision, so the assistant is never drawn as a person. |
 
 ## 3. Illustrations (v4 cast)
@@ -204,11 +150,11 @@ These go against at least one of the three skills on purpose. Keep them unless t
 - **Assistant:** a thinking scene and a plain-language activity trail ("What I checked") while an
   answer streams; markdown is formatted while streaming; errors appear inline with Retry.
 - A load failure shows what failed and a "Try again" ghost button, never a blank column.
-- **Loading status card (v6).** When a page's first reads take longer than 300 ms, a small fixed card
-  floats above the page with the shader `loading` band and one sentence ("Getting your latest
+- **Loading status card.** When a page's first reads take longer than 300 ms, a small fixed card
+  floats above the page with the thin CSS status bar and one sentence ("Getting your latest
   details…"). It overlays rather than pushes, so nothing shifts when the data lands; on phones it sits
   above the tab bar and never covers the page title. Skeletons stay in the content areas underneath.
-  Static band under reduced motion.
+  Still bar under reduced motion.
 
 ## 5. Result pattern
 
@@ -237,59 +183,35 @@ button back to "Recalculate" once a result shows, so one coral action remains.
   `apps/web/assistant/src`; impeccable `detect` over the same paths (static, regex rules), plus a
   live-page impeccable scan of the fixture render in v3.
 
-### Scan counts
+### Final results (2026-11-03, after the shaders were removed and origin/main merged)
+
+- **axe-core, WCAG 2.2 AA:** all 29 pages at 1280 and at 390, run in small slices with every page
+  covered once per width: **0 violations, 0 serious/critical**.
+- **Rendered text contrast** (worst-case background pixel under each text box): 182 items over sign-in,
+  dashboard, approved, checks running, not approved, products, help and documents at 1280 and 390;
+  all AA, lowest **5.05:1**.
+- **Scans:** taste-skill lint `--app` (73 files): **2 FAIL / 85 WARN**; impeccable detect (static, 42
+  files): **0 findings**. No `taste-skill-ignore` lines remain in the app.
+  - The two FAILs are deliberate or pre-existing: the reserved `example.com` test address (deviation
+    above) and the `★` rating glyph in `feedback.js`.
+  - WARNs: 45 `shadow` (floating layers, focus rings and `none` resets), 30 `mono` (the Sora-backed
+    token name), 7 `glass` (the sticky top and tab bars, the dialog backdrop, resets), 1 `eyebrow` (a
+    legacy selector no template uses), 1 `numbering` (`padStart` for a time in a test), 1 `em-dash`.
+
+### Scan history
 
 | Pass | taste-skill lint (`--app`) | impeccable detect (static) |
 | --- | --- | --- |
 | Before (origin/main) | 19 FAIL / 109 WARN | 0 findings, 1 advisory (`bounce-easing`) |
-| v2 (e8a272d) | 1 FAIL / 85 WARN | 0 findings |
-| v3 (7d1dd12) | 1 FAIL / 87 WARN | 0 findings, 0 advisories |
-| v4 after illustration + depth, before the skill pass (4ee4eee) | 3 FAIL / 96 WARN | 0 findings |
-| v4 after the skill pass | 1 FAIL / 77 WARN | 0 findings |
-| v5 shaders (3ddd035) | 2 FAIL / 77 WARN | 0 findings |
-| v6 shader placement + voice orb (this pass) | 2 FAIL / 85 WARN | 0 findings (42 files, static) |
+| v2 | 1 FAIL / 85 WARN | 0 findings |
+| v3 | 1 FAIL / 87 WARN | 0 findings, 0 advisories |
+| v4 (after the skill pass) | 1 FAIL / 77 WARN | 0 findings |
+| v5 (shaders) | 2 FAIL / 77 WARN | 0 findings |
+| v6 (shader placement, voice orb) | 2 FAIL / 85 WARN | 0 findings |
+| **Final (no shaders)** | **2 FAIL / 85 WARN** | **0 findings** |
 
-v4 notes:
-- The two new FAILs were the shader-zone fallback gradients (deliberate, now marked `taste-skill-ignore`).
-  The one FAIL left is the reserved `example.com` test address.
-- `shadow` WARNs fell 56 → 37 by deleting resting shadows at the source (the `--shadow-sm: none` token
-  and its 17 uses, the coral hover glow, the assistant panel, identity card, plate and result card)
-  instead of overriding them.
-- Live impeccable scan, 8 pages (sign in, products, dashboard, eligibility, approved and not-approved
-  results, documents, identity check): `cream-palette` on every page (accepted deviation),
-  `first-viewport-column-overflow` on eligibility (the long form beside a short result column; the
-  result column is sticky on desktop, accepted), and `wide-tracking` on the identity card (fixed: 0.14em
-  → 0.04em). The application result no longer reports column overflow.
-- unslop has no detector CLI; its `signs.md` checklist was applied by hand to full-page shots: removed
-  numbered circles (identity check, documents), tiny uppercase tracked labels (demo flag, identity summary,
-  repayment months), an em-dash in the feedback lead, and the coral hover glow. One bright element per
-  screen is the scene (or its shader zone); the chrome stays quiet.
-
-v3 notes:
-- The one FAIL is the reserved `example.com` test address (deviation above).
-- WARNs: 30 `mono` (the Sora-backed token name), 47 `shadow` (all are `none` resets, hover/focus
-  rings, overlays such as the dialog, drawer and sheet, or shadows overridden later; two more than v2), 7 `glass`
-  (the sticky top and tab bars, the dialog backdrop, and `none` resets), 1 `eyebrow` (a legacy selector no template uses), 1 `numbering` (`padStart` for
-  date formatting in a test), 1 `em-dash`.
-- Live impeccable scan (products, dashboard, eligibility, info-needed and not-approved results):
-  `cream-palette` on every page (accepted deviation) and `first-viewport-column-overflow` on the
-  eligibility form and the application result, where a long form or record is the content.
-- axe WCAG 2.2 AA: 0 violations on all 29 pages at 1280 and at 390.
-
-v5 notes (shaders):
-- taste-skill lint `--app` over www, templates, portal.css, page scripts, `shader.js` and the island
-  source (72 files): 2 FAIL / 77 WARN. The FAILs are the reserved `example.com` test address and the
-  `★` rating glyph in `feedback.js` (pre-existing, first included now that page scripts are linted). No
-  `gradient` FAIL: every v5 fallback gradient line is marked `taste-skill-ignore`.
-- axe WCAG 2.2 AA: 0 violations (0 serious/critical) on all 29 pages at 1280 and at 390.
-
-v6 notes (shader placement, assistant polish, voice orb, loading card):
-- taste-skill lint `--app`, same 72 files as v5: 2 FAIL / 85 WARN. FAILs unchanged in kind: the reserved
-  `example.com` test address and the `★` rating glyph in `feedback.js` (both pre-existing). Two `gradient`
-  FAILs on the orb canvas `mask-image` lines were alpha masks, not fills, and are now marked
-  `taste-skill-ignore`; every v6 fallback gradient already was. WARNs rose 77 → 85, mostly `shadow`
-  (45: the floating loading card, the lifted orb mark and the overlay drawer are real overlays) and
-  `mono` (30, the Sora-backed token name).
-- impeccable detect (static, 42 files): 0 findings.
-- axe WCAG 2.2 AA, partial in v6 (memory limits): 0 violations on the slices run, 26 of 29 pages at 390
-  (routes 14–16 and 21–22 not re-run) and 13 of 29 at 1280; v5 had 0 violations on all 29 at both widths.
+The live impeccable scan of the fixture render (v3/v4) reported `cream-palette` on every page (accepted
+deviation) and `first-viewport-column-overflow` on the eligibility form, where the long form sits beside a
+short, sticky result column (accepted). unslop has no detector CLI; its checklist was applied by hand to
+the full-page shots (numbered circles, tiny uppercase labels, the coral hover glow and an em-dash were
+removed in v4).

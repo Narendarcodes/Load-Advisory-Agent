@@ -86,29 +86,30 @@ Every scene side by side: `illustrations_sheet.png` in the v4 evidence folder at
 Removed in v4: `calculating.svg` (loading has no scene). The v3 per-slot figures (`peep-46`, `peep-2`, …)
 are no longer used.
 
-## Shaders: Paper Shaders (Apache-2.0)
+## No shaders or animation libraries
 
-Tree-shaken bundles of **`@paper-design/shaders@0.0.82`** (vanilla build, the latest release;
-https://github.com/paper-design/shaders, https://shaders.paper.design; Apache License 2.0, copyright 2026
-Paper). The licence and NOTICE ship beside them (`PAPER-SHADERS-LICENSE.txt`, `PAPER-SHADERS-NOTICE.txt`).
+The final design ships **no WebGL, no shader library and no animation library**. Every state treatment
+(key cards, the status bar for checks running and page loading, the assistant's empty / thinking /
+streaming states, the voice circle) is plain CSS in `public/css/portal.css` and
+`apps/web/assistant/src/assistant.css`, with no image assets of its own.
 
-| File (`public/js/vendor/`) | Contents | gzipped |
-| --- | --- | --- |
-| `saral-shader.js` | MeshGradient looks (v6): `wash`, `band`, `loading`, `orb`, `stream` | 1.8 KB |
-| `saral-chunk-*.js` | shared `ShaderMount` and colour helpers | 6.7 KB |
-| `saral-shader-extra.js` | PulsingBorder (`ring`, `pulse`, `composer`), SmokeRing (`voice`, six states), GrainGradient (`calm`) and Paper's noise texture; loaded only where used | 24.5 KB |
+Paper Shaders (`@paper-design/shaders`, Apache-2.0) were bundled during the v4–v6 iterations and were
+**removed** at the user's request on 2026-11-03, together with the loader (`public/js/shader.js`), the
+bundles (`public/js/vendor/saral-shader*.js`, `saral-chunk-*.js`), their licence and NOTICE copies and
+the build scripts (`scripts/brand/build_shader.sh`, `shader_entry.mjs`, `shader_extra.mjs`). No Paper
+code or licence obligation remains in the repository.
 
-Source: `scripts/brand/shader_entry.mjs`, `scripts/brand/shader_extra.mjs`; build:
-`scripts/brand/build_shader.sh` (esbuild, code-split). `public/js/shader.js` (loader, 3.3 KB gzipped,
-linked from `base.html`) imports them lazily after load and idle, keeps at most 2 live by on-screen
-priority, and leaves the static CSS look under reduced motion, Save-Data or no WebGL. Total ~36 KB
-gzipped. See `DESIGN_PRINCIPLES.md` §1 "Shader placement (v6)" for where shaders may appear (never under
-an illustration; wash, bands, rings; the assistant exception; the voice orb; the loading card).
-
-v6 placement changed no illustration files: the scenes are the same Open Peeps cast, now on the plain
-page instead of over a shader. The voice orb and the loading band are shaders only (no image assets).
 The fixture-only fake LiveKit module used for captures (`tests/e2e/fake_livekit.mjs`) is test code and
 never ships to the portal.
+
+## Final asset and licence list
+
+| Asset | Where | Licence |
+| --- | --- | --- |
+| Illustrations (35 SVGs, the v4 cast) | `public/illustrations/` | Open Peeps by Pablo Stanley, CC0 1.0; parts via `react-peeps@0.1.10` (MIT code, CC0 art). Courtesy credit on the Help page |
+| Saral mark, favicon, social image, web manifest | `public/brand/` | Original artwork for this project (`docs/BRAND.md`, `scripts/brand/`) |
+| Sora and Manrope webfonts | `public/fonts/` | SIL Open Font License 1.1 (`public/fonts/*-OFL.txt` ship beside them) |
+| Assistant island bundle | `public/js/assistant/` | Built from `apps/web/assistant` (React, CopilotKit, livekit-client and their dependencies under their own licences, unchanged from main) |
 
 ## Brand assets
 Original artwork for this project; see `docs/BRAND.md` and `scripts/brand/`.
