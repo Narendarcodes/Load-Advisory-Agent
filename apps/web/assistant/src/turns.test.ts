@@ -1,6 +1,17 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { addStage, followUps, keptState, loadTurns, metaFor, saveTurns, turnsKey } from "./turns";
+import {
+  addStage,
+  answerKey,
+  displayText,
+  followUps,
+  formattedAnswer,
+  keptState,
+  loadTurns,
+  metaFor,
+  saveTurns,
+  turnsKey,
+} from "./turns";
 
 afterEach(() => window.sessionStorage.clear());
 
@@ -87,5 +98,42 @@ describe("follow-up suggestions", () => {
 
   it("always offers a way to a person", () => {
     expect(followUps(undefined)).toContain("How do I talk to a person about this?");
+  });
+});
+
+describe("formatted answer text", () => {
+  const streamed =
+    "Your application was **not approved**. ### What did not pass 1. **EMIs:** 50% of income. - Pay down one loan. ";
+  const final =
+    "Your application was **not approved**.\n\n### What did not pass\n\n1. **EMIs:** 50% of income.\n\n- Pay down one loan.";
+
+  it("uses the final answer's line breaks when its words match the streamed sentences", () => {
+    expect(formattedAnswer(streamed, final)).toBe(final);
+  });
+
+  it("keeps the streamed text when the final answer says something else", () => {
+    expect(formattedAnswer(streamed, final + "\n\nAn extra sentence the stream never showed.")).toBe(streamed);
+    expect(formattedAnswer(streamed, "A different answer.")).toBe(streamed);
+  });
+
+  it("keeps the streamed text when there is no usable final answer", () => {
+    expect(formattedAnswer(streamed, undefined)).toBe(streamed);
+    expect(formattedAnswer(streamed, 42)).toBe(streamed);
+    expect(formattedAnswer(streamed, "")).toBe(streamed);
+  });
+
+  it("stores the formatted text with the turn and only re-applies it to the same words", () => {
+    const key = turnsKey("u@example.invalid", "APP-T", "thread-f");
+    saveTurns(key, [{ answer: answerKey(streamed), stages: [], text: final }]);
+    const [meta] = loadTurns(key);
+    expect(meta.text).toBe(final);
+    expect(displayText(meta, streamed)).toBe(final);
+    expect(displayText(meta, "Another answer entirely.")).toBe("Another answer entirely.");
+    expect(displayText(undefined, streamed)).toBe(streamed);
+  });
+
+  it("finds the cards of a restored answer whose text kept its line breaks", () => {
+    const meta = { answer: answerKey(streamed), stages: ["compose"] };
+    expect(metaFor([meta], 0, final)).toBe(meta);
   });
 });

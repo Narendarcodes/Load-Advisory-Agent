@@ -12,13 +12,40 @@ export interface TurnMeta {
   answer: string;
   stages: string[];
   state?: PublicState;
+  /**
+   * The answer as the server finished it, with its line breaks. The stream arrives one guarded
+   * sentence at a time with the breaks collapsed, which flattens headings and lists; this copy is
+   * only ever shown when its words are the streamed words (see `displayText`).
+   */
+  text?: string;
 }
 
 const ANSWER_KEY = 120;
 const MAX_TURNS = 40;
+const MAX_TEXT = 12000;
 
+function words(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * The text to render for a finished answer: the final answer from the server's state when it is
+ * the same words as what was streamed (only whitespace differs), otherwise the streamed text.
+ * Nothing the guarded stream did not show can reach the page this way.
+ */
+export function formattedAnswer(streamed: string, finalAnswer: unknown): string {
+  if (typeof finalAnswer !== "string" || !finalAnswer.trim() || finalAnswer.length > MAX_TEXT) return streamed;
+  return words(finalAnswer) === words(streamed) ? finalAnswer : streamed;
+}
+
+/** What to render for one answer, given the meta stored with it. */
+export function displayText(meta: TurnMeta | undefined, streamed: string): string {
+  return meta?.text ? formattedAnswer(streamed, meta.text) : streamed;
+}
+
+/** Whitespace-insensitive, so a restored transcript (with line breaks) still finds its cards. */
 export function answerKey(text: string): string {
-  return text.trim().slice(0, ANSWER_KEY);
+  return text.replace(/\s+/g, " ").trim().slice(0, ANSWER_KEY);
 }
 
 /** Append a server stage once, in arrival order. Unknown stage ids are ignored, never labelled. */
@@ -62,11 +89,13 @@ export function loadTurns(key: string | undefined): TurnMeta[] {
     if (!Array.isArray(parsed)) return [];
     return parsed.flatMap((item): TurnMeta[] => {
       if (!item || typeof item !== "object") return [];
-      const record = item as { answer?: unknown; stages?: unknown; state?: unknown };
+      const record = item as { answer?: unknown; stages?: unknown; state?: unknown; text?: unknown };
       if (typeof record.answer !== "string") return [];
       const stages = Array.isArray(record.stages) ? record.stages.reduce<string[]>(addStage, []) : [];
       const state = record.state ? keptState(parsePublicState(record.state)) : undefined;
-      return [{ answer: record.answer.slice(0, ANSWER_KEY), stages, state }];
+      const text =
+        typeof record.text === "string" && record.text.length <= MAX_TEXT ? record.text : undefined;
+      return [{ answer: record.answer.slice(0, ANSWER_KEY), stages, state, ...(text ? { text } : {}) }];
     });
   } catch {
     return [];
