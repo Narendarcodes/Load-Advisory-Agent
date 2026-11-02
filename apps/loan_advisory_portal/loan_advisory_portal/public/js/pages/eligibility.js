@@ -386,7 +386,6 @@
 			clearStale();
 			hasResult = false;
 			panel.innerHTML =
-				'<p class="eyebrow">Your estimate</p>' +
 				"<h2>Nothing calculated yet</h2>" +
 				'<p class="small muted">Fill in the three sections and choose Estimate eligibility. You can change any answer and recalculate.</p>' +
 				"<div><h3>What the estimate uses</h3><ul class=\"result-factors\">" +

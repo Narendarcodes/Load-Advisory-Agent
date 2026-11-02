@@ -3,13 +3,10 @@
 {% block body_class %}public-shell auth-shell{% endblock %}
 {% block page_content %}
 <div class="auth">
-	<section class="card auth__card" aria-labelledby="signin-heading">
-		<div class="card__head">
-			<div>
-				<img class="auth__logo" src="/assets/loan_advisory_portal/brand/saral-mark.svg" alt="" width="40" height="40">
-				<h1 id="signin-heading">Welcome back</h1>
-				<p class="small muted">Sign in to see your application and its decision.</p>
-			</div>
+	<section class="auth__card" aria-labelledby="signin-heading">
+		<div class="auth__head">
+			<h1 id="signin-heading">Sign in</h1>
+			<p class="muted">See your application and the reasons behind its decision.</p>
 		</div>
 
 		<div class="alert alert--bad" id="login-error" role="alert" hidden></div>
@@ -47,7 +44,6 @@
 	</section>
 	<section class="auth__intro" aria-labelledby="auth-title">
 		<img class="auth__art" src="/assets/loan_advisory_portal/illustrations/login.svg" alt="" width="320" height="240">
-		<p class="eyebrow">Borrow with clarity</p>
 		<h2 id="auth-title" class="auth__title">Your loan, made simple.</h2>
 		<p class="lede">
 			Pick up where you left off, follow each step, and read the reasoning behind a decision in
@@ -55,16 +51,13 @@
 		</p>
 		<ul class="auth__points">
 			<li>
-				<span class="auth__mark" aria-hidden="true">01</span>
-				<span><strong>Indicative checks only</strong> — checking eligibility does not affect your credit score.</span>
+				<strong>Indicative checks only.</strong> Checking eligibility does not affect your credit score.
 			</li>
 			<li>
-				<span class="auth__mark" aria-hidden="true">02</span>
-				<span><strong>Your documents stay private</strong> — files are served only to you and the review team.</span>
+				<strong>Your documents stay private.</strong> Files are served only to you and the review team.
 			</li>
 			<li>
-				<span class="auth__mark" aria-hidden="true">03</span>
-				<span><strong>Reasons, not just results</strong> — every recorded decision explains what mattered.</span>
+				<strong>Reasons, not just results.</strong> Every recorded decision explains what mattered.
 			</li>
 		</ul>
 		<p class="small muted">

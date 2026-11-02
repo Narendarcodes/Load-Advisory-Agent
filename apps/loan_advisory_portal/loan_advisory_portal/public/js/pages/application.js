@@ -16,17 +16,6 @@
 
 	var CLOSED = ["APPROVED", "REJECTED", "WITHDRAWN"];
 
-	var STATUS_STYLE = {
-		DRAFT: { variant: "", mark: "DR" },
-		SUBMITTED: { variant: "status-block--info", mark: "i" },
-		INFO_REQUESTED: { variant: "status-block--warn", mark: "!" },
-		UNDER_REVIEW: { variant: "status-block--info", mark: "i" },
-		MANUAL_REVIEW: { variant: "status-block--warn", mark: "!" },
-		APPROVED: { variant: "status-block--ok", mark: "OK" },
-		REJECTED: { variant: "status-block--bad", mark: "×" },
-		WITHDRAWN: { variant: "status-block--info", mark: "i" },
-	};
-
 	var FIELD_LABELS = {
 		monthly_income: "monthly income",
 		monthly_obligations: "monthly obligations",
@@ -61,24 +50,16 @@
 		);
 	}
 
-	function trackerStates(application) {
-		var state = application.lifecycle || "DRAFT";
-		if (state === "DRAFT") return ["current", "", "", ""];
-		if (state === "SUBMITTED") return ["done", "current", "", ""];
-		if (state === "UNDER_REVIEW" || state === "INFO_REQUESTED" || state === "MANUAL_REVIEW") {
-			return ["done", "done", "current", ""];
-		}
-		if (state === "APPROVED" || state === "REJECTED") return ["done", "done", "done", "done"];
-		// Withdrawn: the process stopped where it was and no outcome was reached.
-		return application.docstatus === 0 ? ["done", "", "", ""] : ["done", "done", "", ""];
-	}
-
-	function renderTracker(application) {
-		var states = trackerStates(application);
-		document.querySelectorAll("#tracker .tracker__stage").forEach(function (stage, index) {
-			if (states[index]) stage.dataset.state = states[index];
-			else delete stage.dataset.state;
-		});
+	/* One sentence says where the application stands; the dated history below shows how it got there. */
+	function renderStatusLine(application) {
+		var line = document.getElementById("status-line");
+		if (!line || !window.PortalStatus) return;
+		var status = window.PortalStatus.statusSentence(application, Portal.date);
+		var tone = { ok: "badge--ok", bad: "badge--bad", warn: "badge--warn", info: "badge--info" }[status.tone] || "badge--neutral";
+		line.innerHTML =
+			"<span>" + Portal.esc(status.text) + "</span>" +
+			'<span aria-hidden="true">·</span>' +
+			'<span class="badge ' + tone + '">' + Portal.esc(status.outcome) + "</span>";
 	}
 
 	function renderActions(application) {
@@ -99,7 +80,7 @@
 			html += '<a class="btn" href="#info-request">Update details</a>';
 		}
 		if (lifecycle === "WITHDRAWN" || lifecycle === "REJECTED") {
-			html += '<a class="btn" href="/borrower/apply">Start a new application</a>';
+			html += '<a class="btn btn--ghost" href="/borrower/apply">Start a new application</a>';
 		}
 		if (open) {
 			html += '<button class="btn btn--quiet" type="button" id="withdraw">Withdraw</button>';
@@ -118,10 +99,6 @@
 
 	function renderStatus(application) {
 		var lifecycle = application.lifecycle || "DRAFT";
-		var style = STATUS_STYLE[lifecycle] || STATUS_STYLE.DRAFT;
-		document.getElementById("status-block").className = "status-block" + (style.variant ? " " + style.variant : "");
-		document.getElementById("status-mark").textContent = style.mark;
-
 		var guidance = application.guidance || {};
 		document.getElementById("status-title").textContent =
 			guidance.title || Portal.lifecycleLabel(lifecycle);
@@ -135,20 +112,6 @@
 			})
 			.join("");
 		list.classList.toggle("hidden", !steps.length);
-
-		var timeline = application.timeline || [];
-		var at = timeline.length
-			? timeline[timeline.length - 1].at
-			: application.submitted_at || application.posting_date;
-		var time = document.getElementById("status-time");
-		if (at) {
-			time.textContent = "Last update " + Portal.date(at);
-			time.setAttribute("datetime", at);
-			time.classList.remove("hidden");
-		} else {
-			time.textContent = "";
-			time.classList.add("hidden");
-		}
 	}
 
 	function renderSummary(application) {
@@ -215,24 +178,19 @@
 	}
 
 	function renderTimeline(application) {
-		var events = application.timeline || [];
 		var host = document.getElementById("timeline");
-		if (!events.length) {
+		var items = window.PortalStatus ? window.PortalStatus.historyItems(application.timeline || []) : [];
+		if (!items.length) {
 			host.innerHTML = '<li class="muted small">No history recorded yet.</li>';
 			return;
 		}
-		host.innerHTML = events
-			.map(function (event, index) {
-				var current = index === events.length - 1 ? ' data-current="true"' : "";
-				var extra = event.policy_version ? " · policy " + Portal.esc(event.policy_version) : "";
+		host.innerHTML = items
+			.map(function (item) {
 				return (
-					"<li" +
-					current +
-					"><strong>" +
-					Portal.esc(event.event) +
-					'</strong><span class="when">' +
-					Portal.esc(Portal.date(event.at)) +
-					extra +
+					"<li" + (item.current ? ' aria-current="step"' : "") + ">" +
+					'<time datetime="' + Portal.esc(item.at) + '">' + Portal.esc(Portal.date(item.at)) + "</time>" +
+					"<span>" + Portal.esc(item.label) +
+					(item.current ? '<span class="history-list__now">Now</span>' : "") +
 					"</span></li>"
 				);
 			})
@@ -492,7 +450,7 @@
 		]);
 		var application = results[0];
 		renderHeader(application);
-		renderTracker(application);
+		renderStatusLine(application);
 		renderStatus(application);
 		renderActions(application);
 		renderSummary(application);

@@ -1,15 +1,13 @@
 {% extends "templates/portal/base.html" %}
 {% block title %}Documents{% endblock %}
 {% block page_content %}
-<div class="page-head">
+<div class="page-head page-head--art">
 	<div>
-		<p class="eyebrow">Documents</p>
 		<h1>Add the documents for your application</h1>
 		<p>Upload private copies of the documents you are asked for. A person reviews them. Keep any originals until your application is complete.</p>
+		<p><a class="small" href="/borrower">Back to applications</a></p>
 	</div>
-	<div class="page-head__actions">
-		<a class="btn btn--quiet" href="/borrower">Back to applications</a>
-	</div>
+	<img class="page-head__art" src="/assets/loan_advisory_portal/illustrations/documents-header.svg" alt="" width="160" height="120">
 </div>
 
 {% if created %}
@@ -34,7 +32,6 @@
 		<div class="card hidden" id="application-head">
 			<div class="card__head">
 				<div>
-					<p class="eyebrow">Application</p>
 					<h2 id="app-title">Loan application</h2>
 					<p class="small muted" id="app-meta">Loading</p>
 				</div>

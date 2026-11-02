@@ -134,39 +134,13 @@
 			"</tbody></table></div>";
 	}
 
-	// Where the newest application is: Started -> Submitted -> Checks -> Outcome.
-	var STAGE_OF = {
-		DRAFT: 0,
-		WITHDRAWN: 0,
-		SUBMITTED: 1,
-		UNDER_REVIEW: 2,
-		INFO_REQUESTED: 2,
-		MANUAL_REVIEW: 2,
-		APPROVED: 3,
-		REJECTED: 3,
-	};
-
-	function renderTimeline(application) {
-		var host = document.getElementById("status-timeline");
-		if (!host) return;
-		var stage = STAGE_OF[application.lifecycle];
-		if (stage === undefined) stage = 0;
-		var labels = ["Started", "Submitted", "Checks", "Outcome"];
-		host.innerHTML =
-			'<p class="small muted">' + Portal.esc(application.name) + "</p>" +
-			'<ol class="mini-timeline">' +
-			labels
-				.map(function (label, index) {
-					var state = index < stage ? "done" : index === stage ? "current" : "todo";
-					return (
-						'<li data-state="' + state + '"' + (index === stage ? ' aria-current="step"' : "") + ">" +
-						'<span class="mini-timeline__dot" aria-hidden="true">' + (index < stage ? "✓" : "") + "</span>" +
-						"<span>" + label + (index < stage ? '<span class="sr-only"> (done)</span>' : "") + "</span></li>"
-					);
-				})
-				.join("") +
-			"</ol>";
-		host.classList.remove("hidden");
+	// One plain line about the newest application, instead of a row of progress dots.
+	function renderLatestStatus(application) {
+		var node = document.getElementById("latest-status");
+		if (!node || !window.PortalStatus) return;
+		var status = window.PortalStatus.statusSentence(application, Portal.date);
+		node.textContent = application.name + " · " + status.text + " · " + status.outcome;
+		node.classList.remove("hidden");
 	}
 
 	function renderNextStep(applications) {
@@ -189,7 +163,7 @@
 		var step = NEXT_STEP[latest.lifecycle] || NEXT_STEP.DRAFT;
 		title.textContent = step.title;
 		body.textContent = step.body;
-		renderTimeline(latest);
+		renderLatestStatus(latest);
 		var href = latest.lifecycle === "WITHDRAWN" ? "/borrower/apply" : applicationUrl(latest);
 		action.innerHTML = '<a class="btn btn--sm" href="' + href + '">' + Portal.esc(step.label) + "</a>";
 	}
