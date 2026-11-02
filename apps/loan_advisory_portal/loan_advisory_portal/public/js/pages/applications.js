@@ -165,7 +165,8 @@
 		body.textContent = step.body;
 		renderLatestStatus(latest);
 		var href = latest.lifecycle === "WITHDRAWN" ? "/borrower/apply" : applicationUrl(latest);
-		action.innerHTML = '<a class="btn btn--sm" href="' + href + '">' + Portal.esc(step.label) + "</a>";
+		// Ghost, not coral: the page head already carries the one coral action ("Start an application").
+		action.innerHTML = '<a class="btn btn--ghost btn--sm" href="' + href + '">' + Portal.esc(step.label) + "</a>";
 	}
 
 	function renderActiveLoan() {

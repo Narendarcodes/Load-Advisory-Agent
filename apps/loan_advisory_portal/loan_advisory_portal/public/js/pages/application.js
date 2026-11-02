@@ -28,11 +28,13 @@
 	}
 
 	function renderHeader(application) {
-		document.getElementById("app-title").textContent = "Application " + application.name;
+		// The reference stays on one line ("ACC-" / "LOAP-..." broke at the hyphen on phones).
+		document.getElementById("app-title").innerHTML =
+			'Application <span class="nowrap">' + Portal.esc(application.name) + "</span>";
 		document.getElementById("app-purpose").textContent = application.purpose || "No purpose recorded.";
 
 		var product = application.product || {};
-		var bits = ['<span class="mono">' + Portal.esc(application.name) + "</span>"];
+		var bits = []; // the reference is already in the title
 		if (product.product_name) bits.push(Portal.esc(product.product_name));
 		bits.push("Started " + Portal.esc(Portal.date(application.posting_date)));
 		if (application.submitted_at) {
@@ -57,9 +59,10 @@
 		var status = window.PortalStatus.statusSentence(application, Portal.date);
 		var tone = { ok: "badge--ok", bad: "badge--bad", warn: "badge--warn", info: "badge--info" }[status.tone] || "badge--neutral";
 		line.innerHTML =
-			"<span>" + Portal.esc(status.text) + "</span>" +
-			'<span aria-hidden="true">·</span>' +
-			'<span class="badge ' + tone + '">' + Portal.esc(status.outcome) + "</span>";
+			"<span>" + Portal.esc(status.text) + "</span> " +
+			// Separator and outcome wrap together, so a narrow line never ends on a lone "·".
+			'<span class="status-line__outcome"><span aria-hidden="true">·</span> ' +
+			'<span class="badge ' + tone + '">' + Portal.esc(status.outcome) + "</span></span>";
 	}
 
 	function renderActions(application) {

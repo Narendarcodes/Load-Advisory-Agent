@@ -1519,10 +1519,10 @@ textarea {
 
 select {
 	appearance: none;
-	background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
-		linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-	background-position: calc(100% - 19px) 20px, calc(100% - 14px) 20px;
-	background-size: 5px 5px, 5px 5px;
+	/* Chevron as a drawn icon (stroke = --muted #71665f), not two clipped gradients. */
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%2371665f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-position: calc(100% - 14px) 50%;
+	background-size: 12px 8px;
 	background-repeat: no-repeat;
 	padding-right: 38px;
 }
@@ -2785,7 +2785,7 @@ dialog.dialog::backdrop {
 	aspect-ratio: 1;
 	right: -12%;
 	top: -18%;
-	background: radial-gradient(circle at 35% 35%, var(--coral), var(--coral-3) 70%);
+	background: var(--coral-3);
 	opacity: 0.9;
 }
 
@@ -2794,7 +2794,7 @@ dialog.dialog::backdrop {
 	aspect-ratio: 1;
 	left: -10%;
 	bottom: -22%;
-	background: radial-gradient(circle at 60% 40%, var(--sage-soft), var(--sage) 85%);
+	background: var(--sage);
 	opacity: 0.55;
 }
 
@@ -2853,21 +2853,21 @@ dialog.dialog::backdrop {
 }
 
 .plate--documents::before {
-	background: radial-gradient(circle at 40% 30%, var(--peach), var(--coral-2) 72%);
+	background: var(--coral-2);
 }
 
 .plate--documents::after {
-	background: radial-gradient(circle at 55% 45%, var(--warn-soft), var(--amber) 88%);
+	background: var(--amber);
 	opacity: 0.35;
 }
 
 .plate--approved::before {
-	background: radial-gradient(circle at 40% 35%, #d9ead9, var(--ok) 82%);
+	background: var(--ok);
 	opacity: 0.5;
 }
 
 .plate--support::before {
-	background: radial-gradient(circle at 40% 35%, var(--info-soft), var(--info) 85%);
+	background: var(--info);
 	opacity: 0.4;
 }
 
@@ -3329,7 +3329,7 @@ dialog.dialog::backdrop {
 	position: absolute;
 	inset: 0;
 	transform: translateX(-100%);
-	background: linear-gradient(90deg, transparent, rgb(255 255 255 / 65%), transparent);
+	background: rgb(255 255 255 / 45%); /* flat band, no gradient */
 	animation: shimmer 1.2s infinite;
 }
 
@@ -3951,8 +3951,10 @@ body .assistant__head h2 {
 		grid-column: auto;
 	}
 
+	/* v2: the form comes first in one column. With the summary first, a phone user scrolled past the
+	   request summary and the Stage 3 note before reaching the field they were asked to fill. */
 	.wizard__aside {
-		order: -1;
+		order: 1;
 	}
 
 	.hero {
@@ -4450,6 +4452,11 @@ body .assistant__head h2 {
 	body.nav-open .rail .rail__user {
 		justify-content: flex-start;
 		padding-inline: 8px;
+	}
+
+	/* The collapsed rail centres its footer; the open drawer lines it up with the links above. */
+	body.nav-open .rail .rail__foot {
+		justify-items: stretch;
 	}
 
 	body.nav-open {
@@ -5174,6 +5181,12 @@ dl.detail--rows div {
 
 .status-line .badge {
 	font-size: 0.78rem;
+}
+
+.status-line__outcome {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
 }
 
 /* Dated history, current state marked */
