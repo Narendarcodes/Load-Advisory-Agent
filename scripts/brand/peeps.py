@@ -36,6 +36,27 @@ SOURCES = {
     "peep-standing-23": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5362fa8becbf1d50570b23_peep-standing-23.svg",
     "peep-standing-24": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5363188becbffe8c57172c_peep-standing-24.svg",
     "peep-standing-13": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5361ccd3992383f7595afc_peep-standing-13.svg",
+    "peep-105": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535dd92b568a729c1c42f5_peep-105.svg",
+    "peep-sitting-1": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e532c65d871315ee7fcae9e_peep-sitting-1.svg",
+    "peep-standing-25": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53633a7371bbe22da4c986_peep-standing-25.svg",
+    "peep-77": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535aa1d871310896104715_peep-77.svg",
+    "peep-standing-22": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5362e2f5fa1aefa7ffe47c_peep-standing-22.svg",
+    "peep-sitting-14": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535f7d9b55b097be57089f_peep-sitting-14.svg",
+    "peep-7": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5350f9d399238698511b2f_peep-7.svg",
+    "peep-103": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535da59588e079598123fc_peep-103.svg",
+    "peep-standing-19": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e536281c992503d98cecdc1_peep-standing-19.svg",
+    "peep-standing-20": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5362a27488c217864c784d_peep-standing-20.svg",
+    "peep-sitting-17": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535fd95197054606a88bd2_peep-sitting-17.svg",
+    "peep-sitting-6": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535e9fc992502f35cd7902_peep-sitting-6.svg",
+    "peep-sitting-15": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535f96c67e7961f5994532_peep-sitting-15.svg",
+    "peep-standing-10": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53613f9b55b0a5a457c452_peep-standing-10.svg",
+    "peep-38": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53560d9b55b04007535350_peep-38.svg",
+    "peep-26": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5353e82b568af2d916cbbd_peep-26.svg",
+    "peep-standing-14": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5361e9f3aa4be48230418f_peep-standing-14.svg",
+    "peep-8": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53510f2b568ad72715a304_peep-8.svg",
+    "peep-sitting-11": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535f2ad39923f7d558435b_peep-sitting-11.svg",
+    "peep-sitting-4": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535e658e24935b1b096148_peep-sitting-4.svg",
+    "peep-59": "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5358878e2493fbea064dd9_peep-59.svg",
 }
 
 CORAL = "#FE7D6B"
@@ -181,6 +202,180 @@ def card_id(x, y, w=84, h=56):
     )
 
 
+def magnifier(cx, cy, r=22):
+    return (
+        f'<path d="M{cx + r * 0.7:.1f} {cy + r * 0.7:.1f} l{r * 0.9:.1f} {r * 0.9:.1f}" stroke="{INK}" stroke-width="7" stroke-linecap="round"/>'
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{WHITE}" stroke="{INK}" stroke-width="3.5"/>'
+        f'<circle cx="{cx}" cy="{cy}" r="{r - 7}" fill="{SOFT}"/>'
+        f'<path d="M{cx - r * 0.45:.1f} {cy - r * 0.15:.1f} a{r * 0.5:.1f} {r * 0.5:.1f} 0 0 1 {r * 0.4:.1f} -{r * 0.35:.1f}" fill="none" stroke="{CORAL}" stroke-width="3.5" stroke-linecap="round"/>'
+    )
+
+
+def calendar(x, y, w=86, h=76, ticks=2, empty=False):
+    s = [
+        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="6" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>',
+        f'<path d="M{x} {y + 20} h{w}" stroke="{INK}" stroke-width="3"/>',
+        f'<rect x="{x + 1.5}" y="{y + 1.5}" width="{w - 3}" height="17" rx="5" fill="{CORAL}"/>',
+        f'<path d="M{x + 20} {y - 7} v14 M{x + w - 20} {y - 7} v14" stroke="{INK}" stroke-width="3.5" stroke-linecap="round"/>',
+    ]
+    cw, ch = (w - 16) / 4, (h - 30) / 3
+    n = 0
+    for r in range(3):
+        for c in range(4):
+            cx, cy = x + 8 + c * cw + cw / 2, y + 26 + r * ch + ch / 2
+            if not empty and n < ticks:
+                s.append(f'<path d="M{cx - 5:.1f} {cy:.1f} l3.5 3.5 l6 -7" fill="none" stroke="{INK}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>')
+            elif not empty and n == ticks:
+                s.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="6" fill="{SOFT}" stroke="{CORAL}" stroke-width="2.5"/>')
+            else:
+                s.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="2" fill="{LINE}"/>')
+            n += 1
+    return "".join(s)
+
+
+def shield(cx, cy, s=1.0):
+    return (
+        f'<path d="M{cx} {cy - 38 * s:.1f} l{30 * s:.1f} {11 * s:.1f} v{22 * s:.1f} c0 {22 * s:.1f} -{14 * s:.1f} {36 * s:.1f} -{30 * s:.1f} {44 * s:.1f} '
+        f'c-{16 * s:.1f} -{8 * s:.1f} -{30 * s:.1f} -{22 * s:.1f} -{30 * s:.1f} -{44 * s:.1f} v-{22 * s:.1f}z" fill="{SOFT}" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+        f'<rect x="{cx - 11 * s:.1f}" y="{cy - 4 * s:.1f}" width="{22 * s:.1f}" height="{18 * s:.1f}" rx="3" fill="{CORAL}" stroke="{INK}" stroke-width="2.5"/>'
+        f'<path d="M{cx - 6 * s:.1f} {cy - 4 * s:.1f} v-{5 * s:.1f} a{6 * s:.1f} {6 * s:.1f} 0 0 1 {12 * s:.1f} 0 v{5 * s:.1f}" fill="none" stroke="{INK}" stroke-width="2.5"/>'
+    )
+
+
+def envelope(x, y, w=86, h=58, mark=None):
+    s = [
+        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="5" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>',
+        f'<path d="M{x + 3} {y + 4} L{x + w / 2} {y + h * 0.58} L{x + w - 3} {y + 4}" fill="none" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>',
+    ]
+    if mark == "tick":
+        s.append(f'<circle cx="{x + w}" cy="{y}" r="14" fill="{CORAL}" stroke="{INK}" stroke-width="3"/>')
+        s.append(f'<path d="M{x + w - 6} {y} l4.5 4.5 l8 -9" fill="none" stroke="{INK}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>')
+    elif mark == "key":
+        s.append(f'<circle cx="{x + w - 2}" cy="{y + 2}" r="10" fill="{CORAL}" stroke="{INK}" stroke-width="3"/>')
+        s.append(f'<path d="M{x + w + 6} {y + 9} l16 16 m-6 -6 l5 -5 m-11 -1 l5 -5" fill="none" stroke="{INK}" stroke-width="3" stroke-linecap="round"/>')
+    return "".join(s)
+
+
+def confetti():
+    bits = [(40, 40, 0), (78, 22, 1), (250, 30, 2), (286, 64, 0), (118, 34, 2), (214, 20, 1), (30, 92, 1), (296, 120, 2)]
+    s = []
+    for x, y, kind in bits:
+        if kind == 0:
+            s.append(f'<rect x="{x}" y="{y}" width="10" height="5" rx="2" transform="rotate(-30 {x} {y})" fill="{CORAL}"/>')
+        elif kind == 1:
+            s.append(f'<circle cx="{x}" cy="{y}" r="4" fill="{PEACH}"/>')
+        else:
+            s.append(f'<path d="M{x} {y} q4 -6 8 0 t8 0" fill="none" stroke="{INK}" stroke-width="2.5" stroke-linecap="round"/>')
+    return "".join(s)
+
+
+def pen(x, y):
+    return (
+        f'<path d="M{x} {y} l34 -34 l8 8 l-34 34 l-11 3z" fill="{CORAL}" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+        f'<path d="M{x + 28} {y - 28} l8 8" stroke="{INK}" stroke-width="3"/>'
+    )
+
+
+def star_bubble(x, y, w=86, h=54):
+    cx, cy = x + w / 2, y + (h - 8) / 2 + 2
+    pts = []
+    import math
+
+    for i in range(10):
+        r = 13 if i % 2 == 0 else 5.5
+        a = -math.pi / 2 + i * math.pi / 5
+        pts.append(f"{cx + r * math.cos(a):.1f},{cy + r * math.sin(a):.1f}")
+    return bubble(x, y, w, h, dots=False) + f'<polygon points="{" ".join(pts)}" fill="{WHITE}" stroke="{INK}" stroke-width="2.5" stroke-linejoin="round"/>'
+
+
+def thought(x, y, w=86, h=52):
+    return (
+        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{h / 2}" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>'
+        f'<circle cx="{x + 12}" cy="{y + h + 10}" r="6" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>'
+        f'<circle cx="{x + 2}" cy="{y + h + 24}" r="3.5" fill="{WHITE}" stroke="{INK}" stroke-width="2.5"/>'
+        + "".join(f'<circle cx="{x + w / 2 - 18 + i * 18}" cy="{y + h / 2}" r="4.5" fill="{CORAL if i == 1 else INK}"/>' for i in range(3))
+    )
+
+
+def range_bar(x, y, w=110, marker=0.62, outside=False):
+    lo, hi = (0.35, 0.8)
+    s = [
+        f'<rect x="{x}" y="{y}" width="{w}" height="64" rx="6" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>',
+        f'<path d="M{x + 12} {y + 40} h{w - 24}" stroke="{LINE}" stroke-width="8" stroke-linecap="round"/>',
+        f'<path d="M{x + 12 + (w - 24) * lo:.1f} {y + 40} H{x + 12 + (w - 24) * hi:.1f}" stroke="{CORAL}" stroke-width="8" stroke-linecap="round"/>',
+        f'<path d="M{x + 12} {y + 18} h{w * 0.4:.0f}" stroke="{INK}" stroke-width="2.5" stroke-linecap="round"/>',
+    ]
+    mx = x + 12 + (w - 24) * marker
+    s.append(f'<path d="M{mx:.1f} {y + 30} v20" stroke="{INK}" stroke-width="3.5" stroke-linecap="round"/>')
+    if outside:
+        s.append(f'<circle cx="{mx:.1f}" cy="{y + 40}" r="6" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>')
+    return "".join(s)
+
+
+def calculator(x, y, w=62, h=84):
+    s = [
+        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="7" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>',
+        f'<rect x="{x + 9}" y="{y + 9}" width="{w - 18}" height="18" rx="3" fill="{SOFT}" stroke="{INK}" stroke-width="2.5"/>',
+    ]
+    for r in range(3):
+        for c in range(3):
+            fill = CORAL if (r, c) == (2, 2) else WHITE
+            s.append(f'<rect x="{x + 9 + c * 15}" y="{y + 35 + r * 15}" width="11" height="10" rx="2" fill="{fill}" stroke="{INK}" stroke-width="2"/>')
+    return "".join(s)
+
+
+def cards_stack(x, y):
+    s = []
+    for i, fill in enumerate((SOFT, WHITE, WHITE)):
+        dx, dy = 24 - i * 12, i * 14
+        s.append(f'<rect x="{x + dx}" y="{y + dy}" width="78" height="50" rx="6" fill="{fill}" stroke="{INK}" stroke-width="3"/>')
+    s.append(f'<rect x="{x + 10}" y="{y + 40}" width="30" height="7" rx="3.5" fill="{CORAL}"/>')
+    s.append(f'<path d="M{x + 10} {y + 58} h46 M{x + 10} {y + 68} h30" stroke="{INK}" stroke-width="2.5" stroke-linecap="round"/>')
+    return "".join(s)
+
+
+def closed_folder(x, y, w=92, h=64):
+    return (
+        f'<path d="M{x} {y + 10} a6 6 0 0 1 6 -6 h24 l8 8 h{w - 38} a6 6 0 0 1 6 6 v{h - 14} a6 6 0 0 1 -6 6 h-{w - 12} a6 6 0 0 1 -6 -6z" '
+        f'fill="{SOFT}" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+        f'<rect x="{x + w / 2 - 18}" y="{y + h / 2 - 2}" width="36" height="14" rx="3" fill="{WHITE}" stroke="{INK}" stroke-width="2.5"/>'
+        f'<path d="M{x + w / 2 - 10} {y + h / 2 + 5} h20" stroke="{CORAL}" stroke-width="3" stroke-linecap="round"/>'
+    )
+
+
+def signpost(x, y):
+    return (
+        f'<path d="M{x + 30} {y} v104" stroke="{INK}" stroke-width="4" stroke-linecap="round"/>'
+        f'<path d="M{x} {y + 10} h58 l12 12 l-12 12 h-58z" fill="{CORAL}" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+        f'<path d="M{x + 66} {y + 46} h-58 l-12 12 l12 12 h58z" fill="{WHITE}" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+        f'<path d="M{x + 14} {y + 58} h38" stroke="{INK}" stroke-width="2.5" stroke-linecap="round"/>'
+    )
+
+
+def person_bubble(x, y, w=86, h=54):
+    cx, cy = x + w / 2, y + (h - 8) / 2 + 2
+    return bubble(x, y, w, h, dots=False) + (
+        f'<circle cx="{cx}" cy="{cy - 6}" r="7" fill="{WHITE}" stroke="{INK}" stroke-width="2.5"/>'
+        f'<path d="M{cx - 12} {cy + 13} q12 -16 24 0" fill="{WHITE}" stroke="{INK}" stroke-width="2.5"/>'
+    )
+
+
+def phone(x, y, w=46, h=80):
+    return (
+        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" fill="{WHITE}" stroke="{INK}" stroke-width="3"/>'
+        f'<path d="M{x + w / 2 - 7} {y + 8} h14" stroke="{INK}" stroke-width="2.5" stroke-linecap="round"/>'
+        f'<circle cx="{x + w / 2}" cy="{y + 34}" r="10" fill="{SOFT}" stroke="{INK}" stroke-width="2.5"/>'
+        f'<path d="M{x + 10} {y + 56} h{w - 20} M{x + 14} {y + 65} h{w - 28}" stroke="{INK}" stroke-width="2.5" stroke-linecap="round"/>'
+    )
+
+
+def id_tick(x, y, w=84, h=56):
+    return card_id(x, y, w, h) + (
+        f'<circle cx="{x + w}" cy="{y + h}" r="14" fill="{CORAL}" stroke="{INK}" stroke-width="3"/>'
+        f'<path d="M{x + w - 6} {y + h} l4.5 4.5 l8 -9" fill="none" stroke="{INK}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>'
+    )
+
+
 # ---------------------------------------------------------------- slots
 
 # (file, title, peep, figure x, figure y, figure height, props builder)
@@ -202,6 +397,28 @@ SLOTS = [
     ("documents-header", "A person sitting with their papers", "peep-sitting-18", 64, 26, 200, lambda: ground() + document(210, 70, 54, 70, lines=3) + floor()),
     ("profile-header", "A person standing at ease", "peep-standing-13", 112, 8, 230, lambda: ground() + card_id(200, 60, 76, 52)),
     ("help-header", "A person explaining something", "peep-standing-24", 64, 8, 230, lambda: ground() + bubble(194, 34, 86, 50)),
+    # v3: results, loading and the pages that had no scene
+    ("approved", "A delighted person with an approved letter", "peep-105", 40, 30, 210, lambda: ground() + confetti() + document(212, 52, 58, 74, mark="tick")),
+    ("not-approved", "A person sitting and thinking about what to do next", "peep-sitting-1", 34, 52, 186, lambda: ground() + signpost(214, 40) + floor()),
+    ("withdrawn", "A person walking on with a closed folder", "peep-standing-25", 60, 8, 230, lambda: ground() + closed_folder(184, 120)),
+    ("checking", "A person thinking while a document is checked under a magnifier", "peep-77", 30, 30, 210, lambda: ground() + document(204, 54, 58, 74, lines=4, accent=True) + magnifier(250, 120, 22)),
+    ("eligibility", "A person pointing at a borrowing range", "peep-standing-22", 44, 8, 230, lambda: ground() + range_bar(180, 66, 116)),
+    ("eligibility-result", "A person in a wheelchair pleased with an estimate", "peep-sitting-14", 30, 34, 200, lambda: ground() + range_bar(196, 44, 104) + floor()),
+    ("eligibility-outside", "A person shrugging at an estimate outside the range", "peep-7", 26, 30, 210, lambda: ground() + range_bar(206, 56, 96, marker=0.12, outside=True)),
+    ("calculating", "A person working something out on a phone beside a calculator", "peep-103", 34, 30, 210, lambda: ground() + calculator(222, 62)),
+    ("products", "A person looking over loan options", "peep-standing-19", 70, 8, 230, lambda: ground() + cards_stack(184, 60)),
+    ("kyc", "A person holding a phone next to an identity card", "peep-67", 34, 30, 210, lambda: ground() + phone(206, 52) + card_id(226, 120, 76, 52)),
+    ("kyc-verified", "A person with an identity card that has been confirmed", "peep-standing-20", 80, 8, 230, lambda: ground() + id_tick(190, 80)),
+    ("repayments", "A person sitting beside a repayment calendar and a coin", "peep-sitting-17", 30, 40, 196, lambda: ground() + calendar(196, 40) + coin(270, 150, 16) + floor()),
+    ("repayments-empty", "A person beside an empty calendar", "peep-sitting-6", 30, 40, 196, lambda: ground() + calendar(196, 52, empty=True) + floor()),
+    ("feedback", "A person in a wheelchair sharing what they think", "peep-sitting-15", 24, 36, 198, lambda: ground() + star_bubble(198, 30) + floor()),
+    ("feedback-sent", "A person whose message has been sent", "peep-standing-10", 70, 8, 230, lambda: ground() + envelope(180, 86, mark="tick")),
+    ("privacy", "A person with a cup next to a shield and lock", "peep-38", 34, 30, 210, lambda: ground() + shield(250, 96, 1.15)),
+    ("terms", "A person reading terms with a pen nearby", "peep-26", 34, 30, 210, lambda: ground() + document(208, 46, 60, 78, lines=5) + pen(246, 150)),
+    ("invite", "A person with an invitation and a key", "peep-standing-14", 70, 8, 230, lambda: ground() + envelope(176, 88, mark="key")),
+    ("not-found", "A person looking for a page with a magnifier", "peep-8", 34, 30, 210, lambda: ground() + magnifier(246, 90, 28)),
+    ("assistant-thinking", "A person thinking, with a thought bubble", "peep-sitting-11", 24, 50, 186, lambda: ground() + thought(196, 24) + floor()),
+    ("handoff", "A person asking for a person to help", "peep-59", 40, 30, 210, lambda: ground() + person_bubble(206, 34, 88, 56)),
 ]
 
 

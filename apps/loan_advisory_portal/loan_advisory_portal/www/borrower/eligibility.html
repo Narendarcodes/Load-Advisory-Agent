@@ -137,9 +137,15 @@
 			<span>Recalculate to refresh the estimate.</span>
 		</div>
 		<div class="result-card" id="result-panel" aria-live="polite">
-			<h2>Nothing calculated yet</h2>
-			<p class="small muted">Fill in the three sections and choose Estimate eligibility. You can change any answer and recalculate.</p>
-			<div>
+			<div class="result-head">
+				<img class="result-head__art" src="/assets/loan_advisory_portal/illustrations/eligibility.svg" alt="" width="120" height="90">
+				<div class="result-head__text">
+					<p class="result-head__status"><span class="badge badge--neutral">Not calculated yet</span></p>
+					<h2>Your estimate appears here</h2>
+					<p class="small muted">Fill in the three sections and choose Estimate eligibility. You can change any answer and recalculate.</p>
+				</div>
+			</div>
+			<section class="result-section">
 				<h3>What the estimate uses</h3>
 				<ul class="result-factors">
 					<li>The amount and tenure you choose</li>
@@ -147,11 +153,8 @@
 					<li>Your employment type and time in work</li>
 					<li>The current product rate</li>
 				</ul>
-			</div>
-			<div class="alert alert--info">
-				<strong>This is not an approval</strong>
-				<span>It does not check your credit file, ask for identity numbers or run a credit bureau enquiry.</span>
-			</div>
+			</section>
+			<p class="result-note">This is not an approval. It does not check your credit file, ask for identity numbers or run a credit bureau enquiry.</p>
 		</div>
 	</aside>
 </div>

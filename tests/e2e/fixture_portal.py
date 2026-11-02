@@ -15,7 +15,11 @@ fictional fixture data. Do not read anything it shows as a real outcome.
         --runtime http://127.0.0.1:4200
 
 Scenario: add ``?fx=empty`` to any page to switch the borrower to "no applications" (sticky
-for that browser via a cookie); ``?fx=full`` switches back.
+for that browser via a cookie); ``?fx=full`` switches back. ``?fx=reset`` puts the walkthrough draft
+(ACC-LOAP-2026-00025) back to DRAFT; submitting it shows "under review", and after
+SUBMIT_TO_OUTCOME_S seconds the fixture records an APPROVED outcome (fixture data, not a decision).
+``?demo=1`` renders a page in preview (demo) mode; ``?product=none`` removes the lending product.
+A ``fxslow=<ms>`` cookie delays every /api/method read so loading states can be captured.
 """
 
 from __future__ import annotations
@@ -59,6 +63,21 @@ APPLICATIONS = {
 	                            posted="2026-09-28", decision="APPROVED"),
 }
 
+# v3: states shot only by direct link (not in the dashboard list), and the one draft the walkthrough submits.
+EXTRA = {
+	"ACC-LOAP-2026-00026": dict(state="UNDER_REVIEW", amount=180000, tenure=24, purpose="Medical costs",
+	                            posted="2026-11-01", decision=None),
+	"ACC-LOAP-2026-00027": dict(state="MANUAL_REVIEW", amount=320000, tenure=36, purpose="Home renovation",
+	                            posted="2026-10-29", decision="REVIEW"),
+	"ACC-LOAP-2026-00009": dict(state="WITHDRAWN", amount=120000, tenure=12, purpose="Wedding",
+	                            posted="2026-09-02", decision=None),
+	"ACC-LOAP-2026-00025": dict(state="DRAFT", amount=250000, tenure=36, purpose="Home renovation",
+	                            posted="2026-11-02", decision=None),
+}
+DRAFT = "ACC-LOAP-2026-00025"
+# Seconds a submitted fixture draft stays "under review" before the fixture records an outcome.
+SUBMIT_TO_OUTCOME_S = 12
+
 REASONS = {
 	"REJECTED": [
 		{"code": "FOIR_TOO_HIGH", "text": "Your existing monthly repayments are more than 45% of your monthly income."},
@@ -83,6 +102,22 @@ def _guidance(app_root: Path):
 class Fixtures:
 	def __init__(self, app_root: Path):
 		self.guidance, self.lifecycle, self.legal = _guidance(app_root)
+		self.reset()
+
+	def reset(self):
+		"""Fixture walkthrough state: the draft goes back to DRAFT (?fx=reset)."""
+		self.rows = {**{k: dict(v) for k, v in APPLICATIONS.items()}, **{k: dict(v) for k, v in EXTRA.items()}}
+		self.submitted_at = None
+
+	def row(self, name: str) -> dict:
+		"""The draft moves DRAFT -> UNDER_REVIEW on submit, then to APPROVED after SUBMIT_TO_OUTCOME_S."""
+		import time
+
+		row = self.rows[name]
+		if name == DRAFT and self.submitted_at and row["state"] == "UNDER_REVIEW":
+			if time.time() - self.submitted_at >= SUBMIT_TO_OUTCOME_S:
+				row.update(state="APPROVED", decision="APPROVED")
+		return row
 
 	def boot(self, signed_in: bool) -> dict:
 		if not signed_in:
@@ -100,14 +135,14 @@ class Fixtures:
 		}
 
 	def evidence(self, name: str) -> dict | None:
-		row = APPLICATIONS[name]
+		row = self.row(name)
 		if not row["decision"]:
 			return None
 		return {"decision": row["decision"], "policy_version": "synthetic-2026.1",
 		        "evaluated_at": row["posted"] + " 14:30:00", "simulation": False}
 
 	def serialise(self, name: str) -> dict:
-		row = APPLICATIONS[name]
+		row = self.row(name)
 		return {
 			"name": name, "status": "Open", "lifecycle": row["state"], "loan_product": "Personal Term Loan",
 			"loan_amount": row["amount"], "tenure_months": row["tenure"], "posting_date": row["posted"],
@@ -119,10 +154,14 @@ class Fixtures:
 		return [] if scenario == "empty" else [self.serialise(name) for name in APPLICATIONS]
 
 	def application(self, name: str) -> dict:
-		row = APPLICATIONS[name]
+		row = self.row(name)
 		payload = self.serialise(name)
-		timeline = [{"at": row["posted"] + " 09:40:00", "event": "Started"},
-		            {"at": row["posted"] + " 10:05:00", "event": "Submitted", "state": "SUBMITTED", "source": "portal"}]
+		timeline = [{"at": row["posted"] + " 09:40:00", "event": "Started"}]
+		if row["state"] != "DRAFT":
+			timeline.append({"at": row["posted"] + " 10:05:00", "event": "Submitted", "state": "SUBMITTED", "source": "portal"})
+		if row["state"] in ("UNDER_REVIEW", "MANUAL_REVIEW") or (row["state"] == "WITHDRAWN"):
+			timeline.append({"at": row["posted"] + " 10:06:00", "event": self.lifecycle_label(row["state"]),
+			                 "state": row["state"], "source": "portal"})
 		if row["decision"]:
 			timeline.append({"at": row["posted"] + " 14:30:00", "event": f"Evaluated ({row['decision']})",
 			                 "policy_version": "synthetic-2026.1"})
@@ -130,7 +169,7 @@ class Fixtures:
 			                 "state": row["state"], "source": "evidence"})
 		payload.update({
 			"docstatus": 0 if row["state"] == "DRAFT" else 1,
-			"documents": [] if row["state"] == "DRAFT" else [
+			"documents": [
 				{"row": "ROW-1", "document_type": "Salary slip", "file": "/private/files/fixture.pdf",
 				 "file_name": "salary-slip-oct.pdf"}],
 			"product": {"product_name": "Personal Term Loan", "rate_of_interest": 13.5, "maximum_loan_amount": 1000000},
@@ -146,8 +185,8 @@ class Fixtures:
 		return self.guidance.for_state(state)["title"]
 
 	def decision(self, name: str) -> dict:
-		row = APPLICATIONS[name]
-		if not row["decision"]:
+		row = self.row(name)
+		if not row["decision"] or row["state"] == "MANUAL_REVIEW":
 			return {"available": False}
 		return {
 			"available": True, "decision": row["decision"], "lifecycle": row["state"],
@@ -183,10 +222,19 @@ class Fixtures:
 			return self.me()
 		if short == "list_applications":
 			return self.applications(scenario)
-		if short == "get_application" and app in APPLICATIONS:
+		if short == "get_application" and app in self.rows:
 			return self.application(app)
-		if short == "get_decision" and app in APPLICATIONS:
+		if short == "get_decision" and app in self.rows:
 			return self.decision(app)
+		if short == "submit_application" and app == DRAFT:
+			import time
+
+			self.rows[DRAFT].update(state="UNDER_REVIEW")
+			self.submitted_at = time.time()
+			return {"name": DRAFT, "lifecycle": "UNDER_REVIEW"}
+		if short == "withdraw_application" and app in self.rows:
+			self.rows[app].update(state="WITHDRAWN", decision=None)
+			return {"name": app, "lifecycle": "WITHDRAWN"}
 		if short in ("get_profile", "update_profile"):
 			return self.profile()
 		if short == "list_documents":
@@ -234,10 +282,10 @@ class Fixtures:
 		if path == "/borrower/application":
 			name = get("name")
 			ctx.update(active_page="application", title="Application")
-			if name not in APPLICATIONS:
+			if name not in self.rows:
 				ctx.update(not_found=True, title="Application not found")
 			else:
-				row = APPLICATIONS[name]
+				row = self.row(name)
 				ctx["application"] = AttrDict(name=name, custom_lifecycle_state=row["state"], loan_amount=row["amount"],
 				                              repayment_periods=row["tenure"], custom_loan_purpose=row["purpose"])
 			return "www/borrower/application.html", ctx
@@ -260,16 +308,49 @@ class Fixtures:
 			           locale_options=vocabulary.locale_options(), literacy_options=vocabulary.literacy_options(),
 			           current_locale="en", current_literacy="low")
 			return "www/borrower/profile.html", ctx
+		# v3: the remaining borrower pages, with the same context keys as their www/*.py.
+		demo = get("demo") == "1"
+		if demo:
+			ctx["boot"]["demo"] = True
+		product = {"name": "Personal Term Loan", "maximum": 1000000, "rate": 13.5}
+		if path == "/borrower/eligibility":
+			ctx.update(active_page="eligibility", title="Check eligibility",
+			           product=None if get("product") == "none" else product)
+			return "www/borrower/eligibility.html", ctx
+		if path == "/borrower/products":
+			rows = [] if get("product") == "none" else [
+				{"name": "Personal Term Loan", "maximum_loan_amount": 1000000, "rate_of_interest": 13.5}]
+			ctx.update(active_page="products", title="Loan products", products=rows, primary=rows[0] if rows else None)
+			return "www/borrower/products.html", ctx
+		if path in ("/borrower/kyc", "/borrower/feedback", "/borrower/invite"):
+			key = path.rsplit("/", 1)[-1]
+			if key == "invite":
+				ctx["boot"] = self.boot(False)
+			ctx.update(active_page=key, title={"kyc": "Identity check", "feedback": "Feedback",
+			                                   "invite": "Set up your account"}[key])
+			return f"www/borrower/{key}.html", ctx
+		if path == "/borrower/servicing":
+			ctx.update(active_page="servicing", title="Repayments", two_months_ago="02 Sep 2026",
+			           last_month="02 Oct 2026", next_due="02 Dec 2026", following_due="02 Jan 2027")
+			return "www/borrower/servicing.html", ctx
+		if path == "/borrower/privacy":
+			ctx.update(active_page="privacy", title="Privacy notice", version=self.legal.PRIVACY_VERSION,
+			           terms_version=self.legal.TERMS_VERSION, updated=self.legal.UPDATED)
+			return "www/borrower/privacy.html", ctx
+		if path == "/borrower/terms":
+			ctx.update(active_page="terms", title="Terms of use", version=self.legal.TERMS_VERSION,
+			           updated=self.legal.UPDATED)
+			return "www/borrower/terms.html", ctx
 		if path == "/borrower/assistant":
 			name = get("application")
 			ctx.update(active_page="assistant", title="Assistant")
-			if name not in APPLICATIONS:
+			if name not in self.rows:
 				rows = self.applications(get("fx") or "full")
 				for row in rows:
 					row["lifecycle_label"] = self.lifecycle_label(row["lifecycle"])
 				ctx.update(application=None, applications=rows)
 				return "www/borrower/assistant.html", ctx
-			row = APPLICATIONS[name]
+			row = self.row(name)
 			guide = self.guidance.for_state(row["state"])
 			labels = {"APPROVED": "Approved", "REJECTED": "Not approved"}
 			ctx.update(
@@ -339,6 +420,8 @@ def make_handler(app_root: Path, fixtures: Fixtures, env: jinja2.Environment, ru
 				self.send_header("Content-Length", "0")
 				self.end_headers()
 				return
+			if (query.get("fx") or [""])[0] == "reset":
+				fixtures.reset()
 			scenario, set_cookie = self._scenario(query)
 			found = fixtures.page(url.path, {**query, "fx": [scenario]})
 			if not found:
@@ -378,6 +461,13 @@ def make_handler(app_root: Path, fixtures: Fixtures, env: jinja2.Environment, ru
 			merged = {k: v[0] for k, v in query.items()}
 			merged.update(args or {})
 			scenario, _ = self._scenario(query)
+			# ?slow=<ms> on the page is not visible here; a cookie set by the capture delays reads so
+			# page-load skeletons can be photographed. Fixture only.
+			jar = cookies.SimpleCookie(self.headers.get("Cookie") or "")
+			if "fxslow" in jar:
+				import time
+
+				time.sleep(min(int(jar["fxslow"].value or 0), 20000) / 1000)
 			result = fixtures.method(method, merged, scenario)
 			if result is None and not method.endswith(("logout", "submit_feedback")):
 				return self._send(404, json.dumps({"exc_type": "DoesNotExistError"}).encode(), "application/json")

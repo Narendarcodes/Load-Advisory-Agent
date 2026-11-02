@@ -5739,3 +5739,334 @@ h3 {
 		width: 96px;
 	}
 }
+
+/* ---------- v3: result screens ---------- */
+/* One shape for every outcome (eligibility estimate, application result): illustration, status,
+   one headline, a lead sentence, then hairline-separated sections and a single primary action. */
+
+.result {
+	margin-bottom: var(--s6);
+}
+
+.result-card {
+	position: static;
+	gap: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+@media (min-width: 981px) {
+	.result-card {
+		position: sticky;
+		top: 88px;
+	}
+}
+
+.result-head {
+	display: grid;
+	grid-template-columns: 120px minmax(0, 1fr);
+	gap: var(--s4);
+	align-items: center;
+	padding-bottom: var(--s4);
+	border-bottom: 1px solid var(--line);
+}
+
+.result-head--lg {
+	grid-template-columns: 160px minmax(0, 1fr);
+	gap: var(--s5);
+	padding-bottom: var(--s5);
+}
+
+.result-head__art {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 4 / 3;
+}
+
+.result-head__text {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+}
+
+.result-head__status {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 10px;
+	margin: 0;
+}
+
+.result-head h2 {
+	margin: 0;
+	font: 700 1.35rem/1.25 var(--font-display);
+	letter-spacing: -0.01em;
+}
+
+.result-head--lg h2 {
+	font-size: clamp(1.4rem, 1.1rem + 1vw, 1.75rem);
+}
+
+.result-head h2 .result-card__amount {
+	display: block;
+	margin-top: 4px;
+	font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.1rem);
+}
+
+.result-head__lead {
+	margin: 0;
+	color: var(--ink-2);
+	max-width: 60ch;
+}
+
+.result-section {
+	display: grid;
+	gap: var(--s2);
+	padding: var(--s4) 0;
+	border-bottom: 1px solid var(--line);
+	margin: 0;
+}
+
+.result-section h3 {
+	margin: 0;
+	font: 600 0.95rem/1.35 var(--font-display);
+}
+
+.result-section.detail--rows {
+	gap: 0;
+}
+
+.result-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s3) var(--s5);
+	padding-top: var(--s4);
+}
+
+.link-quiet {
+	font-weight: 600;
+	color: var(--deep);
+	text-underline-offset: 3px;
+}
+
+.result-note {
+	margin: var(--s4) 0 0;
+	padding: var(--s3) var(--s4);
+	border-radius: var(--radius-sm);
+	background: var(--paper-2);
+	color: var(--ink-2);
+	font-size: 0.86rem;
+}
+
+.result-note--warn {
+	background: var(--warn-soft);
+	color: var(--warn);
+}
+
+.decision-reasons {
+	margin: 0;
+	padding-left: 1.1em;
+	display: grid;
+	gap: 6px;
+}
+
+.decision-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px var(--s4);
+	margin: var(--s4) 0 0;
+	color: var(--muted);
+	font-size: 0.8rem;
+}
+
+/* In-flight progress: what has happened and what is still to come. A quiet mark, no percentage. */
+.run-progress {
+	list-style: none;
+	margin: 0;
+	padding: var(--s4) 0;
+	display: grid;
+	gap: 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.run-progress li {
+	position: relative;
+	display: grid;
+	grid-template-columns: 20px minmax(0, 1fr);
+	gap: var(--s3);
+	padding: 0 0 var(--s4);
+}
+
+.run-progress li:last-child {
+	padding-bottom: 0;
+}
+
+.run-progress li::after {
+	content: "";
+	position: absolute;
+	left: 9px;
+	top: 22px;
+	bottom: 2px;
+	width: 2px;
+	background: var(--line);
+}
+
+.run-progress li:last-child::after {
+	display: none;
+}
+
+.run-progress li > span:last-child {
+	display: grid;
+	gap: 2px;
+}
+
+.run-progress strong {
+	font-weight: 600;
+}
+
+.run-progress__mark {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	border: 2px solid var(--line-2);
+	background: var(--card);
+}
+
+.run-progress li[data-state="done"] .run-progress__mark {
+	border-color: var(--ok);
+	background: var(--ok);
+	box-shadow: inset 0 0 0 4px var(--card);
+}
+
+.run-progress li[data-state="current"] .run-progress__mark {
+	border-color: var(--coral);
+	background: var(--peach-soft);
+	animation: calm-pulse 2.4s ease-in-out infinite;
+}
+
+.run-progress li[data-state="todo"] strong {
+	color: var(--muted);
+}
+
+@media (max-width: 640px) {
+	.result-head,
+	.result-head--lg {
+		grid-template-columns: 96px minmax(0, 1fr);
+		gap: var(--s3);
+		align-items: start;
+	}
+
+	.result-head h2 {
+		font-size: 1.2rem;
+	}
+
+	.result-actions .btn {
+		width: 100%;
+	}
+}
+
+/* ---------- v3: loading ---------- */
+/* Skeletons keep the final layout's shape in flat paper tone. They breathe slowly (opacity only);
+   no sliding band and no gradient. Reduced motion holds them still. */
+
+.skeleton {
+	display: block;
+	border-radius: var(--radius-xs);
+	background: var(--paper-2);
+	color: transparent !important;
+	animation: calm-pulse 1.8s ease-in-out infinite;
+}
+
+.skeleton::after {
+	content: none;
+	animation: none;
+}
+
+.skeleton--line {
+	height: 0.85em;
+	margin: 0.3em 0;
+}
+
+.skeleton--title {
+	height: 1.5rem;
+	width: 70%;
+}
+
+.skeleton--amount {
+	height: 2.2rem;
+	width: 65%;
+	margin: 4px 0;
+}
+
+.skeleton--badge {
+	height: 1.3rem;
+	width: 7rem;
+	border-radius: 999px;
+}
+
+.skeleton--row {
+	height: 1.1rem;
+	margin: 0.45rem 0;
+}
+
+.skeleton--art {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	border-radius: var(--radius);
+}
+
+.skeleton--w30 { width: 30%; }
+.skeleton--w40 { width: 40%; }
+.skeleton--w50 { width: 50%; }
+.skeleton--w60 { width: 60%; }
+.skeleton--w70 { width: 70%; }
+.skeleton--w80 { width: 80%; }
+
+@keyframes calm-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.55;
+	}
+}
+
+/* Pending buttons keep their width and say what is happening; the spinner stops under reduced motion. */
+.btn[aria-busy="true"] {
+	opacity: 0.85;
+	cursor: progress;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.skeleton,
+	.run-progress li[data-state="current"] .run-progress__mark {
+		animation: none;
+	}
+
+	.btn[aria-busy="true"]::before {
+		animation: none;
+		border-right-color: currentColor;
+		border-style: dotted;
+	}
+}
+
+/* ---------- v3: illustration slots ---------- */
+
+.empty__art,
+.state-art {
+	display: block;
+	width: 180px;
+	max-width: 60%;
+	height: auto;
+	margin: 0 auto var(--s3);
+}
+
+.page-head__art {
+	aspect-ratio: 4 / 3;
+}
