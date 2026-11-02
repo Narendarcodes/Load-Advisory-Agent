@@ -55,12 +55,12 @@
 	<header class="workspace__head">
 		<div class="workspace__title">
 			<h1>Ask about this decision</h1>
-			<a class="small" href="/borrower/help#assistant">How the assistant works</a>
+			<a class="small workspace__help" href="/borrower/help#assistant">How the assistant works</a>
 		</div>
 		<section class="appstrip" aria-label="This application">
 			<dl class="appstrip__facts">
 				<div><dt>Application</dt><dd>{{ application.name }}</dd></div>
-				<div><dt>Amount</dt><dd>₹{{ "{:,.0f}".format(application.loan_amount or 0) }}</dd></div>
+				<div class="appstrip__minor"><dt>Amount</dt><dd>₹{{ "{:,.0f}".format(application.loan_amount or 0) }}</dd></div>
 				<div class="appstrip__minor"><dt>Tenure</dt><dd>{{ application.repayment_periods }} months</dd></div>
 				<div class="appstrip__minor"><dt>Purpose</dt><dd>{{ application.get("custom_loan_purpose") or "Not recorded" }}</dd></div>
 				<div><dt>Recorded outcome</dt><dd><span class="badge {% if state == 'APPROVED' %}badge--ok{% elif state == 'REJECTED' %}badge--bad{% elif state == 'INFO_REQUESTED' or state == 'MANUAL_REVIEW' %}badge--warn{% elif state == 'SUBMITTED' or state == 'UNDER_REVIEW' %}badge--info{% else %}badge--neutral{% endif %}">{{ snapshot.title }}</span></dd></div>

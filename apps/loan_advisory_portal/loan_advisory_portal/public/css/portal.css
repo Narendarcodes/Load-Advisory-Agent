@@ -5628,3 +5628,52 @@ body .msg.bot {
 		min-height: calc(100dvh - 64px - 62px - 40px);
 	}
 }
+
+@media (max-width: 640px) {
+	.workspace__help {
+		display: none;
+	}
+
+	.workspace__head {
+		gap: var(--s2);
+		margin-bottom: var(--s2);
+	}
+
+	.workspace__head h1 {
+		font-size: 1.35rem;
+	}
+
+	.appstrip {
+		padding: 8px 0;
+	}
+
+	.appstrip__facts {
+		gap: 4px 16px;
+	}
+}
+
+/* Quiet chrome on phones too: neutral active tab, square-ish menu button. */
+.tabbar a[aria-current="page"] {
+	background: var(--active);
+	color: var(--ink);
+}
+
+.tabbar {
+	background: var(--paper);
+	backdrop-filter: none;
+}
+
+.nav-menu {
+	border-radius: var(--radius-sm);
+	background: transparent;
+}
+
+.topbar {
+	backdrop-filter: none;
+}
+
+.topbar,
+.public-header {
+	background: var(--paper);
+	backdrop-filter: none;
+}

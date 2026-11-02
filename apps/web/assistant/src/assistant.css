@@ -2066,3 +2066,22 @@
 .assistant .log {
 	flex: 1 1 auto;
 }
+
+@media (max-width: 640px) {
+	.assistant .chat-empty {
+		margin-top: 12px;
+	}
+
+	.assistant .chat-empty__art {
+		width: 120px;
+	}
+
+	.assistant .chat-empty h3 {
+		font-size: 1.1rem;
+	}
+
+	.assistant .log {
+		gap: 22px;
+		padding-top: 16px;
+	}
+}
