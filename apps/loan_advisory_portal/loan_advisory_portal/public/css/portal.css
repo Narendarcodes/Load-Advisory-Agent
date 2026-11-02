@@ -4649,9 +4649,12 @@ body .assistant__head h2 {
 	}
 }
 
-/* Sign in: form first, illustration secondary */
-.auth {
-	grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+/* Sign in: form first, illustration secondary. Two columns only where both fit; below that the
+   earlier single-column rule applies (an unconditional rule here squeezed the form to ~100px at 390px). */
+@media (min-width: 901px) {
+	.auth {
+		grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+	}
 }
 
 .auth__card h1 {
@@ -4682,5 +4685,66 @@ body .assistant__head h2 {
 @media (max-width: 900px) {
 	.auth__art {
 		max-width: 240px;
+	}
+}
+
+/* Applications table: stack into labelled rows whenever its own box is too narrow for six columns,
+   not only below the 900px page breakpoint. Beside the dashboard's side column at 1280px the table
+   scrolled sideways and hid its Action column. */
+.table-wrap--stack {
+	container-type: inline-size;
+}
+
+@container (max-width: 760px) {
+	.table-wrap--stack thead {
+		display: none;
+	}
+
+	.table-wrap--stack table,
+	.table-wrap--stack tbody,
+	.table-wrap--stack tr,
+	.table-wrap--stack td {
+		display: block;
+		width: 100%;
+	}
+
+	.table-wrap--stack tr {
+		padding: 12px 16px;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.table-wrap--stack tr:last-child {
+		border-bottom: 0;
+	}
+
+	.table-wrap--stack td {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: baseline;
+		gap: 2px var(--s3);
+		padding: 5px 0;
+		border: 0;
+		text-align: right;
+	}
+
+	.table-wrap--stack td::before {
+		content: attr(data-label);
+		color: var(--muted);
+		font-size: 0.76rem;
+		font-weight: 600;
+		text-align: left;
+	}
+
+	.table-wrap--stack td .cell-title,
+	.table-wrap--stack td .sub {
+		grid-column: 2;
+	}
+
+	.table-wrap--stack td:first-child {
+		padding-top: 0;
+	}
+
+	.table-wrap--stack td[data-empty]::before {
+		content: none;
 	}
 }
