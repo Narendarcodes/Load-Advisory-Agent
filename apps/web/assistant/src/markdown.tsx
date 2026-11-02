@@ -4,7 +4,7 @@ import type { Citation } from "./types";
 
 /**
  * A deliberately small Markdown subset for assistant answers: paragraphs, line breaks, bullet and
- * numbered lists, bold, italics, inline code, simple pipe tables and citation chips like [1].
+ * numbered lists, "> " quotes, bold, italics, inline code, simple pipe tables and citation chips like [1].
  *
  * Everything is built as React elements from plain strings. There is no HTML channel at all:
  * angle brackets in the model's text stay literal characters, and only http(s) links survive.
@@ -13,6 +13,7 @@ import type { Citation } from "./types";
 type Block =
   | { kind: "p"; lines: string[] }
   | { kind: "h"; text: string }
+  | { kind: "quote"; lines: string[] }
   | { kind: "ul"; items: string[] }
   | { kind: "ol"; items: string[]; start: number }
   | { kind: "table"; head: string[]; rows: string[][] };
@@ -20,6 +21,7 @@ type Block =
 const BULLET = /^\s*(?:[-*•])\s+(.*)$/;
 const NUMBERED = /^\s*(\d{1,3})[.)]\s+(.*)$/;
 const HEADING = /^\s{0,3}#{1,4}\s+(.*?)\s*#*\s*$/;
+const QUOTE = /^\s{0,3}>\s?(.*)$/;
 const TABLE_RULE = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
 
 function cells(line: string): string[] {
@@ -43,6 +45,15 @@ export function parseBlocks(text: string): Block[] {
     if (heading) {
       blocks.push({ kind: "h", text: heading[1] });
       index += 1;
+      continue;
+    }
+    if (QUOTE.test(line)) {
+      const quoted: string[] = [];
+      while (index < lines.length && QUOTE.test(lines[index])) {
+        quoted.push(QUOTE.exec(lines[index])![1]);
+        index += 1;
+      }
+      blocks.push({ kind: "quote", lines: quoted });
       continue;
     }
     if (line.includes("|") && index + 1 < lines.length && TABLE_RULE.test(lines[index + 1]) && lines[index + 1].includes("-")) {
@@ -82,7 +93,8 @@ export function parseBlocks(text: string): Block[] {
       lines[index].trim() &&
       !BULLET.test(lines[index]) &&
       !NUMBERED.test(lines[index]) &&
-      !HEADING.test(lines[index])
+      !HEADING.test(lines[index]) &&
+      !QUOTE.test(lines[index])
     ) {
       paragraph.push(lines[index]);
       index += 1;
@@ -168,6 +180,19 @@ export function Markdown({ text, citations = [] }: { text: string; citations?: C
               <p key={key} className="md-h">
                 <strong>{renderInline(block.text, citations, key)}</strong>
               </p>
+            );
+          case "quote":
+            return (
+              <blockquote key={key} className="md-quote">
+                <p>
+                  {block.lines.map((line, i) => (
+                    <Fragment key={i}>
+                      {i ? <br /> : null}
+                      {renderInline(line, citations, `${key}-${i}`)}
+                    </Fragment>
+                  ))}
+                </p>
+              </blockquote>
             );
           case "ul":
             return (

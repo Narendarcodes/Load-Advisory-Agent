@@ -2110,3 +2110,25 @@
 .assistant .msg__card {
 	min-width: 0;
 }
+
+/* "> " lines in an answer: a quiet aside, set off by indent and tone (no coloured stripe). */
+.assistant .md-quote {
+	margin: 10px 0;
+	padding: 0 0 0 14px;
+	border-left: 1px solid var(--line-2);
+	color: var(--ink-2);
+}
+
+.assistant .md-quote p {
+	margin: 0;
+}
+
+/* v2 (taste micro-label): drawer and panel captions in sentence case, body type. */
+.assistant__title,
+.assistant .history__title,
+.assistant .details h2,
+.assistant .voice__speaker {
+	text-transform: none;
+	letter-spacing: 0;
+	font-size: 0.9rem;
+}

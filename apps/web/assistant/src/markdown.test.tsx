@@ -62,4 +62,11 @@ describe("Markdown subset", () => {
     const out = html("Use `**not bold** <b>` here");
     expect(out).toContain("<code>**not bold** &lt;b&gt;</code>");
   });
+
+  it("renders a '>' line as a quote, not a literal angle bracket", () => {
+    const out = html("Two checks did not pass.\n\n> A what-if never changes your application.");
+    expect(out).toContain('<blockquote class="md-quote"><p>A what-if never changes your application.</p></blockquote>');
+    expect(out).not.toContain("&gt; A what-if");
+    expect(parseBlocks("> one\n> two")[0]).toMatchObject({ kind: "quote", lines: ["one", "two"] });
+  });
 });
