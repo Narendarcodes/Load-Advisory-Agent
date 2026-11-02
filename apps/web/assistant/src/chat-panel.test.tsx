@@ -194,6 +194,43 @@ describe("ChatPanel", () => {
     });
   });
 
+  it("gives the composer a shader edge only while it is focused or answering (v6)", async () => {
+    let release: (() => void) | undefined;
+    const agent = {
+      messages: [],
+      state: {},
+      addMessage: vi.fn(),
+      setMessages: vi.fn(),
+      setState: vi.fn(),
+      runAgent: vi.fn(() => new Promise<void>((resolve) => (release = resolve))),
+    } as unknown as AbstractAgent;
+    const { container: element } = await mount(agent);
+    const form = element.querySelector<HTMLFormElement>(".composer form")!;
+    expect(form.hasAttribute("data-shader")).toBe(false);
+
+    await act(async () => {
+      element.querySelector<HTMLInputElement>("#question")!.focus();
+    });
+    expect(form.getAttribute("data-shader")).toBe("composer");
+    expect(form.getAttribute("data-shader-state")).toBe("focus");
+
+    await act(async () => {
+      element.querySelector<HTMLInputElement>("#question")!.blur();
+    });
+    expect(form.hasAttribute("data-shader")).toBe(false);
+
+    await act(async () => {
+      element.querySelector<HTMLButtonElement>(".chips button")?.click();
+    });
+    expect(form.getAttribute("data-shader")).toBe("composer");
+    expect(form.getAttribute("data-shader-state")).toBe("sending");
+
+    await act(async () => {
+      release?.();
+      await Promise.resolve();
+    });
+  });
+
   it("leaves the application facts to the page's header strip instead of repeating them in the log", async () => {
     // v2: assistant.html renders the slim "This application" strip with the decision and documents links.
     const { agent } = fakeAgent();

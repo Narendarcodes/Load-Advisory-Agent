@@ -41,8 +41,9 @@ const RING_TONE = {
    the card by that much in CSS, so the ring lands on the card's border and the glow falls outside it). */
 const BORDER = {
 	ring: { colors: BRAND, edge: 14, inset: 3, thickness: 0.012, softness: 0.4, intensity: 0.12, bloom: 0.1, spots: 4, spotSize: 0.5, pulse: 0.06, smoke: 0.05, smokeSize: 0.3, speed: 0.4, roundness: 0.08 },
-	composer: { colors: BRAND, edge: 10, thickness: 0.05, softness: 0.7, intensity: 0.28, bloom: 0.3, spots: 4, spotSize: 0.45, pulse: 0.1, smoke: 0.15, smokeSize: 0.4, speed: 0.7, roundness: 0.35 },
-	pulse: { colors: ["#FF8F68", "#E25F4B", "#7E3550", "#FFC4A8"], edge: 0, thickness: 0.1, softness: 0.85, intensity: 0.32, bloom: 0.4, spots: 3, spotSize: 0.42, pulse: 0.45, smoke: 0.4, smokeSize: 0.6, speed: 0.7, roundness: 1, square: true, margin: 0.14 },
+	composer: { colors: BRAND, edge: 10, inset: 2, thickness: 0.04, softness: 0.5, intensity: 0.16, bloom: 0.15, spots: 4, spotSize: 0.5, pulse: 0.05, smoke: 0.06, smokeSize: 0.3, speed: 0.5, roundness: 0.3 },
+	/* Thinking: thinner and smoother than v5, more spots so the light travels round instead of blinking. */
+	pulse: { colors: ["#FFC4A8", "#FF8F68", "#E25F4B", "#7E3550", "#C9A3D8"], edge: 0, thickness: 0.06, softness: 0.9, intensity: 0.24, bloom: 0.3, spots: 4, spotSize: 0.5, pulse: 0.22, smoke: 0.22, smokeSize: 0.5, speed: 0.55, roundness: 1, square: true, margin: 0.16 },
 };
 
 function borderUniforms(p, el) {
@@ -93,6 +94,13 @@ function border(el, name, opts) {
 			m.setUniforms(borderUniforms(p, el));
 		},
 		setState: (state) => {
+			if (name === "composer") {
+				// Sending: the light travels faster and a little brighter while the answer is on its way.
+				const sending = state === "sending";
+				m.setUniforms({ u_intensity: sending ? 0.26 : p.intensity, u_pulse: sending ? 0.25 : p.pulse });
+				m.setSpeed(sending ? 1.1 : p.speed);
+				return;
+			}
 			if (name !== "ring") return;
 			const tone = RING_TONE[state] || RING_TONE.brand;
 			const next = rgba(tone.colors);
@@ -105,12 +113,12 @@ function border(el, name, opts) {
 /* Voice orb: a soft smoke ring. Each state changes radius, thickness, colour weight and speed; the
    listening level (0..1, from the call's own speaker detection) breathes the ring outward a little. */
 const VOICE = {
-	idle: { radius: 0.3, thickness: 0.5, inner: 0.7, speed: 0.25, colors: ["#FFC4A8", "#FF8F68", "#E9C3CF"] },
-	connecting: { radius: 0.26, thickness: 0.35, inner: 0.5, speed: 0.9, colors: ["#FFC4A8", "#FF8F68", "#C9A3B8"] },
-	listening: { radius: 0.32, thickness: 0.55, inner: 0.8, speed: 0.5, colors: ["#FFE3D3", "#FF8F68", "#E25F4B", "#F2A65A"] },
-	thinking: { radius: 0.27, thickness: 0.4, inner: 0.55, speed: 1.1, colors: ["#FFC4A8", "#E25F4B", "#7E3550", "#C9A3D8"] },
-	speaking: { radius: 0.36, thickness: 0.7, inner: 1, speed: 0.75, colors: ["#FFE3D3", "#FF8F68", "#E25F4B", "#7E3550", "#F2A65A"] },
-	muted: { radius: 0.28, thickness: 0.4, inner: 0.6, speed: 0.15, colors: ["#E7DAD3", "#D8C8CB", "#C9A3B8"] },
+	idle: { radius: 0.26, thickness: 0.16, inner: 0.7, speed: 0.25, colors: ["#FFC4A8", "#FF8F68", "#E9C3CF"] },
+	connecting: { radius: 0.23, thickness: 0.1, inner: 0.5, speed: 0.9, colors: ["#FFC4A8", "#FF8F68", "#C9A3B8"] },
+	listening: { radius: 0.27, thickness: 0.2, inner: 0.8, speed: 0.5, colors: ["#FFE3D3", "#FF8F68", "#E25F4B", "#F2A65A"] },
+	thinking: { radius: 0.24, thickness: 0.13, inner: 0.55, speed: 1.1, colors: ["#FFC4A8", "#E25F4B", "#7E3550", "#C9A3D8"] },
+	speaking: { radius: 0.28, thickness: 0.24, inner: 1, speed: 0.75, colors: ["#FFE3D3", "#FF8F68", "#E25F4B", "#7E3550", "#F2A65A"] },
+	muted: { radius: 0.24, thickness: 0.1, inner: 0.6, speed: 0.15, colors: ["#E7DAD3", "#D8C8CB", "#C9A3B8"] },
 };
 
 function voiceUniforms(state, level) {
@@ -122,8 +130,8 @@ function voiceUniforms(state, level) {
 		uniforms: {
 			u_colors: colors,
 			u_colorsCount: colors.length,
-			u_radius: v.radius + lift * 0.05,
-			u_thickness: v.thickness + lift * 0.15,
+			u_radius: v.radius + lift * 0.03,
+			u_thickness: v.thickness + lift * 0.08,
 			u_innerShape: v.inner,
 		},
 	};
@@ -134,7 +142,7 @@ function voice(el, opts) {
 	const m = new ShaderMount(
 		el,
 		smokeRingFragmentShader,
-		{ u_colorBack: CLEAR, ...first.uniforms, u_noiseScale: 2.6, u_noiseIterations: 6, u_noiseTexture: noise, ...sizing, u_scale: 0.95 },
+		{ u_colorBack: CLEAR, ...first.uniforms, u_noiseScale: 1.8, u_noiseIterations: 3, u_noiseTexture: noise, ...sizing, u_scale: 1 },
 		GL_ALPHA,
 		first.speed,
 		opts.frame,

@@ -2214,77 +2214,223 @@
 	}
 }
 
-/* v5 shaders (portal js/shader.js mounts Paper Shaders into these zones; portal.css has the base
-   .shader-zone rules and the static fallbacks). Decorative only. */
+/* v6 shaders in the assistant (portal js/shader.js mounts Paper Shaders into these zones; portal.css has
+   the base .shader-zone rules). Decorative only; the words carry the meaning. */
+
+/* Empty state: a deeper orb behind the Saral mark. The live mesh is masked to a soft-edged disc (no CSS
+   blur on the canvas, which is costly in software GL) over a static halo that is also the fallback. */
 .assistant .chat-empty__mark.shader-zone {
 	display: grid;
 	place-items: center;
-	width: 210px;
-	height: 210px;
-	margin: 0 auto 8px;
+	width: 232px;
+	height: 232px;
+	margin: 0 auto 4px;
 	overflow: visible;
 	border-radius: 50%;
 	background: transparent;
+}
+
+.assistant .chat-empty__mark > .chat-empty__halo {
+	position: absolute;
+	inset: 18px;
+	z-index: -1;
+	border-radius: 50%;
+	background:
+		radial-gradient(closest-side, #ffe3d3 0, #ffb089 46%, rgb(226 95 75 / 45%) 72%, rgb(226 95 75 / 0%) 100%); /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+	opacity: 0.9;
 }
 
 .assistant .chat-empty__mark .shader-zone__canvas {
-	inset: 12px;
+	inset: 6px;
 	border-radius: 50%;
-	filter: blur(14px);
+	-webkit-mask-image: radial-gradient(closest-side, #000 52%, rgb(0 0 0 / 60%) 72%, transparent 100%);
+	mask-image: radial-gradient(closest-side, #000 52%, rgb(0 0 0 / 60%) 72%, transparent 100%);
+	transition: opacity 900ms var(--ease-out, ease-out);
 }
 
-.assistant .chat-empty__mark::before {
-	content: "";
-	position: absolute;
-	inset: 26px;
-	z-index: 0;
-	border-radius: 50%;
-	background: #ffd2bd;
-	filter: blur(10px);
+.assistant .chat-empty__mark.is-live > .chat-empty__halo {
+	opacity: 0.35;
 }
 
 .assistant .chat-empty__mark .chat-empty__art {
-	width: 120px;
+	position: relative;
+	z-index: 2;
+	width: 118px;
 	height: auto;
+	filter: drop-shadow(0 8px 18px rgb(78 36 64 / 22%));
 }
 
+/* Thinking: a refined ring around the mark scene, with a quiet static halo under it. */
 .assistant .msg__thinking-mark.shader-zone {
 	display: grid;
 	place-items: center;
-	width: 96px;
-	height: 96px;
+	width: 104px;
+	height: 104px;
 	overflow: visible;
 	border-radius: 50%;
 	background: transparent;
 }
 
+.assistant .msg__thinking-mark > .msg__thinking-halo {
+	position: absolute;
+	inset: 14px;
+	z-index: -1;
+	border-radius: 50%;
+	background: radial-gradient(closest-side, #fff4ec 0, #ffe3d3 60%, rgb(255 196 168 / 0%) 100%); /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+	box-shadow: 0 0 0 1px rgb(226 95 75 / 16%);
+}
+
+.assistant .msg__thinking-mark.is-live > .msg__thinking-halo {
+	box-shadow: none;
+}
+
 .assistant .msg__thinking-mark .msg__thinking-art {
-	width: 64px;
+	position: relative;
+	z-index: 2;
+	width: 62px;
+}
+
+/* Streaming: a thin shimmer along the bottom edge of the answer that is still arriving. */
+.assistant .msg__stream-edge.shader-zone {
+	height: 3px;
+	margin-top: 10px;
+	border-radius: 999px;
+	background: linear-gradient(90deg, rgb(255 196 168 / 0%), #ff8f68 30%, #e25f4b 60%, rgb(126 53 80 / 0%)); /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+	opacity: 0.85;
+}
+
+/* Composer: a thin travelling shader edge while focused or answering. The canvas bleeds past the
+   composer so the ring lands on its border; the plain focus ring stays for keyboard users. */
+.assistant .composer form.row.composer__form {
+	position: relative;
+	isolation: isolate;
+	overflow: visible;
+}
+
+.assistant .composer form.row.composer__form > :not(.shader-zone__canvas) {
+	position: relative;
+	z-index: 1;
+}
+
+.assistant .composer form.row.composer__form > .shader-zone__canvas {
+	position: absolute;
+	inset: -10px;
+	z-index: 0;
+	border-radius: calc(var(--radius) + 14px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 500ms var(--ease-out, ease-out);
+}
+
+.assistant .composer form.row.composer__form.is-live > .shader-zone__canvas {
+	opacity: 1;
+}
+
+.assistant .composer form.row.composer__form.is-live {
+	border-color: transparent;
+}
+
+.assistant .composer form.row.composer__form.is-live:focus-within {
+	box-shadow: var(--shadow), 0 0 0 2px rgb(178 58 46 / 22%);
+}
+
+/* Suggested questions: a soft warm glow on hover and focus, tone not movement. */
+.assistant .chips .chip,
+.assistant .followups .chip {
+	transition:
+		box-shadow var(--dur, 180ms) var(--ease-out, ease-out),
+		border-color var(--dur, 180ms) var(--ease-out, ease-out),
+		background-color var(--dur, 180ms) var(--ease-out, ease-out);
+}
+
+.assistant .chips .chip:hover:not(:disabled),
+.assistant .followups .chip:hover:not(:disabled) {
+	border-color: rgb(226 95 75 / 45%);
+	background: #fffaf6;
+	box-shadow: 0 0 0 3px rgb(255 143 104 / 14%), 0 8px 20px -10px rgb(226 95 75 / 45%);
+}
+
+/* Voice: the call's orb (SmokeRing) with its state underneath. */
+.assistant .voice-stage {
+	display: grid;
+	justify-items: center;
+	gap: 4px;
+	margin: 8px 0 12px;
+}
+
+.assistant .voice-orb.shader-zone {
+	display: grid;
+	place-items: center;
+	width: 200px;
+	height: 200px;
+	overflow: visible;
+	border-radius: 50%;
+	background: radial-gradient(closest-side, rgb(255 227 211 / 0%) 34%, #ffc4a8 52%, rgb(226 95 75 / 55%) 64%, rgb(255 196 168 / 0%) 86%); /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+	transform: scale(calc(1 + var(--voice-level, 0) * 0.06));
+	transition: transform 160ms var(--ease-out, ease-out);
+}
+
+.assistant .voice-orb.shader-zone.is-live {
+	background: transparent;
+}
+
+.assistant .voice-orb[data-shader-state="muted"],
+.assistant .voice-orb[data-shader-state="idle"] {
+	filter: saturate(0.75);
+}
+
+.assistant .voice-orb__core {
+	position: relative;
+	z-index: 1;
+	width: 44%;
+	height: 44%;
+	border-radius: 50%;
+	background: radial-gradient(closest-side, #fffaf6 0, #fff1e6 70%, rgb(255 241 230 / 0%) 100%); /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
+}
+
+.assistant .voice-orb__label {
+	margin: 0;
+	color: var(--ink-2, #4a403c);
+	font: 600 0.95rem/1.3 var(--font-display, inherit);
 }
 
 @media (max-width: 560px) {
 	.assistant .chat-empty__mark.shader-zone {
-		width: 168px;
-		height: 168px;
+		width: 176px;
+		height: 176px;
 	}
 
 	.assistant .chat-empty__mark .chat-empty__art {
-		width: 96px;
+		width: 92px;
 	}
 
 	.assistant .msg__thinking-mark.shader-zone {
-		width: 72px;
-		height: 72px;
+		width: 76px;
+		height: 76px;
 	}
 
 	.assistant .msg__thinking-mark .msg__thinking-art {
-		width: 48px;
+		width: 46px;
+	}
+
+	.assistant .voice-orb.shader-zone {
+		width: 168px;
+		height: 168px;
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.assistant .chat-empty__mark .shader-zone__canvas,
-	.assistant .msg__thinking-mark .shader-zone__canvas {
+	.assistant .shader-zone__canvas {
 		display: none;
+	}
+
+	.assistant .voice-orb.shader-zone {
+		transform: none;
+		transition: none;
+	}
+
+	.assistant .chips .chip,
+	.assistant .followups .chip {
+		transition: none;
 	}
 }
