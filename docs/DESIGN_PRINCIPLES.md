@@ -34,21 +34,49 @@ disagree, the brand sheet and the borrower's task win.
 - **Hover and focus are tone, not glow.** Buttons darken (`--coral-2`) or gain a white surface (ghost);
   inputs get `--ring` (3 px deep-coral at 18%). The coral hover glow was removed. Transitions are
   `--dur` 180 ms with `--ease-out`; all of it stops under `prefers-reduced-motion`.
-- **Gradients only inside shader zones** (see below and deviations). No glass, no glows, no blobs, no
-  emoji, no sparkle for "AI".
+- **Gradients only inside shader zones** (see below and deviations). No glass cards, no glows, no blobs,
+  no emoji, no sparkle for "AI". The one frosted surface is the text plate on a shader zone.
 - **No coloured side stripes** on alerts or list items (impeccable "side-stripe borders"); alerts use a
   quiet tint and a full hairline.
 
-### Shader zones (v4)
-- A slow Paper Shaders mesh gradient (`@paper-design/shaders`, Apache-2.0, vanilla build, 7.2 KB gzipped,
-  `public/js/vendor/saral-shader.js`) in **three decorative art panels only**: the sign-in visual, the
-  loan products hero art, and the approved result's scene. Never behind body text, the app shell or a form.
-- Palette: cream `#F7F3EE`, peach `#FCE6DC` / `#F8D3C3`, a hint of sage on approved. Low contrast; only the
-  illustration sits on it.
-- Each zone first paints a **static CSS radial-gradient fallback**. `js/shader.js` loads the bundle with
-  `import()` after `load` and idle, only when WebGL exists, Save-Data is off and reduced motion is not
-  requested, then fades the canvas in (700 ms). Paper's `ShaderMount` pauses when the zone is off-screen
-  or the tab is hidden. If reduced motion is switched on while the page is open, the shaders are disposed.
+### Shader zones (v5): shaders are part of the brand
+v4 put a pale mesh gradient behind three illustrations; it read as flat colour. In v5 the shaders are a
+visible, intentional part of Saral, in the style of the shadcn shader blocks (Paper Shaders), and still
+kept out of the work itself.
+
+| Where | Shader (Paper Shaders) | Palette / motion |
+| --- | --- | --- |
+| Sign in: the whole right half, one tall panel | MeshGradient `brand` | cream `#FFF1E6` → peach `#FF8F68` → coral `#E25F4B` → deep plum `#4E2440`; speed 0.38, light grain |
+| Dashboard: hero band with the greeting and the next step | MeshGradient `brand` | as above |
+| Loan products hero | MeshGradient `brand` | as above |
+| Eligibility estimate result head | MeshGradient `brand` (an estimate) / `muted` (none) | as above / muted |
+| Application result banner, approved | MeshGradient `approved` | cream, apricot `#FFC98C`, peach, plum `#7E3550`; warm and a little brighter, not flashy |
+| Application result banner, submitted / checks running / with a reviewer / information needed / draft | GrainGradient `calm` (wave) | neutral-warm cream, blush and lilac; slow drift that doubles as the "checks running" cue |
+| Application result banner, not approved / withdrawn | MeshGradient `muted` | soft greige and rose, almost still (speed 0.12) |
+| Assistant empty state | MeshGradient `orb`, blurred into a soft glow behind the Saral mark | peach, coral, plum |
+| Assistant thinking | PulsingBorder `pulse`, a soft ring around the thinking scene | coral, peach, plum |
+
+Rules:
+- **Never behind work.** No shader behind form fields, tables, body text, the sidebar or the tab bar.
+- **Text on a shader sits on a plate** (`.shader-plate`: cream at 94% with a light frost), so contrast is
+  measured against the plate. Illustrations on a shader sit on a frosted tile so the ink line stays clear.
+  Spot check of the rendered pixels (55 text items, 6 pages, 1280 and 390): lowest 4.99:1, all AA.
+- **One loader** (`public/js/shader.js`, linked once from `base.html`). It imports Paper Shaders with
+  `import()` only after `load` + idle (first paint is the static gradient), mounts at most **2 live
+  shaders per page** (first in document order; the rest keep their static look), caps rendering at
+  **1.5× device pixels** (`maxPixelCount` follows each zone's size), and relies on Paper's `ShaderMount`
+  to pause off-screen and in hidden tabs. It watches the DOM, so zones that React or page scripts add
+  later are mounted and zones that leave are disposed (the orb and the thinking ring never pile up).
+- **Static fallback.** Every palette has a CSS radial-gradient look (`[data-shader="…"]` in portal.css)
+  that is also what shows with reduced motion, Save-Data or no WebGL. Switching reduced motion on while
+  a page is open disposes every shader.
+- **Weight.** Bundled from `@paper-design/shaders@0.0.82` (Apache-2.0, the latest release; licence and
+  notice in `public/js/vendor/`) by `scripts/brand/build_shader.sh`: the mesh core (`saral-shader.js` +
+  shared chunk) is 8.4 KB gzipped; the extra chunk with GrainGradient, PulsingBorder and Paper's noise
+  texture is 22.7 KB gzipped and loads only on pages that show `calm` or `pulse`. Loader 2.3 KB.
+  All added JS: ~33 KB gzipped, under the 40 KB budget.
+- Chromium under Xvfb (software GL, SwiftShader via ANGLE) renders the shaders without extra flags; the
+  captures and `SHADERS.mp4` show the live canvases, not the fallback.
 
 ### Colour and emphasis
 - **One coral primary action per page.** Every other action is a ghost button, a quiet button or a
@@ -92,7 +120,8 @@ These go against at least one of the three skills on purpose. Keep them unless t
 | `--font-mono` token resolves to **Sora** | taste-skill "no monospace outside code" (the lint still WARNs on the token name) | The token is a legacy name for "figures and references". No monospace face ships; the WARNs are on the variable name, not on monospace type. |
 | `example.com` in test data (`apps/web/assistant/src/turns.test.ts`) | taste-skill `placeholder-data` (the only remaining FAIL) | `example.com` is reserved by RFC 2606 for documentation and tests, so it can never reach a real inbox. It is test-only and never rendered to a borrower. |
 | Hairline dividers between sections | taste-skill "no thin rules, no hairline dividers" | Kept by user request: hairlines replaced the boxed cards and read as calm structure on cream paper. |
-| Gradients in the three shader zones (and their static CSS fallback) | taste-skill `gradient` FAIL ("flat colour or a real image"); impeccable/unslop "no decorative gradients" | The user asked for a premium, shadcn-style shader look. It is limited to decorative art panels, never behind text, low contrast, lazy and still under reduced motion. The two fallback lines carry `taste-skill-ignore`. |
+| v5 shaders as a brand surface: animated gradients in hero bands, result banners, the sign-in panel and the assistant mark (and their static CSS fallbacks) | taste-skill `gradient` FAIL ("flat colour or a real image"); impeccable/unslop "no decorative gradients" | The user asked for a visibly premium, shader-rich look (shadcn shader blocks / Paper Shaders) after v4's low-contrast version read as flat. Kept out of forms, tables, body text and the sidebar; text sits on a solid plate; lazy, capped at 2 live per page, still under reduced motion. Every fallback gradient line carries `taste-skill-ignore`. |
+| Frosted text plate on shader zones (`backdrop-filter` on `.shader-plate`) | taste-skill `glass` WARN ("glass cards are a tell") | It is 94% opaque cream, used only where text must sit on a moving shader, so AA holds over any colour. Both lines carry `taste-skill-ignore`. |
 | One soft shadow on floating layers | taste-skill `shadow` WARN ("elements at rest carry none") | Only floating things carry it (composer, menus, sheet, drawer, dialogs, toasts), which is what the rule allows. The remaining `shadow` WARNs are those, focus rings, and `none` resets. |
 | The assistant shown as the Saral mark in its illustrations | BRAND "don't use the mark next to an outcome" | Used only for the assistant itself (empty state, thinking), never beside a decision, so the assistant is never drawn as a person. |
 
@@ -196,3 +225,10 @@ v3 notes:
   `cream-palette` on every page (accepted deviation) and `first-viewport-column-overflow` on the
   eligibility form and the application result, where a long form or record is the content.
 - axe WCAG 2.2 AA: 0 violations on all 29 pages at 1280 and at 390.
+
+v5 notes (shaders):
+- taste-skill lint `--app` over www, templates, portal.css, page scripts, `shader.js` and the island
+  source (72 files): 2 FAIL / 77 WARN. The FAILs are the reserved `example.com` test address and the
+  `★` rating glyph in `feedback.js` (pre-existing, first included now that page scripts are linted). No
+  `gradient` FAIL: every v5 fallback gradient line is marked `taste-skill-ignore`.
+- axe WCAG 2.2 AA: 0 violations (0 serious/critical) on all 29 pages at 1280 and at 390.

@@ -6590,8 +6590,8 @@ textarea:focus-visible {
 	border: 1px solid rgb(255 255 255 / 55%);
 	border-radius: 12px;
 	background: rgb(255 252 249 / 94%);
-	backdrop-filter: blur(14px) saturate(1.1);
-	-webkit-backdrop-filter: blur(14px) saturate(1.1);
+	backdrop-filter: blur(14px) saturate(1.1); /* taste-skill-ignore: v5 shader plate, a near-solid text plate over a shader zone, deliberate (DESIGN_PRINCIPLES §2) */
+	-webkit-backdrop-filter: blur(14px) saturate(1.1); /* taste-skill-ignore: v5 shader plate (DESIGN_PRINCIPLES §2) */
 }
 
 /* Illustrations on a shader get a soft frosted tile so the ink line stays readable. */

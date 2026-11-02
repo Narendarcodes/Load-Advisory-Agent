@@ -86,15 +86,22 @@ Every scene side by side: `illustrations_sheet.png` in the v4 evidence folder at
 Removed in v4: `calculating.svg` (loading has no scene). The v3 per-slot figures (`peep-46`, `peep-2`, …)
 are no longer used.
 
-## Hero shader: Paper Shaders (Apache-2.0)
+## Shaders: Paper Shaders (Apache-2.0)
 
-`public/js/vendor/saral-shader.js` (22.5 KB minified, **7.2 KB gzipped**) is a tree-shaken bundle of
-`ShaderMount` and the mesh-gradient fragment shader from **`@paper-design/shaders@0.0.82`** (vanilla build,
+Tree-shaken bundles of **`@paper-design/shaders@0.0.82`** (vanilla build, the latest release;
 https://github.com/paper-design/shaders, https://shaders.paper.design; Apache License 2.0, copyright 2026
-Paper). The licence and NOTICE ship beside it (`PAPER-SHADERS-LICENSE.txt`, `PAPER-SHADERS-NOTICE.txt`).
-Source: `scripts/brand/shader_entry.mjs`; build: `scripts/brand/build_shader.sh` (esbuild).
-`public/js/shader.js` (loader, ~1 KB gzipped) imports it lazily after load and idle, only on the sign-in
-page, the loan products page and the application result; see `DESIGN_PRINCIPLES.md` for where it may appear.
+Paper). The licence and NOTICE ship beside them (`PAPER-SHADERS-LICENSE.txt`, `PAPER-SHADERS-NOTICE.txt`).
+
+| File (`public/js/vendor/`) | Contents | gzipped |
+| --- | --- | --- |
+| `saral-shader.js` | MeshGradient palettes (brand, approved, muted, orb) | 1.7 KB |
+| `saral-chunk-*.js` | shared `ShaderMount` and colour helpers | 6.7 KB |
+| `saral-shader-extra.js` | GrainGradient (`calm`), PulsingBorder (`pulse`) and Paper's noise texture; loaded only where used | 22.7 KB |
+
+Source: `scripts/brand/shader_entry.mjs`, `scripts/brand/shader_extra.mjs`; build:
+`scripts/brand/build_shader.sh` (esbuild, code-split). `public/js/shader.js` (loader, 2.3 KB gzipped,
+linked from `base.html`) imports them lazily after load and idle; see `DESIGN_PRINCIPLES.md` §1
+"Shader zones (v5)" for where shaders may appear and the performance and accessibility rules.
 
 ## Brand assets
 Original artwork for this project; see `docs/BRAND.md` and `scripts/brand/`.
