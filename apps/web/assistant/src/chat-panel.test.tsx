@@ -165,11 +165,11 @@ describe("ChatPanel", () => {
     expect(element.querySelector<HTMLButtonElement>(".chips button")?.disabled).toBe(false);
   });
 
-  it("shows the application this conversation is about", async () => {
+  it("leaves the application facts to the page's header strip instead of repeating them in the log", async () => {
+    // v2: assistant.html renders the slim "This application" strip with the decision and documents links.
     const { agent } = fakeAgent();
     const { container: element } = await mount(agent);
-    expect(element.querySelector(".appctx")?.textContent).toContain("LA-2026-00001");
-    expect(element.querySelector('.appctx a[href="/borrower/documents?name=LA-2026-00001"]')).not.toBeNull();
+    expect(element.querySelector(".appctx")).toBeNull();
   });
 
   it("shows a real server stage only while the turn is running", async () => {
@@ -192,7 +192,7 @@ describe("ChatPanel", () => {
       element.querySelector("form.row")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
 
-    expect(element.querySelector(".progress")?.textContent).toContain("Searching the policy library");
+    expect(element.querySelector(".progress")?.textContent).toContain("Searching the lender's policy documents");
     expect(element.textContent).not.toContain("retrieve_policy");
 
     await act(async () => {
@@ -208,7 +208,7 @@ const CARD = {
   decision: "REJECTED",
   recorded_outcome: "REJECTED",
   policy_synthetic: true,
-  rules: [{ rule_id: "MIN_CREDIT_SCORE", name: "Credit score", result: "FAIL", actual: "640", threshold: "≥ 700" }],
+  rules: [{ rule_id: "MIN_CREDIT_SCORE", name: "Credit score", result: "FAIL", actual: "640", threshold: "≥ 700", actual_value: 640, threshold_value: 700, operator: ">=" }],
   failed_reason_codes: ["MIN_CREDIT_SCORE"],
   missing_fields: [],
   flags: [],
@@ -264,14 +264,16 @@ describe("ChatPanel conversation surface", () => {
     const steps = element.querySelectorAll(".msg--live .progress li");
     expect(element.querySelector(".msg--live .typing")).not.toBeNull();
     expect(Array.from(steps).map((step) => step.textContent)).toEqual([
-      "✓Checking your application (done)",
-      "✓Loading the decision record (done)",
-      "Preparing the explanation",
+      "Confirmed this is your application (done)",
+      "Read your recorded decision (done)",
+      "Writing the explanation",
     ]);
+    expect(element.querySelector(".msg--live .trail svg")).not.toBeNull();
 
     await finish();
     expect(element.querySelector(".progress")).toBeNull();
-    expect(element.querySelector(".msg.bot .run-steps summary")?.textContent).toBe("Checked 3 steps");
+    expect(element.querySelector(".msg.bot .run-steps summary")?.textContent).toBe("What I checked (3 steps)");
+    expect((element.querySelector(".msg.bot .run-steps") as HTMLDetailsElement).open).toBe(true);
   });
 
   it("renders the answer's cards inside its own bubble and keeps them after the next turn", async () => {
@@ -317,7 +319,9 @@ describe("ChatPanel conversation surface", () => {
     } as unknown as AbstractAgent;
     const { container: again } = await mount(restored, vi.fn(), {}, { storageKey });
     expect(again.querySelector(".msg.bot .decision")?.textContent).toContain("Not approved");
-    expect(again.querySelector(".msg.bot .run-steps summary")?.textContent).toBe("Checked 1 step");
+    // One real stage plus the one evaluated rule the recorded card carries.
+    expect(again.querySelector(".msg.bot .run-steps summary")?.textContent).toBe("What I checked (2 steps)");
+    expect(again.querySelector(".msg.bot .run-steps")?.textContent).toContain("Compared credit score: 640 against a minimum of 700 (not met)");
   });
 
   it("offers follow-ups after an answer and starters only while empty", async () => {
@@ -351,6 +355,7 @@ describe("ChatPanel conversation surface", () => {
     const bubble = element.querySelector(".msg.bot.msg--error");
     expect(bubble?.getAttribute("role")).toBe("alert");
     expect(bubble?.textContent).toMatch(/busy or unavailable/);
+    expect(bubble?.querySelector('img[alt=""]')).not.toBeNull();
     const addMessage = (agent as unknown as { addMessage: ReturnType<typeof vi.fn> }).addMessage;
     expect(addMessage).toHaveBeenCalledTimes(1);
     await act(async () => (bubble!.querySelector("button") as HTMLButtonElement).click());

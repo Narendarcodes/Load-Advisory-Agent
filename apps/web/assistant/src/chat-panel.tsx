@@ -4,7 +4,7 @@ import type { AbstractAgent, Message } from "@copilotkit/react-core/v2";
 import type { PublicState } from "./types";
 import { buildBlocks, renderBlock, type GenUiBlock, type GenUiContext } from "./genui/registry";
 import { parsePublicState } from "./genui/schema";
-import { progressLabel } from "./genui/catalog";
+import { trailLabel, ruleTrailLines } from "./genui/trail";
 import { Markdown } from "./markdown";
 import { sendAnswerFeedback } from "./feedback";
 import {
@@ -30,6 +30,7 @@ export const STARTERS = [
 
 export const TRUST_LINE = "Understand your loan decision. A person decides.";
 const ILLUSTRATION = "/assets/loan_advisory_portal/illustrations/assistant.svg";
+const ERROR_ILLUSTRATION = "/assets/loan_advisory_portal/illustrations/service-unavailable.svg";
 
 function textOf(message: Message): string {
   const content = (message as { content?: unknown }).content;
@@ -74,40 +75,31 @@ export function answerBlocks(state: PublicState | undefined, context: GenUiConte
   return blocks;
 }
 
-function Avatar() {
+function Tick() {
   return (
-    <span className="msg__avatar" aria-hidden="true">
-      <svg viewBox="0 0 64 64" width="28" height="28" focusable="false">
-        <rect width="64" height="64" rx="16" fill="#FE7D6B" />
-        <path
-          d="M11 39 Q17 34.5 22.5 38.5 L30 45 L52.5 19.5"
-          fill="none"
-          stroke="#241C1B"
-          strokeWidth="6.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
+    <svg className="trail__icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+      <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
-/** Steps reported by the server for the running turn: finished ones ticked, the newest spinning. */
+/** The running turn's activity trail: one line per real server stage, finished ones ticked. */
 function LiveSteps({ stages }: { stages: string[] }) {
+  const known = stages.filter((stage) => trailLabel(stage, true));
   return (
-    <ol className="progress" role="status" aria-live="polite" aria-label="Working on your question">
-      {stages.length === 0 ? (
+    <ol className="progress trail" role="status" aria-live="polite" aria-label="What I am checking">
+      {known.length === 0 ? (
         <li className="progress__step progress__step--current">
           <span className="progress__dot" aria-hidden="true" />
           <span>Reading your question</span>
         </li>
       ) : (
-        stages.map((stage, index) => {
-          const current = index === stages.length - 1;
+        known.map((stage, index) => {
+          const current = index === known.length - 1;
           return (
             <li key={stage} className={`progress__step${current ? " progress__step--current" : " progress__step--done"}`}>
-              {current ? <span className="progress__dot" aria-hidden="true" /> : <span className="progress__tick" aria-hidden="true">✓</span>}
-              <span>{progressLabel(stage)}</span>
+              {current ? <span className="progress__dot" aria-hidden="true" /> : <Tick />}
+              <span>{trailLabel(stage, !current)}</span>
               {current ? null : <span className="sr-only"> (done)</span>}
             </li>
           );
@@ -117,21 +109,38 @@ function LiveSteps({ stages }: { stages: string[] }) {
   );
 }
 
-function DoneSteps({ stages }: { stages: string[] }) {
-  if (!stages.length) return null;
+/** After the answer: the stages that really ran, then the recorded figures the answer read. */
+function DoneSteps({ stages, state, open }: { stages: string[]; state?: PublicState; open: boolean }) {
+  const lines = [
+    ...stages.map((stage) => trailLabel(stage, true)).filter((line): line is string => Boolean(line)),
+    ...ruleTrailLines(state?.decision_card),
+  ];
+  if (!lines.length) return null;
   return (
-    <details className="run-steps">
-      <summary>
-        Checked {stages.length} {stages.length === 1 ? "step" : "steps"}
-      </summary>
+    <details className="run-steps trail" open={open}>
+      <summary>What I checked ({lines.length} {lines.length === 1 ? "step" : "steps"})</summary>
       <ol>
-        {stages.map((stage) => (
-          <li key={stage}>
-            <span className="progress__tick" aria-hidden="true">✓</span> {progressLabel(stage)}
+        {lines.map((line) => (
+          <li key={line}>
+            <Tick /> {line}
           </li>
         ))}
       </ol>
     </details>
+  );
+}
+
+function Thumb({ down }: { down?: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false" style={down ? { transform: "rotate(180deg)" } : undefined}>
+      <path
+        d="M6.5 9v8.5H3.5V9zM6.5 9l3.2-5.6c.4-.7 1.3-.9 1.9-.4.5.4.7 1 .5 1.6L11.4 8H16c1 0 1.8.9 1.6 1.9l-1.1 6c-.2.9-.9 1.6-1.8 1.6H6.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -183,6 +192,7 @@ export function ChatPanel({
   const [votes, setVotes] = useState<Record<number, Vote>>({});
   const stagesRef = useRef<string[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // A different thread brings its own cards; nothing from the previous one carries over.
@@ -195,9 +205,13 @@ export function ChatPanel({
   const messages = agent.messages.filter((message) => message.role === "user" || message.role === "assistant");
   const signature = `${messages.map((message) => `${message.id}:${textOf(message).length}`).join("|")}#${runStages.length}#${busy}#${error ? 1 : 0}`;
 
+  // The conversation flows in the page; keep the newest line in view above the sticky composer.
   useEffect(() => {
+    const end = endRef.current;
+    if (end && typeof end.scrollIntoView === "function" && messages.length) end.scrollIntoView({ block: "end" });
     const log = logRef.current;
     if (log) log.scrollTop = log.scrollHeight;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
 
   const pushStage = useCallback((stage: unknown) => {
@@ -295,7 +309,12 @@ export function ChatPanel({
   }
 
   const disabled = busy || !isReady;
-  const genui: GenUiContext = { application, busy: disabled, onAsk: (question) => void run(question, true) };
+  const genui: GenUiContext = {
+    application,
+    busy: disabled,
+    onAsk: (question) => void run(question, true),
+    onOpenWhatIf: () => setWhatIfOpen(true),
+  };
   const totalAnswers = assistantCount(messages);
   const waiting = busy && totalAnswers <= runBase;
   const empty = messages.length === 0 && !busy;
@@ -308,7 +327,7 @@ export function ChatPanel({
       return (
         <div key={message.id} className="msg user">
           <span className="sr-only">You said: </span>
-          {text}
+          <p>{text}</p>
         </div>
       );
     }
@@ -318,7 +337,6 @@ export function ChatPanel({
     if (live) {
       return (
         <div key={message.id} className="msg bot msg--live">
-          <Avatar />
           <div className="msg__body">
             <LiveSteps stages={runStages} />
             {text ? <Markdown text={liveText(text)} /> : <Typing />}
@@ -333,9 +351,8 @@ export function ChatPanel({
     const voted = votes[index];
     return (
       <div key={message.id} className="msg bot">
-        <Avatar />
         <div className="msg__body">
-          <DoneSteps stages={meta?.stages ?? []} />
+          <DoneSteps stages={meta?.stages ?? []} state={meta?.state} open={index === totalAnswers - 1} />
           <Markdown text={displayText(meta, text)} citations={meta?.state?.citations ?? []} />
           {blocks.length ? (
             <div className="msg__cards">
@@ -356,10 +373,10 @@ export function ChatPanel({
                 ) : (
                   <>
                     <button type="button" className="icon-btn" aria-label="Helpful" title="Helpful" onClick={() => void vote(index, true)}>
-                      👍
+                      <Thumb />
                     </button>
                     <button type="button" className="icon-btn" aria-label="Not helpful" title="Not helpful" onClick={() => void vote(index, false)}>
-                      👎
+                      <Thumb down />
                     </button>
                     {voted === "failed" ? <span className="feedback__thanks">Couldn't send that. Try again.</span> : null}
                   </>
@@ -386,7 +403,6 @@ export function ChatPanel({
       <h2 id="chat-heading" className="sr-only">
         Ask about this application
       </h2>
-      {renderBlock({ type: "application_context", application }, genui)}
       <p className="sr-only" role="status">
         {busy ? "Saral is answering." : ""}
       </p>
@@ -409,7 +425,6 @@ export function ChatPanel({
         )}
         {waiting ? (
           <div className="msg bot msg--live">
-            <Avatar />
             <div className="msg__body">
               <LiveSteps stages={runStages} />
               <Typing />
@@ -418,24 +433,28 @@ export function ChatPanel({
         ) : null}
         {error && !busy ? (
           <div className="msg bot msg--error" role="alert">
-            <Avatar />
-            <div className="msg__body">
-              <p>{error.text}</p>
+            <div className="msg__body action-row action-row--error">
+              <img className="msg__error-art" src={ERROR_ILLUSTRATION} alt="" width={96} height={72} />
+              <div className="action-row__text">
+                <p>{error.text}</p>
+                <p className="note">Your question is kept. Nothing on your application changed.</p>
+              </div>
               <button type="button" className="btn btn--ghost btn--sm" onClick={() => void run(error.question, false)} disabled={disabled}>
                 Retry
               </button>
             </div>
           </div>
         ) : null}
+        {whatIfOpen ? (
+          <div className="whatif-panel">
+            {renderBlock({ type: "what_if_form", card: lastCard(turns, state) }, genui)}
+            <button type="button" className="btn btn--quiet btn--sm" onClick={() => setWhatIfOpen(false)}>
+              Close what-if
+            </button>
+          </div>
+        ) : null}
+        <div ref={endRef} className="log__end" aria-hidden="true" />
       </div>
-      {whatIfOpen ? (
-        <div className="whatif-panel">
-          {renderBlock({ type: "what_if_form", card: lastCard(turns, state) }, genui)}
-          <button type="button" className="btn btn--quiet btn--sm" onClick={() => setWhatIfOpen(false)}>
-            Close what-if
-          </button>
-        </div>
-      ) : null}
       <div className="composer">
         <div className="composer__tools">
           <button

@@ -53,6 +53,8 @@ export interface GenUiContext {
   application: string;
   busy?: boolean;
   onAsk: (question: string) => void;
+  /** Opens the inline what-if form (the chat panel owns it). Absent where there is no form. */
+  onOpenWhatIf?: () => void;
 }
 
 type Renderer<K extends BlockKind> = (block: Extract<GenUiBlock, { type: K }>, context: GenUiContext) => ReactNode;
@@ -65,7 +67,9 @@ const RENDERERS: { [K in BlockKind]: Renderer<K> } = {
   what_if_form: (block, context) => (
     <WhatIfForm disabled={Boolean(context.busy)} recorded={block.card} onAsk={context.onAsk} />
   ),
-  what_if_result: (block) => <WhatIfResultBlock whatIf={block.whatIf} card={block.card} />,
+  what_if_result: (block, context) => (
+    <WhatIfResultBlock whatIf={block.whatIf} card={block.card} onAdjust={context.busy ? undefined : context.onOpenWhatIf} />
+  ),
   improvement_plan: (block) => <ImprovementPlanBlock plan={block.plan} />,
   missing_information: (block) => <MissingInformationBlock items={block.items} />,
   human_assistance: (block) => <HumanAssistanceBlock handoffRef={block.handoffRef} />,

@@ -39,6 +39,15 @@ function number(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+const EXCERPT_LIMIT = 600;
+
+/** Plain text, cut to a limit. Rendered as a text node, never as markup. */
+function bounded(value: unknown, limit: number): string | null {
+  const value_ = text(value);
+  if (!value_) return null;
+  return value_.length > limit ? `${value_.slice(0, limit)}…` : value_;
+}
+
 function safePage(value: unknown): number | null {
   const page = number(value);
   return page !== null && Number.isInteger(page) && page > 0 ? page : null;
@@ -60,6 +69,7 @@ export function parseCitation(value: unknown): Citation | null {
     source_url: text(raw.source_url),
     relationship: text(raw.relationship),
     applies_to_entity: textList(raw.applies_to_entity),
+    excerpt: bounded(raw.excerpt, EXCERPT_LIMIT),
   };
 }
 
@@ -77,6 +87,9 @@ export function parseDecisionRule(value: unknown): DecisionRule | null {
     actual: text(raw.actual),
     threshold: text(raw.threshold),
     threshold_source: text(raw.threshold_source),
+    actual_value: number(raw.actual_value),
+    threshold_value: number(raw.threshold_value),
+    operator: raw.operator === ">=" || raw.operator === "<=" ? raw.operator : null,
   };
 }
 

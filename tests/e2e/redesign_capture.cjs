@@ -55,19 +55,13 @@ async function ask(page, text) {
   await page.locator(".composer button", { hasText: /Send/ }).first().click();
 }
 
-/** Bring the conversation into view and put the latest answer (or the error) at the top of the log. */
-async function focusLatest(page, selector = ".msg.bot") {
-  await page.evaluate((sel) => {
-    const section = document.querySelector(".assistant");
-    const log = document.querySelector(".assistant .log");
-    if (section) window.scrollTo(0, section.getBoundingClientRect().top + window.scrollY - 8);
+/** v2: the conversation flows in the page. Scroll the window so `selector`'s last match sits near the top. */
+async function focusLatest(page, selector = ".msg.bot", offset = 72) {
+  await page.evaluate(([sel, off]) => {
     const items = document.querySelectorAll(sel);
     const last = items[items.length - 1];
-    if (log && last) {
-      log.style.scrollBehavior = "auto";
-      log.scrollTop = last.getBoundingClientRect().top - log.getBoundingClientRect().top + log.scrollTop - 8;
-    }
-  }, selector);
+    if (last) window.scrollTo({ top: last.getBoundingClientRect().top + window.scrollY - off, behavior: "instant" });
+  }, [selector, offset]);
   await sleep(300);
 }
 
@@ -116,36 +110,41 @@ async function assistant(page, prefix, width) {
   await settle(page);
   await page.waitForSelector(".composer", { timeout: 20000 });
   await sleep(800);
-  await shot(page, `${prefix}assistant-0-empty-${width}`, true);
+  await shot(page, `${prefix}assistant-0-empty-${width}`, false);
   await ask(page, "Why was this decision made?");
-  await page.waitForSelector(".msg--live .progress li", { timeout: 20000 }).catch(() => {});
-  await page.waitForFunction(() => document.querySelectorAll(".msg--live .progress li").length >= 2, null, { timeout: 15000 }).catch(() => {});
-  await focusLatest(page, ".msg--live");
-  await shot(page, `${prefix}assistant-1-progress-${width}`, false);
+  await page.waitForFunction(() => document.querySelectorAll(".msg--live .trail li").length >= 2, null, { timeout: 15000 }).catch(() => {});
+  await focusLatest(page, ".msg.user");
+  await shot(page, `${prefix}assistant-1-streaming-trail-${width}`, false);
   await waitAnswer(page, 1);
-  await focusLatest(page);
-  await shot(page, `${prefix}assistant-2-markdown-card-${width}`, false);
-  await page.evaluate(() => {
-    const log = document.querySelector(".assistant .log");
-    const cards = document.querySelector(".msg.bot .msg__cards");
-    if (log && cards) log.scrollTop += cards.getBoundingClientRect().top - log.getBoundingClientRect().top - 8;
-  });
-  await sleep(300);
-  await shot(page, `${prefix}assistant-2b-card-${width}`, false);
-  await ask(page, "What if my credit score was 720?");
+  await focusLatest(page, ".msg.user");
+  await shot(page, `${prefix}assistant-2-answer-${width}`, false);
+  await focusLatest(page, ".msg.bot .decision", 24);
+  await shot(page, `${prefix}assistant-2b-meters-${width}`, false);
+  await ask(page, "Which policy source sets these limits?");
   await waitAnswer(page, 2);
-  await focusLatest(page);
-  await shot(page, `${prefix}assistant-3-whatif-${width}`, false);
+  await page.locator(".source-chip summary").first().click().catch(() => {});
+  await sleep(300);
+  await focusLatest(page, ".msg.user");
+  await shot(page, `${prefix}assistant-3-citations-${width}`, false);
+  await ask(page, "What if my credit score was 720?");
+  await waitAnswer(page, 3);
+  await focusLatest(page, ".msg.bot .whatif", 24);
+  await shot(page, `${prefix}assistant-4-whatif-${width}`, false);
+  await page.locator(".whatif button", { hasText: "Try other numbers" }).last().click().catch(() => {});
+  await sleep(400);
+  await focusLatest(page, ".whatif-panel", 24);
+  await shot(page, `${prefix}assistant-4b-whatif-form-${width}`, false);
+  await page.locator(".whatif-panel button", { hasText: "Close what-if" }).click().catch(() => {});
   await ask(page, "Please simulate failure");
   await page.waitForSelector(".msg--error", { timeout: 30000 }).catch(() => {});
   await sleep(600);
-  await focusLatest(page, ".msg--error");
-  await shot(page, `${prefix}assistant-4-error-retry-${width}`, false);
+  await focusLatest(page, ".msg.user", 24);
+  await shot(page, `${prefix}assistant-5-error-retry-${width}`, false);
   const history = page.locator(".drawer-tab", { hasText: "History" });
   if (await history.count()) {
     await history.first().click();
     await sleep(600);
-    await shot(page, `${prefix}assistant-5-drawer-${width}`, false);
+    await shot(page, `${prefix}assistant-6-drawer-${width}`, false);
     await page.locator(".tools-drawer button", { hasText: "Close" }).first().click().catch(() => {});
   }
 }
@@ -161,17 +160,21 @@ async function shots() {
       ["dashboard", "/borrower?fx=full"],
       ["dashboard-empty", "/borrower?fx=empty"],
       ["documents-empty", "/borrower/documents?fx=empty"],
+      ["documents", `/borrower/documents?name=${REJECTED}`],
+      ["profile", "/borrower/profile"],
       ["help", "/borrower/help?fx=full"],
       ["decision-rejected", `/borrower/application?name=${REJECTED}`],
       ["decision-approved", `/borrower/application?name=${APPROVED}`],
       ["decision-pending", `/borrower/application?name=${PENDING}`],
+      ["assistant-choose", "/borrower/assistant"],
     ];
-    for (const [name, route] of routes) {
+    if (process.env.ONLY !== "assistant") for (const [name, route] of routes) {
       await page.goto(BASE + route);
       await settle(page);
       await shot(page, `${name}-${width}`);
     }
-    await wizard(page, "", width);
+    if (process.env.ONLY === "screens") { await context.close(); continue; }
+    if (process.env.ONLY !== "assistant") await wizard(page, "", width);
     await assistant(page, "", width);
     if (width <= 420) {
       await page.locator('[data-action="nav-toggle"]').last().click().catch(() => {});
@@ -275,6 +278,8 @@ async function axe() {
       ["login", "/login"], ["dashboard", "/borrower?fx=full"], ["dashboard-empty", "/borrower?fx=empty"],
       ["apply", "/borrower/apply"], ["documents-empty", "/borrower/documents?fx=empty"],
       ["help", "/borrower/help?fx=full"],
+      ["profile", "/borrower/profile"],
+      ["documents", `/borrower/documents?name=${REJECTED}`],
       ["decision-rejected", `/borrower/application?name=${REJECTED}`],
       ["decision-approved", `/borrower/application?name=${APPROVED}`],
       ["decision-pending", `/borrower/application?name=${PENDING}`],
@@ -287,8 +292,11 @@ async function axe() {
         await page.waitForSelector(".composer", { timeout: 20000 });
         await ask(page, "Why was this decision made?");
         await waitAnswer(page, 1);
-        await ask(page, "What if my credit score was 720?");
+        await ask(page, "Which policy source sets these limits?");
         await waitAnswer(page, 2);
+        await page.locator(".source-chip summary").first().click().catch(() => {});
+        await ask(page, "What if my credit score was 720?");
+        await waitAnswer(page, 3);
       }
       const result = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])

@@ -1354,3 +1354,715 @@
 		max-height: max(260px, calc(100dvh - 330px));
 	}
 }
+
+/* ======================================================================
+   Saral v2: the assistant as a workspace (2026-11-02, second design pass)
+   One readable column (about 760px) that flows with the page, no boxed chat
+   panel, assistant answers without bubbles, a sticky composer at the bottom
+   of the viewport, and inline visuals built only from the recorded state.
+   Comes last on purpose: it supersedes the v1 panel, log-scroller and bubble
+   rules above. The log no longer scrolls on its own, so nothing is clipped.
+   ====================================================================== */
+
+.assistant {
+	--ws-col: 760px;
+	--ws-dock: 0px;
+	display: block;
+	overflow: visible;
+}
+
+@media (max-width: 767px) {
+	.assistant {
+		--ws-dock: calc(62px + env(safe-area-inset-bottom));
+	}
+}
+
+.assistant__body,
+.assistant__body > .assistant__grid {
+	height: auto !important;
+	overflow: visible !important;
+}
+
+.assistant__grid {
+	display: block;
+	max-width: var(--ws-col);
+	margin: 0 auto;
+}
+
+.assistant__toolbar {
+	display: flex;
+	gap: 4px;
+	padding: 0 0 10px;
+	border-bottom: 1px solid var(--line);
+}
+
+.assistant .drawer-tab {
+	border-radius: var(--radius-sm);
+	min-height: 34px;
+	padding: 6px 10px;
+	color: var(--ink-2);
+}
+
+.assistant .drawer-tab--on {
+	background: var(--active, #ebe4dc);
+	border-color: transparent;
+	color: var(--ink);
+}
+
+.assistant__toolbar .btn--quiet {
+	text-decoration: none;
+	color: var(--ink-2);
+	font-weight: 600;
+}
+
+.assistant .chat {
+	display: block;
+	padding: 0;
+	overflow: visible;
+	min-height: 0;
+}
+
+.assistant .log,
+.assistant .log:focus {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+	min-height: 0;
+	max-height: none;
+	overflow: visible;
+	padding: 24px 0 24px;
+	outline: none;
+}
+
+.assistant .log:focus-visible {
+	outline: 2px solid var(--deep);
+	outline-offset: 4px;
+}
+
+.assistant .log__end {
+	height: 1px;
+	scroll-margin-bottom: 180px;
+}
+
+/* Messages: the person in a quiet bubble, the answer as plain text on the page. */
+.assistant .msg {
+	font-size: 1rem;
+	line-height: 1.6;
+	overflow-wrap: break-word;
+}
+
+.assistant .msg.user {
+	align-self: flex-end;
+	max-width: min(80%, 560px);
+	padding: 10px 14px;
+	border: 0;
+	border-radius: var(--radius);
+	background: var(--paper-2);
+	color: var(--ink);
+}
+
+.assistant .msg.user p {
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+.assistant .msg.bot {
+	display: block;
+	align-self: stretch;
+}
+
+.assistant .msg__body,
+.assistant .msg.bot .msg__body {
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.assistant .md p,
+.assistant .md li {
+	max-width: 70ch;
+}
+
+.assistant .md .md-h {
+	font-family: var(--font-display);
+	font-size: 1.02rem;
+	margin: 18px 0 6px;
+}
+
+.assistant .md blockquote {
+	margin: 12px 0;
+	padding: 0 0 0 12px;
+	border-left: 1px solid var(--line-2);
+	color: var(--ink-2);
+}
+
+/* Activity trail: what really ran, in plain words. */
+.assistant .trail,
+.assistant .progress.trail {
+	display: grid;
+	gap: 4px;
+	height: auto;
+	overflow: visible;
+	margin: 0 0 12px;
+	padding: 0;
+	list-style: none;
+	background: none;
+	border: 0;
+	font-size: 0.88rem;
+	color: var(--muted);
+}
+
+.assistant .trail li,
+.assistant .run-steps li {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	line-height: 1.45;
+}
+
+.assistant .trail__icon {
+	flex: 0 0 14px;
+	margin-top: 3px;
+	color: var(--ok);
+}
+
+.assistant .progress__step--current {
+	color: var(--ink);
+}
+
+.assistant .progress__dot {
+	flex: 0 0 8px;
+	width: 8px;
+	height: 8px;
+	margin: 6px 3px 0;
+	border-radius: 50%;
+	background: var(--coral);
+}
+
+.assistant .run-steps {
+	margin: 0 0 12px;
+	padding: 0;
+	border: 0;
+	font-size: 0.88rem;
+	color: var(--muted);
+}
+
+.assistant .run-steps summary {
+	cursor: pointer;
+	width: fit-content;
+	color: var(--ink-2);
+	font-weight: 600;
+}
+
+.assistant .run-steps ol {
+	display: grid;
+	gap: 4px;
+	margin: 8px 0 0;
+	padding: 0 0 0 2px;
+	list-style: none;
+}
+
+/* Inline blocks: sections on the page separated by hairlines, not boxes. */
+.assistant .msg__cards {
+	display: grid;
+	gap: 0;
+	margin-top: 16px;
+}
+
+.assistant .msg__card {
+	overflow: visible;
+	border-top: 1px solid var(--line);
+	padding: 16px 0;
+}
+
+.assistant .msg__card > .card-block,
+.assistant .msg__card > .whatif,
+.assistant .msg__card > .cites,
+.assistant .msg__card > .missing,
+.assistant .msg__card > .handoff,
+.assistant .msg__card > .plan,
+.assistant .msg__card > .notice {
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+.assistant .msg__card h3 {
+	font-size: 0.98rem;
+	margin: 0 0 6px;
+}
+
+.assistant .card-block__head,
+.assistant .whatif__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 6px;
+}
+
+.assistant .card-block__head h3,
+.assistant .whatif__head h3 {
+	margin: 0;
+}
+
+/* Rule rows with meters */
+.assistant .rule-list {
+	display: grid;
+	gap: 0;
+	margin: 10px 0 8px;
+	padding: 0;
+	list-style: none;
+}
+
+.assistant .rule-row {
+	padding: 10px 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.assistant .rule-row:last-child {
+	border-bottom: 0;
+}
+
+.assistant .rule-row__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.assistant .rule-row__name {
+	font-weight: 600;
+}
+
+.assistant .rule-row__figures {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 4px 16px;
+	margin: 4px 0 0;
+	font-size: 0.86rem;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.assistant .rule-row__figures b {
+	color: var(--ink);
+	font-weight: 650;
+}
+
+.assistant .meter {
+	display: block;
+	padding: 8px 7px 2px;
+}
+
+.assistant .meter__track {
+	position: relative;
+	display: block;
+	height: 8px;
+	border-radius: 4px;
+	background: #ece5de;
+}
+
+.assistant .meter__ok {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	border-radius: 4px;
+	background: #cfe3d6;
+}
+
+.assistant .meter__limit {
+	position: absolute;
+	top: -5px;
+	bottom: -5px;
+	width: 2px;
+	margin-left: -1px;
+	background: var(--ink);
+}
+
+.assistant .meter__value {
+	position: absolute;
+	top: 50%;
+	width: 14px;
+	height: 14px;
+	border: 2px solid var(--paper);
+	border-radius: 50%;
+	transform: translate(-50%, -50%);
+	background: var(--ink);
+}
+
+.assistant .meter__value--bad {
+	background: var(--deep);
+}
+
+.assistant .meter__value--ok {
+	background: var(--ok);
+}
+
+.assistant .meter__value--before {
+	background: var(--paper);
+	border-color: var(--muted);
+}
+
+.assistant .record-details {
+	margin-top: 8px;
+	font-size: 0.84rem;
+	color: var(--muted);
+}
+
+.assistant .record-details summary {
+	cursor: pointer;
+	width: fit-content;
+}
+
+/* What-if: before and after, labelled as a simulation */
+.assistant .whatif__changes {
+	display: grid;
+	gap: 6px;
+	margin: 8px 0 10px;
+	padding: 0;
+	list-style: none;
+}
+
+.assistant .whatif__figures {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 4px 16px;
+	margin: 0;
+	font-variant-numeric: tabular-nums;
+}
+
+.assistant .whatif__label {
+	font-weight: 600;
+}
+
+.assistant .whatif__before {
+	color: var(--muted);
+}
+
+.assistant .whatif__table {
+	margin: 4px 0 8px;
+}
+
+.assistant .whatif__outcome {
+	margin: 4px 0;
+}
+
+/* Source chips: tap to read the policy excerpt */
+.assistant .source-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 6px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.assistant .source-chips li {
+	min-width: 0;
+	max-width: 100%;
+}
+
+.assistant .source-chips li:has(details[open]) {
+	flex-basis: 100%;
+}
+
+.assistant .source-chip summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	max-width: 100%;
+	min-height: 32px;
+	padding: 4px 10px;
+	border: 1px solid var(--line-2);
+	border-radius: var(--radius-sm);
+	background: var(--card, #fff);
+	cursor: pointer;
+	font-size: 0.86rem;
+	list-style: none;
+}
+
+.assistant .source-chip summary::-webkit-details-marker {
+	display: none;
+}
+
+.assistant .source-chip[open] summary {
+	border-color: var(--ink-2);
+}
+
+.assistant .source-chip__label {
+	color: var(--deep);
+	font-weight: 700;
+}
+
+.assistant .source-chip__title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.assistant .source-chip__body {
+	padding: 10px 2px 2px;
+}
+
+.assistant .source-chip__quote {
+	margin: 0 0 6px;
+	padding: 0 0 0 12px;
+	border-left: 1px solid var(--line-2);
+	color: var(--ink);
+	font-size: 0.94rem;
+}
+
+/* Missing information and handoff: action rows */
+.assistant .action-rows {
+	margin: 6px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.assistant .action-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 6px 16px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.assistant .action-row:last-child {
+	border-bottom: 0;
+}
+
+.assistant .action-row__text .note {
+	margin: 2px 0 0;
+}
+
+.assistant .action-row__action {
+	display: inline-flex;
+	align-items: center;
+	min-height: 34px;
+	padding: 0 12px;
+	border: 1px solid var(--line-2);
+	border-radius: var(--radius-sm);
+	color: var(--ink);
+	font-weight: 650;
+	font-size: 0.86rem;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.assistant .action-row__action:hover {
+	background: var(--paper-2);
+}
+
+@media (max-width: 560px) {
+	.assistant .action-row {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.assistant .action-row__action {
+		justify-self: start;
+		white-space: normal;
+	}
+}
+
+/* Error: an inline row with Retry, not a red box */
+.assistant .msg--error .msg__body.action-row--error {
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	padding: 12px 0;
+	border-top: 1px solid var(--line);
+	border-bottom: 1px solid var(--line);
+	color: var(--ink);
+}
+
+.assistant .msg--error p {
+	margin: 0;
+}
+
+.assistant .msg--error p:first-child {
+	color: var(--bad);
+	font-weight: 600;
+}
+
+.assistant .msg__error-art {
+	width: 72px;
+	height: auto;
+}
+
+@media (max-width: 560px) {
+	.assistant .msg--error .msg__body.action-row--error {
+		grid-template-columns: auto minmax(0, 1fr);
+	}
+
+	.assistant .msg--error .msg__body.action-row--error .btn {
+		grid-column: 2;
+		justify-self: start;
+	}
+}
+
+/* Feedback, follow-ups, chips */
+.assistant .icon-btn {
+	display: inline-grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--radius-sm);
+	background: transparent;
+	color: var(--muted);
+}
+
+.assistant .icon-btn:hover {
+	color: var(--ink);
+	background: var(--paper-2);
+}
+
+.assistant .chip {
+	border-radius: var(--radius-sm);
+	background: transparent;
+	font-weight: 600;
+}
+
+.assistant .chip:hover,
+.assistant .chip:focus-visible {
+	background: var(--paper-2);
+	border-color: var(--line-2);
+}
+
+.assistant .followups {
+	margin-top: 14px;
+}
+
+/* Empty conversation */
+.assistant .chat-empty {
+	margin: 24px auto 8px;
+	max-width: 560px;
+}
+
+.assistant .chat-empty__art {
+	width: 180px;
+}
+
+.assistant .chat-empty h3 {
+	font-size: 1.25rem;
+}
+
+/* What-if form, inline in the conversation */
+.assistant .whatif-panel {
+	margin: 0;
+	padding: 16px 0 0;
+	border: 0;
+	border-top: 1px solid var(--line);
+	border-radius: 0;
+	background: transparent;
+	max-height: none;
+	overflow: visible;
+}
+
+/* Composer: sticky at the bottom of the viewport, above the phone tab bar. */
+.assistant .composer {
+	position: sticky;
+	bottom: var(--ws-dock);
+	z-index: 6;
+	margin: 0;
+	padding: 12px 0 10px;
+	border-top: 1px solid var(--line);
+	background: var(--paper);
+}
+
+.assistant .composer input {
+	min-height: 48px;
+	border-radius: var(--radius);
+	border-color: var(--line-2);
+	background: var(--card, #fff);
+	padding-inline: 14px;
+}
+
+.assistant .composer .btn {
+	min-height: 48px;
+	border-radius: var(--radius);
+}
+
+.assistant .composer__tools .chip {
+	min-height: 32px;
+	padding: 4px 10px;
+	font-size: 0.84rem;
+}
+
+.assistant .trust-line {
+	margin-top: 6px;
+	text-align: left;
+}
+
+/* Tools drawer floats over the conversation (desktop) or above the tab bar (phones). */
+.assistant__aside.tools-drawer {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 60;
+	width: min(360px, 92vw);
+	border-radius: 0;
+	box-shadow: -16px 0 40px rgba(36, 28, 27, 0.14);
+}
+
+@media (max-width: 820px) {
+	.assistant__aside.tools-drawer {
+		top: auto;
+		left: 0;
+		width: auto;
+		border-radius: var(--radius) var(--radius) 0 0;
+	}
+}
+
+@media (max-width: 767px) {
+	.assistant__aside.tools-drawer {
+		bottom: calc(62px + env(safe-area-inset-bottom));
+		border-radius: var(--radius);
+	}
+}
+
+/* Tables inside answers (what-if) */
+.assistant table {
+	width: 100%;
+}
+
+.assistant td,
+.assistant th {
+	padding: 8px 10px 8px 0;
+}
+
+.assistant .whatif__table tbody tr:last-child th,
+.assistant .whatif__table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+.assistant .synthetic {
+	margin: 8px 0 0;
+	font-size: 0.86rem;
+	color: var(--ink-2);
+}
+
+/* The conversation fills the viewport so the composer starts at the bottom, not mid-page. */
+.assistant,
+.assistant__body,
+.assistant__body > .assistant__grid,
+.assistant .chat {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+}
+
+.assistant__body > .assistant__grid {
+	width: 100%;
+}
+
+.assistant .log {
+	flex: 1 1 auto;
+}

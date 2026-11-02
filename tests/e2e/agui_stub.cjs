@@ -87,13 +87,17 @@ const REJECTED_CARD = {
   decision: "REJECTED",
   recorded_outcome: "REJECTED",
   lifecycle_state: "REJECTED",
+  // Same shape as facts.decision_card(): display strings plus the engine's numbers (v2 meters).
   rules: [
     { rule_id: "FOIR_MAX_45", name: "Existing EMIs vs income (FOIR)", reason_code: "FOIR_TOO_HIGH",
-      result: "FAIL", actual: "50%", threshold: "\u2264 45%", threshold_source: "synthetic" },
+      result: "FAIL", actual: "50.0%", threshold: "\u2264 45.0%", threshold_source: "synthetic",
+      actual_value: 0.5, threshold_value: 0.45, operator: "<=" },
     { rule_id: "MIN_CREDIT_SCORE", name: "Credit score", reason_code: "CREDIT_SCORE_LOW",
-      result: "FAIL", actual: "612", threshold: "\u2265 650", threshold_source: "synthetic" },
+      result: "FAIL", actual: "612", threshold: "\u2265 650", threshold_source: "synthetic",
+      actual_value: 612, threshold_value: 650, operator: ">=" },
     { rule_id: "MIN_MONTHLY_INCOME", name: "Monthly income", reason_code: null,
-      result: "PASS", actual: "\u20b952,000", threshold: "\u2265 \u20b925,000", threshold_source: "synthetic" },
+      result: "PASS", actual: "\u20b952,000", threshold: "\u2265 \u20b925,000", threshold_source: "synthetic",
+      actual_value: 52000, threshold_value: 25000, operator: ">=" },
   ],
   failed_reason_codes: ["FOIR_TOO_HIGH", "CREDIT_SCORE_LOW"],
   missing_fields: [],
@@ -120,6 +124,9 @@ const CITATIONS = [
     source_url: "https://example.invalid/policy/credit",
     relationship: "synthetic fixture, not a live policy source",
     applies_to_entity: ["SME"],
+    excerpt:
+      "Fixture excerpt (synthetic policy): an applicant's bureau score must be at least 650 at the time of " +
+      "assessment. Scores below this threshold are not approved under this product.",
   },
   {
     label: "S2",
@@ -129,6 +136,9 @@ const CITATIONS = [
     page: 7,
     source_url: null,
     relationship: "synthetic fixture, not a live policy source",
+    excerpt:
+      "Fixture excerpt (synthetic policy): total existing monthly repayments (EMIs) may be at most 45% of " +
+      "verified monthly income.",
   },
 ];
 
@@ -323,9 +333,12 @@ async function run(res, input) {
   send({ type: "RUN_STARTED", threadId, runId });
   send({ type: "TEXT_MESSAGE_START", messageId, role: "assistant" });
 
+  // The real graph's node order per intent: what-if re-runs the checks; a policy question retrieves.
   const stages = scenario === "whatif"
     ? ["authenticate", "load_evidence", "what_if", "compose"]
-    : ["authenticate", "load_evidence", "compose"];
+    : scenario === "citations"
+      ? ["authenticate", "retrieve_policy", "compose"]
+      : ["authenticate", "load_evidence", "compose"];
   for (const stage of stages) {
     if (!progress(stage)) return;
     await sleep(slow ? 900 : STAGE_MS);

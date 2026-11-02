@@ -170,7 +170,10 @@ describe("what-if result", () => {
     });
     const markup = renderToStaticMarkup(<>{buildBlocks(state, context).map((block, index) => <div key={index}>{renderBlock(block, context)}</div>)}</>);
     expect(markup).toContain("Simulation, not your decision");
-    expect(markup).toContain("credit score = 720");
+    // v2: a before/after row per changed field (no engine number on this card, so no "before").
+    expect(markup).toContain("Credit score");
+    expect(markup).toMatch(/set to <\/span><b>720<\/b>/);
+    expect(markup).toContain("<b>720</b>");
     expect(markup).toContain("Recorded");
     expect(markup).toContain("Not met");
     expect(markup).toContain("Met");

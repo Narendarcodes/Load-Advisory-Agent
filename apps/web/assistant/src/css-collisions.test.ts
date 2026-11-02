@@ -60,10 +60,15 @@ describe("phone layout against the portal's tab bar", () => {
     expect(sheet).toMatch(/bottom:\s*calc\(62px/);
   });
 
-  it("bounds the conversation log below the desktop layout so scroll-to-newest has something to scroll", () => {
-    const narrow = mediaBlocks(islandCss, "max-width: 900px").join("");
-    const log = narrow.match(/\.assistant \.log\s*\{([^}]*)\}/)?.[1] ?? "";
-    expect(log).toMatch(/max-height:/);
+  it("v2: the conversation flows in the page (nothing clipped) and the composer docks above the tab bar", () => {
+    const v2 = islandCss.slice(islandCss.indexOf("Saral v2: the assistant as a workspace"));
+    const log = v2.match(/\.assistant \.log,\s*\.assistant \.log:focus\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(log).toMatch(/max-height:\s*none/);
+    expect(log).toMatch(/overflow:\s*visible/);
+    const composer = v2.match(/\.assistant \.composer\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(composer).toMatch(/position:\s*sticky/);
+    expect(composer).toMatch(/bottom:\s*var\(--ws-dock\)/);
+    expect(mediaBlocks(v2, "max-width: 767px").join("")).toMatch(/--ws-dock:\s*calc\(62px/);
   });
 });
 

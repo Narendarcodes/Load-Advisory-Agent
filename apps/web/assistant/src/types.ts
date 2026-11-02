@@ -13,6 +13,8 @@ export interface Citation {
   source_url?: string | null;
   relationship?: string | null;
   applies_to_entity?: string[] | null;
+  /** Opening of the cited passage, plain text (server-trimmed). Shown in the source chip. */
+  excerpt?: string | null;
 }
 
 export interface ImprovementTask {
@@ -45,6 +47,10 @@ export interface DecisionRule {
   actual?: string | null;
   threshold?: string | null;
   threshold_source?: string | null;
+  /** The engine's own numbers for meters. Null when the engine did not evaluate the rule. */
+  actual_value?: number | null;
+  threshold_value?: number | null;
+  operator?: ">=" | "<=" | null;
 }
 
 /** facts.bureau_facts(): present only when the decision used a bureau report. */

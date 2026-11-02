@@ -7,6 +7,7 @@ import {
   ruleResultLabel,
   type MissingInformationItem,
 } from "./catalog";
+import { meterModel, whatIfComparisons, type MeterModel } from "./meter";
 
 function safeUrl(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -45,27 +46,74 @@ export function RuleEvaluationList({ rules }: { rules: DecisionRule[] }) {
     return <p className="note">No rule checks are recorded on this decision.</p>;
   }
   return (
-    <table className="rules">
-      <caption className="sr-only">Checks recorded on this decision</caption>
-      <thead>
-        <tr>
-          <th scope="col">Check</th>
-          <th scope="col">Your recorded value</th>
-          <th scope="col">Requirement</th>
-          <th scope="col">Result</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rules.map((rule) => (
-          <tr key={rule.rule_id}>
-            <th scope="row">{rule.name}</th>
-            <td>{rule.actual ?? "Not recorded"}</td>
-            <td>{rule.threshold ?? "Not recorded"}</td>
-            <td className={`r-${rule.result}`}>{ruleResultLabel(rule.result)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <ul className="rule-list" aria-label="Checks recorded on this decision">
+      {rules.map((rule) => (
+        <RuleRow key={rule.rule_id} rule={rule} />
+      ))}
+    </ul>
+  );
+}
+
+/** The UI owns the words: "Existing EMIs vs income (FOIR)" shows without the acronym. */
+export function ruleName(name: string): string {
+  return name.replace(/\s*\([^)]*\)\s*$/, "") || name;
+}
+
+function resultTone(result: string): "ok" | "bad" | "neutral" {
+  if (result === "PASS") return "ok";
+  if (result === "FAIL") return "bad";
+  return "neutral";
+}
+
+/** A horizontal scale with the recorded value and the policy limit. Decorative; the text says it all. */
+export function Meter({ model }: { model: MeterModel }) {
+  const passSide =
+    model.direction === "at_least"
+      ? { left: `${model.limitPct}%`, width: `${100 - model.limitPct}%` }
+      : { left: "0%", width: `${model.limitPct}%` };
+  return (
+    <span className="meter" aria-hidden="true">
+      <span className="meter__track">
+        <span className="meter__ok" style={passSide} />
+        <span className="meter__limit" style={{ left: `${model.limitPct}%` }} />
+        <span className={`meter__value meter__value--${model.passes ? "ok" : "bad"}`} style={{ left: `${model.valuePct}%` }} />
+      </span>
+    </span>
+  );
+}
+
+function RuleRow({ rule }: { rule: DecisionRule }) {
+  const model = meterModel(rule);
+  const tone = resultTone(rule.result);
+  return (
+    <li className="rule-row">
+      <div className="rule-row__head">
+        <span className="rule-row__name">{ruleName(rule.name)}</span>
+        <span className={`badge badge--${tone}`}>{ruleResultLabel(rule.result)}</span>
+      </div>
+      {model ? (
+        <>
+          <Meter model={model} />
+          <p className="rule-row__figures">
+            <span>
+              Yours <b>{model.valueLabel}</b>
+            </span>
+            <span>
+              {model.direction === "at_least" ? "Minimum" : "Limit"} <b>{model.limitLabel}</b>
+            </span>
+          </p>
+        </>
+      ) : (
+        <p className="rule-row__figures">
+          <span>
+            Yours <b>{rule.actual ?? "Not recorded"}</b>
+          </span>
+          <span>
+            Requirement <b>{rule.threshold ?? "Not recorded"}</b>
+          </span>
+        </p>
+      )}
+    </li>
   );
 }
 
@@ -78,9 +126,13 @@ export function DecisionCardBlock({ card }: { card: DecisionCard }) {
         <span className={`badge badge--${outcome.tone}`}>{outcome.label}</span>
       </div>
       <p className="note">
-        Recorded for {card.application_ref ?? "this application"}. This is the decision already on file, not a new
-        assessment.
+        Recorded for {card.application_ref ?? "this application"}. These are the figures on the decision already on
+        file, not a new assessment.
       </p>
+      <RuleEvaluationList rules={card.rules} />
+      {card.missing_fields.length ? (
+        <p className="note">Checks that could not run: {card.missing_fields.map(fieldName).join(", ")}.</p>
+      ) : null}
       {card.policy_synthetic ? (
         <p className="synthetic">
           <span className="badge badge--warn">Synthetic policy</span>{" "}
@@ -88,15 +140,6 @@ export function DecisionCardBlock({ card }: { card: DecisionCard }) {
         </p>
       ) : card.policy_label ? (
         <p className="note">Policy source: {card.policy_label}</p>
-      ) : null}
-      <RuleEvaluationList rules={card.rules} />
-      {card.missing_fields.length ? (
-        <p className="note">
-          Checks that could not run: {card.missing_fields.map(fieldName).join(", ")}.
-        </p>
-      ) : null}
-      {card.failed_reason_codes.length ? (
-        <p className="note">Reason codes on the record: {card.failed_reason_codes.join(", ")}.</p>
       ) : null}
       {card.bureau ? (
         <div className="bureau">
@@ -120,32 +163,52 @@ export function DecisionCardBlock({ card }: { card: DecisionCard }) {
           ) : null}
         </div>
       ) : null}
-      <p className="provenance">
-        {card.record_id ? `Decision record ${card.record_id}` : "Decision record"}
-        {card.policy_version ? ` · policy ${card.policy_version}` : ""}
-        {card.evaluated_at ? ` · evaluated ${card.evaluated_at}` : ""}
-        {card.flags.length ? ` · flags: ${card.flags.join(", ")}` : ""}
-      </p>
+      <details className="record-details">
+        <summary>Record details</summary>
+        {card.failed_reason_codes.length ? (
+          <p className="note">Reason codes on the record: {card.failed_reason_codes.join(", ")}.</p>
+        ) : null}
+        <p className="provenance">
+          {card.record_id ? `Decision record ${card.record_id}` : "Decision record"}
+          {card.policy_version ? ` · policy ${card.policy_version}` : ""}
+          {card.evaluated_at ? ` · evaluated ${card.evaluated_at}` : ""}
+          {card.flags.length ? ` · flags: ${card.flags.join(", ")}` : ""}
+        </p>
+      </details>
     </section>
   );
 }
 
-function CitationItem({ citation }: { citation: Citation }) {
+function CitationChip({ citation }: { citation: Citation }) {
   const href = safeUrl(citation.source_url);
-  const title = href ? (
-    <a href={href} target="_blank" rel="noopener noreferrer">
-      {citation.title}
-    </a>
-  ) : (
-    citation.title
-  );
+  const where = [citation.section ? `Section ${citation.section}` : null, citation.page ? `page ${citation.page}` : null]
+    .filter(Boolean)
+    .join(", ");
   return (
     <li>
-      <span className="cite-label">[{citation.label}]</span> {title}
-      {citation.section ? ` · ${citation.section}` : ""}
-      {citation.page ? ` · p.${citation.page}` : ""}
-      {citation.relationship ? <span className="rel"> · {citation.relationship}</span> : null}
-      {citation.applies_to_entity?.length ? ` · applies to: ${citation.applies_to_entity.join("/")}` : null}
+      <details className="source-chip">
+        <summary>
+          <span className="source-chip__label">{citation.label}</span>
+          <span className="source-chip__title">{citation.title}</span>
+        </summary>
+        <div className="source-chip__body">
+          {citation.excerpt ? (
+            <blockquote className="source-chip__quote">{citation.excerpt}</blockquote>
+          ) : (
+            <p className="note">No excerpt was sent with this source.</p>
+          )}
+          <p className="note">
+            {where ? `${where}. ` : ""}
+            {citation.relationship ? `${citation.relationship}. ` : ""}
+            {citation.applies_to_entity?.length ? `Applies to: ${citation.applies_to_entity.join(", ")}.` : ""}
+          </p>
+          {href ? (
+            <a href={href} target="_blank" rel="noopener noreferrer">
+              Open the source document
+            </a>
+          ) : null}
+        </div>
+      </details>
     </li>
   );
 }
@@ -155,16 +218,21 @@ export function PolicyCitationBlock({ citations }: { citations: Citation[] }) {
   return (
     <div className="cites">
       <h3>Sources</h3>
-      <ul>
+      <ul className="source-chips">
         {citations.map((citation) => (
-          <CitationItem key={`${citation.label}-${citation.document_id}-${citation.section ?? ""}`} citation={citation} />
+          <CitationChip key={`${citation.label}-${citation.document_id}-${citation.section ?? ""}`} citation={citation} />
         ))}
       </ul>
     </div>
   );
 }
 
-export function WhatIfResultBlock({ whatIf, card }: { whatIf: WhatIf; card?: DecisionCard }) {
+function formatNumber(field: string, value: number): string {
+  if (field === "monthly_income" || field === "monthly_obligations") return `₹${amount(value)}`;
+  return amount(value);
+}
+
+export function WhatIfResultBlock({ whatIf, card, onAdjust }: { whatIf: WhatIf; card?: DecisionCard; onAdjust?: () => void }) {
   if (whatIf.error) {
     return (
       <div className="whatif">
@@ -173,33 +241,72 @@ export function WhatIfResultBlock({ whatIf, card }: { whatIf: WhatIf; card?: Dec
       </div>
     );
   }
-  const changes = Object.entries(whatIf.changes ?? {});
+  const rows = whatIfComparisons(whatIf, card);
   const results = Object.entries(whatIf.rule_results ?? {});
   const recorded = new Map((card?.rules ?? []).map((rule) => [rule.rule_id, rule]));
+  const simulated = whatIf.simulated_decision ? outcomeLabel(whatIf.simulated_decision) : null;
+  const recordedOutcome = card ? outcomeLabel(card.recorded_outcome ?? card.decision) : null;
   return (
     <div className="whatif">
-      <h3>
-        What-if <span className="badge badge--warn">Simulation, not your decision</span>
-      </h3>
-      {changes.length ? (
-        <p className="note">
-          With {changes.map(([field, value]) => `${fieldName(field)} = ${amount(value)}`).join(", ")}:
-        </p>
-      ) : null}
-      {whatIf.simulated_decision ? (
-        <p>
-          Simulated outcome: <b>{outcomeLabel(whatIf.simulated_decision).label}</b>
-          {whatIf.is_simulation === false ? "" : " (simulation only)"}
-        </p>
+      <div className="whatif__head">
+        <h3>What-if</h3>
+        <span className="badge badge--warn">Simulation, not your decision</span>
+      </div>
+      {rows.length ? (
+        <ul className="whatif__changes">
+          {rows.map((row) => {
+            const model = row.rule ? meterModel(row.rule) : null;
+            const afterPct = model ? Math.min(100, Math.max(0, ((row.after - model.min) / (model.max - model.min)) * 100)) : null;
+            return (
+              <li key={row.field} className="whatif__change">
+                <p className="whatif__figures">
+                  <span className="whatif__label">{row.label}</span>
+                  <span>
+                    {row.before !== null ? (
+                      <>
+                        <span className="whatif__before">{formatNumber(row.field, row.before)}</span>
+                        <span aria-hidden="true"> → </span>
+                        <span className="sr-only"> changed to </span>
+                      </>
+                    ) : (
+                      <span className="whatif__before">set to </span>
+                    )}
+                    <b>{formatNumber(row.field, row.after)}</b>
+                  </span>
+                </p>
+                {model && afterPct !== null ? (
+                  <>
+                  <span className="meter meter--whatif" aria-hidden="true">
+                    <span className="meter__track">
+                      <span className="meter__limit" style={{ left: `${model.limitPct}%` }} />
+                      <span className="meter__value meter__value--before" style={{ left: `${model.valuePct}%` }} />
+                      <span
+                        className={`meter__value meter__value--${row.simulated === "PASS" ? "ok" : "bad"}`}
+                        style={{ left: `${afterPct}%` }}
+                      />
+                    </span>
+                  </span>
+                  <p className="rule-row__figures">
+                    <span>Recorded and simulated, on the same scale</span>
+                    <span>
+                      {model.direction === "at_least" ? "Minimum" : "Limit"} <b>{model.limitLabel}</b>
+                    </span>
+                  </p>
+                  </>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
       ) : null}
       {results.length ? (
-        <table>
+        <table className="whatif__table">
           <caption className="sr-only">Hypothetical rule results compared with the recorded decision</caption>
           <thead>
             <tr>
               <th scope="col">Check</th>
               {card ? <th scope="col">Recorded</th> : null}
-              <th scope="col">Hypothetical</th>
+              <th scope="col">Simulation</th>
             </tr>
           </thead>
           <tbody>
@@ -207,20 +314,42 @@ export function WhatIfResultBlock({ whatIf, card }: { whatIf: WhatIf; card?: Dec
               const prior = recorded.get(rule);
               return (
                 <tr key={rule}>
-                  <th scope="row">{prior?.name ?? rule}</th>
-                  {card ? <td>{prior ? ruleResultLabel(prior.result) : "Not recorded"}</td> : null}
-                  <td className={`r-${result}`}>{ruleResultLabel(result)}</td>
+                  <th scope="row">{prior ? ruleName(prior.name) : rule}</th>
+                  {card ? (
+                    <td>
+                      {prior ? <span className={`badge badge--${resultTone(prior.result)}`}>{ruleResultLabel(prior.result)}</span> : "Not recorded"}
+                    </td>
+                  ) : null}
+                  <td>
+                    <span className={`badge badge--${resultTone(result)}`}>{ruleResultLabel(result)}</span>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       ) : null}
+      {simulated ? (
+        <p className="whatif__outcome">
+          {recordedOutcome ? (
+            <>
+              Recorded outcome <b>{recordedOutcome.label}</b> ·{" "}
+            </>
+          ) : null}
+          Simulated outcome <b>{simulated.label}</b>
+          {whatIf.is_simulation === false ? "" : " (simulation only)"}
+        </p>
+      ) : null}
       <p className="note">
         {whatIf.label ?? "Hypothetical result under the synthetic prototype policy; not a decision and not a guarantee."}
       </p>
       {whatIf.original_record_unchanged === true ? (
         <p className="note">Your recorded application was not changed by this simulation.</p>
+      ) : null}
+      {onAdjust ? (
+        <button type="button" className="btn btn--ghost btn--sm" onClick={onAdjust}>
+          Try other numbers
+        </button>
       ) : null}
     </div>
   );
@@ -257,12 +386,16 @@ export function MissingInformationBlock({ items }: { items: MissingInformationIt
   return (
     <section className="missing" aria-labelledby="missing-heading">
       <h3 id="missing-heading">Information still needed</h3>
-      <ul>
+      <ul className="action-rows">
         {items.map((item) => (
-          <li key={item.field}>
-            <b>{item.label}</b>
-            <p className="note">{item.explanation}</p>
-            <a href={item.href}>{item.linkLabel}</a>
+          <li key={item.field} className="action-row">
+            <div className="action-row__text">
+              <b>{item.label}</b>
+              <p className="note">{item.explanation}</p>
+            </div>
+            <a className="action-row__action" href={item.href}>
+              {item.linkLabel}
+            </a>
           </li>
         ))}
       </ul>
@@ -274,16 +407,22 @@ export function HumanAssistanceBlock({ handoffRef }: { handoffRef: string }) {
   return (
     <section className="handoff" aria-labelledby="handoff-heading">
       <h3 id="handoff-heading">Human help requested</h3>
-      <p>
-        A handoff reference was saved: <span className="mono">{handoffRef}</span>.
-      </p>
-      <p className="note">
-        This records your request in this site's queue. No message has been sent to a person yet, no advisor has been
-        assigned, and no external ticket has been created.
-      </p>
-      <p className="note">
-        For a response, use the <a href="/borrower/help">help page</a> to see how to reach the lender.
-      </p>
+      <ul className="action-rows">
+        <li className="action-row">
+          <div className="action-row__text">
+            <b>
+              Reference <span className="mono">{handoffRef}</span>
+            </b>
+            <p className="note">
+              This records your request in this site's queue. No message has been sent to a person yet, no advisor has
+              been assigned, and no external ticket has been created.
+            </p>
+          </div>
+          <a className="action-row__action" href="/borrower/help">
+            See how to reach the lender
+          </a>
+        </li>
+      </ul>
     </section>
   );
 }
