@@ -1,0 +1,197 @@
+[
+  {
+    "name": "a guest cannot list applications",
+    "ok": true,
+    "detail": "403"
+  },
+  {
+    "name": "a guest cannot mint an assertion",
+    "ok": true,
+    "detail": "403"
+  },
+  {
+    "name": "a guest is redirected from the dashboard",
+    "ok": true,
+    "detail": "http://127.0.0.1:8082/login?redirect-to=%2Fborrower"
+  },
+  {
+    "name": "a guest is redirected from an application page",
+    "ok": true,
+    "detail": "http://127.0.0.1:8082/login?redirect-to=%2Fborrower%2Fapplication%3Fname%3DACC-LOAP-2026-00001"
+  },
+  {
+    "name": "the browser-shaped session gets a CSRF token",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the borrower sees their own application",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "the listing never includes another borrower's application",
+    "ok": true,
+    "detail": "{\"message\":[{\"name\":\"ACC-LOAP-2026-00001\",\"status\":\"Open\",\"lifecycle\":\"REJECTED\",\"loan_product\":\"LAP-TEST-001\",\"loan_amount\":500000.0,\"tenure_months\":24,\"posting_date\":\"2026-11-02\",\"submitted_at\":\"202"
+  },
+  {
+    "name": "the borrower reads their own application",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "another borrower's application is a 404, not a 403",
+    "ok": true,
+    "detail": "{\"exc_type\":\"NotFound\",\"_error_message\":\"Application not found.\"}"
+  },
+  {
+    "name": "another borrower's decision is a 404",
+    "ok": true,
+    "detail": "404"
+  },
+  {
+    "name": "another borrower's documents are a 404",
+    "ok": true,
+    "detail": "404"
+  },
+  {
+    "name": "another borrower's application page is a 404",
+    "ok": true,
+    "detail": "404"
+  },
+  {
+    "name": "another borrower's assistant page is a 404",
+    "ok": true,
+    "detail": "404"
+  },
+  {
+    "name": "the borrower's own documents are listed",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "a document cannot be downloaded through a foreign application",
+    "ok": true,
+    "detail": "404"
+  },
+  {
+    "name": "an unknown document row is refused",
+    "ok": true,
+    "detail": "403"
+  },
+  {
+    "name": "the mint refuses a request without the CSRF token",
+    "ok": true,
+    "detail": "{\"exc_type\":\"CSRFTokenError\",\"_server_messages\":\"[\\\"{\\\\\\\"message\\\\\\\":\\\\\\\"Invalid Request\\\\\\\",\\\\\\\"as_table\\\\\\\":false,\\\\\\\"title\\\\\\\":\\\\\\\"Message\\\\\\\",\\\\\\\"indicator\\"
+  },
+  {
+    "name": "the mint refuses a wrong CSRF token",
+    "ok": true,
+    "detail": "{\"exc_type\":\"CSRFTokenError\",\"_server_messages\":\"[\\\"{\\\\\\\"message\\\\\\\":\\\\\\\"Invalid Request\\\\\\\",\\\\\\\"as_table\\\\\\\":false,\\\\\\\"title\\\\\\\":\\\\\\\"Message\\\\\\\",\\\\\\\"indicator\\"
+  },
+  {
+    "name": "the borrower mints for their own conversation",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "another borrower cannot join that conversation",
+    "ok": true,
+    "detail": "403"
+  },
+  {
+    "name": "another borrower cannot advance that conversation",
+    "ok": true,
+    "detail": "403"
+  },
+  {
+    "name": "the mint returns one assertion",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a fresh assertion is accepted by the agent",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "a replayed assertion is refused",
+    "ok": true,
+    "detail": "{\"error\":\"sign in first\"}"
+  },
+  {
+    "name": "a tampered assertion is refused",
+    "ok": true,
+    "detail": "{\"error\":\"sign in first\"}"
+  },
+  {
+    "name": "a malformed credential is refused",
+    "ok": true,
+    "detail": "401"
+  },
+  {
+    "name": "the seeded decision is readable for the comparison",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "the request body cannot override the asserted application",
+    "ok": true,
+    "detail": "{'status': 200, 'refs': ['0571e347-5cf3-5e82-97d5-f9215edee35b'], 'expected': '0571e347-5cf3-5e82-97d5-f9215edee35b'}"
+  },
+  {
+    "name": "the answer never mentions another borrower's file",
+    "ok": true,
+    "detail": "{\"request_id\": \"861471a3-d8cb-4938-b4ad-9e5d02455dee\", \"trace_id\": \"0594af85-0cd2-4d5c-a4ea-d448ee137865\", \"intent\": \"explain\", \"action\": \"answer\", \"answer\": \"Your application was rejected under our s"
+  },
+  {
+    "name": "the explain answer still matches the recorded decision",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a borrower cannot mint a voice assertion",
+    "ok": true,
+    "detail": "403"
+  },
+  {
+    "name": "an unknown voice session is a 404",
+    "ok": true,
+    "detail": "404"
+  },
+  {
+    "name": "a malformed voice session is a 404",
+    "ok": true,
+    "detail": "404"
+  },
+  {
+    "name": "a service without the integration role is refused",
+    "ok": true,
+    "detail": "403"
+  },
+  {
+    "name": "the runtime does not allow a foreign origin",
+    "ok": true,
+    "detail": "(none)"
+  },
+  {
+    "name": "the runtime allows the portal origin",
+    "ok": true,
+    "detail": "http://127.0.0.1:8082"
+  },
+  {
+    "name": "logout succeeds",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "a logged-out session cannot list applications",
+    "ok": true,
+    "detail": "403"
+  },
+  {
+    "name": "a logged-out session cannot mint",
+    "ok": true,
+    "detail": "403"
+  }
+]

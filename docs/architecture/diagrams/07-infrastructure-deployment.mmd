@@ -1,0 +1,65 @@
+---
+title: "Infrastructure and deployment"
+---
+flowchart TB
+  subgraph CLIENT["Borrower device"]
+    BR["Browser<br/>single origin, session cookie only"]
+  end
+
+  subgraph HOSTPUB["Public boundary"]
+    NGX["Reverse proxy / TLS<br/>infra/proxy/nginx.conf.template<br/>same-origin merge"]
+  end
+
+  subgraph DOCKER["Docker Compose project - infra/frappe/loanrangers.yml"]
+    subgraph FT["Frappe frontend container"]
+      Fnginx["nginx<br/>pins X-Frappe-Site-Name<br/>:8080"]
+    end
+    subgraph BE["Backend containers (no published ports)"]
+      Gunicorn["backend<br/>gunicorn :8000"]
+      WS["websocket :9000"]
+      SCH["scheduler"]
+      Q1["queue-short"]
+      Q2["queue-long"]
+    end
+    DB[("db<br/>mariadb:11.8<br/>volume db-data")]
+    RC[("redis-cache<br/>redis:8.6-alpine")]
+    RQ[("redis-queue<br/>volume redis-queue-data")]
+  end
+
+  subgraph HOSTPRIV["Host processes - private network, never published"]
+    RT["CopilotKit runtime<br/>apps/runtime/dist/index.js<br/>127.0.0.1:4200"]
+    AG["Advisory agent<br/>FastAPI + uvicorn<br/>127.0.0.1:8095"]
+    BUR["Synthetic bureau<br/>127.0.0.1:8011"]
+  end
+
+  subgraph EXT["External services - each optional, none required by the portal"]
+    GROQ["LLM provider<br/>Groq or any LLM_BASE endpoint"]
+    LKF["Langfuse stack<br/>:3000 (own compose project)"]
+    LK["LiveKit server<br/>NOT DEPLOYED"]
+  end
+
+  VOL[("sites volume<br/>sites + private files + assets symlink")]
+
+  BR -->|"HTTPS, one origin"| NGX
+  NGX --> Fnginx
+  NGX -->|"/api/copilotkit"| RT
+  Fnginx --> Gunicorn
+  Gunicorn --> DB
+  Gunicorn --> RC
+  Q1 --> RQ
+  Q2 --> RQ
+  SCH --> RQ
+  WS --> RC
+  BE --- VOL
+  RT -->|"mint assertion"| NGX
+  RT -->|"POST /api/agui + bearer assertion"| AG
+  AG -->|"evidence read, service token"| NGX
+  AG --> BUR
+  AG --> GROQ
+  AG -.->|"spans, currently dropped"| LKF
+  BRx["Voice worker"] -.-> LK
+
+  classDef devonly fill:#f5f5f5,stroke:#999,stroke-dasharray:4 3;
+  classDef notbuilt fill:#fdecea,stroke:#c0392b,stroke-dasharray:4 3;
+  class LKF notbuilt;
+  class LK notbuilt;

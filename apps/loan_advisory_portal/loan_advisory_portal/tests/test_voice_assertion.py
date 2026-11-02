@@ -7,10 +7,12 @@ from loan_advisory_portal.portal.errors import Conflict, Forbidden, NotFound
 from loan_advisory_portal.services import assertion
 from loan_advisory_portal.tests.utils import (
 	as_user,
+	configure_voice_for_tests,
 	ensure_company,
 	ensure_product,
 	make_application,
 	make_borrower,
+	restore_voice_config,
 	unique,
 )
 
@@ -35,7 +37,13 @@ class VoiceAssertionTest(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
+		cls.voice_config = configure_voice_for_tests()
 		ensure_product(ensure_company())
+
+	@classmethod
+	def tearDownClass(cls):
+		restore_voice_config(cls.voice_config)
+		super().tearDownClass()
 
 	def setUp(self):
 		frappe.set_user("Administrator")
