@@ -219,8 +219,16 @@ async function record(kind) {
   // Kiosk window filling the Xvfb screen; ffmpeg (started by the caller) grabs the display.
   const width = Number(process.env.REC_WIDTH || 1280);
   const height = Number(process.env.REC_HEIGHT || 800);
-  const browser = await launch(["--kiosk", `--window-size=${width},${height}`, "--window-position=0,0"]);
-  const context = await browser.newContext({ viewport: null, hasTouch: width <= 420 });
+  // Playwright's headed contexts open their own windows, which ignore --kiosk, and Chromium will
+  // not make a window narrower than ~500px. So the page gets an exact viewport inside a larger
+  // window at 0,0 and the caller crops the X grab to the page area (REC_TOP = browser UI height).
+  const browser = await launch(["--window-position=0,0", `--window-size=${Math.max(width, 600) + 20},${height + 140}`]);
+  const context = await browser.newContext({
+    viewport: { width, height },
+    deviceScaleFactor: 1,
+    isMobile: width <= 420,
+    hasTouch: width <= 420,
+  });
   const page = await context.newPage();
   if (kind === "wizard") {
     await page.goto(`${BASE}/borrower?fx=full`); await settle(page); await sleep(1500);
