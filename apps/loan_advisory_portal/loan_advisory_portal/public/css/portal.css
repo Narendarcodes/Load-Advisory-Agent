@@ -6742,11 +6742,17 @@ textarea:focus-visible {
 	box-shadow: var(--shadow);
 }
 
+/* Phones: above the tab bar, so it never covers the page title. */
 @media (max-width: 767px) {
 	.page-loading {
-		top: 74px;
+		top: auto;
+		bottom: calc(84px + env(safe-area-inset-bottom, 0px));
 		right: 50%;
 		transform: translateX(50%);
+	}
+
+	.public-shell .page-loading {
+		bottom: calc(20px + env(safe-area-inset-bottom, 0px));
 	}
 }
 
