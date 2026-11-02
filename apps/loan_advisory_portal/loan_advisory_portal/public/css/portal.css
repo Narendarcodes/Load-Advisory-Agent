@@ -5722,3 +5722,20 @@ h2,
 h3 {
 	text-wrap: balance;
 }
+
+/* v2 (390 px): the page-head text had a ~130 px column beside the art and the profile meter.
+   On phones the text takes the full first row; the meter and the art share the row below. */
+@media (max-width: 640px) {
+	.page-head--art {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
+	.page-head--art > :first-child {
+		grid-column: 1 / -1;
+	}
+
+	.page-head--art .page-head__art {
+		justify-self: end;
+		width: 96px;
+	}
+}

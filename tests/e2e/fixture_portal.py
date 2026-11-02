@@ -94,7 +94,7 @@ class Fixtures:
 			"initials": BORROWER["initials"],
 			"demo": False,
 			"customer": "CUST-FIXTURE",
-			"literacy": "simple",
+			"literacy": "low",
 			"locale": "en",
 			"profile": "BP-FIXTURE",
 		}
@@ -162,7 +162,7 @@ class Fixtures:
 			"name": "BP-FIXTURE", "customer": "CUST-FIXTURE", "status": "Active", "onboarding_state": "PROFILE",
 			"full_name": BORROWER["full_name"], "email": BORROWER["user"], "phone": "+919000000000",
 			"employment_type": "Salaried", "employer": "Example Textiles Pvt Ltd", "employment_months": 30,
-			"monthly_income": 52000, "monthly_obligations": 9000, "preferred_locale": "en", "literacy": "simple",
+			"monthly_income": 52000, "monthly_obligations": 9000, "preferred_locale": "en", "literacy": "low",
 			"consent_terms": 1, "consent_privacy": 1, "terms_version": "fixture", "privacy_version": "fixture",
 			"profile_completion": 80,
 		}
@@ -171,7 +171,7 @@ class Fixtures:
 		return {
 			"authenticated": True, "user": BORROWER["user"], "full_name": BORROWER["full_name"],
 			"email": BORROWER["user"], "roles": ["Borrower"], "is_borrower": True,
-			"borrower": {"customer": "CUST-FIXTURE", "profile": "BP-FIXTURE", "literacy": "simple", "locale": "en",
+			"borrower": {"customer": "CUST-FIXTURE", "profile": "BP-FIXTURE", "literacy": "low", "locale": "en",
 			             "onboarding_state": "PROFILE", "profile_completion": 80},
 			"selected_application": None,
 		}
@@ -278,7 +278,7 @@ class Fixtures:
 				snapshot={"lifecycle": row["state"], "title": guide["title"], "summary": guide["summary"],
 				          "decision_label": labels.get(row["decision"], "No assessment recorded")},
 				assistant={"application": name, "user": BORROWER["user"], "csrf_token": "fixture-csrf",
-				           "literacy": "simple", "locale": "en",
+				           "literacy": "low", "locale": "en",
 				           "voice": {"enabled": False, "consent_version": "fixture"}},
 			)
 			return "www/borrower/assistant.html", ctx

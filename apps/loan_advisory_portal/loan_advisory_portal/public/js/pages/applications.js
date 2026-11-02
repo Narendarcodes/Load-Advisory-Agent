@@ -90,7 +90,7 @@
 				'<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-applications.svg" alt="" width="180" height="135">' +
 				"<h2>No applications yet</h2>" +
 				"<p>When you start an application it appears here, with its status, documents and the reasons behind any decision.</p>" +
-				'<a class="btn" href="/borrower/apply">Start an application</a>' +
+				'<a class="btn btn--ghost" href="/borrower/apply">Start an application</a>' + // page head holds the coral one
 				"</div>";
 			return;
 		}
@@ -154,8 +154,8 @@
 			body.textContent =
 				"See an indicative amount before you fill in a full application. It does not affect your credit score.";
 			action.innerHTML =
-				'<a class="btn btn--sm" href="/borrower/eligibility">Check eligibility</a> ' +
-				'<a class="btn btn--ghost btn--sm" href="/borrower/apply">Start an application</a>';
+				'<a class="btn btn--ghost btn--sm" href="/borrower/eligibility">Check eligibility</a> ' +
+				'<a class="btn btn--quiet btn--sm" href="/borrower/apply">Start an application</a>';
 			return;
 		}
 
