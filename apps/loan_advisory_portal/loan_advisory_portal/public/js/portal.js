@@ -75,8 +75,8 @@
 	 */
 	/*
 	 * v6 page loading: while the page's first reads are still out after a short grace period, the loading
-	 * band at the top of the page (base.html #page-loading; a Paper Shaders "loading" band, static under
-	 * reduced motion) shows with one status sentence. Content areas keep their own skeletons. Reads that a
+	 * status card (base.html #page-loading; a thin CSS status bar, still under reduced motion) shows with
+	 * one status sentence. Content areas keep their own skeletons. Reads that a
 	 * borrower starts later (a save, a refresh) have their own busy states, so they do not show it.
 	 */
 	var loading = { inflight: 0, settled: false, timer: 0, settle: 0, shownAt: 0 };

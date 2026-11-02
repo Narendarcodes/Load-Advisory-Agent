@@ -13,18 +13,17 @@ import { createLiveKitTransport, type VoiceTransport, type VoiceTransportFactory
 import { ORB_LABEL, nextOrbState, type OrbState, type VoiceSpeaker } from "./voice-orb";
 
 /**
- * v6: a Paper Shaders smoke-ring orb (portal js/shader.js mounts it; static gradient under reduced motion)
- * that follows the call: idle, connecting, listening, thinking, speaking, microphone off. Decorative; the
- * status line and transcript carry the meaning, so it is hidden from assistive tech.
+ * A clean CSS circle that follows the call (idle, connecting, listening, thinking, speaking, microphone off)
+ * and scales gently with LiveKit's audio level; still under reduced motion. Decorative; the static state
+ * label, status line and transcript carry the meaning, so the circle is hidden from assistive tech.
  */
 function VoiceOrb({ state, level }: { state: OrbState; level: number }) {
   return (
     <div className="voice-stage">
       <div
-        className="voice-orb shader-zone"
-        data-shader="voice"
-        data-shader-state={state}
-        data-shader-level={level.toFixed(2)}
+        className="voice-orb"
+        data-state={state}
+        data-level={level.toFixed(2)}
         aria-hidden="true"
         style={{ ["--voice-level" as string]: level.toFixed(2) }}
       >

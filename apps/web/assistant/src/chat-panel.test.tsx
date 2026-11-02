@@ -165,7 +165,7 @@ describe("ChatPanel", () => {
     expect(element.querySelector<HTMLButtonElement>(".chips button")?.disabled).toBe(false);
   });
 
-  it("marks the decorative shader zones: an orb behind the mark while empty, a pulse ring while thinking (v5)", async () => {
+  it("shows the Saral mark on a plain circle while empty and a quiet thinking mark while working (final)", async () => {
     let release: (() => void) | undefined;
     const agent = {
       messages: [],
@@ -176,54 +176,19 @@ describe("ChatPanel", () => {
       runAgent: vi.fn(() => new Promise<void>((resolve) => (release = resolve))),
     } as unknown as AbstractAgent;
     const { container: element } = await mount(agent);
-    const orb = element.querySelector(".chat-empty [data-shader]");
-    expect(orb?.getAttribute("data-shader")).toBe("orb");
-    expect(orb?.querySelector("img")?.getAttribute("alt")).toBe("");
-    expect(element.querySelector('[data-shader="pulse"]')).toBeNull();
+    const mark = element.querySelector(".chat-empty .chat-empty__mark");
+    expect(mark).not.toBeNull();
+    expect(mark?.querySelector("img")?.getAttribute("alt")).toBe("");
+    expect(element.querySelector(".msg__thinking-mark")).toBeNull();
 
     await act(async () => {
       element.querySelector<HTMLButtonElement>(".chips button")?.click();
     });
-    // Only one shader zone at a time in the log: the orb leaves with the empty state.
-    expect(element.querySelector('[data-shader="orb"]')).toBeNull();
-    expect(element.querySelector('.msg--live [data-shader="pulse"]')).not.toBeNull();
-
-    await act(async () => {
-      release?.();
-      await Promise.resolve();
-    });
-  });
-
-  it("gives the composer a shader edge only while it is focused or answering (v6)", async () => {
-    let release: (() => void) | undefined;
-    const agent = {
-      messages: [],
-      state: {},
-      addMessage: vi.fn(),
-      setMessages: vi.fn(),
-      setState: vi.fn(),
-      runAgent: vi.fn(() => new Promise<void>((resolve) => (release = resolve))),
-    } as unknown as AbstractAgent;
-    const { container: element } = await mount(agent);
-    const form = element.querySelector<HTMLFormElement>(".composer form")!;
-    expect(form.hasAttribute("data-shader")).toBe(false);
-
-    await act(async () => {
-      element.querySelector<HTMLInputElement>("#question")!.focus();
-    });
-    expect(form.getAttribute("data-shader")).toBe("composer");
-    expect(form.getAttribute("data-shader-state")).toBe("focus");
-
-    await act(async () => {
-      element.querySelector<HTMLInputElement>("#question")!.blur();
-    });
-    expect(form.hasAttribute("data-shader")).toBe(false);
-
-    await act(async () => {
-      element.querySelector<HTMLButtonElement>(".chips button")?.click();
-    });
-    expect(form.getAttribute("data-shader")).toBe("composer");
-    expect(form.getAttribute("data-shader-state")).toBe("sending");
+    expect(element.querySelector(".chat-empty__mark")).toBeNull();
+    expect(element.querySelector(".msg--live .msg__thinking-mark")).not.toBeNull();
+    expect(element.querySelector(".msg--live .typing")).not.toBeNull();
+    // No canvas or decorative data hooks: the treatment is plain CSS.
+    expect(element.querySelector("canvas")).toBeNull();
 
     await act(async () => {
       release?.();

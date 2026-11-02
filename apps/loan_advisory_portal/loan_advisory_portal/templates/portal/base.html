@@ -25,8 +25,6 @@
 {%- endmacro -%}
 {%- macro footer_block() -%}
 <footer class="site-footer">
-	{#- v6: a thin animated Paper Shaders strip along the top of the footer (decorative). #}
-	<div class="foot-band shader-zone" data-shader="band" aria-hidden="true"></div>
 	<div class="site-footer__inner">
 		<span class="site-footer__trust">Understand your loan decision. A person decides.</span>
 		<span class="spacer"></span>
@@ -66,7 +64,6 @@
 	<link rel="stylesheet" href="/assets/loan_advisory_portal/css/portal.css">
 	<script id="portal-bootstrap" type="application/json">{{ boot | tojson }}</script>
 	<script src="/assets/loan_advisory_portal/js/portal.js" defer></script>
-	<script src="/assets/loan_advisory_portal/js/shader.js" defer></script>
 	{% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{{ 'app-shell' if app_frame else 'public-shell' }}{% endblock %}" data-signed-in="{{ 'true' if signed_in else 'false' }}">
@@ -117,9 +114,6 @@
 		</aside>
 
 		<div class="shell__main">
-			{#- v6: a very quiet page wash on the flat cream (never under the sidebar) and a thin animated top strip. #}
-			<div class="page-wash shader-zone" data-shader="wash" aria-hidden="true"></div>
-			<div class="top-band shader-zone" data-shader="band" aria-hidden="true"></div>
 			<header class="topbar">
 				<a class="topbar__brand" href="/borrower">
 					<img class="brand__mark" src="/assets/loan_advisory_portal/brand/saral-mark.svg" alt="" width="38" height="38">
@@ -136,8 +130,6 @@
 			</header>
 	{%- else %}
 	<div class="public-frame">
-		<div class="page-wash shader-zone" data-shader="wash" aria-hidden="true"></div>
-		<div class="top-band shader-zone" data-shader="band" aria-hidden="true"></div>
 		<header class="public-header">
 			<div class="public-header__inner">
 				<a class="brand" href="{{ '/borrower' if signed_in else '/borrower/products' }}">
@@ -161,9 +153,9 @@
 	{%- endif %}
 
 		<main id="main" class="page" tabindex="-1">
-			{#- v6 page loading: shown by portal.js while the first reads are slow (a calm shader band + one sentence). #}
+			{#- Page loading: shown by portal.js while the first reads are slow (a status bar + one sentence). #}
 			<div class="page-loading" id="page-loading" hidden>
-				<div class="page-loading__band shader-zone" data-shader="loading" aria-hidden="true"></div>
+				<div class="status-bar" aria-hidden="true"></div>
 				<p class="page-loading__text" role="status">Getting your latest details…</p>
 			</div>
 			<noscript>

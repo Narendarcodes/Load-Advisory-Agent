@@ -39,11 +39,6 @@ async function settle(page) {
   await page.waitForLoadState("networkidle").catch(() => {});
   await page.evaluate(() => document.fonts && document.fonts.ready).catch(() => {});
   await sleep(350);
-  // v5: shaders mount lazily after load + idle and fade in over 700 ms; let them land before a capture.
-  await page
-    .waitForFunction(() => !document.querySelector("[data-shader]") || (window.saralShader && window.saralShader.live().length > 0), null, { timeout: 3000 })
-    .catch(() => {});
-  if (await page.$("[data-shader-on]").catch(() => null)) await sleep(800);
 }
 
 async function shot(page, name, full = true) {

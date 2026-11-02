@@ -37,10 +37,9 @@ const THINKING_ILLUSTRATION = "/assets/loan_advisory_portal/illustrations/assist
 function Thinking({ stages }: { stages: string[] }) {
   return (
     <div className="msg__thinking">
-      {/* v6: a refined Paper Shaders pulsing ring around the Saral mark scene while Saral works (decorative;
-          portal js/shader.js mounts it, a static soft ring under reduced motion). */}
-      <div className="msg__thinking-mark shader-zone" data-shader="pulse">
-        <span className="msg__thinking-halo" aria-hidden="true" />
+      {/* The Saral mark scene on a plain soft circle that pulses gently while Saral works (CSS; still under
+          reduced motion). Decorative: the live steps say what is happening. */}
+      <div className="msg__thinking-mark">
         <img className="msg__thinking-art" src={THINKING_ILLUSTRATION} alt="" width={96} height={72} />
       </div>
       <div className="msg__thinking-body">
@@ -208,7 +207,6 @@ export function ChatPanel({
   const [runBase, setRunBase] = useState(0);
   const [turns, setTurns] = useState<TurnMeta[]>(() => loadTurns(storageKey));
   const [whatIfOpen, setWhatIfOpen] = useState(false);
-  const [focused, setFocused] = useState(false);
   const [votes, setVotes] = useState<Record<number, Vote>>({});
   const stagesRef = useRef<string[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
@@ -362,8 +360,8 @@ export function ChatPanel({
               <>
                 <LiveSteps stages={runStages} />
                 <Markdown text={liveText(text)} />
-                {/* v6: a thin shader shimmer on the edge of an answer that is still arriving (decorative). */}
-                <div className="msg__stream-edge shader-zone" data-shader="stream" aria-hidden="true" />
+                {/* A thin CSS progress bar under an answer that is still arriving (decorative; still under reduced motion). */}
+                <div className="msg__stream-edge" aria-hidden="true" />
               </>
             ) : (
               <Thinking stages={runStages} />
@@ -437,10 +435,8 @@ export function ChatPanel({
       <div className="log" ref={logRef} role="log" aria-live="polite" aria-relevant="additions text" tabIndex={0}>
         {empty ? (
           <div className="chat-empty">
-            {/* v6: a deeper, slower mesh-gradient orb glows behind the Saral mark (decorative; portal js/shader.js
-                mounts it). The assistant is the mark, not a person, so this is the one scene a shader may sit behind. */}
-            <div className="chat-empty__mark shader-zone" data-shader="orb">
-              <span className="chat-empty__halo" aria-hidden="true" />
+            {/* The Saral mark on a plain, soft coral-tinted circle (decorative). */}
+            <div className="chat-empty__mark">
               <img className="chat-empty__art" src={ILLUSTRATION} alt="" width={160} height={120} />
             </div>
             <h3>Ask about your decision</h3>
@@ -499,18 +495,8 @@ export function ChatPanel({
             Try a what-if
           </button>
         </div>
-        {/* v6: while the composer is focused or a question is being answered, a thin Paper Shaders edge
-            (PulsingBorder) runs around it; otherwise it is the plain floating surface. Decorative. */}
-        <form
-          className="row composer__form"
-          onSubmit={submit}
-          onFocus={() => setFocused(true)}
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
-          }}
-          data-shader={focused || busy ? "composer" : undefined}
-          data-shader-state={busy ? "sending" : focused ? "focus" : undefined}
-        >
+        {/* The composer is the plain floating surface; keyboard focus shows the standard focus ring. */}
+        <form className="row composer__form" onSubmit={submit}>
           <label className="sr-only" htmlFor="question">
             Your question
           </label>

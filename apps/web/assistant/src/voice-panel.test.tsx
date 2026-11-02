@@ -235,7 +235,7 @@ describe("VoicePanel", () => {
   });
 });
 
-describe("VoicePanel shader orb (v6)", () => {
+describe("VoicePanel voice circle (final)", () => {
   function activityTransport() {
     const fake = fakeTransport();
     const activityHandlers = new Set<(activity: VoiceActivity) => void>();
@@ -257,8 +257,7 @@ describe("VoicePanel shader orb (v6)", () => {
     const zone = orb(element);
     expect(zone).not.toBeNull();
     expect(zone.getAttribute("aria-hidden")).toBe("true");
-    expect(zone.getAttribute("data-shader")).toBe("voice");
-    expect(zone.getAttribute("data-shader-state")).toBe("idle");
+    expect(zone.getAttribute("data-state")).toBe("idle");
     expect(element.querySelector(".voice-orb__label")?.textContent).toBe("Ready when you are");
   });
 
@@ -267,21 +266,21 @@ describe("VoicePanel shader orb (v6)", () => {
     const fake = activityTransport();
     const { element } = await mount(() => fake.transport);
     await startCall(element);
-    expect(orb(element).getAttribute("data-shader-state")).toBe("listening");
+    expect(orb(element).getAttribute("data-state")).toBe("listening");
 
     await act(async () => fake.emitActivity({ speaker: "user", level: 0.6 }));
-    expect(orb(element).getAttribute("data-shader-state")).toBe("listening");
-    expect(Number(orb(element).getAttribute("data-shader-level"))).toBeGreaterThan(0.4);
+    expect(orb(element).getAttribute("data-state")).toBe("listening");
+    expect(Number(orb(element).getAttribute("data-level"))).toBeGreaterThan(0.4);
 
     await act(async () => fake.emitActivity({ speaker: null, level: 0 }));
-    expect(orb(element).getAttribute("data-shader-state")).toBe("thinking");
+    expect(orb(element).getAttribute("data-state")).toBe("thinking");
     expect(element.querySelector(".voice-orb__label")?.textContent).toBe("Thinking");
 
     await act(async () => fake.emitActivity({ speaker: "assistant", level: 0.5 }));
-    expect(orb(element).getAttribute("data-shader-state")).toBe("speaking");
+    expect(orb(element).getAttribute("data-state")).toBe("speaking");
 
     await act(async () => fake.emitActivity({ speaker: null, level: 0 }));
-    expect(orb(element).getAttribute("data-shader-state")).toBe("listening");
+    expect(orb(element).getAttribute("data-state")).toBe("listening");
   });
 
   it("leaves thinking when the answer arrives on the transcript", async () => {
@@ -291,9 +290,9 @@ describe("VoicePanel shader orb (v6)", () => {
     await startCall(element);
     await act(async () => fake.emitActivity({ speaker: "user", level: 0.4 }));
     await act(async () => fake.emitActivity({ speaker: null, level: 0 }));
-    expect(orb(element).getAttribute("data-shader-state")).toBe("thinking");
+    expect(orb(element).getAttribute("data-state")).toBe("thinking");
     await act(async () => fake.emitUtterance({ role: "assistant", text: "Your income was below the minimum." }));
-    expect(orb(element).getAttribute("data-shader-state")).toBe("listening");
+    expect(orb(element).getAttribute("data-state")).toBe("listening");
   });
 
   it("shows the muted look while the microphone is off", async () => {
@@ -303,7 +302,7 @@ describe("VoicePanel shader orb (v6)", () => {
     await startCall(element);
     await act(async () => button(element, /mute microphone/i).click());
     await flush();
-    expect(orb(element).getAttribute("data-shader-state")).toBe("muted");
+    expect(orb(element).getAttribute("data-state")).toBe("muted");
     expect(element.querySelector(".voice-orb__label")?.textContent).toBe("Microphone off");
   });
 
@@ -314,7 +313,7 @@ describe("VoicePanel shader orb (v6)", () => {
     await startCall(element);
     await act(async () => button(element, /end session/i).click());
     await flush();
-    expect(orb(element).getAttribute("data-shader-state")).toBe("idle");
+    expect(orb(element).getAttribute("data-state")).toBe("idle");
   });
 
   it("still works with a transport that has no speaker detection (orb stays listening)", async () => {
@@ -322,7 +321,7 @@ describe("VoicePanel shader orb (v6)", () => {
     const fake = fakeTransport();
     const { element } = await mount(() => fake.transport);
     await startCall(element);
-    expect(orb(element).getAttribute("data-shader-state")).toBe("listening");
+    expect(orb(element).getAttribute("data-state")).toBe("listening");
   });
 
   it("shows no orb when voice is not available on the site", async () => {

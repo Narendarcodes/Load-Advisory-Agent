@@ -1,6 +1,6 @@
 import { i as e, t } from "./chunks/rolldown-runtime-CwxnZyOB.js";
 import { c as n, h as r, i, m as a, o, s } from "./chunks/chunk-JAPRZBRM-CJMvR5Wo.js";
-import { $ as c, A as l, C as u, Ct as d, D as f, E as p, F as m, J as h, M as g, N as _, P as v, Q as y, S as b, St as x, T as S, X as C, Y as w, Z as T, _t as E, a as D, bt as O, c as k, ct as A, d as ee, dt as te, et as ne, f as j, ft as M, g as re, gt as ie, h as N, ht as ae, i as P, it as F, k as oe, l as se, lt as ce, m as le, mt as ue, n as de, nt as fe, ot as pe, p as me, pt as he, r as ge, rt as _e, s as ve, st as ye, t as be, tt as xe, u as Se, ut as Ce, v as we, w as Te, xt as Ee, y as De } from "./chunks/directive-CMaqULIC.js";
+import { $ as c, A as l, C as u, Ct as d, D as f, E as p, F as m, J as h, M as g, N as _, P as v, Q as y, S as b, St as x, T as S, X as C, Y as w, Z as T, _t as E, a as D, bt as O, c as k, ct as ee, d as te, dt as A, et as ne, f as j, ft as M, g as re, gt as ie, h as N, ht as ae, i as P, it as F, k as oe, l as se, lt as ce, m as le, mt as ue, n as de, nt as fe, ot as pe, p as me, pt as he, r as ge, rt as _e, s as ve, st as ye, t as be, tt as xe, u as Se, ut as Ce, v as we, w as Te, xt as Ee, y as De } from "./chunks/directive-CMaqULIC.js";
 import { C as Oe, _ as ke, c as Ae, g as je, o as Me, r as Ne, s as Pe, t as Fe, x as Ie } from "./chunks/random-id-Dq3iPRBO.js";
 import { n as Le, t as Re } from "./chunks/content-schema-zuSr5D-R.js";
 // node_modules/scheduler/cjs/scheduler.production.js
@@ -60,7 +60,7 @@ var ze = /* @__PURE__ */ t(((e) => {
 			if (n(c) !== null) m = !0, S || (S = !0, O());
 			else {
 				var t = n(l);
-				t !== null && ee(x, t.startTime - e);
+				t !== null && te(x, t.startTime - e);
 			}
 		}
 	}
@@ -95,7 +95,7 @@ var ze = /* @__PURE__ */ t(((e) => {
 							if (d !== null) i = !0;
 							else {
 								var u = n(l);
-								u !== null && ee(x, u.startTime - t), i = !1;
+								u !== null && te(x, u.startTime - t), i = !1;
 							}
 						}
 						break a;
@@ -114,14 +114,14 @@ var ze = /* @__PURE__ */ t(((e) => {
 		y(D);
 	};
 	else if (typeof MessageChannel < "u") {
-		var k = new MessageChannel(), A = k.port2;
+		var k = new MessageChannel(), ee = k.port2;
 		k.port1.onmessage = D, O = function() {
-			A.postMessage(null);
+			ee.postMessage(null);
 		};
 	} else O = function() {
 		_(D, 0);
 	};
-	function ee(t, n) {
+	function te(t, n) {
 		C = _(function() {
 			t(e.unstable_now());
 		}, n);
@@ -190,7 +190,7 @@ var ze = /* @__PURE__ */ t(((e) => {
 			startTime: a,
 			expirationTime: s,
 			sortIndex: -1
-		}, a > o ? (r.sortIndex = a, t(l, r), n(c) === null && r === n(l) && (h ? (v(C), C = -1) : h = !0, ee(x, a - o))) : (r.sortIndex = s, t(c, r), m || p || (m = !0, S || (S = !0, O()))), r;
+		}, a > o ? (r.sortIndex = a, t(l, r), n(c) === null && r === n(l) && (h ? (v(C), C = -1) : h = !0, te(x, a - o))) : (r.sortIndex = s, t(c, r), m || p || (m = !0, S || (S = !0, O()))), r;
 	}, e.unstable_shouldYield = E, e.unstable_wrapCallback = function(e) {
 		var t = f;
 		return function() {
@@ -443,13 +443,13 @@ var ze = /* @__PURE__ */ t(((e) => {
 		return null;
 	}
 	var p = Object.assign, m = Symbol.for("react.element"), h = Symbol.for("react.transitional.element"), g = Symbol.for("react.portal"), _ = Symbol.for("react.fragment"), v = Symbol.for("react.strict_mode"), y = Symbol.for("react.profiler"), b = Symbol.for("react.consumer"), x = Symbol.for("react.context"), S = Symbol.for("react.forward_ref"), C = Symbol.for("react.suspense"), w = Symbol.for("react.suspense_list"), T = Symbol.for("react.memo"), E = Symbol.for("react.lazy"), D = Symbol.for("react.activity"), O = Symbol.for("react.memo_cache_sentinel"), k = Symbol.iterator;
-	function A(e) {
+	function ee(e) {
 		return typeof e != "object" || !e ? null : (e = k && e[k] || e["@@iterator"], typeof e == "function" ? e : null);
 	}
-	var ee = Symbol.for("react.client.reference");
-	function te(e) {
+	var te = Symbol.for("react.client.reference");
+	function A(e) {
 		if (e == null) return null;
-		if (typeof e == "function") return e.$$typeof === ee ? null : e.displayName || e.name || null;
+		if (typeof e == "function") return e.$$typeof === te ? null : e.displayName || e.name || null;
 		if (typeof e == "string") return e;
 		switch (e) {
 			case _: return "Fragment";
@@ -466,11 +466,11 @@ var ze = /* @__PURE__ */ t(((e) => {
 			case S:
 				var t = e.render;
 				return e = e.displayName, e ||= (e = t.displayName || t.name || "", e === "" ? "ForwardRef" : "ForwardRef(" + e + ")"), e;
-			case T: return t = e.displayName || null, t === null ? te(e.type) || "Memo" : t;
+			case T: return t = e.displayName || null, t === null ? A(e.type) || "Memo" : t;
 			case E:
 				t = e._payload, e = e._init;
 				try {
-					return te(e(t));
+					return A(e(t));
 				} catch {}
 		}
 		return null;
@@ -2199,7 +2199,7 @@ var ze = /* @__PURE__ */ t(((e) => {
 					case g: return t = gi(t, e.mode, n), t.return = e, t;
 					case E: return t = ka(t), f(e, t, n);
 				}
-				if (ne(t) || A(t)) return t = pi(t, e.mode, n, null), t.return = e, t;
+				if (ne(t) || ee(t)) return t = pi(t, e.mode, n, null), t.return = e, t;
 				if (typeof t.then == "function") return f(e, Fa(t), n);
 				if (t.$$typeof === x) return f(e, ra(e, t), n);
 				La(e, t);
@@ -2215,7 +2215,7 @@ var ze = /* @__PURE__ */ t(((e) => {
 					case g: return n.key === i ? u(e, t, n, r) : null;
 					case E: return n = ka(n), p(e, t, n, r);
 				}
-				if (ne(n) || A(n)) return i === null ? d(e, t, n, r, null) : null;
+				if (ne(n) || ee(n)) return i === null ? d(e, t, n, r, null) : null;
 				if (typeof n.then == "function") return p(e, t, Fa(n), r);
 				if (n.$$typeof === x) return p(e, t, ra(e, n), r);
 				La(e, n);
@@ -2230,7 +2230,7 @@ var ze = /* @__PURE__ */ t(((e) => {
 					case g: return e = e.get(r.key === null ? n : r.key) || null, u(t, e, r, i);
 					case E: return r = ka(r), m(e, t, n, r, i);
 				}
-				if (ne(r) || A(r)) return e = e.get(n) || null, d(t, e, r, i, null);
+				if (ne(r) || ee(r)) return e = e.get(n) || null, d(t, e, r, i, null);
 				if (typeof r.then == "function") return m(e, t, n, Fa(r), i);
 				if (r.$$typeof === x) return m(e, t, n, ra(t, r), i);
 				La(t, r);
@@ -2321,8 +2321,8 @@ var ze = /* @__PURE__ */ t(((e) => {
 					case E: return o = ka(o), b(e, r, o, c);
 				}
 				if (ne(o)) return v(e, r, o, c);
-				if (A(o)) {
-					if (l = A(o), typeof l != "function") throw Error(a(150));
+				if (ee(o)) {
+					if (l = ee(o), typeof l != "function") throw Error(a(150));
 					return o = l.call(o), y(e, r, o, c);
 				}
 				if (typeof o.then == "function") return b(e, r, Fa(o), c);
@@ -3895,7 +3895,7 @@ var ze = /* @__PURE__ */ t(((e) => {
 								break a;
 							}
 						}
-						throw t = te(e) || e, Error(a(306, t, ""));
+						throw t = A(e) || e, Error(a(306, t, ""));
 					}
 				}
 				return t;
@@ -8577,17 +8577,17 @@ var Rn = (0, L.createContext)(null), zn = ({ children: e, labels: t, agentId: n,
 	(0, L.useEffect)(() => {
 		S && (w.current ? o?.isModalOpen !== void 0 && x(o.isModalOpen) : w.current = !0);
 	}, [o?.isModalOpen, S]);
-	let T = S ? b : o?.isModalOpen ?? b, E = S ? C : o?.setModalOpen ?? x, [D, O] = (0, L.useState)(!1), [k, A] = (0, L.useState)(0), ee = (0, L.useRef)(() => {});
-	ee.current = E;
-	let te = (0, L.useRef)([]), ne = (0, L.useCallback)((e) => (te.current.push(e), () => {
-		te.current = te.current.filter((t) => t !== e);
+	let T = S ? b : o?.isModalOpen ?? b, E = S ? C : o?.setModalOpen ?? x, [D, O] = (0, L.useState)(!1), [k, ee] = (0, L.useState)(0), te = (0, L.useRef)(() => {});
+	te.current = E;
+	let A = (0, L.useRef)([]), ne = (0, L.useCallback)((e) => (A.current.push(e), () => {
+		A.current = A.current.filter((t) => t !== e);
 	}), []), j = (0, L.useCallback)((e) => {
 		if (O(e), e && Ln()) {
-			let e = te.current;
-			(e.length > 0 ? e[e.length - 1] : ee.current)(!1);
+			let e = A.current;
+			(e.length > 0 ? e[e.length - 1] : te.current)(!1);
 		}
-	}, []), M = (0, L.useCallback)(() => (A((e) => e + 1), () => {
-		A((e) => Math.max(0, e - 1));
+	}, []), M = (0, L.useCallback)(() => (ee((e) => e + 1), () => {
+		ee((e) => Math.max(0, e - 1));
 	}), []), re = o ? o.drawerOpen : D, ie = o ? o.setDrawerOpen : j, N = o ? o.drawerRegistered : k > 0, ae = o ? o.registerDrawer : M, P = o ? o.ɵregisterModalCloser : ne;
 	(0, L.useEffect)(() => {
 		if (S) return P(E);
@@ -10342,7 +10342,7 @@ function Ca(e, t, n, r, i, a) {
 				ancestors: o
 			}, t));
 		}, c = n;
-		for (let e of t) c = te(c, e.path, (t) => s(e.kind, t));
+		for (let e of t) c = A(c, e.path, (t) => s(e.kind, t));
 		return c;
 	}, [
 		e,
@@ -11637,15 +11637,15 @@ var kc = 50, Ac = async (e, t, n) => {
 			y: r
 		}, p = pc(i), m = dc(p), h = await o.getDimensions(l), g = p === "y", _ = g ? "top" : "left", v = g ? "bottom" : "right", y = g ? "clientHeight" : "clientWidth", b = a.reference[m] + a.reference[p] - f[p] - a.floating[m], x = f[p] - a.reference[p], S = await (o.getOffsetParent == null ? void 0 : o.getOffsetParent(l)), C = S ? S[y] : 0;
 		C && await (o.isElement == null ? void 0 : o.isElement(S)) || (C = s.floating[y] || a.floating[m]);
-		let w = b / 2 - x / 2, T = C / 2 - h[m] / 2 - 1, E = ec(d[_], T), D = ec(d[v], T), O = C - h[m] - D, k = C / 2 - h[m] / 2 + w, A = oc(E, k, O), ee = !c.arrow && lc(i) != null && k !== A && a.reference[m] / 2 - (k < E ? E : D) - h[m] / 2 < 0, te = ee ? k < E ? k - E : k - O : 0;
+		let w = b / 2 - x / 2, T = C / 2 - h[m] / 2 - 1, E = ec(d[_], T), D = ec(d[v], T), O = C - h[m] - D, k = C / 2 - h[m] / 2 + w, ee = oc(E, k, O), te = !c.arrow && lc(i) != null && k !== ee && a.reference[m] / 2 - (k < E ? E : D) - h[m] / 2 < 0, A = te ? k < E ? k - E : k - O : 0;
 		return {
-			[p]: f[p] + te,
+			[p]: f[p] + A,
 			data: {
-				[p]: A,
-				centerOffset: k - A - te,
-				...ee && { alignmentOffset: te }
+				[p]: ee,
+				centerOffset: k - ee - A,
+				...te && { alignmentOffset: A }
 			},
-			reset: ee
+			reset: te
 		};
 	}
 }), Mc = function(e) {
@@ -12328,7 +12328,7 @@ function tu(e) {
 				...e,
 				isPositioned: O.current !== !1
 			};
-			A.current && !Zl(w.current, t) && (w.current = t, rs.flushSync(() => {
+			ee.current && !Zl(w.current, t) && (w.current = t, rs.flushSync(() => {
 				d(t);
 			}));
 		});
@@ -12345,9 +12345,9 @@ function tu(e) {
 			isPositioned: !1
 		})));
 	}, [l]);
-	let A = L.useRef(!1);
-	Xl(() => (A.current = !0, () => {
-		A.current = !1;
+	let ee = L.useRef(!1);
+	Xl(() => (ee.current = !0, () => {
+		ee.current = !1;
 	}), []), Xl(() => {
 		if (b && (S.current = b), x && (C.current = x), b && x) {
 			if (E.current) return E.current(b, x, k);
@@ -12360,12 +12360,12 @@ function tu(e) {
 		E,
 		T
 	]);
-	let ee = L.useMemo(() => ({
+	let te = L.useMemo(() => ({
 		reference: S,
 		floating: C,
 		setReference: v,
 		setFloating: y
-	}), [v, y]), te = L.useMemo(() => ({
+	}), [v, y]), A = L.useMemo(() => ({
 		reference: b,
 		floating: x
 	}), [b, x]), ne = L.useMemo(() => {
@@ -12374,12 +12374,12 @@ function tu(e) {
 			left: 0,
 			top: 0
 		};
-		if (!te.floating) return e;
-		let t = $l(te.floating, u.x), r = $l(te.floating, u.y);
+		if (!A.floating) return e;
+		let t = $l(A.floating, u.x), r = $l(A.floating, u.y);
 		return s ? {
 			...e,
 			transform: "translate(" + t + "px, " + r + "px)",
-			...Ql(te.floating) >= 1.5 && { willChange: "transform" }
+			...Ql(A.floating) >= 1.5 && { willChange: "transform" }
 		} : {
 			position: n,
 			left: t,
@@ -12388,21 +12388,21 @@ function tu(e) {
 	}, [
 		n,
 		s,
-		te.floating,
+		A.floating,
 		u.x,
 		u.y
 	]);
 	return L.useMemo(() => ({
 		...u,
 		update: k,
-		refs: ee,
-		elements: te,
+		refs: te,
+		elements: A,
 		floatingStyles: ne
 	}), [
 		u,
 		k,
-		ee,
 		te,
+		A,
 		ne
 	]);
 }
@@ -12565,7 +12565,7 @@ var hu = Object.defineProperty, gu = (e, t) => hu(e, "name", {
 		padding: E,
 		boundary: D.filter(Pu),
 		altBoundary: O
-	}, { refs: A, floatingStyles: ee, placement: te, isPositioned: ne, middlewareData: j } = tu({
+	}, { refs: ee, floatingStyles: te, placement: A, isPositioned: ne, middlewareData: j } = tu({
 		strategy: "fixed",
 		placement: T,
 		whileElementsMounted: /* @__PURE__ */ gu((...e) => Vl(...e, { animationFrame: p === vu.Always }), "whileElementsMounted"),
@@ -12607,10 +12607,10 @@ var hu = Object.defineProperty, gu = (e, t) => hu(e, "name", {
 			})
 		]
 	}), M = g.setPlacementState;
-	cs(() => (M(te), () => {
+	cs(() => (M(A), () => {
 		M(void 0);
-	}), [te, M]);
-	let [re, ie] = Iu(te), N = fs(m);
+	}), [A, M]);
+	let [re, ie] = Iu(A), N = fs(m);
 	cs(() => {
 		ne && N?.();
 	}, [ne, N]);
@@ -12618,11 +12618,11 @@ var hu = Object.defineProperty, gu = (e, t) => hu(e, "name", {
 	return cs(() => {
 		_ && se(window.getComputedStyle(_).zIndex);
 	}, [_]), /* @__PURE__ */ (0, R.jsx)("div", {
-		ref: A.setFloating,
+		ref: ee.setFloating,
 		"data-radix-popper-content-wrapper": "",
 		style: {
-			...ee,
-			transform: ne ? ee.transform : "translate(0, -200%)",
+			...te,
+			transform: ne ? te.transform : "translate(0, -200%)",
 			minWidth: "max-content",
 			zIndex: oe,
 			"--radix-popper-transform-origin": [j.transformOrigin?.x, j.transformOrigin?.y].join(" "),
@@ -14581,7 +14581,7 @@ var lm = Object.defineProperty, um = (e, t) => lm(e, "name", {
 }, "MenuRootContentNonModal")), Hm = /* @__PURE__ */ To("MenuContent.ScrollLock"), Um = /* @__PURE__ */ L.forwardRef(/* @__PURE__ */ um(function(e, t) {
 	let { __scopeMenu: n, loop: r = !1, trapFocus: i, onOpenAutoFocus: a, onCloseAutoFocus: o, disableOutsidePointerEvents: s, onEntryFocus: c, onEscapeKeyDown: l, onPointerDownOutside: u, onFocusOutside: d, onInteractOutside: f, onDismiss: p, disableOutsideScroll: m, ...h } = e, g = Dm(Im, n), _ = km(Im, n), v = wm(n), y = Tm(n), b = bm(n), [x, S] = L.useState(null), C = L.useRef(null), [w, T] = L.useState(null);
 	Is(w);
-	let { nodes: E, registry: D } = Fs(), O = !!(i || m), k = So(t, C, g.onContentChange, T), A = L.useRef(0), ee = L.useRef(""), te = L.useRef(0), ne = L.useRef(null), j = L.useRef("right"), M = L.useRef(0), re = L.useMemo(() => m ? [C, ...E.map((e) => ({ current: e }))] : [], [
+	let { nodes: E, registry: D } = Fs(), O = !!(i || m), k = So(t, C, g.onContentChange, T), ee = L.useRef(0), te = L.useRef(""), A = L.useRef(0), ne = L.useRef(null), j = L.useRef("right"), M = L.useRef(0), re = L.useMemo(() => m ? [C, ...E.map((e) => ({ current: e }))] : [], [
 		C,
 		E,
 		m
@@ -14590,17 +14590,17 @@ var lm = Object.defineProperty, um = (e, t) => lm(e, "name", {
 		allowPinchZoom: !0,
 		shards: re
 	} : void 0, ae = /* @__PURE__ */ um((e) => {
-		let t = ee.current + e, n = b().filter((e) => !e.disabled), r = document.activeElement, i = n.find((e) => e.ref.current === r)?.textValue, a = ph(n.map((e) => e.textValue), t, i), o = n.find((e) => e.textValue === a)?.ref.current;
+		let t = te.current + e, n = b().filter((e) => !e.disabled), r = document.activeElement, i = n.find((e) => e.ref.current === r)?.textValue, a = ph(n.map((e) => e.textValue), t, i), o = n.find((e) => e.textValue === a)?.ref.current;
 		function s(e) {
-			ee.current = e, window.clearTimeout(A.current), e !== "" && (A.current = window.setTimeout(() => s(""), 1e3));
+			te.current = e, window.clearTimeout(ee.current), e !== "" && (ee.current = window.setTimeout(() => s(""), 1e3));
 		}
 		um(s, "updateSearch"), s(t), o && setTimeout(() => o.focus());
 	}, "handleTypeaheadSearch");
-	L.useEffect(() => () => window.clearTimeout(A.current), []), gf();
+	L.useEffect(() => () => window.clearTimeout(ee.current), []), gf();
 	let P = L.useCallback((e) => j.current === ne.current?.side && hh(e, ne.current?.area), []);
 	return /* @__PURE__ */ (0, R.jsx)(Lm, {
 		scope: n,
-		searchRef: ee,
+		searchRef: te,
 		onItemEnter: L.useCallback((e) => {
 			P(e) && e.preventDefault();
 		}, [P]),
@@ -14610,7 +14610,7 @@ var lm = Object.defineProperty, um = (e, t) => lm(e, "name", {
 		onTriggerLeave: L.useCallback((e) => {
 			P(e) && e.preventDefault();
 		}, [P]),
-		pointerGraceTimerRef: te,
+		pointerGraceTimerRef: A,
 		onPointerGraceIntentChange: L.useCallback((e) => {
 			ne.current = e;
 		}, []),
@@ -14669,7 +14669,7 @@ var lm = Object.defineProperty, um = (e, t) => lm(e, "name", {
 									mm.includes(e.key) && a.reverse(), dh(a);
 								}),
 								onBlur: qo(e.onBlur, (e) => {
-									e.currentTarget.contains(e.target) || (window.clearTimeout(A.current), ee.current = "");
+									e.currentTarget.contains(e.target) || (window.clearTimeout(ee.current), te.current = "");
 								}),
 								onPointerMove: qo(e.onPointerMove, gh((e) => {
 									let t = e.target, n = M.current !== e.clientX;
@@ -25954,7 +25954,7 @@ var DT = {
 	border: "oklch(0.922 0 0)",
 	ring: "oklch(0.708 0 0)",
 	radius: "0.625rem"
-}, OT = (e) => ee(e), kT = DT, AT = Se`
+}, OT = (e) => te(e), kT = DT, AT = Se`
   :host {
     /* Re-pin inheritable properties to close inheritance leaks from hostile
        host CSS. These are the only properties that cross the shadow boundary
@@ -27714,11 +27714,11 @@ function $(e, t, n) {
 	});
 }
 function bE({ mode: e = "input", onSubmitMessage: t, onStop: n, isRunning: r = !1, onStartTranscribe: i, onCancelTranscribe: a, onFinishTranscribe: o, onFinishTranscribeWithAudio: c, onAddFile: l, onChange: u, value: d, toolsMenu: f, autoFocus: p = !1, positioning: m = "static", keyboardHeight: h = 0, containerRef: g, showDisclaimer: _, bottomAnchored: v = !1, textArea: y, sendButton: b, startTranscribeButton: x, cancelTranscribeButton: S, finishTranscribeButton: C, addMenuButton: w, audioRecorder: T, disclaimer: E, children: D, className: O, ...k }) {
-	let A = d !== void 0, [ee, te] = (0, L.useState)(() => d ?? "");
+	let ee = d !== void 0, [te, A] = (0, L.useState)(() => d ?? "");
 	(0, L.useEffect)(() => {
-		!A && d !== void 0 && te(d);
-	}, [A, d]);
-	let ne = A ? d ?? "" : ee, [j, M] = (0, L.useState)("compact"), re = (0, L.useRef)(!1), ie = (0, L.useRef)(null), N = e === "input" && j === "expanded", [ae, P] = (0, L.useState)(null), [F, oe] = (0, L.useState)(0), se = (0, L.useRef)(null), ce = (0, L.useRef)(null), le = (0, L.useRef)(null), ue = (0, L.useRef)(null), de = (0, L.useRef)(null), fe = (0, L.useRef)(null), pe = Bn(), me = pe?.labels ?? Fn, he = (0, L.useRef)(void 0), ge = (0, L.useRef)(null), _e = (0, L.useRef)({
+		!ee && d !== void 0 && A(d);
+	}, [ee, d]);
+	let ne = ee ? d ?? "" : te, [j, M] = (0, L.useState)("compact"), re = (0, L.useRef)(!1), ie = (0, L.useRef)(null), N = e === "input" && j === "expanded", [ae, P] = (0, L.useState)(null), [F, oe] = (0, L.useState)(0), se = (0, L.useRef)(null), ce = (0, L.useRef)(null), le = (0, L.useRef)(null), ue = (0, L.useRef)(null), de = (0, L.useRef)(null), fe = (0, L.useRef)(null), pe = Bn(), me = pe?.labels ?? Fn, he = (0, L.useRef)(void 0), ge = (0, L.useRef)(null), _e = (0, L.useRef)({
 		singleLineHeight: 0,
 		maxHeight: 0,
 		paddingLeft: 0,
@@ -27782,10 +27782,10 @@ function bE({ mode: e = "input", onSubmitMessage: t, onStop: n, isRunning: r = !
 	}, [ne, Se]);
 	let Ce = (e) => {
 		let t = e.target.value;
-		A || te(t), u?.(t), Se(t);
+		ee || A(t), u?.(t), Se(t);
 	}, we = (0, L.useCallback)(() => {
-		A || te(""), u && u("");
-	}, [A, u]), Te = (0, L.useCallback)((e) => {
+		ee || A(""), u && u("");
+	}, [ee, u]), Te = (0, L.useCallback)((e) => {
 		we(), e.action?.(), P(null), oe(0), requestAnimationFrame(() => {
 			se.current?.focus();
 		});
@@ -27817,7 +27817,7 @@ function bE({ mode: e = "input", onSubmitMessage: t, onStop: n, isRunning: r = !
 	}, De = () => {
 		if (!t) return;
 		let e = ne.trim();
-		e && (t(e), A || te(""), u?.(""), se.current && se.current.focus());
+		e && (t(e), ee || A(""), u?.(""), se.current && se.current.focus());
 	}, Oe = $(y, bE.TextArea, {
 		ref: se,
 		value: ne,
@@ -29452,7 +29452,7 @@ function BD(e) {
 	return t.includes(" | ") ? `(${e})[]` : `${e}[]`;
 }
 function VD(e, t) {
-	let n = A(e);
+	let n = ee(e);
 	if (n === "single") return "componentId";
 	if (n === "multiple") return "componentId[] | { componentId: string; path: string }";
 	if ("const" in e) return JSON.stringify(e.const);
@@ -30572,9 +30572,9 @@ function LO(e, t, n) {
 	}, [i, t]), i;
 }
 var RO = ({ children: e, runtimeUrl: t, headers: n = OO, credentials: r, messageFilter: i, publicApiKey: a, publicLicenseKey: o, licenseToken: s, properties: c = kO, agents__unsafe_dev_only: l = AO, selfManagedAgents: u = AO, renderToolCalls: d, renderActivityMessages: f, renderCustomMessages: p, frontendTools: m, humanInTheLoop: g, openGenerativeUI: _, enableInspector: v, agentId: y, showIntelligenceIndicator: b = !0, useSingleEndpoint: x, onError: S, a2ui: C, generativeUI: w, mcpApps: T, defaultThrottleMs: E, debug: D, learning: O }) => {
-	let k = (0, L.useMemo)(() => IO(O), [O]), [A, ee] = (0, L.useState)(!1), [te, ne] = (0, L.useState)(!1);
+	let k = (0, L.useMemo)(() => IO(O), [O]), [ee, te] = (0, L.useState)(!1), [A, ne] = (0, L.useState)(!1);
 	(0, L.useEffect)(() => {
-		ee(Ze({
+		te(Ze({
 			enableInspector: v,
 			isBrowser: !0,
 			isDevelopment: !1
@@ -30588,12 +30588,12 @@ var RO = ({ children: e, runtimeUrl: t, headers: n = OO, credentials: r, message
 		M({ ...e });
 	}, []), ye = (0, L.useMemo)(() => ({
 		providerEnableInspector: v,
-		isInspectorEnabled: A && te,
+		isInspectorEnabled: ee && A,
 		openInspector: ve
 	}), [
 		v,
+		ee,
 		A,
-		te,
 		ve
 	]), be = LO(d, "renderToolCalls must be a stable array. If you want to dynamically add or remove tools, use `useFrontendTool` instead.", (e, t) => {
 		let n = (e) => `${e?.agentId ?? ""}:${e?.name ?? ""}`, r = (e) => new Set(e.map(n)), i = r(e), a = r(t);
@@ -30939,7 +30939,7 @@ var RO = ({ children: e, runtimeUrl: t, headers: n = OO, credentials: r, message
 								value: Qe,
 								children: e
 							})
-						}), A ? /* @__PURE__ */ (0, R.jsx)(DE, {
+						}), ee ? /* @__PURE__ */ (0, R.jsx)(DE, {
 							core: I,
 							openRequest: j,
 							onVisibilityChange: ne
@@ -32444,22 +32444,22 @@ function uA({ feedbackComment: e, comment: t, savedComment: n, rating: r, anchor
 }
 function dA({ message: e, messages: t, isRunning: n, isLatest: r, onThumbsUp: i, onThumbsDown: a, onReadAloud: o, onRegenerate: c, additionalToolbarItems: l, toolbarVisible: u = !0, markdownRenderer: d, toolbar: f, copyButton: p, inspectorButton: m, thumbsUpButton: h, thumbsDownButton: g, readAloudButton: _, regenerateButton: v, feedbackComment: y, toolCallsView: b, children: x, className: S, ...C }) {
 	Un();
-	let { isInspectorEnabled: w, openInspector: T } = AE(), E = jk(), D = w && !E, O = tA(e), k = rA(O), A = O?.feedback?.rating, ee = (0, L.useRef)(null), te = (0, L.useRef)(null), ne = (0, L.useRef)(A);
+	let { isInspectorEnabled: w, openInspector: T } = AE(), E = jk(), D = w && !E, O = tA(e), k = rA(O), ee = O?.feedback?.rating, te = (0, L.useRef)(null), A = (0, L.useRef)(null), ne = (0, L.useRef)(ee);
 	(0, L.useLayoutEffect)(() => {
-		k.open && !te.current?.isConnected && A && (te.current = ee.current?.querySelector(`[data-copilotkit-rating="${A}"]`) ?? ee.current?.querySelector("button[aria-pressed=\"true\"]") ?? null);
+		k.open && !A.current?.isConnected && ee && (A.current = te.current?.querySelector(`[data-copilotkit-rating="${ee}"]`) ?? te.current?.querySelector("button[aria-pressed=\"true\"]") ?? null);
 	});
-	let j = (e, t) => O ? A === e ? (k.close({ save: !1 }), O.clear(), !1) : (O.rate(e), ne.current = e, te.current = t?.currentTarget ?? null, k.show({
+	let j = (e, t) => O ? ee === e ? (k.close({ save: !1 }), O.clear(), !1) : (O.rate(e), ne.current = e, A.current = t?.currentTarget ?? null, k.show({
 		comment: "",
 		focus: t?.detail === 0
 	}), !0) : !0, M = (e) => {
 		if (!O) return {};
 		let t = { "data-copilotkit-rating": e };
-		if (A !== e) return {
+		if (ee !== e) return {
 			...t,
 			"aria-pressed": !1
 		};
 		let n = (t, n) => {
-			k.open || (ne.current = e), te.current = t, k.enter(n);
+			k.open || (ne.current = e), A.current = t, k.enter(n);
 		};
 		return {
 			...t,
@@ -32514,11 +32514,11 @@ function dA({ message: e, messages: t, isRunning: n, isLatest: r, onThumbsUp: i,
 		messages: t
 	}), le = !!(e.content && e.content.trim().length > 0), ue = e.role === "assistant" && (r ?? t?.[t.length - 1]?.id === e.id), de = u && (le || D) && !(n && ue), { open: fe, close: pe } = k;
 	(0, L.useEffect)(() => {
-		fe && (A === ne.current ? de || pe() : pe({ save: !1 }));
+		fe && (ee === ne.current ? de || pe() : pe({ save: !1 }));
 	}, [
 		fe,
 		de,
-		A,
+		ee,
 		pe
 	]);
 	let me = O?.feedback && de && /* @__PURE__ */ (0, R.jsx)(uA, {
@@ -32526,11 +32526,11 @@ function dA({ message: e, messages: t, isRunning: n, isLatest: r, onThumbsUp: i,
 		comment: k,
 		savedComment: O.feedback.comment ?? "",
 		rating: O.feedback.rating,
-		anchor: te,
+		anchor: A,
 		messageId: e.id
 	});
 	return x ? /* @__PURE__ */ (0, R.jsxs)("div", {
-		ref: ee,
+		ref: te,
 		"data-copilotkit": !0,
 		"data-message-id": e.id,
 		style: { display: "contents" },
@@ -32555,7 +32555,7 @@ function dA({ message: e, messages: t, isRunning: n, isLatest: r, onThumbsUp: i,
 			toolbarVisible: de
 		}), me]
 	}) : /* @__PURE__ */ (0, R.jsxs)("div", {
-		ref: ee,
+		ref: te,
 		"data-copilotkit": !0,
 		"data-testid": "copilot-assistant-message",
 		className: s("copilotKitMessage copilotKitAssistantMessage", S),
@@ -33428,15 +33428,15 @@ function oj({ messages: e = [], assistantMessage: t, userMessage: n, reasoningMe
 		O,
 		u,
 		D
-	]), A = k[k.length - 1]?.id, ee = wE(), te = (0, L.useMemo)(() => f === "separate" ? /* @__PURE__ */ new Map() : Sk(k, e, ee), [
+	]), ee = k[k.length - 1]?.id, te = wE(), A = (0, L.useMemo)(() => f === "separate" ? /* @__PURE__ */ new Map() : Sk(k, e, te), [
 		f,
 		k,
 		e,
-		ee
-	]), ne = (0, L.useMemo)(() => f === "turn" ? Ck(k, te) : void 0, [
+		te
+	]), ne = (0, L.useMemo)(() => f === "turn" ? Ck(k, A) : void 0, [
 		f,
 		k,
-		te
+		A
 	]), j = (0, L.useMemo)(() => {
 		let e = /* @__PURE__ */ new Map();
 		for (let t of ne?.values() ?? []) e.set(t.firstMessageId, t);
@@ -33475,13 +33475,13 @@ function oj({ messages: e = [], assistantMessage: t, userMessage: n, reasoningMe
 	]), se = (0, L.useMemo)(() => ({
 		display: f,
 		isRunning: c,
-		layouts: te,
+		layouts: A,
 		workOpen: F,
 		workTextOpen: oe
 	}), [
 		f,
 		c,
-		te,
+		A,
 		F,
 		oe
 	]), ce = (e, t) => {
@@ -33618,7 +33618,7 @@ function oj({ messages: e = [], assistantMessage: t, userMessage: n, reasoningMe
 			message: t,
 			messages: e,
 			isRunning: c,
-			isLatest: t.id === A,
+			isLatest: t.id === ee,
 			AssistantMessageComponent: ye,
 			slotProps: Te
 		}, i));
@@ -33636,7 +33636,7 @@ function oj({ messages: e = [], assistantMessage: t, userMessage: n, reasoningMe
 				message: t,
 				messages: e,
 				isRunning: c,
-				isLatest: t.id === A,
+				isLatest: t.id === ee,
 				ReasoningMessageComponent: Oe,
 				slotProps: ke
 			}, i);
@@ -34098,7 +34098,7 @@ function Ej() {
 		})
 	});
 }
-function Dj({ messageView: e, input: t, scrollView: n, suggestionView: r, welcomeScreen: i, messages: a = [], autoScroll: o = !0, isRunning: s = !1, suggestions: c, suggestionLoadingIndexes: l, onSelectSuggestion: u, onSubmitMessage: d, onStop: f, inputMode: p, inputValue: m, onInputChange: h, onStartTranscribe: g, onCancelTranscribe: _, onFinishTranscribe: v, onFinishTranscribeWithAudio: y, attachments: b, onRemoveAttachment: x, onAddFile: S, dragOver: C, onDragOver: w, onDragLeave: T, onDrop: E, isConnecting: D = !1, hasExplicitThreadId: O = !1, disclaimer: k, intelligenceIndicator: A, children: ee, className: te, ...ne }) {
+function Dj({ messageView: e, input: t, scrollView: n, suggestionView: r, welcomeScreen: i, messages: a = [], autoScroll: o = !0, isRunning: s = !1, suggestions: c, suggestionLoadingIndexes: l, onSelectSuggestion: u, onSubmitMessage: d, onStop: f, inputMode: p, inputValue: m, onInputChange: h, onStartTranscribe: g, onCancelTranscribe: _, onFinishTranscribe: v, onFinishTranscribeWithAudio: y, attachments: b, onRemoveAttachment: x, onAddFile: S, dragOver: C, onDragOver: w, onDragLeave: T, onDrop: E, isConnecting: D = !1, hasExplicitThreadId: O = !1, disclaimer: k, intelligenceIndicator: ee, children: te, className: A, ...ne }) {
 	let j = Bn()?.threadId, [M, re] = (0, L.useState)(a[0]?.id), ie = (0, L.useRef)(/* @__PURE__ */ new Set());
 	(0, L.useEffect)(() => {
 		if (a.length === 0) return;
@@ -34127,7 +34127,7 @@ function Dj({ messageView: e, input: t, scrollView: n, suggestionView: r, welcom
 	let pe = $(e, oj, {
 		messages: a,
 		isRunning: s,
-		intelligenceIndicator: A
+		intelligenceIndicator: ee
 	}), me = $(t, xE, {
 		onSubmitMessage: d,
 		onStop: f,
@@ -34201,15 +34201,15 @@ function Dj({ messageView: e, input: t, scrollView: n, suggestionView: r, welcom
 			onDragOver: w,
 			onDragLeave: T,
 			onDrop: E,
-			className: Q("copilotKitChat cpk:@container cpk:relative cpk:h-full cpk:flex cpk:flex-col", te),
+			className: Q("copilotKitChat cpk:@container cpk:relative cpk:h-full cpk:flex cpk:flex-col", A),
 			...ne,
 			children: [C && /* @__PURE__ */ (0, R.jsx)(Ej, {}), a]
 		});
 	}
-	return ee ? /* @__PURE__ */ (0, R.jsx)("div", {
+	return te ? /* @__PURE__ */ (0, R.jsx)("div", {
 		"data-copilotkit": !0,
 		style: { display: "contents" },
-		children: ee({
+		children: te({
 			messageView: pe,
 			input: me,
 			scrollView: _e,
@@ -34222,7 +34222,7 @@ function Dj({ messageView: e, input: t, scrollView: n, suggestionView: r, welcom
 		onDragOver: w,
 		onDragLeave: T,
 		onDrop: E,
-		className: Q("copilotKitChat cpk:@container cpk:relative cpk:h-full cpk:flex cpk:flex-col", te),
+		className: Q("copilotKitChat cpk:@container cpk:relative cpk:h-full cpk:flex cpk:flex-col", A),
 		...ne,
 		children: [
 			C && /* @__PURE__ */ (0, R.jsx)(Ej, {}),
@@ -34656,17 +34656,17 @@ function Fj({ agentId: e, threadId: t, labels: n, inspectorTools: r, chatView: i
 	}), w = x ?? y, T = x !== null || b, { agent: E, isReady: D } = dk({
 		agentId: _,
 		throttleMs: c
-	}), { copilotkit: O } = Dn(), { suggestions: k } = fk({ agentId: _ }), { checkFeature: A } = kn(), ee = A("chat");
+	}), { copilotkit: O } = Dn(), { suggestions: k } = fk({ agentId: _ }), { checkFeature: ee } = kn(), te = ee("chat");
 	(0, L.useEffect)(() => {
-		ee || console.warn("[CopilotKit] Warning: \"chat\" feature is not licensed. Visit copilotkit.ai/pricing");
-	}, [ee]);
-	let te = (0, L.useRef)(s);
+		te || console.warn("[CopilotKit] Warning: \"chat\" feature is not licensed. Visit copilotkit.ai/pricing");
+	}, [te]);
+	let A = (0, L.useRef)(s);
 	(0, L.useEffect)(() => {
-		te.current = s;
+		A.current = s;
 	}, [s]), (0, L.useEffect)(() => {
-		if (!te.current) return;
+		if (!A.current) return;
 		let e = O.subscribe({ onError: (e) => {
-			e.context?.agentId !== _ && e.context?.agentId || te.current?.({
+			e.context?.agentId !== _ && e.context?.agentId || A.current?.({
 				error: e.error,
 				code: e.code,
 				context: e.context
@@ -35090,7 +35090,7 @@ function Fj({ agentId: e, threadId: t, labels: n, inspectorTools: r, chatView: i
 					accept: o?.accept ?? "*/*",
 					style: { display: "none" }
 				}),
-				!ee && /* @__PURE__ */ (0, R.jsx)(LE, { featureName: "Chat" }),
+				!te && /* @__PURE__ */ (0, R.jsx)(LE, { featureName: "Chat" }),
 				ie && /* @__PURE__ */ (0, R.jsx)("div", {
 					style: {
 						position: "absolute",
@@ -36998,19 +36998,15 @@ var YN = [
 function eP({ stages: e }) {
 	return /* @__PURE__ */ (0, R.jsxs)("div", {
 		className: "msg__thinking",
-		children: [/* @__PURE__ */ (0, R.jsxs)("div", {
-			className: "msg__thinking-mark shader-zone",
-			"data-shader": "pulse",
-			children: [/* @__PURE__ */ (0, R.jsx)("span", {
-				className: "msg__thinking-halo",
-				"aria-hidden": "true"
-			}), /* @__PURE__ */ (0, R.jsx)("img", {
+		children: [/* @__PURE__ */ (0, R.jsx)("div", {
+			className: "msg__thinking-mark",
+			children: /* @__PURE__ */ (0, R.jsx)("img", {
 				className: "msg__thinking-art",
 				src: $N,
 				alt: "",
 				width: 96,
 				height: 72
-			})]
+			})
 		}), /* @__PURE__ */ (0, R.jsxs)("div", {
 			className: "msg__thinking-body",
 			children: [/* @__PURE__ */ (0, R.jsx)(cP, { stages: e }), /* @__PURE__ */ (0, R.jsx)(dP, {})]
@@ -37138,32 +37134,32 @@ function dP() {
 	});
 }
 function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: i, onAnswered: a, onConversationReset: o, storageKey: s, csrfToken: c }) {
-	let [l, u] = (0, L.useState)(""), [d, f] = (0, L.useState)(!1), [p, m] = (0, L.useState)(null), [h, g] = (0, L.useState)([]), [_, v] = (0, L.useState)(0), [y, b] = (0, L.useState)(() => GN(s)), [x, S] = (0, L.useState)(!1), [C, w] = (0, L.useState)(!1), [T, E] = (0, L.useState)({}), D = (0, L.useRef)([]), O = (0, L.useRef)(null), k = (0, L.useRef)(null), A = (0, L.useRef)(null);
+	let [l, u] = (0, L.useState)(""), [d, f] = (0, L.useState)(!1), [p, m] = (0, L.useState)(null), [h, g] = (0, L.useState)([]), [_, v] = (0, L.useState)(0), [y, b] = (0, L.useState)(() => GN(s)), [x, S] = (0, L.useState)(!1), [C, w] = (0, L.useState)({}), T = (0, L.useRef)([]), E = (0, L.useRef)(null), D = (0, L.useRef)(null), O = (0, L.useRef)(null);
 	(0, L.useEffect)(() => {
-		b(GN(s)), m(null), E({});
+		b(GN(s)), m(null), w({});
 	}, [s]);
-	let ee = e.messages.filter((e) => e.role === "user" || e.role === "assistant"), te = `${ee.map((e) => `${e.id}:${tP(e).length}`).join("|")}#${h.length}#${d}#${+!!p}`;
+	let k = e.messages.filter((e) => e.role === "user" || e.role === "assistant"), ee = `${k.map((e) => `${e.id}:${tP(e).length}`).join("|")}#${h.length}#${d}#${+!!p}`;
 	(0, L.useEffect)(() => {
-		let e = k.current;
-		e && typeof e.scrollIntoView == "function" && ee.length && e.scrollIntoView({ block: "end" });
-		let t = O.current;
+		let e = D.current;
+		e && typeof e.scrollIntoView == "function" && k.length && e.scrollIntoView({ block: "end" });
+		let t = E.current;
 		t && (t.scrollTop = t.scrollHeight);
-	}, [te]);
-	let ne = (0, L.useCallback)((e) => {
-		let t = VN(D.current, e);
-		t.length !== D.current.length && (D.current = t, g(t));
-	}, []), j = r.progress?.stage;
+	}, [ee]);
+	let te = (0, L.useCallback)((e) => {
+		let t = VN(T.current, e);
+		t.length !== T.current.length && (T.current = t, g(t));
+	}, []), A = r.progress?.stage;
 	(0, L.useEffect)(() => {
-		d && j && ne(j);
+		d && A && te(A);
 	}, [
 		d,
-		j,
-		ne
+		A,
+		te
 	]);
-	async function M(r, c) {
+	async function ne(r, c) {
 		let l = r.trim();
 		if (!l || d || !t) return;
-		m(null), f(!0), S(!1), D.current = [], g([]), v(aP(e.messages)), c && e.addMessage({
+		m(null), f(!0), S(!1), T.current = [], g([]), v(aP(e.messages)), c && e.addMessage({
 			id: crypto.randomUUID(),
 			role: "user",
 			content: l
@@ -37185,20 +37181,20 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 				onStateSnapshotEvent: ({ event: e }) => {
 					p = !0;
 					let t = e.snapshot;
-					ne(EM(t).progress?.stage);
+					te(EM(t).progress?.stage);
 				}
 			});
 		} catch (e) {
 			h(e instanceof Error ? e.message : String(e));
 		} finally {
-			f(!1), A.current?.focus();
+			f(!1), O.current?.focus();
 		}
 		if (u) return;
 		let _ = e.messages.filter((e) => e.role === "assistant"), y = _.length ? tP(_[_.length - 1]) : "";
 		if (!y) return;
 		let x = p ? EM(e.state) : void 0, C = LN(y, x?.answer), w = {
 			answer: BN(y),
-			stages: D.current,
+			stages: T.current,
 			state: x ? HN(x) : void 0,
 			...C === y ? {} : { text: C }
 		};
@@ -37211,33 +37207,33 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 			return t[_.length - 1] = w, KN(s, t), t;
 		}), a(l, C);
 	}
-	function re(e) {
+	function j(e) {
 		e.preventDefault();
 		let t = l;
-		u(""), M(t, !0);
+		u(""), ne(t, !0);
 	}
-	async function ie(e, t) {
-		if (c && T[e] !== "up" && T[e] !== "down") {
-			E((n) => ({
+	async function M(e, t) {
+		if (c && C[e] !== "up" && C[e] !== "down") {
+			w((n) => ({
 				...n,
 				[e]: t ? "up" : "down"
 			}));
 			try {
 				await NN(c, n, t);
 			} catch {
-				E((t) => ({
+				w((t) => ({
 					...t,
 					[e]: "failed"
 				}));
 			}
 		}
 	}
-	let N = d || !t, ae = {
+	let re = d || !t, ie = {
 		application: n,
-		busy: N,
-		onAsk: (e) => void M(e, !0),
+		busy: re,
+		onAsk: (e) => void ne(e, !0),
 		onOpenWhatIf: () => S(!0)
-	}, P = aP(ee), F = d && P <= _, oe = ee.length === 0 && !d, se = -1, ce = ee.map((e) => {
+	}, N = aP(k), ae = d && N <= _, P = k.length === 0 && !d, F = -1, oe = k.map((e) => {
 		let t = tP(e);
 		if (e.role === "user") return t ? /* @__PURE__ */ (0, R.jsxs)("div", {
 			className: "msg user",
@@ -37246,8 +37242,8 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 				children: "You said: "
 			}), /* @__PURE__ */ (0, R.jsx)("p", { children: t })]
 		}, e.id) : null;
-		se += 1;
-		let n = se;
+		F += 1;
+		let n = F;
 		if (d && n >= _) return /* @__PURE__ */ (0, R.jsx)("div", {
 			className: "msg bot msg--live",
 			children: /* @__PURE__ */ (0, R.jsx)("div", {
@@ -37256,15 +37252,14 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					/* @__PURE__ */ (0, R.jsx)(cP, { stages: h }),
 					/* @__PURE__ */ (0, R.jsx)(MN, { text: RN(t) }),
 					/* @__PURE__ */ (0, R.jsx)("div", {
-						className: "msg__stream-edge shader-zone",
-						"data-shader": "stream",
+						className: "msg__stream-edge",
 						"aria-hidden": "true"
 					})
 				] }) : /* @__PURE__ */ (0, R.jsx)(eP, { stages: h })
 			})
 		}, e.id);
 		if (!t) return null;
-		let r = qN(y, n, t), i = oP(r?.state, ae), a = n === P - 1 && !d && !p, o = T[n];
+		let r = qN(y, n, t), i = oP(r?.state, ie), a = n === N - 1 && !d && !p, o = C[n];
 		return /* @__PURE__ */ (0, R.jsx)("div", {
 			className: "msg bot",
 			children: /* @__PURE__ */ (0, R.jsxs)("div", {
@@ -37273,7 +37268,7 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					/* @__PURE__ */ (0, R.jsx)(lP, {
 						stages: r?.stages ?? [],
 						state: r?.state,
-						open: n === P - 1
+						open: n === N - 1
 					}),
 					/* @__PURE__ */ (0, R.jsx)(MN, {
 						text: zN(r, t),
@@ -37283,7 +37278,7 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 						className: "msg__cards",
 						children: i.map((e, t) => /* @__PURE__ */ (0, R.jsx)("div", {
 							className: "msg__card",
-							children: hN(e, ae)
+							children: hN(e, ie)
 						}, `${e.type}-${t}`))
 					}) : null,
 					c ? /* @__PURE__ */ (0, R.jsx)("div", {
@@ -37302,7 +37297,7 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 									className: "icon-btn",
 									"aria-label": "Helpful",
 									title: "Helpful",
-									onClick: () => void ie(n, !0),
+									onClick: () => void M(n, !0),
 									children: /* @__PURE__ */ (0, R.jsx)(uP, {})
 								}),
 								/* @__PURE__ */ (0, R.jsx)("button", {
@@ -37310,7 +37305,7 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 									className: "icon-btn",
 									"aria-label": "Not helpful",
 									title: "Not helpful",
-									onClick: () => void ie(n, !1),
+									onClick: () => void M(n, !1),
 									children: /* @__PURE__ */ (0, R.jsx)(uP, { down: !0 })
 								}),
 								o === "failed" ? /* @__PURE__ */ (0, R.jsx)("span", {
@@ -37326,8 +37321,8 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 						children: JN(r?.state).map((e) => /* @__PURE__ */ (0, R.jsx)("button", {
 							type: "button",
 							className: "chip",
-							disabled: N,
-							onClick: () => void M(e, !0),
+							disabled: re,
+							onClick: () => void ne(e, !0),
 							children: e
 						}, e))
 					}) : null
@@ -37351,28 +37346,24 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 			}),
 			/* @__PURE__ */ (0, R.jsxs)("div", {
 				className: "log",
-				ref: O,
+				ref: E,
 				role: "log",
 				"aria-live": "polite",
 				"aria-relevant": "additions text",
 				tabIndex: 0,
 				children: [
-					oe ? /* @__PURE__ */ (0, R.jsxs)("div", {
+					P ? /* @__PURE__ */ (0, R.jsxs)("div", {
 						className: "chat-empty",
 						children: [
-							/* @__PURE__ */ (0, R.jsxs)("div", {
-								className: "chat-empty__mark shader-zone",
-								"data-shader": "orb",
-								children: [/* @__PURE__ */ (0, R.jsx)("span", {
-									className: "chat-empty__halo",
-									"aria-hidden": "true"
-								}), /* @__PURE__ */ (0, R.jsx)("img", {
+							/* @__PURE__ */ (0, R.jsx)("div", {
+								className: "chat-empty__mark",
+								children: /* @__PURE__ */ (0, R.jsx)("img", {
 									className: "chat-empty__art",
 									src: ZN,
 									alt: "",
 									width: 160,
 									height: 120
-								})]
+								})
 							}),
 							/* @__PURE__ */ (0, R.jsx)("h3", { children: "Ask about your decision" }),
 							/* @__PURE__ */ (0, R.jsx)("p", { children: "Ask why, what to fix, or try a what-if." }),
@@ -37381,14 +37372,14 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 								children: YN.map((e) => /* @__PURE__ */ (0, R.jsx)("button", {
 									type: "button",
 									className: "chip",
-									disabled: N,
-									onClick: () => void M(e, !0),
+									disabled: re,
+									onClick: () => void ne(e, !0),
 									children: e
 								}, e))
 							})
 						]
-					}) : ce,
-					F ? /* @__PURE__ */ (0, R.jsx)("div", {
+					}) : oe,
+					ae ? /* @__PURE__ */ (0, R.jsx)("div", {
 						className: "msg bot msg--live",
 						children: /* @__PURE__ */ (0, R.jsx)("div", {
 							className: "msg__body",
@@ -37418,8 +37409,8 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 								/* @__PURE__ */ (0, R.jsx)("button", {
 									type: "button",
 									className: "btn btn--ghost btn--sm",
-									onClick: () => void M(p.question, !1),
-									disabled: N,
+									onClick: () => void ne(p.question, !1),
+									disabled: re,
 									children: "Retry"
 								})
 							]
@@ -37430,7 +37421,7 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 						children: [hN({
 							type: "what_if_form",
 							card: pP(y, r)
-						}, ae), /* @__PURE__ */ (0, R.jsx)("button", {
+						}, ie), /* @__PURE__ */ (0, R.jsx)("button", {
 							type: "button",
 							className: "btn btn--quiet btn--sm",
 							onClick: () => S(!1),
@@ -37438,7 +37429,7 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 						})]
 					}) : null,
 					/* @__PURE__ */ (0, R.jsx)("div", {
-						ref: k,
+						ref: D,
 						className: "log__end",
 						"aria-hidden": "true"
 					})
@@ -37453,20 +37444,14 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 							type: "button",
 							className: "chip chip--alt",
 							"aria-expanded": x,
-							disabled: N,
+							disabled: re,
 							onClick: () => S((e) => !e),
 							children: "Try a what-if"
 						})
 					}),
 					/* @__PURE__ */ (0, R.jsxs)("form", {
 						className: "row composer__form",
-						onSubmit: re,
-						onFocus: () => w(!0),
-						onBlur: (e) => {
-							e.currentTarget.contains(e.relatedTarget) || w(!1);
-						},
-						"data-shader": C || d ? "composer" : void 0,
-						"data-shader-state": d ? "sending" : C ? "focus" : void 0,
+						onSubmit: j,
 						children: [
 							/* @__PURE__ */ (0, R.jsx)("label", {
 								className: "sr-only",
@@ -37475,18 +37460,18 @@ function fP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 							}),
 							/* @__PURE__ */ (0, R.jsx)("input", {
 								id: "question",
-								ref: A,
+								ref: O,
 								type: "text",
 								value: l,
 								placeholder: "Ask about your decision…",
 								autoComplete: "off",
-								disabled: N,
+								disabled: re,
 								onChange: (e) => u(e.target.value)
 							}),
 							/* @__PURE__ */ (0, R.jsx)("button", {
 								type: "submit",
 								className: "btn",
-								disabled: N || !l.trim(),
+								disabled: re || !l.trim(),
 								children: d ? "Answering…" : "Send"
 							})
 						]
@@ -37660,10 +37645,9 @@ function EP({ state: e, level: t }) {
 	return /* @__PURE__ */ (0, R.jsxs)("div", {
 		className: "voice-stage",
 		children: [/* @__PURE__ */ (0, R.jsx)("div", {
-			className: "voice-orb shader-zone",
-			"data-shader": "voice",
-			"data-shader-state": e,
-			"data-shader-level": t.toFixed(2),
+			className: "voice-orb",
+			"data-state": e,
+			"data-level": t.toFixed(2),
 			"aria-hidden": "true",
 			style: { "--voice-level": t.toFixed(2) },
 			children: /* @__PURE__ */ (0, R.jsx)("span", { className: "voice-orb__core" })
@@ -37813,7 +37797,7 @@ function AP({ context: e, createTransport: t, onSessionExpired: n }) {
 			children: "Voice is not available on this site. You can still ask by text."
 		})]
 	});
-	let A = OP.includes(a), ee = a === "ended" || a === "failed";
+	let ee = OP.includes(a), te = a === "ended" || a === "failed";
 	return /* @__PURE__ */ (0, R.jsxs)("section", {
 		className: "voice",
 		"aria-labelledby": "voice-heading",
@@ -37831,7 +37815,7 @@ function AP({ context: e, createTransport: t, onSessionExpired: n }) {
 				state: _.state,
 				level: _.level
 			}),
-			!A && !ee ? /* @__PURE__ */ (0, R.jsxs)("div", {
+			!ee && !te ? /* @__PURE__ */ (0, R.jsxs)("div", {
 				className: "voice__start",
 				children: [/* @__PURE__ */ (0, R.jsxs)("label", {
 					className: "voice__consent",
@@ -37868,7 +37852,7 @@ function AP({ context: e, createTransport: t, onSessionExpired: n }) {
 				role: "alert",
 				children: /* @__PURE__ */ (0, R.jsx)("p", { children: s })
 			}) : null,
-			A ? /* @__PURE__ */ (0, R.jsxs)("div", {
+			ee ? /* @__PURE__ */ (0, R.jsxs)("div", {
 				className: "voice__actions",
 				children: [
 					/* @__PURE__ */ (0, R.jsx)("button", {
@@ -37893,7 +37877,7 @@ function AP({ context: e, createTransport: t, onSessionExpired: n }) {
 					}) : null
 				]
 			}) : null,
-			ee ? /* @__PURE__ */ (0, R.jsx)("button", {
+			te ? /* @__PURE__ */ (0, R.jsx)("button", {
 				type: "button",
 				className: "btn btn--sm",
 				onClick: k,

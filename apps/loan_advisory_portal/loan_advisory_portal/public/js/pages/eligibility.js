@@ -197,8 +197,7 @@
 	var ART = "/assets/loan_advisory_portal/illustrations/";
 
 	/* v3 result layout: illustration, status badge, one headline, then hairline sections.
-	   v6: the illustration sits on the plain surface (no shader under it); the estimate itself is the key card
-	   and carries a Paper Shaders glow ring on its edge (decorative; the words carry the result). */
+	   The illustration sits on the plain surface; the estimate itself is the key card (white, hairline). */
 	function head(art, badge, title, lead, amount) {
 		return (
 			'<div class="result-head">' +
@@ -210,7 +209,7 @@
 			"</div>" +
 			// The range gets the full panel width so "₹4,80,000 – ₹5,70,000" stays on one line.
 			(amount
-				? '<div class="result-head__amount estimate-card shader-ring" data-shader="ring"><p class="result-card__amount">' + amount + "</p>" +
+				? '<div class="result-head__amount estimate-card key-card"><p class="result-card__amount">' + amount + "</p>" +
 				  (lead ? '<p class="small muted">' + lead + "</p>" : "") + "</div>"
 				: "") +
 			"</div>"

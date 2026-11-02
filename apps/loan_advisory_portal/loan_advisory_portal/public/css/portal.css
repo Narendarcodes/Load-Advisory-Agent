@@ -6409,42 +6409,6 @@ textarea:focus-visible {
 	box-shadow: var(--ring);
 }
 
-/* Shader zones: decorative art panels only, never behind text. The static gradient is the
-   no-WebGL and reduced-motion fallback; js/shader.js fades a slow mesh gradient in over it. */
-.shader-zone {
-	position: relative;
-	isolation: isolate;
-	overflow: hidden;
-	border-radius: var(--radius);
-	background:
-		radial-gradient(90% 80% at 18% 12%, #fce6dc 0, rgb(252 230 220 / 0%) 60%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-		radial-gradient(80% 90% at 88% 92%, #f8d3c3 0, rgb(248 211 195 / 0%) 62%), /* taste-skill-ignore: shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-		var(--paper);
-}
-
-.shader-zone > img {
-	position: relative;
-	z-index: 1;
-}
-
-.shader-zone__canvas {
-	position: absolute;
-	inset: 0;
-	z-index: 0;
-	opacity: 0;
-	transition: opacity 700ms var(--ease-out);
-}
-
-.shader-zone.is-live .shader-zone__canvas {
-	opacity: 1;
-}
-
-.shader-zone__canvas canvas {
-	display: block;
-	width: 100% !important;
-	height: 100% !important;
-}
-
 .auth__visual {
 	max-width: 420px;
 	margin: 0 0 var(--s5);
@@ -6458,10 +6422,6 @@ textarea:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.shader-zone__canvas {
-		display: none;
-	}
-
 	.btn,
 	.btn--ghost,
 	.btn--quiet,
@@ -6512,105 +6472,47 @@ textarea:focus-visible {
 }
 
 /* ==========================================================================================
-   v6 shaders (DESIGN_PRINCIPLES §1 "Shader placement (v6)"). Paper Shaders live on flat surfaces only:
-   a very quiet page wash, thin top and footer strips, a glow ring on the edge of a few key cards
-   (sign-in, the dashboard next step, the decision, the eligibility estimate) and the loading band.
-   Never behind an illustration, form fields, tables, body text or the sidebar. js/shader.js mounts
-   the live canvas over these static looks, which are also the reduced-motion / Save-Data / no-WebGL look.
+   Final surfaces (DESIGN_PRINCIPLES §1). The cream page, white raised work surfaces with a hairline,
+   and the one soft shadow (--shadow) on floating layers only. No animated art: the few key cards
+   (sign-in, the dashboard next step, the decision, the eligibility estimate) are white with a hairline.
    ========================================================================================== */
-.shader-zone {
-	border: 0;
-}
-
-.shader-zone > :not(.shader-zone__canvas) {
+.key-card {
 	position: relative;
-	z-index: 1;
-}
-
-.shader-zone__canvas {
-	border-radius: inherit;
-	overflow: hidden;
-	pointer-events: none;
-}
-
-/* ---- Page wash: the flat cream, a few steps off paper and very slow. Never under the sidebar. ---- */
-.page-wash.shader-zone {
-	position: fixed;
-	inset: 0;
-	z-index: -1;
-	border-radius: 0;
-	background:
-		radial-gradient(60% 55% at 92% 8%, #fce9de 0, rgb(252 233 222 / 0%) 70%), /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-		radial-gradient(55% 60% at 4% 96%, #f6eef1 0, rgb(246 238 241 / 0%) 70%), /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-		var(--paper);
-}
-
-.app-shell .page-wash.shader-zone {
-	left: var(--rail);
-}
-
-/* ---- Top strip and footer strip: thin animated brand bands. ---- */
-.top-band.shader-zone,
-.foot-band.shader-zone {
-	height: 3px;
-	border-radius: 0;
-	background: linear-gradient(90deg, #ffb089, #ff8f68 30%, #e25f4b 62%, #7e3550); /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-}
-
-.foot-band.shader-zone {
-	height: 4px;
-	margin-top: -1px;
-}
-
-/* ---- Key-card glow ring: the canvas bleeds 14 px past the card so the ring lands on the card's edge
-   and its glow falls outside it like a soft shadow. Static look: a warm gradient hairline + glow. ---- */
-.shader-ring {
-	position: relative;
-	isolation: isolate;
-	border: 1px solid transparent;
-	border-radius: 14px;
-	background:
-		linear-gradient(var(--surface), var(--surface)) padding-box, /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-		linear-gradient(135deg, #ffb089, #e25f4b 45%, #c9a3b8 75%, #ffc4a8) border-box; /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-	box-shadow: 0 14px 34px -22px rgb(226 95 75 / 55%), 0 2px 6px -3px rgb(78 36 64 / 12%);
-}
-
-.shader-ring[data-shader-state="muted"] {
-	background:
-		linear-gradient(var(--surface), var(--surface)) padding-box, /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-		linear-gradient(135deg, #e7dad3, #d8c8cb 50%, #efe2d8) border-box; /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-	box-shadow: 0 10px 28px -22px rgb(78 36 64 / 30%);
-}
-
-.shader-ring[data-shader-state="approved"] {
-	background:
-		linear-gradient(var(--surface), var(--surface)) padding-box, /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-		linear-gradient(135deg, #ffc98c, #ff8f68 45%, #f2a65a 75%, #7e3550) border-box; /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-}
-
-.shader-ring > :not(.shader-zone__canvas) {
-	position: relative;
-	z-index: 1;
-}
-
-.shader-ring > .shader-zone__canvas {
-	position: absolute;
-	inset: -14px;
-	z-index: 0;
-	border-radius: 26px;
-	opacity: 0;
-	pointer-events: none;
-	transition: opacity 700ms var(--ease-out);
-}
-
-.shader-ring.is-live > .shader-zone__canvas {
-	opacity: 1;
-}
-
-/* Live: the shader draws the edge, so the static hairline steps back to a quiet one. */
-.shader-ring.is-live {
-	border-color: transparent;
+	border: 1px solid var(--line);
+	border-radius: 12px;
 	background: var(--surface);
+}
+
+/* Status bar: a thin indeterminate bar for work in progress (checks running, page loading).
+   Decorative (aria-hidden); the sentence beside it says what is happening. Static under reduced motion. */
+.status-bar {
+	position: relative;
+	height: 4px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: var(--paper-2);
+}
+
+.status-bar::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 34%;
+	border-radius: inherit;
+	background: var(--coral-3);
+	animation: saral-indeterminate 1.8s var(--ease-out) infinite;
+}
+
+@keyframes saral-indeterminate {
+	from {
+		transform: translateX(-105%);
+	}
+
+	to {
+		transform: translateX(300%);
+	}
 }
 
 /* ---- Sign in: the card is the key card; the illustration sits on the plain page. ---- */
@@ -6696,7 +6598,7 @@ textarea:focus-visible {
 	height: auto;
 }
 
-/* ---- Application result: the decision card carries the ring; the scene sits beside it. ---- */
+/* ---- Application result: the decision is the key card; the scene sits beside it. ---- */
 .result-v6 {
 	border-bottom: 0;
 	margin-bottom: var(--s5);
@@ -6706,17 +6608,9 @@ textarea:focus-visible {
 	padding: clamp(16px, 2vw, 24px);
 }
 
-/* Checks running: a calm GrainGradient band inside the decision card is the processing cue. */
-.process-band.shader-zone {
-	height: 8px;
+/* Checks running: a thin status bar inside the decision card is the processing cue. */
+.process-bar {
 	margin-top: var(--s2);
-	border-radius: 999px;
-	background: linear-gradient(90deg, #f6c9b3, #e9c3cf 40%, #ffae8c 70%, #c9a3b8); /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-	animation: saral-breathe 2.8s var(--ease-out) infinite alternate;
-}
-
-.process-band.shader-zone.is-live {
-	animation: none;
 }
 
 /* ---- Eligibility: the estimate is the key card. ---- */
@@ -6724,7 +6618,7 @@ textarea:focus-visible {
 	padding: clamp(14px, 1.8vw, 22px);
 }
 
-/* ---- Page loading: a calm shader band and one sentence; content areas keep their skeletons. ---- */
+/* ---- Page loading: a status bar and one sentence; content areas keep their skeletons. ---- */
 /* A floating status (a layer above the page, so it carries the floating shadow) that never shifts the
    content under it. */
 .page-loading {
@@ -6760,43 +6654,10 @@ textarea:focus-visible {
 	display: none;
 }
 
-.page-loading__band.shader-zone {
-	height: 8px;
-	border-radius: 999px;
-	background: linear-gradient(90deg, #ffd9c4, #ff8f68 35%, #e25f4b 65%, #f2a65a); /* taste-skill-ignore: v6 shader fallback, deliberate (DESIGN_PRINCIPLES §2) */
-	animation: saral-breathe 1.6s var(--ease-out) infinite alternate;
-}
-
-.page-loading__band.shader-zone.is-live {
-	animation: none;
-}
-
 .page-loading__text {
 	margin: 0;
 	color: var(--ink-2);
 	font-size: 0.92rem;
-}
-
-@keyframes saral-breathe {
-	from {
-		opacity: 0.55;
-	}
-
-	to {
-		opacity: 1;
-	}
-}
-
-@media (max-width: 899px) {
-	.app-shell .page-wash.shader-zone {
-		left: 0;
-	}
-}
-
-@media (min-width: 768px) and (max-width: 900px) {
-	.app-shell .page-wash.shader-zone {
-		left: var(--rail);
-	}
 }
 
 @media (max-width: 640px) {
@@ -6823,19 +6684,12 @@ textarea:focus-visible {
 	.auth__panel .auth__art {
 		width: 200px;
 	}
-
-	.shader-ring > .shader-zone__canvas {
-		inset: -10px;
-	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.shader-zone__canvas {
-		display: none;
-	}
-
-	.process-band.shader-zone,
-	.page-loading__band.shader-zone {
+	.status-bar::after {
+		width: 100%;
+		opacity: 0.45;
 		animation: none;
 	}
 }
