@@ -113,7 +113,9 @@ def test_derive_features_reads_only_bureau_report_v1_contract_paths(case_id):
         report[k] = "probe"
     derive_features(_Recorder(report, "", seen))
     assert seen, "the classifier must read the bureau record"
-    assert seen <= set(CONTRACT["paths"]), sorted(seen - set(CONTRACT["paths"]))
+    paths = set(CONTRACT["paths"])
+    containers = {p.split("[]")[0] for p in paths if "[]" in p} | {p.rsplit(".", 1)[0] for p in paths if "." in p}
+    assert seen <= paths | containers, sorted(seen - paths - containers)
     assert not any(k in p for p in seen for k in DEMOGRAPHIC_KEYS)
 
 
@@ -297,6 +299,18 @@ def _run_with(bureau_report):
 DECISION_FIELDS = ("action", "intent", "decision_card", "improvement_plan", "what_if", "evidence_refs", "citations")
 
 
+_CLOCK = ("evaluated_at", "generated_at", "timestamp")
+
+
+def _stable(v):
+    """Drop wall-clock fields so two runs of the same decision compare equal."""
+    if isinstance(v, dict):
+        return {k: _stable(x) for k, x in v.items() if k not in _CLOCK}
+    if isinstance(v, list):
+        return [_stable(x) for x in v]
+    return v
+
+
 def _facts_of(system: str) -> dict:
     return json.loads(system[system.index("FACTS (JSON):") + 13: system.rindex("}") + 1])
 
@@ -308,12 +322,13 @@ def test_segment_never_alters_decision_fields_or_facts():
         ["PERSONAL_LOAN", "AUTO_LOAN", "HOME_LOAN", "PERSONAL_LOAN"])]))
     assert base.decision_card is not None
     for f in DECISION_FIELDS:
-        b = base.model_dump().get(f)
-        assert guided.model_dump().get(f) == b, f
-        assert detailed.model_dump().get(f) == b, f
+        b = _stable(base.model_dump().get(f))
+        assert _stable(guided.model_dump().get(f)) == b, f
+        assert _stable(detailed.model_dump().get(f)) == b, f
     # the same facts reach the model; only the style line differs
     assert base_prompts and guided_prompts and detailed_prompts
-    assert _facts_of(guided_prompts[0][1]) == _facts_of(base_prompts[0][1]) == _facts_of(detailed_prompts[0][1])
+    assert _stable(_facts_of(guided_prompts[0][1])) == _stable(_facts_of(base_prompts[0][1])) \
+        == _stable(_facts_of(detailed_prompts[0][1]))
     assert guided_prompts[0][1] != base_prompts[0][1] != detailed_prompts[0][1]
     assert GUIDANCE["Guided"][0] in guided_prompts[0][1]
     assert GUIDANCE["Detailed"][0] in detailed_prompts[0][1]

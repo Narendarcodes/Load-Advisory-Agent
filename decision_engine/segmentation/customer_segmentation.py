@@ -1,10 +1,13 @@
-"""Standalone and CLI interface for Customer Communication Segmentation.
+"""CLI for the explanation-tone classifier over synthetic ``bureau-report/1`` records.
 
 Usage:
-    python decision_engine/segmentation/customer_segmentation.py --application-id APP1001
-    python decision_engine/segmentation/customer_segmentation.py --all
-    python decision_engine/segmentation/customer_segmentation.py --all --data data/synthetic/demo_applicants.json
+    python decision_engine/segmentation/customer_segmentation.py --reports path/to/reports.json
+
+The file holds one bureau-report/1 record, a list of them, or ``{"cases": [{"report": ...}]}``
+(the shape of data/synthetic/saral_v1/bureau_cases.json). There is no default data file.
+Output per record: ``report_id`` (synthetic) plus ``segment`` and ``how_to_explain``.
 """
+from __future__ import annotations
 
 import argparse
 import json
@@ -13,99 +16,34 @@ from pathlib import Path
 from typing import Any
 
 if __package__ is None or __package__ == "":
-    # Add project root and decision_engine/segmentation to sys.path for direct execution
     _root = Path(__file__).resolve().parent.parent.parent
     if str(_root) not in sys.path:
         sys.path.insert(0, str(_root))
-    from decision_engine.segmentation.classifier import classify_applicant
+    from decision_engine.segmentation.classifier import BUREAU_SCHEMA, classify_bureau_report
 else:
-    from .classifier import classify_applicant
+    from .classifier import BUREAU_SCHEMA, classify_bureau_report
 
 
-def load_applicants(file_path: str | Path) -> list[dict[str, Any]]:
-    """Load and validate applicants from a JSON file."""
-    path = Path(file_path)
-    if not path.exists():
-        raise FileNotFoundError(f"Data file not found: {path}")
-
-    with open(path, "r", encoding="utf-8") as file:
-        data = json.load(file)
-
-    applicants = data.get("applicants")
-    if not isinstance(applicants, list):
-        # Support cases format as fallback if applicants list isn't root
-        applicants = data.get("cases")
-
-    if not isinstance(applicants, list):
-        raise ValueError("JSON must contain an applicants or cases list.")
-
-    applicant_ids = set()
-    for applicant in applicants:
-        applicant_id = applicant.get("applicant_id") or applicant.get("application_id")
-        if not applicant_id:
-            raise ValueError("Applicant ID is missing in record.")
-        if applicant_id in applicant_ids:
-            raise ValueError(f"Duplicate Applicant ID: {applicant_id}")
-        applicant_ids.add(applicant_id)
-
-    return applicants
-
-
-def find_applicant(applicants: list[dict[str, Any]], applicant_id: str) -> dict[str, Any] | None:
-    """Find applicant by applicant_id or application_id."""
-    for applicant in applicants:
-        if (
-            applicant.get("applicant_id") == applicant_id
-            or applicant.get("application_id") == applicant_id
-        ):
-            return applicant
-    return None
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Customer Communication Segmentation for Persona-Based Loan Advisory"
-    )
-    parser.add_argument(
-        "--application-id",
-        "--applicant-id",
-        dest="applicant_id",
-        help="Applicant ID to segment"
-    )
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Segment all applicants in the file"
-    )
-    parser.add_argument(
-        "--data",
-        default="data/synthetic/demo_applicants.json",
-        help="Path to JSON data file (defaults to data/synthetic/demo_applicants.json)"
-    )
-
-    args = parser.parse_args()
-    applicants = load_applicants(args.data)
-
-    if args.all:
-        results = [
-            {
-                "applicant_id": applicant.get("applicant_id") or applicant.get("application_id"),
-                **classify_applicant(applicant)
-            }
-            for applicant in applicants
-        ]
+def load_reports(file_path: str | Path) -> list[dict[str, Any]]:
+    """Load bureau-report/1 records from a JSON file."""
+    data = json.loads(Path(file_path).read_text(encoding="utf-8"))
+    if isinstance(data, dict) and "cases" in data:
+        items = [c.get("report") for c in data["cases"]]
+    elif isinstance(data, list):
+        items = data
     else:
-        applicant_id = args.applicant_id
-        if not applicant_id:
-            applicant_id = input("Enter Applicant ID: ").strip()
+        items = [data]
+    reports = [r for r in items if isinstance(r, dict) and r.get("schema_version") == BUREAU_SCHEMA]
+    if len(reports) != len(items):
+        raise ValueError(f"every record must be a {BUREAU_SCHEMA} report")
+    return reports
 
-        applicant = find_applicant(applicants, applicant_id)
-        if applicant is None:
-            raise SystemExit(f"Applicant ID '{applicant_id}' not found.")
 
-        results = classify_applicant(applicant)
-
-    # Outputs only persona segment and communication guidance - zero PII.
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Explanation tone from a synthetic bureau-report/1 record")
+    parser.add_argument("--reports", required=True, help="JSON file with bureau-report/1 record(s)")
+    args = parser.parse_args()
+    results = [{"report_id": r.get("report_id"), **classify_bureau_report(r)} for r in load_reports(args.reports)]
     print(json.dumps(results, indent=2))
 
 

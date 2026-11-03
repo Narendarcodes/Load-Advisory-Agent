@@ -1,50 +1,55 @@
-# Customer Communication Segmentation for Loan Advisory Agent
+# Explanation tone from customer segmentation
 
-A rule-based customer segmentation engine that classifies loan applicants into communication personas for explaining loan decisions.
+Rule-based customer segmentation (first built by @BharathkumarGoud179 in PR #43) that picks
+**how** the advisory agent explains a recorded decision. It never changes **what** the
+decision is or which facts are shown, and the borrower never sees it.
 
-## Personas & Communication Guidance
+## Input: the synthetic bureau record
 
-Based on credit history, borrowing diversity, and repayment indicators, applicants are categorized into four communication personas:
+The classifier takes one synthetic bureau record in the provider contract
+`bureau-report/1` (`decision_engine/schemas/bureau.py`; the path list is
+`contracts/synthetic_sources.json` → `sources.SYNTHETIC_BUREAU`). It reads only:
 
-1. **Guided Explanation Required**
-   - *Target*: First-time borrowers or applicants without prior loan history.
-   - *Communication Style*: Step-by-step numbered steps, simple everyday language, clear explanations of banking terms and documents, actionable next steps.
+- `accounts[].account_type`
+- `accounts[].months_reviewed`
 
-2. **Simple Explanation Required**
-   - *Target*: Applicants with limited borrowing experience ($\le 3$ loans, $\le 2$ loan types).
-   - *Communication Style*: Everyday language, avoiding jargon, explaining one point at a time with simple examples.
+The score, repayment history, income, gender, marital status and family details are never
+inputs. There is no demo-file or id lookup: the caller passes the record.
+Test fixtures (the 20 synthetic records from `data/synthetic/saral_v1/bureau_cases.json`) live
+only under `tests/fixtures/segmentation/`.
 
-3. **Standard Explanation Required**
-   - *Target*: Experienced retail borrowers with standard credit histories.
-   - *Communication Style*: Professional banking language, brief explanations of financial terms, practical examples, clear explanation of rejection reasons.
+## Four tone levels
 
-4. **Technical Explanation Required**
-   - *Target*: Experienced borrowers with diverse portfolios or extensive credit records ($>10$ loans or $\ge 4$ loans across $\ge 2$ types with $\ge 36$ months history).
-   - *Communication Style*: Precise financial metrics (FOIR, DTI, credit utilization, repayment history), detailed rejection analysis, and measurable improvement targets.
+| Tone | When | How |
+|---|---|---|
+| Guided | no loans on record yet (no credit record, or only a card) | short numbered steps, every money word explained |
+| Simple | a little borrowing experience | everyday words, one point at a time |
+| Standard | an established borrower | clear everyday professional language |
+| Detailed | long, varied borrowing experience | a little more context, still plain words |
 
-## Critical Privacy Guarantee
+Every tone line follows the Saral plain-language rules (ADR-0006): no internal terms
+(no FOIR, DTI, score bands, rule ids), no thresholds or cut-offs, no targets or gaps,
+and no numbers. The experience cut points live only in `classifier.py`.
 
-The segmentation output contains **only**:
-- `segment`: The persona classification label.
-- `how_to_explain`: Actionable communication guidelines for the AI agent.
+## Output
 
-**Zero sensitive personal information** (PII, applicant names, PAN, phone numbers, raw incomes, or demographic details) is exposed in the output or sent to the AI agent.
-
-## CLI Usage
-
-### Segment a single applicant by ID
-```bash
-python decision_engine/segmentation/customer_segmentation.py --application-id APP1001
+```json
+{"segment": "Simple", "how_to_explain": ["Use everyday words and very short sentences.", "..."]}
 ```
 
-### Segment all applicants from demo dataset
+Only `segment` and `how_to_explain`. In the agent, the segmentation stays in the graph
+state. The prompt gets the tone lines (not the label) in front of the plain-language
+style, and `AgentResponse` carries no segmentation field.
+
+## CLI
+
 ```bash
-python decision_engine/segmentation/customer_segmentation.py --all --data data/synthetic/demo_applicants.json
+python decision_engine/segmentation/customer_segmentation.py --reports tests/fixtures/segmentation/saral_v1_bureau_reports.json
 ```
 
-## AI Agent Integration
+## Agent hook
 
-The advisory agent (`apps/api/src/loan_advisory/agent/graph.py`) incorporates the customer segmentation:
-- During evidence evaluation, `get_customer_segmentation()` analyzes the applicant's bureau/credit record.
-- The derived persona directives configure the agent prompt (`prompts.SEGMENT_STYLE`).
-- The response object (`AgentResponse.customer_segmentation`) returns the sanitized segment and explanation guidelines.
+`loan_advisory.agent.segmentation.bureau_report_from_record(rec)` reads a `bureau-report/1`
+record attached to the decision evidence as `bureau_report`. Decision evidence does not carry
+that record yet, so until it does the agent keeps the default plain-language style (no tone).
+Wiring the record (or a stored tone) into the evidence is tracked for Qoder.
