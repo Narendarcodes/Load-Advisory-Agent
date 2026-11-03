@@ -1,7 +1,6 @@
 import sys
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
-from fontTools.pens.boundsPen import BoundsPen
 from fontTools.varLib.instancer import instantiateVariableFont
 font = TTFont(sys.argv[1])
 if 'fvar' in font:
@@ -17,5 +16,5 @@ for ch in text:
 asc = font['hhea'].ascent
 print(upm, x, asc, file=sys.stderr)
 # flip y: font units y-up
-print(f'<g transform="scale(1 -1)">' + "".join(parts) + '</g>')
+print('<g transform="scale(1 -1)">' + "".join(parts) + '</g>')
 print(x, file=sys.stderr)

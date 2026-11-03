@@ -1,4 +1,5 @@
-import re, os, sys
+import os
+import sys
 OUT = sys.argv[1]; os.makedirs(OUT, exist_ok=True)
 CORAL="#FE7D6B"; INK="#241C1B"; PAPER="#F7F3EE"; DEEP="#B23A2E"; PEACH="#FF8F68"
 word = open("word.g").read().strip()  # from wordmark.py
