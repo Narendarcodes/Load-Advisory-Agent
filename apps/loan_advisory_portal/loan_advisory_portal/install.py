@@ -81,6 +81,11 @@ def ensure_officer_permissions():
 		add_permission("Loan Application", OFFICER_ROLE, permlevel)
 		update_permission_property("Loan Application", OFFICER_ROLE, permlevel, "read", 1)
 	update_permission_property("Loan Application", OFFICER_ROLE, 0, "report", 1)
+	# The Lending form script on Loan Application reads Loan Origination Settings; without read the officer
+	# gets "No permission for Loan Origination Settings" on every case (E2E A4, 2026-11-04).
+	if frappe.db.exists("DocType", "Loan Origination Settings"):
+		add_permission("Loan Origination Settings", OFFICER_ROLE, 0)
+		update_permission_property("Loan Origination Settings", OFFICER_ROLE, 0, "read", 1)
 	# System Manager must keep seeing the officer-only fields it already administers.
 	add_permission("Loan Application", "System Manager", 1)
 	update_permission_property("Loan Application", "System Manager", 1, "read", 1)
