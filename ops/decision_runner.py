@@ -30,6 +30,25 @@ from loan_advisory.infrastructure.evidence_store import FrappeEvidenceSink
 from loan_advisory.infrastructure.frappe_adapter import FrappeClient
 
 
+class UnfetchedScoreAsMissing:
+    """Q-17 workaround (ops only): Frappe stores an unfetched Int score as 0, which the bureau gate reads
+    as an invalid local score and holds the application for information. Until the adapter maps
+    `custom_credit_score_origin == NOT_FETCHED` to None, the runner hands the pipeline a view where it is
+    None, so the synthetic bureau score is used. Reads only; nothing is written back."""
+
+    def __init__(self, store):
+        self.store = store
+
+    def __getattr__(self, name):
+        return getattr(self.store, name)
+
+    def get(self, application_id):
+        doc = dict(self.store.get(application_id))
+        if doc.get("custom_credit_score_origin") == "NOT_FETCHED" and not doc.get("custom_credit_score"):
+            doc["custom_credit_score"] = None
+        return doc
+
+
 def submitted(client: FrappeClient, limit: int = 50) -> list[str]:
     params = {"filters": json.dumps([["custom_lifecycle_state", "=", "SUBMITTED"], ["docstatus", "=", 1]]),
               "fields": json.dumps(["name"]), "order_by": "creation asc", "limit_page_length": str(limit)}
@@ -43,7 +62,7 @@ def run_pass(store, sink, bureau, log=print) -> int:
     n = 0
     for name in submitted(store):
         try:
-            out = process_bureau_application(name, store, sink, bureau)
+            out = process_bureau_application(name, UnfetchedScoreAsMissing(store), sink, bureau)
             rec = out.record or {}
             log(json.dumps({"at": datetime.now(timezone.utc).isoformat(), "application": name,
                             "to": out.to_state, "outcome": rec.get("outcome"), "flags": out.flags}))
