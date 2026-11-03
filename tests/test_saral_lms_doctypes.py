@@ -469,8 +469,8 @@ def test_purpose_codes_from_portal_text():
 
 
 def test_snapshot_outcome_options_match_loan_application_outcomes_d04():
-    """E2E D-04 (2026-11-04): a DECLINE could not be snapshotted because the Select lacked it."""
-    field = next(f for f in _doctypes()["Decision Snapshot"]["fields"] if f["fieldname"] == "outcome")
+    """Guard for E2E D-04 (2026-11-04): the runner now snapshots every decision, DECLINE included."""
+    field = next(f for f in DOCTYPES["Decision Snapshot"][1]["fields"] if f["fieldname"] == "outcome")
     snap = {o for o in field["options"].split("\n") if o}
     la = {o for o in custom_fields.DECISION_OUTCOMES.split("\n") if o}
     assert snap == la and "DECLINE" in snap
