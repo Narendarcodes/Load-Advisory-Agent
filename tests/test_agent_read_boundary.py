@@ -64,6 +64,37 @@ def test_the_read_only_views_pass_the_same_guard():
     assert_reader(ReadOnlyDocumentStore({"A": OWNED}), role="document view")
 
 
+def test_a_model_objects_homonym_is_not_mistaken_for_a_write_to_the_record():
+    """The real retriever holds a cross-encoder, and that library spells "persist the weights" `save`.
+
+    Found live, not in review: the guard matched the name everywhere, so the serving object with a reranker
+    loaded was refused while every fake retriever in the suite passed. Names count on project adapters only;
+    the walk itself still goes through third-party state.
+    """
+    class ThirdPartyModel:
+        def save(self, *a, **kw):
+            raise AssertionError("not called")
+
+        def insert(self, *a, **kw):
+            raise AssertionError("not called")
+
+    class Retriever:
+        def __init__(self):
+            self.reranker = ThirdPartyModel()
+
+    assert_reader(Retriever(), role="the agent's retriever")
+
+
+def test_a_project_writer_nested_inside_a_third_party_object_is_still_refused():
+    """The exemption is about names on foreign classes, not about hiding writers inside them."""
+    class Holder:
+        def __init__(self, inner):
+            self.inner = inner
+
+    with pytest.raises(ReadOnlyBoundaryViolation, match="FrappeClient exposes call_method, create"):
+        assert_reader(Holder(FrappeClient("https://x.invalid", "k", "s")), role="a retriever")
+
+
 # ------------------------------------------------------------------ 2. the shipped wiring
 def test_the_offline_agent_holds_no_write_capable_object():
     agent, store, _ = runtime.build_offline_agent(llm=ScriptedLLM(intent="explain"), policy_tools=FakePolicy())

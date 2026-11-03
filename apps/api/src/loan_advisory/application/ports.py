@@ -17,16 +17,47 @@ shipped wiring and a startup refusal of accidental re-wiring — not a sandbox a
 running in this process. The two readers that hold a real credential (`ReadOnlyFrappeApplication`,
 `FrappeEvidenceReader`) are built from configuration strings only and therefore pass the walk with
 nothing behind them at all.
+
+Two names need a qualification: `save` and `insert` are Frappe document verbs, and the agent's retriever
+holds a cross-encoder whose library spells "write these weights" exactly that way. Matched everywhere, the
+guard refused the real serving object while every fake in the suite passed. They are therefore matched
+only on adapters this project owns; every other name is matched on every object, foreign or not, however
+deeply nested — which is what keeps a raw `QdrantClient` or `FrappeClient` out of the graph.
 """
 from collections.abc import Callable
 from typing import Protocol
 
 WRITE_METHOD_NAMES = frozenset({
+    # Frappe / system-of-record writes
     "call_method", "create", "db_delete", "db_insert", "db_update", "delete", "delete_doc",
     "insert", "persist", "save", "set_status", "submit", "cancel", "revert",
+    # vector-index writes: the serving runtime opens a collection, it never manages one
+    "create_collection", "create_payload_index", "delete_collection", "delete_payload",
+    "delete_points", "overwrite_payload", "recreate_collection", "update_collection", "upsert",
 })
 
 _NOT_WORTH_WALKING = (str, bytes, bool, int, float, complex, type(None), type(NotImplemented))
+
+# `save` and `insert` are Frappe document writes, and the agent's retriever holds a cross-encoder whose
+# library spells "persist these weights" exactly that way. Matched everywhere, the guard refused the real
+# serving object and passed every fake in the suite (found live, Phase 1.6 §A). They are therefore checked
+# only on adapters this project owns — which is where a document write can come from. Every other name is
+# unambiguous and still matched on any object, foreign or not: that is what keeps a raw `QdrantClient`
+# (upsert, delete_collection) and a `FrappeClient` (create, call_method) out of the graph.
+_PROJECT_ONLY_WRITE_NAMES = frozenset({"save", "insert"})
+_PROJECT_NAMESPACES = ("loan_advisory", "decision_engine", "rag", "zen")
+
+
+def _is_project_adapter(obj) -> bool:
+    module = (type(obj).__module__ or "").split(".", 1)[0]
+    return module in _PROJECT_NAMESPACES
+
+
+def _write_names(obj) -> list[str]:
+    names = set(WRITE_METHOD_NAMES)
+    if not _is_project_adapter(obj):
+        names -= _PROJECT_ONLY_WRITE_NAMES
+    return sorted(name for name in names if callable(getattr(obj, name, None)))
 
 
 class ReadOnlyBoundaryViolation(TypeError):
@@ -49,7 +80,7 @@ def assert_reader(obj, *, role: str, max_depth: int = 3) -> None:
         if id(current) in seen:
             continue
         seen.add(id(current))
-        offending = sorted(name for name in WRITE_METHOD_NAMES if callable(getattr(current, name, None)))
+        offending = _write_names(current)
         if offending:
             raise ReadOnlyBoundaryViolation(
                 f"{role} is not read-only: {type(current).__name__} exposes {', '.join(offending)}")

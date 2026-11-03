@@ -73,9 +73,10 @@ def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = 
     import torch
     from sentence_transformers import SentenceTransformer
 
+    from rag.dense_read import ReadOnlyDenseSearch
     from rag.index_meta import index_identity
-    from rag.retrieve import (BM25Index, CrossEncoderReranker, DenseIndex, DOC_PREFIX, HybridRetriever, doc_string,
-                              load_profile, load_rag_config, profile_filter)
+    from rag.retrieve import (BM25Index, CrossEncoderReranker, DOC_PREFIX, HybridRetriever, load_profile,
+                              load_rag_config, profile_filter)
 
     pdir = Path(policy_dir or os.environ.get("LOAN_POLICY_DIR", "/root/hx/loan/policy"))
     chunks = load_chunks(pdir)
@@ -94,12 +95,10 @@ def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = 
                               dimension=getattr(emb, "get_sentence_embedding_dimension", lambda: None)(),
                               doc_prefix=DOC_PREFIX, query_prompt=query_prompt,
                               query_prompt_text=(getattr(emb, "prompts", None) or {}).get(query_prompt))
-    qdir = Path(os.environ.get("AGENT_QDRANT_DIR", str(pdir / "qdrant_v2")))
-    if (qdir / "collection").exists():
-        dense = _open_dense(str(qdir), chunks, identity)
-    else:
-        vecs = emb.encode([doc_string(c) for c in chunks], batch_size=32, normalize_embeddings=True)
-        dense = DenseIndex(chunks, vecs, path=str(qdir), meta=identity)
+    # The serving process opens an index that already exists; it never embeds or builds one. Index
+    # management lives in scripts/policy/, and `AGENT_QDRANT_URL` switches between the local collection
+    # and a Qdrant Server without changing what a query does.
+    dense = ReadOnlyDenseSearch.open(chunks, identity, default_dir=str(pdir / "qdrant_v2"))
     reranker = CrossEncoderReranker(device=dev) if cfg.rerank_candidates else None
     retr = HybridRetriever(BM25Index(chunks), dense, lambda q: emb.encode(q, prompt_name=query_prompt, normalize_embeddings=True),
                            reranker=reranker, chunks_by_id=by_id, config=cfg)
@@ -115,23 +114,6 @@ def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = 
     tools = PolicyTools(retr, by_id, profile, profile_filter(profile, mode), hfilter=profile_filter(profile, "historical"))
     tools.search("warm-up: how do I raise a grievance?")  # first query pays CUDA/kernel warm-up, not the applicant
     return tools, profile
-
-
-def _open_dense(path: str, chunks: list[dict], identity: dict):
-    from qdrant_client import QdrantClient, models
-
-    from rag.index_meta import validate_collection, validate_index
-    from rag.retrieve import DenseIndex
-    d = DenseIndex.__new__(DenseIndex)  # reuse the read path (qdrant_filter/search) on an existing collection
-    d.m, d.client, d.col = models, QdrantClient(path=path), "policy_chunks_v2"
-    try:
-        validate_index(path, chunks=chunks, identity=identity, collection=d.col)
-        validate_collection(d.client, d.col, dimension=identity.get("dimension"), distance=identity["distance"],
-                            chunk_ids={c["chunk_id"] for c in chunks})
-    except Exception:
-        d.client.close()
-        raise
-    return d
 
 
 def build_live_agent(policy_tools=None, profile=None, llm=None) -> tuple[AdvisoryAgent, ReadOnlyFrappeApplication]:

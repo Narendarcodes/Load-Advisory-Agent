@@ -164,6 +164,7 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 | `LLM_TIMEOUT_S`, `LLM_RETRIES` | `120`, `3` | Per-call limits; the per-turn deadline below still applies |
 | `LOAN_POLICY_DIR` | `/root/hx/loan/policy` | Policy text, `chunks.jsonl`, Qdrant dir (text stays off git) |
 | `AGENT_QDRANT_DIR` | `$LOAN_POLICY_DIR/qdrant_v2` | Local Qdrant collection `policy_chunks_v2` |
+| `AGENT_QDRANT_URL` (+ `AGENT_QDRANT_API_KEY`, `AGENT_QDRANT_COLLECTION`) | unset | Serve dense retrieval from a Qdrant Server. Unset keeps the embedded collection; both set at once is refused, and the serving handle is query-only (create/upsert/delete are refused at startup) |
 | `EMBED_MODEL` | `google/embeddinggemma-2` | Dense embedder |
 | `LENDER_PROFILE` | `bajaj_finance` (from `config/rag.yaml`) | Lender profile for retrieval filters |
 | `AGENT_RETRIEVER_DEVICE`, `AGENT_GPU_FRACTION` | auto, unset | Retriever device; VRAM cap on the shared GPU (e.g. `0.016` ≈ 3 GB on MI300X) |

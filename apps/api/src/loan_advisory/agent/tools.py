@@ -3,7 +3,9 @@
 Every applicant-specific tool re-checks authorization server-side against the system of record
 (the Loan Application's `applicant`), never against the message, the thread id or the LLM.
 There is no generic Frappe/SQL/web tool and no write path: decisions are only READ from the stored
-Decision Evidence; what-if goes through lifecycle.simulate (in memory, never persisted).
+Decision Evidence; what-if goes through lifecycle.simulate (in memory, never persisted). The same
+refusal that applies to the Frappe store applies to the retriever — a handle that can create, upsert
+or delete index points is rejected before the first query, in either Qdrant mode.
 
 `DecisionTools` is where that promise becomes enforceable rather than aspirational. Its two
 dependencies are typed as the read-only ports in `application/ports.py` and checked at construction,
@@ -172,6 +174,7 @@ class PolicyTools:
     """search_approved_policy over the hybrid + rerank retriever with lender-profile filters."""
 
     def __init__(self, retriever, chunks_by_id: dict, profile: dict | None, rfilter, k: int = 5, hfilter=None):
+        assert_reader(retriever, role="the agent's retriever")
         self.retriever, self.by_id, self.profile, self.rfilter, self.k = retriever, chunks_by_id, profile, rfilter, k
         self.hfilter = hfilter  # historical-mode filter (approved + approved_historical), used for temporal questions
 
