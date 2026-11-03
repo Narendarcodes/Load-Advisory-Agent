@@ -1,0 +1,141 @@
+# Saral corpus v3 (Gate G1): two physically separate collections built from the CURRENT corpus only.
+#
+# Owner decisions, 2026-11-03 20:46 IST:
+#   * Saral is the app name. It follows the published policies of ONE NBFC, Bajaj Finance Limited, which is a
+#     "public reference lender, not a partner". Nothing here implies a partnership, endorsement or offer.
+#   * RBI documents live in their own collection and are never merged with the NBFC set.
+#   * No new documents. Every document below was already in data/sources/policy_register.yaml and was already
+#     fetched (laptop copy runs/policy_local/src, fetched 2026-10-29). Nothing is re-fetched.
+#   * Products are personal loans categorised by purpose. Flexi Dropline / Flexi Hybrid are repayment variants,
+#     not products; their text is kept as-is but it does not define a product.
+#
+# This file is metadata only. Raw pages and extracted texts stay outside git (see policy_manifest_v2.json and
+# .gitignore); scripts/policy/build_corpus_v3.py reads them from --src.
+version: corpus_v3
+built_from: runs/policy_local/src (laptop, fetched 2026-10-29; 37 docs / 1,557 chunks in policy_chunks_v2)
+chunker: rag.corpus.chunk_document (max_words=180, para_digits from the register) - unchanged repo settings
+dedup: within each collection, a chunk whose chunk_sha256 equals an earlier chunk's is dropped (first kept)
+
+collections:
+  saral_nbfc_policy:
+    description: Bajaj Finance Limited public documents only (lender_id BFL)
+    lender_id: BFL
+    lender_relationship: public reference lender, not a partner
+  rbi_regulatory:
+    description: Reserve Bank of India texts applicable to an NBFC personal-loan borrower only
+    lender_id: null
+
+documents:
+  # ---------------------------------------------------------------- Bajaj Finance -> saral_nbfc_policy
+  BFL-PL-OVERVIEW:
+    collection: saral_nbfc_policy
+    include: true
+    reason: Core personal-loan page (purposes, amount, tenure, rates, eligibility); the site's AI Overview blocks and its machine-generated review summary are removed
+    fixes: [drop_ai_overview]
+    flags: [contains_customer_testimonials_not_policy]
+  BFL-PL-ELIG-DOCS: {collection: saral_nbfc_policy, include: true, reason: Personal-loan eligibility and documents page}
+  BFL-PL-RATES-FEES: {collection: saral_nbfc_policy, include: true, reason: Personal-loan rates, fees and charges page}
+  BFL-PL-SALARIED: {collection: saral_nbfc_policy, include: true, reason: Salaried personal-loan eligibility (city-based minimum salary)}
+  BFL-FAQ-REJECTION:
+    collection: saral_nbfc_policy
+    include: true
+    reason: Only published Bajaj statement on how a rejection is communicated; re-sliced to the rejection answer
+    fixes: [reslice_from_raw]
+    # Mirrors commit 9afb5fc on origin/feat/agent-boundary-corpus-reset (register markers, both unique in the page)
+    start_marker: How will I know the reason for my loan rejection?
+    end_marker: How will I find out the due date of my EMI?
+  BFL-FPC-2026: {collection: saral_nbfc_policy, include: true, reason: Current Fair Practice Code v7.1 (Jan 2026) - NBFC conduct}
+  BFL-IRP-2026: {collection: saral_nbfc_policy, include: true, reason: Current Interest Rate Policy (Mar 2026)}
+  BFL-CITIZENS-CHARTER-2025: {collection: saral_nbfc_policy, include: true, reason: Citizen's Charter v7.0 - service timelines and borrower rights}
+  BFL-PRIVACY: {collection: saral_nbfc_policy, include: true, reason: Privacy policy - how borrower data is used}
+  BFL-APP-TNC-2023: {collection: saral_nbfc_policy, include: true, reason: Loan application terms (discretion to reject, consents)}
+  BFL-KYC-TNC: {collection: saral_nbfc_policy, include: true, reason: Customer-facing KYC terms (CKYC, Aadhaar e-KYC, Video KYC)}
+  BFL-GRIEVANCE:
+    collection: saral_nbfc_policy
+    include: true
+    reason: Borrower grievance and escalation path - directly borrower-relevant
+  BFL-PL-DETAILED-TNC:
+    collection: saral_nbfc_policy
+    include: true
+    reason: Closest public personal-loan contract terms; kept with a FLAG - its "updated as on ____" date is blank, so currency is unknown
+    fixes: [drop_repeated_banner]
+    banner_prefix: Please note the Detailed Terms and Conditions were registered bearing No. HVL10/14523/2019
+    flags: [blank_updated_as_on_date]
+  BFL-DL-PARTNERS:
+    collection: saral_nbfc_policy
+    include: true
+    reason: RBI-mandated list of Bajaj's LSPs/DLAs - lets a borrower check whether an app really lends for Bajaj; in-table numbering fixed so rows no longer split into 15 identical fragments
+    fixes: [unnumber_partner_table]
+    table_end_prefix: 1. Bajaj Finance Limited (“BFL”) is a Non-Banking Finance Company
+  BFL-INSIGHT-REJECTION:
+    collection: saral_nbfc_policy
+    include: true
+    reason: Bajaj's own article on personal-loan rejection reasons - borrower-relevant; source_type stays lender_education (opt-in under the profile) and its 685/750 score figures are recorded as a conflict with the 650 on product pages
+    flags: [lender_education_marketing, conflicts_with_product_pages]
+  BFL-FPC-2023:
+    collection: saral_nbfc_policy
+    include: false
+    reason: Superseded by BFL-FPC-2026 (approved_historical); 3 chunks are verbatim duplicates of FPC-2026
+  BFL-IRP-2023:
+    collection: saral_nbfc_policy
+    include: false
+    reason: Superseded by BFL-IRP-2026 (approved_historical)
+  BFL-KYC-PMLA-POLICY:
+    collection: saral_nbfc_policy
+    include: false
+    reason: Hosted on a staging asset path (cms-assets.../bajajfinancestage/), undated, pending_review, cites 2011-era circulars and a wind-power business; customer KYC is covered by BFL-KYC-TNC
+    flags: [staging_site_origin]
+
+  # ---------------------------------------------------------------- RBI -> rbi_regulatory
+  RBI-RBC-NBFC-2025: {collection: rbi_regulatory, include: true, reason: NBFC Responsible Business Conduct Directions 2025 (FPC, KFS, penal charges) - current}
+  RBI-NBFC-CF-2025: {collection: rbi_regulatory, include: true, reason: NBFC Credit Facilities Directions 2025 incl. digital lending - current}
+  RBI-IOS-2026: {collection: rbi_regulatory, include: true, reason: Integrated Ombudsman Scheme 2026 - current complaint route}
+  RBI-IOS-2026-FAQ: {collection: rbi_regulatory, include: true, reason: RBI FAQ on RB-IOS 2026 - current}
+  RBI-CIC-COMP-2023:
+    collection: rbi_regulatory
+    include: true
+    reason: Addressed to all NBFCs; compensation to borrowers for delayed credit-report correction - borrower-relevant, not superseded in the register
+  RBI-CIC-CS-2023:
+    collection: rbi_regulatory
+    include: true
+    reason: Addressed to all NBFCs; credit-information customer service (alerts, reasons for rejecting correction requests) - not superseded in the register
+  RBI-MC-CS-2015:
+    collection: rbi_regulatory
+    include: false
+    reason: Confirmed bank-only - "Master Circular on Customer Service in Banks", addressed to all Scheduled Commercial Banks (excl. RRBs); applies_to_entity [bank]; historical
+  RBI-RBC-CB-2025:
+    collection: rbi_regulatory
+    include: false
+    reason: Commercial Banks RBC Directions - bank-only (applies_to_entity [bank]); the NBFC equivalent RBI-RBC-NBFC-2025 is included
+  RBI-FPC-2007:
+    collection: rbi_regulatory
+    include: false
+    reason: 2007 Fair Practices Code for banks/FIs - bank-only and historical
+  RBI-FPC-NBFC-2015:
+    collection: rbi_regulatory
+    include: false
+    reason: Historical NBFC FPC master circular, superseded by RBI-RBC-NBFC-2025
+  RBI-KFS-2024:
+    collection: rbi_regulatory
+    include: false
+    reason: Historical; KFS rules now sit in RBI-RBC-NBFC-2025 Chapter III.B (included)
+  RBI-PENAL-2023:
+    collection: rbi_regulatory
+    include: false
+    reason: Historical; penal-charge rules now sit in RBI-RBC-NBFC-2025 Chapter III.C (included); 5 internal duplicate groups
+  RBI-DLD-2025:
+    collection: rbi_regulatory
+    include: false
+    reason: Withdrawn Digital Lending Directions 2025; superseded by RBI-NBFC-CF-2025 Chapter III (included)
+  RBI-IOS-2021:
+    collection: rbi_regulatory
+    include: false
+    reason: Superseded by RB-IOS 2026 (in force 1 Jul 2026)
+
+  # ---------------------------------------------------------------- not Bajaj, not RBI -> no collection
+  HDFC-PL-ELIG: {collection: null, include: false, reason: Another lender (HDFC Bank) - not Saral's reference NBFC}
+  ICICI-PL-ELIG: {collection: null, include: false, reason: Another lender (ICICI Bank) - not Saral's reference NBFC}
+  SYN-POLICY-V1: {collection: null, include: false, reason: Synthetic team policy - evaluation-only fixture}
+  SYN-INJECT-001: {collection: null, include: false, reason: Adversarial prompt-injection test fixture}
+  SYN-INJECT-002: {collection: null, include: false, reason: Adversarial fixture impersonating Bajaj (fake guaranteed approval)}
+  IN-DPDP-2023: {collection: null, include: false, reason: Statute (GoI), neither Bajaj nor RBI, and never fetched (registered_not_ingested); no new fetching allowed}
