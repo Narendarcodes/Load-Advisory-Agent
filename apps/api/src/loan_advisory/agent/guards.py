@@ -12,7 +12,10 @@ from loan_advisory.agent.facts import _norm
 
 # ------------------------------------------------------------------ applicant request
 _REQ = {
-    "guarantee": r"\b(guarantee[ds]?|assure[ds]?|promise|definitely|for sure|surely|certainly|for certain)\b|100 ?%|"
+    # a guarantee *product* ("credit guarantee scheme fee", "CGTMSE guarantee fee", "bank guarantee") is a fee or
+    # security question, not a request to promise approval (DeepEval baseline R2-FEE-08)
+    "guarantee": r"(?<!credit\s)(?<!bank\s)(?<!cgtmse\s)\bguarantee[ds]?\b(?!\s+(?:scheme|fee|fund|charges?|cover|trust)\b)|"
+                 r"\b(assure[ds]?|promise|definitely|for sure|surely|certainly|for certain)\b|100 ?%|"
                  r"\b(will|would|can|could)\s+(i|we|my\s+(loan|application))\s+(get|be|definitely)\s+(approv|sanction|the loan)|"
                  r"\b(chances?|odds|probability|likely|likelihood)\b.{0,30}\b(approv|sanction|get the loan)|"
                  # a rate promise, not any mention of rates: "will I get the best rate", "can you get me the cheapest
@@ -51,7 +54,16 @@ _REQ = {
                      r"\b(my|me)\b.{0,40}\brisk\s+(grade|rating|band|category|tier|bucket|segment)s?\b|"
                      r"किस\s+(अधिकारी|कर्मचारी)|कौन.{0,20}(अधिकारी|कर्मचारी)|आंतरिक\s+(रिस्क|जोखिम|क्रेडिट)?\s*(ग्रेड|रेटिंग|स्कोर)|"
                      r"ఏ\s+(అధికారి|ఉద్యోగి)|(అధికారి|ఉద్యోగి)\s+ఎవరు|అంతర్గత\s+(రిస్క్|క్రెడిట్)?\s*(గ్రేడ్|రేటింగ్|స్కోర్)",
-    "other_applicant": r"\b(another|other|someone else'?s?|my (friend|brother|sister|wife|husband)'?s?)\b.{0,25}\b(application|loan|score|record)\b|"
+    # someone else's data: a possessive ("my friend's score", "another applicant's loan", "someone else's file") or
+    # "<record> of my sister". Mentioning a person in the applicant's OWN question ("my friend and I took the same
+    # loan", DeepEval baseline R2-RAT-07) or "other charges on the loan" is not a request for another person's data.
+    "other_applicant": r"\b(?:another|other)\s+(?:person|applicant|customer|borrower|user|people)(?:'s|’s|s'|s)?\b"
+                       r".{0,25}\b(?:application|loan|score|record|details|data|status)|"
+                       r"\bsomeone\s+else(?:'s|’s)?\b.{0,25}\b(?:application|loan|score|record|details|data|status)|"
+                       r"\bmy\s+(?:friend|brother|sister|wife|husband|father|mother|son|daughter|colleague|cousin|"
+                       r"neighbou?r|relative)(?:'s|’s|s')\s+.{0,25}\b(?:application|loan|score|record|details|data|status|cibil|report)|"
+                       r"\b(?:application|loan|score|record|details|data|status|report)\s+of\s+(?:my\s+(?:friend|brother|sister|"
+                       r"wife|husband|father|mother|son|daughter|colleague|cousin|relative)|another|someone\s+else)\b|"
                        r"\b(SYN-APP|APP-TEST|ACC-LOAP)-[0-9]+",
     "injection": r"ignore (all |the )?(previous|prior|above) (instructions|rules)|system prompt|developer mode|you are now|"
                  r"pretend (to be|you are)|jailbreak|reveal your (prompt|instructions)",
@@ -185,6 +197,69 @@ def ungrounded_numbers(answer: str, allowed: set[str]) -> list[str]:
             continue
         bad.append(n)
     return sorted(set(bad))
+
+
+# ------------------------------------------------------------------ borrower-visible text hygiene
+# Internal labels and retrieval machinery must never reach the borrower (DeepEval baseline: 91/178 answers said
+# "passages" or P1..P5). The POLICY prompt forbids them; sanitize_answer() is the deterministic last line of defence and
+# leaked_terms() the check. LEAK_CASED/LEAK_WORDS match scripts/policy/eval_saral_deepeval.py, plus Hindi/Telugu forms.
+LEAK_CASED = re.compile(r"\b(OCR|ZEN|RAG|LLM|P[1-5])\b")
+LEAK_WORDS = re.compile(r"\b(bureau|chunks?|passages?|retriev\w*|embedding\w*|system prompt)\b|पैसेज\w*|పాసేజ్\w*", re.I)
+_LBL = r"P[1-5]"
+_LBL_LIST = rf"{_LBL}(?:\s*(?:,|/|&|and|और|మరియు)\s*{_LBL})*"
+_PASS = r"(?:the\s+)?(?:provided\s+|given\s+|above\s+|available\s+|retrieved\s+|source\s+)?(?:passages?|chunks?)"
+_SAN = [
+    # bracketed label groups: " (P1)", " (P2, P3)", "[P1][P5]", " (see P2)"
+    (re.compile(rf"\s*[\(\[]\s*(?:see\s+|source:?\s+|sources:?\s+)?{_LBL_LIST}\s*[\)\]]", re.I), ""),
+    # "(referenced as X in P1)" -> "(referenced as X)"
+    (re.compile(rf"\s+(?:in|from|per)\s+{_LBL_LIST}(?=\s*[\)\].,;:!?।]|$)"), ""),
+    # lead-ins: "According to the passages, ", "Based on the passages, ", "Per the passages, " -> drop
+    (re.compile(rf"\b(?:according\s+to|based\s+on|as\s+per|per|from)\s+{_PASS}\s*,\s*", re.I), "\x00"),
+    (re.compile(r"पैसेज\w*\s+के\s+(?:अनुसार|मुताबिक)\s*,?\s*"), "\x00"),
+    (re.compile(r"పాసేజ్\w*\s+(?:ప్రకారం)\s*,?\s*"), ""),
+    # "both P1 and P4" / "P1 and P4" as a subject -> "both sources" / "the sources"
+    (re.compile(rf"\bboth\s+{_LBL}\s+and\s+{_LBL}\b"), "both sources"),
+    (re.compile(rf"\b{_LBL}(?:\s*(?:,|and)\s*{_LBL})+\b"), "the sources"),
+    (re.compile(rf"\b{_LBL}\b"), "one source"),
+    # remaining words: "the passages" -> "the sources"; "credit bureau" -> "credit information company"
+    (re.compile(r"\b(?:the\s+)?(?:provided|given|above|available|retrieved)\s+(passages|chunks)\b", re.I), "the sources"),
+    (re.compile(r"\b(passages|chunks)\b", re.I), "sources"),
+    (re.compile(r"\b(passage|chunk)\b", re.I), "source"),
+    (re.compile(r"पैसेज\w*"), "स्रोत"),
+    (re.compile(r"పాసేజ్\w*"), "ఆధారం"),
+    (re.compile(r"\bcredit\s+bureaus\b", re.I), "credit information companies"),
+    (re.compile(r"\bcredit\s+bureau\b", re.I), "credit information company"),
+    (re.compile(r"\bbureaus\b", re.I), "credit information companies"),
+    (re.compile(r"\bbureau\b", re.I), "credit information company"),
+]
+
+
+def leaked_terms(text: str) -> list[str]:
+    """Internal labels / machinery words in borrower-visible text (case kept for labels, lower-cased words)."""
+    found = [m.group(0) for m in LEAK_CASED.finditer(text or "")]
+    found += [m.group(0).lower() for m in LEAK_WORDS.finditer(text or "")]
+    return sorted(set(found))
+
+
+def sanitize_answer(text: str) -> str:
+    """Strip passage labels and retrieval words from an answer before the borrower sees it.
+
+    Facts, numbers and qualifiers are left untouched; only the machinery is removed or replaced by "source(s)".
+    Idempotent and a no-op on clean text."""
+    if not text or not leaked_terms(text):
+        return text
+    out = text
+    for pat, rep in _SAN:
+        out = pat.sub(rep, out)
+    out = re.sub(r"[ \t]{2,}", " ", out)
+    out = re.sub(r"[ \t]+([,.;:!?।])", r"\1", out)
+    out = re.sub(r"\(\s*\)|\[\s*\]", "", out)
+    # a dropped lead-in ("Based on the passages, a loan ...") leaves a sentence that must start with a capital
+    out = re.sub(r"(^|[.!?।]\s+|\n\s*(?:-\s+)?)\x00([a-z])", lambda m: m.group(1) + m.group(2).upper(), out)
+    out = out.replace("\x00", "")
+    out = re.sub(r"(^|[.!?।]\s+|\n\s*(?:-\s+)?)(one source|both sources|the sources|sources|source)\b",
+                 lambda m: m.group(1) + m.group(2)[0].upper() + m.group(2)[1:], out)
+    return out.strip()
 
 
 def citation_flags(cited: list[str], available: list[str], abstained: bool) -> list[str]:
