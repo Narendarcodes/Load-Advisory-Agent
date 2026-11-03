@@ -135,6 +135,23 @@ class TestCustomerSegmentation(unittest.TestCase):
         self.assertIn("Communication Persona (Technical Explanation Required):", formatted)
         self.assertIn("FOIR", formatted)
 
+    def test_root_level_accounts_supported(self):
+        """Test classifier supports root-level accounts and credit fields directly."""
+        applicant = {
+            "applicant_id": "APP_ROOT_ACCOUNTS",
+            "credit_score": 750,
+            "credit_history_months": 40,
+            "accounts": [
+                {"account_type": "Personal Loan", "status": "Closed"},
+                {"account_type": "Two-wheeler Loan", "status": "Closed"},
+                {"account_type": "Credit Card", "status": "Active"}
+            ]
+        }
+        res = classify_applicant(applicant)
+        self.assertEqual(res["segment"], "Simple Explanation Required")
+        self.assertIn("how_to_explain", res)
+        self.assertGreaterEqual(len(res["how_to_explain"]), 3)
+
     @unittest.skipUnless(HAS_PYDANTIC, "pydantic not installed in this python env")
     def test_agent_response_contains_customer_segmentation(self):
         seg = get_customer_segmentation(applicant_id="APP1001")
@@ -150,6 +167,45 @@ class TestCustomerSegmentation(unittest.TestCase):
         self.assertIn("customer_segmentation", data)
         self.assertEqual(data["customer_segmentation"]["segment"], "Guided Explanation Required")
         self.assertIn("how_to_explain", data["customer_segmentation"])
+
+    @unittest.skipUnless(HAS_PYDANTIC, "pydantic not installed in this python env")
+    def test_advisory_agent_graph_integration(self):
+        """Integration test: exercise customer_segmentation through AdvisoryAgent.run() and assert it appears in response."""
+        from loan_advisory.agent.runtime import build_offline_agent
+        from loan_advisory.agent.contracts import AgentRequest, Session
+
+        class ScriptedLLM:
+            def __init__(self):
+                self.calls, self.prompts = [], []
+
+            def chat(self, system, user, max_tokens=900, temperature=0.0, tag=""):
+                self.prompts.append((tag, system, user))
+                self.calls.append({"tag": tag, "ttft_s": 0.01, "total_s": 0.02})
+                if tag == "classify":
+                    return json.dumps({"intent": "explain", "what_if_changes": {}})
+                facts = json.loads(system[system.index("FACTS (JSON):") + 13: system.rindex("}") + 1])
+                lines = [f"{r['name']}: yours {r['your_value']}, needed {r['required']}." for r in facts["failed_rules_the_only_reasons"]]
+                return "This uses a synthetic prototype policy. " + " ".join(lines)
+
+            def chat_json(self, system, user, max_tokens=900, tag=""):
+                return json.loads(self.chat(system, user, max_tokens, tag=tag))
+
+        ag, store, sink = build_offline_agent(llm=ScriptedLLM(), profile={"legal_name": "Ref", "entity_type": "nbfc"})
+        req = AgentRequest(
+            request_id="req-test-segment",
+            conversation_id="conv-test-segment",
+            message="Why was my loan application rejected?",
+            application_ref="APP-TEST-005"
+        )
+        session = Session(applicant_ref="CUS-TEST-005")
+        resp = ag.run(req, session)
+
+        # Assert customer_segmentation is present on AgentResponse from AdvisoryAgent.run
+        self.assertIsNotNone(resp.customer_segmentation)
+        self.assertIn("segment", resp.customer_segmentation)
+        self.assertIn("how_to_explain", resp.customer_segmentation)
+        self.assertIsInstance(resp.customer_segmentation["how_to_explain"], list)
+        self.assertGreaterEqual(len(resp.customer_segmentation["how_to_explain"]), 3)
 
 
 if __name__ == "__main__":

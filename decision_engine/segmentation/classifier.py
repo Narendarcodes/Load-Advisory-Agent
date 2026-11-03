@@ -20,7 +20,10 @@ from .guidance import GUIDANCE
 
 
 def derive_features(applicant: dict[str, Any]) -> dict[str, Any]:
-    """Derive non-sensitive borrowing features from applicant credit report data."""
+    """Derive non-sensitive borrowing features from applicant credit report data.
+
+    Supports credit fields inside 'cibil_report', 'bureau_report', 'bureau', or at root level.
+    """
     report = (
         applicant.get("cibil_report")
         or applicant.get("bureau_report")
@@ -28,7 +31,8 @@ def derive_features(applicant: dict[str, Any]) -> dict[str, Any]:
         or {}
     )
 
-    accounts = report.get("accounts") or []
+    # Support accounts either inside report or directly at root level
+    accounts = report.get("accounts") or applicant.get("accounts") or []
 
     # Separate loan accounts from credit cards and overdrafts
     loan_accounts = [
@@ -59,9 +63,15 @@ def derive_features(applicant: dict[str, Any]) -> dict[str, Any]:
         for account in accounts
     )
 
-    cibil_score = report.get("cibil_score")
+    cibil_score = (
+        report.get("cibil_score")
+        if report.get("cibil_score") is not None
+        else (applicant.get("cibil_score") if applicant.get("cibil_score") is not None else applicant.get("credit_score"))
+    )
     if cibil_score is None and isinstance(report.get("score"), dict):
         cibil_score = report.get("score", {}).get("value")
+    if cibil_score is None and isinstance(applicant.get("score"), dict):
+        cibil_score = applicant.get("score", {}).get("value")
 
     if cibil_score in (None, 0, -1):
         score_band = "Unavailable"
@@ -76,9 +86,21 @@ def derive_features(applicant: dict[str, Any]) -> dict[str, Any]:
     else:
         score_band = "Low"
 
-    history_months = int(report.get("credit_history_months") or 0)
-    utilization = report.get("credit_card_utilization_percent")
-    enquiries = int(report.get("enquiries_last_6_months") or 0)
+    history_months = int(
+        report.get("credit_history_months")
+        if report.get("credit_history_months") is not None
+        else (applicant.get("credit_history_months") or 0)
+    )
+    utilization = (
+        report.get("credit_card_utilization_percent")
+        if report.get("credit_card_utilization_percent") is not None
+        else applicant.get("credit_card_utilization_percent")
+    )
+    enquiries = int(
+        report.get("enquiries_last_6_months")
+        if report.get("enquiries_last_6_months") is not None
+        else (applicant.get("enquiries_last_6_months") or 0)
+    )
 
     if loan_count == 0 and history_months == 0:
         loan_experience = "No recorded experience"
