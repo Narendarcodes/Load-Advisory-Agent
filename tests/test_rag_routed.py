@@ -34,3 +34,12 @@ def test_merge_relabels_and_leads_with_the_routed_collection():
     assert [p["citation"]["label"] for p in ps] == ["P1", "P2", "P3", "P4"]
     assert ps[0]["collection"] == REGULATORY and meta["collections"][0] == REGULATORY
     assert {p["collection"] for p in ps} == {PRODUCT, REGULATORY}
+
+
+def test_rerank_can_be_switched_off_by_env(monkeypatch):
+    from rag.retrieve import load_rag_config
+
+    monkeypatch.delenv("AGENT_RERANK", raising=False)
+    on = load_rag_config()[0].rerank_candidates
+    monkeypatch.setenv("AGENT_RERANK", "off")
+    assert load_rag_config()[0].rerank_candidates == 0 and on >= 0

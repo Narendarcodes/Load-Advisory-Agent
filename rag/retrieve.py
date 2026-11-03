@@ -300,6 +300,8 @@ def load_rag_config(path: Path | None = None) -> tuple[HybridConfig, dict, str]:
     import yaml
     cfg = yaml.safe_load((path or ROOT / "config" / "rag.yaml").read_text(encoding="utf-8"))
     f, r = cfg.get("fusion", {}), cfg.get("rerank", {})
+    import os
+    enabled = r.get("enabled") and os.environ.get("AGENT_RERANK", "").strip().lower() not in ("0", "off", "false")
     hc = HybridConfig(k=f.get("k", 60), w_dense=f.get("w_dense", 1.0), w_bm25=f.get("w_bm25", 1.0),
-                      rerank_candidates=r.get("candidates", 0) if r.get("enabled") else 0)
+                      rerank_candidates=r.get("candidates", 0) if enabled else 0)  # AGENT_RERANK=off: small CPU hosts
     return hc, load_profile(None), cfg.get("mode", "current")
