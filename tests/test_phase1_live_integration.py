@@ -7,6 +7,8 @@ Environment (see reports/phase1-live-integration-plan.md for the exact bring-up)
 
     FRAPPE_URL / FRAPPE_API_KEY / FRAPPE_API_SECRET      the read-only agent identity on a dev site
     P15_VICTIM_APP, P15_OTHER_APP                        two synthetic applications, different borrowers
+    P15_BUREAU_APP                                       a synthetic application whose stored evidence is
+                                                       bureau-backed (tests/e2e/seed_bureau_evidence.py)
     AGENT_CHECKPOINT_REDIS_URL (or ASSERTION_REPLAY_REDIS_URL)
     P15_REDIS_PREFIX                                     dedicated key prefix for this run
     LANGFUSE_*                                           the self-hosted stack, via infra/langfuse/.env
@@ -114,7 +116,8 @@ def test_a3_bureau_backed_evidence_still_explains_through_the_agent():
     """Only runs when the site holds a bureau-backed record; the agent reads, never starts, an evaluation."""
     reader = _reader()
     found = None
-    for name in [os.environ["P15_VICTIM_APP"], os.environ["P15_OTHER_APP"]]:
+    for name in [x for x in (os.environ.get("P15_BUREAU_APP"), os.environ["P15_VICTIM_APP"],
+                             os.environ["P15_OTHER_APP"]) if x]:
         pointer = reader.get(name).get("custom_latest_evidence")
         if not pointer:
             continue
@@ -199,6 +202,161 @@ def test_a5_live_failures_fail_closed_and_leak_nothing():
         reader.get("ACC-LOAP-9999-99999")
     except UnknownApplication as e:
         assert "applicant" not in str(e).lower() and "@" not in str(e)
+
+
+# ================================================= Phase 1.6 §B — live bureau-backed evidence
+BUREAU_APP = os.environ.get("P15_BUREAU_APP", "")
+bureau_required = pytest.mark.skipif(
+    not (FRAPPE and BUREAU_APP),
+    reason="no bureau-backed fixture application for this run (tests/e2e/seed_bureau_evidence.py)")
+
+
+def _bureau_record() -> dict:
+    """The stored bureau record, read on the agent's own read-only identity — or a skip that says why."""
+    pointer = _reader().get(BUREAU_APP).get("custom_latest_evidence")
+    if not pointer:
+        pytest.skip(f"{BUREAU_APP} carries no evidence pointer — provision the fixture first")
+    record = FrappeEvidenceReader().get_record(pointer)
+    if not record.get("bureau"):
+        pytest.skip(f"{BUREAU_APP}'s stored record has no bureau block — it was not a bureau run")
+    return record
+
+
+def _bureau_turn(llm, tmp_path, tag: str):
+    """One live agent turn on the bureau-backed application, as its own borrower."""
+    agent, _view = runtime.build_live_agent(llm=llm)
+    agent.audit_path = tmp_path / f"{tag}-turns.jsonl"
+    agent.handoff.path = tmp_path / f"{tag}-handoffs.jsonl"
+    owner = _reader().get(BUREAU_APP)["applicant"]
+    response = agent.run(AgentRequest(request_id=tag, conversation_id=tag,
+                                      message="how was my credit score worked out?",
+                                      application_ref=BUREAU_APP), Session(applicant_ref=owner))
+    return agent, response
+
+
+@bureau_required
+def test_a6_the_stored_bureau_evidence_is_readable_on_the_read_identity_alone():
+    for slot in ("EVIDENCE_FRAPPE_URL", "EVIDENCE_FRAPPE_API_KEY", "EVIDENCE_FRAPPE_API_SECRET"):
+        assert not os.environ.get(slot), "explaining a bureau record must not need an ingest credential"
+    record = _bureau_record()
+    assert record["application_ref"] == BUREAU_APP
+    assert record["is_simulation"] is False, "a bureau run that was persisted is not a simulation"
+    assert record["decision"] in ("APPROVED", "REJECTED", "ERROR")
+    bureau = record["bureau"]
+    assert bureau["fetched"] is True and bureau["report_id"] and bureau["report_schema"] == "bureau-report/1"
+    assert bureau["score"]["source"].startswith("SYNTHETIC_BUREAU"), bureau["score"]
+    assert bureau["provider_error"] is None
+    assert record["rule_evaluations"], "a bureau-backed credit decision still carries rule-level evidence"
+    assert record["inputs"]["values"]["credit_score"] == bureau["score"]["value"], \
+        "the score the record claims was evaluated is the score in the inputs"
+
+
+@bureau_required
+def test_a6_bureau_facts_project_the_stored_record_without_deciding_anything():
+    from loan_advisory.agent.facts import bureau_facts
+    record = _bureau_record()
+    facts = bureau_facts(record)
+    assert facts["recorded_outcome"] == (record.get("outcome") or record["decision"])
+    assert facts["legacy_decision"] == record["decision"]
+    assert facts["score_source"] == record["bureau"]["score"]["source"]
+    assert "synthetic" in facts["score_source_plain"], facts["score_source_plain"]
+    assert facts["synthetic_report"] is True
+    assert facts["is_provider_failure"] is False and facts["is_data_quality_hold"] is False
+    assert facts["is_credit_rejection"] == (facts["outcome_kind"] == "CREDIT_REJECTION")
+    # describing is not inventing: strip the blocks and the projection is empty, not a guess
+    assert bureau_facts({**record, "bureau": None, "review": None}) is None
+
+
+@bureau_required
+def test_a6_the_bureau_fields_reach_the_explanation_layer(tmp_path):
+    """Asserted on the prompt the composer actually received, not on what an LLM might have said."""
+    from loan_advisory.agent import facts as F
+    from loan_advisory.agent.facts import bureau_facts
+    record = _bureau_record()
+    llm = _RecordingLLM()
+    _agent, response = _bureau_turn(llm, tmp_path, "p16-a6-prompt")
+    assert response.answer and response.abstained is False
+    compose = [p for tag, p in llm.prompts if tag.startswith("compose_")]
+    assert compose, "the turn never reached the composer"
+    system = compose[-1]
+    bf = bureau_facts(record)
+    assert '"bureau"' in system, "the composer was not shown the bureau block at all"
+    assert bf["score_source"] in system and bf["score_source_plain"] in system
+    assert F.SYNTHETIC_LABEL in system, "the policy the explanation quotes must arrive labelled synthetic"
+    assert record["record_id"] in (response.evidence_refs or []), "the answer is not tied to the stored record"
+
+
+@bureau_required
+def test_a6_the_explanation_distinguishes_synthetic_bureau_evidence_from_a_real_report(tmp_path):
+    """Composer down: the borrower still gets wording that names the score's origin as synthetic."""
+    from loan_advisory.agent.facts import bureau_facts
+    from loan_advisory.agent.llm import LLMError
+
+    class _NoComposer(_SilentLLM):
+        def chat(self, system, user, **kw):
+            raise LLMError("composer down")
+
+    record = _bureau_record()
+    _agent, response = _bureau_turn(_NoComposer(), tmp_path, "p16-a6-fallback")
+    assert "fallback_template" in response.guard_flags, response.guard_flags
+    text = response.answer.lower()
+    assert "not a real credit bureau report" in text, response.answer
+    assert bureau_facts(record)["score_source_plain"] in response.answer, response.answer
+    assert "synthetic" in text
+
+
+@bureau_required
+def test_a6_nothing_the_borrower_can_send_reaches_a_bureau_client():
+    """The live surface and the live object graph, not just the source text."""
+    import types
+
+    from fastapi.testclient import TestClient
+
+    from loan_advisory.api.app import create_app
+    agent, _view = runtime.build_live_agent(llm=_SilentLLM())
+    service = App(agent)
+    client = TestClient(create_app(service))
+    paths = set(client.app.openapi()["paths"])
+    assert "/api/chat" in paths, f"the live service serves no chat route: {sorted(paths)}"
+    assert "/api/bureau/run" not in paths, sorted(paths)
+    assert client.post("/api/bureau/run", json={"application_ref": BUREAU_APP}).status_code == 404
+    assert vars(service) == {"agent": agent}
+
+    bureau_names = {"fetch_report", "run_bureau_evaluation", "bureau_run", "bureau_client"}
+    seen, frontier, reached = set(), [(agent, 0)], []
+    while frontier:
+        current, depth = frontier.pop()
+        if id(current) in seen or depth >= 4:
+            continue
+        seen.add(id(current))
+        for name in dir(current):
+            if name in bureau_names:
+                reached.append(f"{type(current).__name__}.{name}")
+        for value in list(getattr(current, "__dict__", {}).values()):
+            if isinstance(value, (str, bytes, bool, int, float, dict, list, tuple, set, frozenset, types.ModuleType)) \
+                    or callable(value):
+                continue
+            frontier.append((value, depth + 1))
+    assert reached == [], f"the live agent can still reach a bureau entry point: {reached}"
+
+
+@bureau_required
+def test_a6_an_agent_turn_on_the_bureau_record_mutates_nothing(tmp_path):
+    reader = _reader()
+    before_doc = reader.get(BUREAU_APP)
+    before_modified = _full_field(BUREAU_APP, "modified")
+    evidence_before = _evidence_count(reader)
+    record_before = FrappeEvidenceReader().get_record(before_doc["custom_latest_evidence"])
+
+    _agent, response = _bureau_turn(_SilentLLM(), tmp_path, "p16-a6-mutation")
+    assert response.answer
+
+    after_doc = reader.get(BUREAU_APP)
+    assert after_doc == before_doc, "a projected application field changed during a bureau explanation turn"
+    assert _full_field(BUREAU_APP, "modified") == before_modified, "Frappe's own modified stamp moved: something wrote"
+    assert _evidence_count(reader) == evidence_before, "an agent turn created Decision Evidence"
+    assert FrappeEvidenceReader().get_record(before_doc["custom_latest_evidence"]) == record_before, \
+        "the stored bureau record itself changed"
 
 
 # ============================================================== Service B — live Redis
@@ -364,6 +522,22 @@ class _SilentLLM:
         if tag == "classify":
             return {"intent": "explain", "what_if_changes": {}}
         return {"abstain": False, "answer": "The recorded decision stands as stored.", "citations": []}
+
+
+class _RecordingLLM(_SilentLLM):
+    """The same deterministic composer, keeping the prompts it was handed, so a claim about what the
+    explanation was built from is checked against the composer's actual input rather than its output."""
+
+    def __init__(self):
+        self.prompts = []
+
+    def chat(self, system, user, **kw):
+        self.prompts.append((kw.get("tag", "chat"), system))
+        return super().chat(system, user, **kw)
+
+    def chat_json(self, system, user, max_tokens=900, tag="", **kw):
+        self.prompts.append((tag, system))
+        return super().chat_json(system, user, max_tokens=max_tokens, tag=tag, **kw)
 
 
 # ============================================================== Service D — live Langfuse
