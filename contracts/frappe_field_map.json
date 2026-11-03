@@ -1,0 +1,1119 @@
+{
+  "schema": "saral-frappe-field-map/1",
+  "catalogue_version": "saral-pl-catalogue-2.0.0-draft",
+  "kinds": {
+    "field": "A column on an app doctype (doctype JSON in apps/loan_advisory_portal/.../doctype/).",
+    "custom_field": "A custom field the app adds to Loan Application (apps/loan_advisory_portal/loan_advisory_portal/custom_fields.py).",
+    "native_field": "A Frappe Lending field on Loan Application. Lending is not vendored in this repo; the portal writes it.",
+    "child_table": "A Table field; the value is the set of child rows.",
+    "child_row": "A row in a child table, keyed as the note says.",
+    "source_reference": "SOURCE_REFERENCE tier: the raw payload stays at the source; the LMS keeps the reference, sha256 and fetch time.",
+    "doctype_rows": "Rows of a whole doctype linked to the application."
+  },
+  "native_fields": {
+    "Loan Application": [
+      "loan_amount",
+      "repayment_periods",
+      "rate_of_interest",
+      "applicant_name"
+    ],
+    "File": [
+      "content_hash"
+    ]
+  },
+  "fields": {
+    "active_account_count": {
+      "location": "Bureau Report Summary.active_account_count",
+      "kind": "field"
+    },
+    "active_credit_accounts": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ]
+    },
+    "active_personal_loan_count": {
+      "location": "Bureau Report Summary.active_personal_loan_count",
+      "kind": "field"
+    },
+    "actual_emi_debits": {
+      "location": "Bank Statement Summary.actual_emi_debits",
+      "kind": "field"
+    },
+    "address_match_status": {
+      "location": "KYC Verification.address_match_status",
+      "kind": "field"
+    },
+    "address_similarity": {
+      "location": "KYC Verification.address_similarity",
+      "kind": "field"
+    },
+    "age_at_assessment": {
+      "location": "Decision Snapshot.age_at_assessment",
+      "kind": "field"
+    },
+    "age_at_maturity": {
+      "location": "Decision Snapshot.age_at_maturity",
+      "kind": "field"
+    },
+    "amount_band": {
+      "location": "Decision Snapshot.amount_band",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_amount_band"
+      ]
+    },
+    "anomaly_indicators": {
+      "location": "Document Extraction.anomaly_indicators",
+      "kind": "field"
+    },
+    "applicant_address": {
+      "location": "Borrower Profile.address_line1",
+      "kind": "field",
+      "also": [
+        "Borrower Profile.address_line2",
+        "Borrower Profile.current_pincode",
+        "Borrower Profile.current_city"
+      ]
+    },
+    "applicant_city": {
+      "location": "Borrower Profile.current_city",
+      "kind": "field"
+    },
+    "applicant_dob": {
+      "location": "Borrower Profile.date_of_birth",
+      "kind": "field",
+      "note": "Alias of date_of_birth"
+    },
+    "applicant_identifier": {
+      "location": "Loan Application.custom_pan_hash",
+      "kind": "custom_field",
+      "note": "The stable applicant key is the PAN hash, never the PAN."
+    },
+    "applicant_identity": {
+      "location": "KYC Verification.verified_identity",
+      "kind": "field",
+      "also": [
+        "Borrower Profile.full_name",
+        "Borrower Profile.date_of_birth"
+      ]
+    },
+    "applicant_name": {
+      "location": "Borrower Profile.full_name",
+      "kind": "field",
+      "also": [
+        "Loan Application.applicant_name"
+      ]
+    },
+    "applicant_pricing_band": {
+      "location": "Decision Snapshot.applicant_pricing_band",
+      "kind": "field"
+    },
+    "approved_card_obligation_method": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = approved_card_obligation_method"
+    },
+    "approved_enquiry_threshold": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = approved_enquiry_threshold"
+    },
+    "approved_exposure_limit": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = approved_exposure_limit"
+    },
+    "approved_interest_rate_range": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = approved_interest_rate_range"
+    },
+    "approved_maximum_foir": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = approved_maximum_foir"
+    },
+    "approved_minimum_score": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = approved_minimum_score"
+    },
+    "approved_utilisation_threshold": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = approved_utilisation_threshold"
+    },
+    "assessment_date": {
+      "location": "Decision Snapshot.assessment_date",
+      "kind": "field"
+    },
+    "assessment_period": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = assessment_period"
+    },
+    "assessment_rate": {
+      "location": "Decision Snapshot.assessment_rate",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_assessment_rate"
+      ]
+    },
+    "assessment_window": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = assessment_window"
+    },
+    "average_monthly_balance": {
+      "location": "Bank Statement Summary.average_monthly_balance",
+      "kind": "field"
+    },
+    "average_monthly_income": {
+      "location": "Bank Statement Summary.average_monthly_income",
+      "kind": "field"
+    },
+    "bank_salary_credit_avg": {
+      "location": "Bank Statement Summary.bank_salary_credit_avg",
+      "kind": "field"
+    },
+    "bank_transactions": {
+      "location": "Bank Statement Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bank Statement Summary.content_sha256",
+        "Bank Statement Summary.fetched_at"
+      ]
+    },
+    "bureau_accounts": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ]
+    },
+    "bureau_address": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ],
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "bureau_data_quality_flags": {
+      "location": "Bureau Report Summary.dq_issue_codes",
+      "kind": "field"
+    },
+    "bureau_dob": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ],
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "bureau_enquiries": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ]
+    },
+    "bureau_identity": {
+      "location": "Bureau Report Summary.identity_match",
+      "kind": "field"
+    },
+    "bureau_match_status": {
+      "location": "Bureau Report Summary.match_status",
+      "kind": "field"
+    },
+    "bureau_name": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ],
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "bureau_report_date": {
+      "location": "Bureau Report Summary.report_date",
+      "kind": "field"
+    },
+    "bureau_report_status": {
+      "location": "Bureau Report Summary.report_status",
+      "kind": "field"
+    },
+    "bureau_score": {
+      "location": "Bureau Report Summary.score_value",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_credit_score"
+      ]
+    },
+    "calculated_emi": {
+      "location": "Decision Snapshot.calculated_emi",
+      "kind": "field"
+    },
+    "cash_deposit_percentage": {
+      "location": "Bank Statement Summary.cash_deposit_percentage",
+      "kind": "field"
+    },
+    "closed_account_count": {
+      "location": "Bureau Report Summary.closed_account_count",
+      "kind": "field"
+    },
+    "conflict_flags": {
+      "location": "Decision Snapshot.conflict_flags",
+      "kind": "field"
+    },
+    "course_start_date": {
+      "location": "Loan Application.custom_course_start_date",
+      "kind": "custom_field"
+    },
+    "credit_card_balance": {
+      "location": "Bureau Report Summary.credit_card_balance",
+      "kind": "field"
+    },
+    "credit_card_balances": {
+      "location": "Bureau Report Summary.credit_card_balances",
+      "kind": "field"
+    },
+    "credit_card_payment_history": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ]
+    },
+    "credit_history_months": {
+      "location": "Bureau Report Summary.credit_history_months",
+      "kind": "field"
+    },
+    "current_default_count": {
+      "location": "Bureau Report Summary.current_default_count",
+      "kind": "field"
+    },
+    "current_exposure": {
+      "location": "Bureau Report Summary.current_exposure",
+      "kind": "field"
+    },
+    "current_score": {
+      "location": "Bureau Report Summary.score_value",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_credit_score"
+      ],
+      "note": "Alias of bureau_score"
+    },
+    "date_of_birth": {
+      "location": "Borrower Profile.date_of_birth",
+      "kind": "field"
+    },
+    "days_since_last_decline": {
+      "location": "Decision Snapshot.days_since_last_decline",
+      "kind": "field"
+    },
+    "days_since_last_dpd": {
+      "location": "Bureau Report Summary.days_since_last_dpd",
+      "kind": "field"
+    },
+    "debit_credit_ratio": {
+      "location": "Bank Statement Summary.debit_credit_ratio",
+      "kind": "field"
+    },
+    "debt_mismatch": {
+      "location": "Bank Statement Summary.debt_mismatch",
+      "kind": "field"
+    },
+    "declared_income": {
+      "location": "Loan Application.custom_monthly_income",
+      "kind": "custom_field",
+      "also": [
+        "Borrower Profile.monthly_income"
+      ]
+    },
+    "declared_obligations": {
+      "location": "Loan Application.custom_monthly_obligations",
+      "kind": "custom_field",
+      "also": [
+        "Borrower Profile.monthly_obligations"
+      ]
+    },
+    "declared_purpose": {
+      "location": "Loan Application.custom_purpose_code",
+      "kind": "custom_field"
+    },
+    "declared_salary": {
+      "location": "Decision Snapshot.declared_salary",
+      "kind": "field"
+    },
+    "deductions": {
+      "location": "Document Extraction.deductions",
+      "kind": "field"
+    },
+    "dob_match_status": {
+      "location": "KYC Verification.dob_match_status",
+      "kind": "field"
+    },
+    "document_age_days": {
+      "location": "Document Extraction.document_age_days",
+      "kind": "field"
+    },
+    "document_date": {
+      "location": "Document Extraction.document_date",
+      "kind": "field"
+    },
+    "document_hash": {
+      "location": "Document Extraction.document_sha256",
+      "kind": "field",
+      "also": [
+        "File.content_hash"
+      ]
+    },
+    "document_integrity_result": {
+      "location": "Document Extraction.document_integrity_result",
+      "kind": "field"
+    },
+    "document_kind": {
+      "location": "Document Extraction.document_kind",
+      "kind": "field"
+    },
+    "dpd_history": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ]
+    },
+    "dpd_occurrence_count": {
+      "location": "Bureau Report Summary.dpd_occurrence_count",
+      "kind": "field"
+    },
+    "duplicate_document_result": {
+      "location": "Document Extraction.duplicate_document_result",
+      "kind": "field"
+    },
+    "duplicate_match_result": {
+      "location": "KYC Verification.duplicate_match_result",
+      "kind": "field"
+    },
+    "duplicate_tradeline_count": {
+      "location": "Bureau Report Summary.duplicate_tradeline_count",
+      "kind": "field"
+    },
+    "eligible_amount": {
+      "location": "Decision Snapshot.eligible_amount",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_eligible_amount"
+      ]
+    },
+    "eligible_employment_categories": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = eligible_employment_categories"
+    },
+    "eligible_loan_purposes": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = eligible_loan_purposes"
+    },
+    "eligible_nationalities": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = eligible_nationalities"
+    },
+    "email_hash": {
+      "location": "Borrower Profile.email_hash",
+      "kind": "field"
+    },
+    "employer_caution_list_hit": {
+      "location": "Decision Snapshot.employer_caution_list_hit",
+      "kind": "field"
+    },
+    "employer_changes_24m": {
+      "location": "Decision Snapshot.employer_changes_24m",
+      "kind": "field"
+    },
+    "employer_history": {
+      "location": "Borrower Profile.employment_history",
+      "kind": "child_table"
+    },
+    "employer_name": {
+      "location": "Borrower Profile.employer",
+      "kind": "field"
+    },
+    "employer_name_similarity": {
+      "location": "Bank Statement Summary.employer_name_similarity",
+      "kind": "field"
+    },
+    "employer_stability_indicator": {
+      "location": "Decision Snapshot.employer_stability_indicator",
+      "kind": "field"
+    },
+    "employment_category": {
+      "location": "Borrower Profile.employer_category",
+      "kind": "field"
+    },
+    "employment_gap_months": {
+      "location": "Decision Snapshot.employment_gap_months",
+      "kind": "field"
+    },
+    "employment_history": {
+      "location": "Borrower Profile.employment_history",
+      "kind": "child_table"
+    },
+    "employment_months": {
+      "location": "Borrower Profile.employment_months",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_employment_months"
+      ]
+    },
+    "employment_start_date": {
+      "location": "Borrower Profile.employment_start_date",
+      "kind": "field"
+    },
+    "employment_status": {
+      "location": "Borrower Profile.employment_status",
+      "kind": "field"
+    },
+    "employment_type": {
+      "location": "Borrower Profile.employment_type",
+      "kind": "field"
+    },
+    "enquiries_last_30_days": {
+      "location": "Bureau Report Summary.enquiries_last_30_days",
+      "kind": "field"
+    },
+    "enquiries_last_6_months": {
+      "location": "Bureau Report Summary.enquiries_last_6_months",
+      "kind": "field"
+    },
+    "enquiries_last_90_days": {
+      "location": "Bureau Report Summary.enquiries_last_90_days",
+      "kind": "field"
+    },
+    "enquiry_count": {
+      "location": "Bureau Report Summary.enquiry_count",
+      "kind": "field"
+    },
+    "evidence_comparison_results": {
+      "location": "Decision Snapshot.evidence_comparison_results",
+      "kind": "field"
+    },
+    "evidence_references": {
+      "location": "Decision Snapshot.evidence_references",
+      "kind": "field"
+    },
+    "existing_monthly_obligations": {
+      "location": "Decision Snapshot.existing_monthly_obligations",
+      "kind": "field"
+    },
+    "existing_obligations": {
+      "location": "Decision Snapshot.existing_obligations",
+      "kind": "field"
+    },
+    "expected_emi_debits": {
+      "location": "Bank Statement Summary.expected_emi_debits",
+      "kind": "field"
+    },
+    "exposure_growth_percentage": {
+      "location": "Bureau Report Summary.exposure_growth_percentage",
+      "kind": "field"
+    },
+    "extracted_identity_fields": {
+      "location": "KYC Verification.extracted_identity_fields",
+      "kind": "field"
+    },
+    "foir": {
+      "location": "Decision Snapshot.foir",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_foir"
+      ]
+    },
+    "fraud_indicators": {
+      "location": "Decision Snapshot.fraud_indicators",
+      "kind": "field"
+    },
+    "gross_income": {
+      "location": "Borrower Profile.gross_monthly_salary",
+      "kind": "field"
+    },
+    "historical_exposure": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ],
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "historical_income": {
+      "location": "Bank Statement Summary.historical_income",
+      "kind": "field"
+    },
+    "historical_scores": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ],
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "identity_fields": {
+      "location": "KYC Verification.identity_fields",
+      "kind": "field"
+    },
+    "identity_match_status": {
+      "location": "KYC Verification.identity_match_status",
+      "kind": "field"
+    },
+    "identity_verification_status": {
+      "location": "KYC Verification.identity_verification_status",
+      "kind": "field"
+    },
+    "income_match_status": {
+      "location": "Decision Snapshot.income_match_status",
+      "kind": "field"
+    },
+    "income_reduction_percentage": {
+      "location": "Bank Statement Summary.income_reduction_percentage",
+      "kind": "field"
+    },
+    "income_variance_ratio": {
+      "location": "Bank Statement Summary.income_variance_ratio",
+      "kind": "field"
+    },
+    "income_variation": {
+      "location": "Bank Statement Summary.income_variation",
+      "kind": "field"
+    },
+    "independently_calculated_emi": {
+      "location": "Decision Snapshot.independently_calculated_emi",
+      "kind": "field"
+    },
+    "interest_rate": {
+      "location": "Decision Snapshot.offer_rate",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_offer_rate",
+        "Loan Application.rate_of_interest"
+      ]
+    },
+    "kyc_dob_match": {
+      "location": "KYC Verification.kyc_dob_match",
+      "kind": "field"
+    },
+    "kyc_id_last4_match": {
+      "location": "KYC Verification.kyc_id_last4_match",
+      "kind": "field"
+    },
+    "kyc_name_match_score": {
+      "location": "KYC Verification.kyc_name_match_score",
+      "kind": "field"
+    },
+    "last_decline_date": {
+      "location": "Decision Snapshot.last_decline_date",
+      "kind": "field"
+    },
+    "last_dpd_date": {
+      "location": "Bureau Report Summary.last_dpd_date",
+      "kind": "field",
+      "also": [
+        "Bureau Report Summary.source_uri"
+      ],
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "loan_purpose": {
+      "location": "Loan Application.custom_purpose_code",
+      "kind": "custom_field",
+      "also": [
+        "Loan Application.custom_loan_purpose"
+      ]
+    },
+    "loan_tenure_months": {
+      "location": "Loan Application.repayment_periods",
+      "kind": "native_field"
+    },
+    "low_confidence": {
+      "location": "Decision Snapshot.low_confidence",
+      "kind": "field"
+    },
+    "max_dpd_12m": {
+      "location": "Bureau Report Summary.max_dpd_12m",
+      "kind": "field"
+    },
+    "max_dpd_24m": {
+      "location": "Bureau Report Summary.max_dpd_24m",
+      "kind": "field"
+    },
+    "maximum_affordable_emi": {
+      "location": "Decision Snapshot.maximum_affordable_emi",
+      "kind": "field"
+    },
+    "maximum_age_at_maturity": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = maximum_age_at_maturity"
+    },
+    "maximum_loan_amount": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = maximum_loan_amount"
+    },
+    "maximum_report_age_days": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = maximum_report_age_days"
+    },
+    "maximum_tenure_months": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = maximum_tenure_months"
+    },
+    "minimum_age": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = minimum_age"
+    },
+    "minimum_confidence": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = minimum_confidence"
+    },
+    "minimum_income": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = minimum_income"
+    },
+    "minimum_loan_amount": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = minimum_loan_amount"
+    },
+    "minimum_tenure_months": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = minimum_tenure_months"
+    },
+    "missed_payment_count": {
+      "location": "Bureau Report Summary.missed_payment_count",
+      "kind": "field"
+    },
+    "monthly_income_history": {
+      "location": "Bank Statement Summary.monthly_income_history",
+      "kind": "field"
+    },
+    "monthly_income_variance": {
+      "location": "Bank Statement Summary.monthly_income_variance",
+      "kind": "field"
+    },
+    "monthly_net_income": {
+      "location": "Decision Snapshot.monthly_net_income",
+      "kind": "field"
+    },
+    "months_at_current_address": {
+      "location": "Borrower Profile.months_at_current_address",
+      "kind": "field"
+    },
+    "name_match_status": {
+      "location": "KYC Verification.name_match_status",
+      "kind": "field"
+    },
+    "name_similarity": {
+      "location": "KYC Verification.name_similarity",
+      "kind": "field"
+    },
+    "nationality": {
+      "location": "Borrower Profile.nationality",
+      "kind": "field"
+    },
+    "negative_balance_count": {
+      "location": "Bank Statement Summary.negative_balance_count",
+      "kind": "field"
+    },
+    "negative_list_hit": {
+      "location": "KYC Verification.negative_list_hit",
+      "kind": "field"
+    },
+    "observed_recurring_debits": {
+      "location": "Bank Statement Summary.observed_recurring_debits",
+      "kind": "field"
+    },
+    "observed_salary_credits": {
+      "location": "Bank Statement Summary.observed_salary_credits",
+      "kind": "field"
+    },
+    "ocr_extracted_income": {
+      "location": "Document Extraction.ocr_extracted_income",
+      "kind": "field"
+    },
+    "ocr_field_confidence": {
+      "location": "Document Extraction.ocr_field_confidence",
+      "kind": "field"
+    },
+    "oldest_account_date": {
+      "location": "Bureau Report Summary.oldest_account_date",
+      "kind": "field"
+    },
+    "other_monthly_obligations": {
+      "location": "Decision Snapshot.other_monthly_obligations",
+      "kind": "field"
+    },
+    "pan_format_valid": {
+      "location": "KYC Verification.pan_format_valid",
+      "kind": "field"
+    },
+    "pan_hash": {
+      "location": "KYC Verification.pan_hash",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_pan_hash"
+      ]
+    },
+    "payee_account_present": {
+      "location": "Decision Snapshot.payee_account_present",
+      "kind": "field"
+    },
+    "payment_regularity_indicator": {
+      "location": "Bureau Report Summary.payment_regularity_indicator",
+      "kind": "field"
+    },
+    "payslip_count": {
+      "location": "Decision Snapshot.payslip_count",
+      "kind": "field"
+    },
+    "payslip_net_avg": {
+      "location": "Decision Snapshot.payslip_net_avg",
+      "kind": "field"
+    },
+    "phone_hash": {
+      "location": "Borrower Profile.phone_hash",
+      "kind": "field"
+    },
+    "policy_version": {
+      "location": "Decision Snapshot.policy_version",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_policy_version"
+      ]
+    },
+    "principal": {
+      "location": "Loan Application.loan_amount",
+      "kind": "native_field"
+    },
+    "product_purpose": {
+      "location": "Decision Snapshot.product_purpose",
+      "kind": "field"
+    },
+    "property_ownership": {
+      "location": "Loan Application.custom_property_ownership",
+      "kind": "custom_field"
+    },
+    "proposed_emi": {
+      "location": "Decision Snapshot.proposed_emi",
+      "kind": "field",
+      "also": [
+        "Loan Application.custom_proposed_emi"
+      ]
+    },
+    "purpose_evidence_amount": {
+      "location": "Loan Application.custom_purpose_evidence_amount",
+      "kind": "custom_field"
+    },
+    "purpose_evidence_status": {
+      "location": "Decision Snapshot.purpose_evidence_status",
+      "kind": "field"
+    },
+    "recent_income": {
+      "location": "Bank Statement Summary.recent_income",
+      "kind": "field"
+    },
+    "recent_loan_application_count": {
+      "location": "Bureau Report Summary.recent_loan_application_count",
+      "kind": "field",
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "recent_open_account_count": {
+      "location": "Bureau Report Summary.recent_open_account_count",
+      "kind": "field"
+    },
+    "recent_unsecured_account_count": {
+      "location": "Bureau Report Summary.recent_unsecured_account_count",
+      "kind": "field"
+    },
+    "recently_opened_account_count": {
+      "location": "Bureau Report Summary.recently_opened_account_count",
+      "kind": "field"
+    },
+    "recorded_consents": {
+      "location": "Consent Record",
+      "kind": "doctype_rows",
+      "note": "One Consent Record per consent event, linked by borrower_profile and loan_application; wording in Consent Text."
+    },
+    "repayment_history": {
+      "location": "Bureau Report Summary.source_uri",
+      "kind": "source_reference",
+      "also": [
+        "Bureau Report Summary.snapshot_sha256",
+        "Bureau Report Summary.fetched_at"
+      ]
+    },
+    "reported_card_emi": {
+      "location": "Bureau Report Summary.reported_card_emi",
+      "kind": "field"
+    },
+    "requested_amount": {
+      "location": "Loan Application.loan_amount",
+      "kind": "native_field"
+    },
+    "required_consents": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = required_consents"
+    },
+    "required_documents": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = required_documents"
+    },
+    "required_fields": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = required_fields"
+    },
+    "required_identity_fields": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = required_identity_fields"
+    },
+    "residual_income": {
+      "location": "Decision Snapshot.residual_income",
+      "kind": "field"
+    },
+    "restructured_account_count": {
+      "location": "Bureau Report Summary.restructured_account_count",
+      "kind": "field",
+      "also": [
+        "Bureau Report Summary.source_uri"
+      ],
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "return_count": {
+      "location": "Bank Statement Summary.return_count",
+      "kind": "field"
+    },
+    "review_flags": {
+      "location": "Decision Snapshot.review_flags",
+      "kind": "field"
+    },
+    "risk_grade": {
+      "location": "Decision Snapshot.risk_grade",
+      "kind": "field"
+    },
+    "rule_results": {
+      "location": "Decision Snapshot.rule_results",
+      "kind": "child_table"
+    },
+    "salary_credit_consistency": {
+      "location": "Bank Statement Summary.salary_credit_consistency",
+      "kind": "field"
+    },
+    "salary_credit_employer": {
+      "location": "Bank Statement Summary.salary_credit_employer",
+      "kind": "field"
+    },
+    "salary_credit_months": {
+      "location": "Bank Statement Summary.salary_credit_months",
+      "kind": "field"
+    },
+    "salary_match_status": {
+      "location": "Bank Statement Summary.salary_match_status",
+      "kind": "field"
+    },
+    "salary_reversal_indicator": {
+      "location": "Bank Statement Summary.salary_reversal_indicator",
+      "kind": "field"
+    },
+    "score_trend": {
+      "location": "Bureau Report Summary.score_trend",
+      "kind": "field"
+    },
+    "secured_account_count": {
+      "location": "Bureau Report Summary.secured_account_count",
+      "kind": "field"
+    },
+    "settled_account_count": {
+      "location": "Bureau Report Summary.settled_account_count",
+      "kind": "field"
+    },
+    "settled_within_lookback": {
+      "location": "Bureau Report Summary.settled_within_lookback",
+      "kind": "field"
+    },
+    "shared_contact_pan_count": {
+      "location": "KYC Verification.shared_contact_pan_count",
+      "kind": "field"
+    },
+    "signature_anomaly_score": {
+      "location": "Signature Screening Result.signature_anomaly_score",
+      "kind": "field"
+    },
+    "signature_crop_sha256": {
+      "location": "Signature Screening Result.signature_crop_sha256",
+      "kind": "field"
+    },
+    "signature_present": {
+      "location": "Signature Screening Result.signature_present",
+      "kind": "field"
+    },
+    "signature_similarity": {
+      "location": "Signature Screening Result.signature_similarity",
+      "kind": "field"
+    },
+    "statement_integrity_result": {
+      "location": "Bank Statement Summary.statement_integrity_result",
+      "kind": "field"
+    },
+    "statement_months": {
+      "location": "Bank Statement Summary.statement_months",
+      "kind": "field"
+    },
+    "statement_validation_flags": {
+      "location": "Bank Statement Summary.statement_validation_flags",
+      "kind": "field"
+    },
+    "submitted_documents": {
+      "location": "Decision Snapshot.submitted_documents",
+      "kind": "field"
+    },
+    "suit_filed_status": {
+      "location": "Bureau Report Summary.suit_filed_status",
+      "kind": "field",
+      "also": [
+        "Bureau Report Summary.source_uri"
+      ],
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "supplied_fields": {
+      "location": "Decision Snapshot.supplied_fields",
+      "kind": "field"
+    },
+    "supplied_identity_fields": {
+      "location": "KYC Verification.supplied_identity_fields",
+      "kind": "field"
+    },
+    "supported_employment_types": {
+      "location": "Decision Snapshot.policy_parameters",
+      "kind": "child_row",
+      "note": "Decision Policy Parameter row with parameter_name = supported_employment_types"
+    },
+    "tampering_flags": {
+      "location": "Document Extraction.tampering_flags",
+      "kind": "field"
+    },
+    "tenure_months": {
+      "location": "Loan Application.repayment_periods",
+      "kind": "native_field"
+    },
+    "total_credit_limits": {
+      "location": "Bureau Report Summary.total_credit_limits",
+      "kind": "field"
+    },
+    "total_credits": {
+      "location": "Bank Statement Summary.total_credits",
+      "kind": "field"
+    },
+    "total_debits": {
+      "location": "Bank Statement Summary.total_debits",
+      "kind": "field"
+    },
+    "total_existing_exposure": {
+      "location": "Bureau Report Summary.total_existing_exposure",
+      "kind": "field"
+    },
+    "total_experience_months": {
+      "location": "Borrower Profile.total_experience_months",
+      "kind": "field"
+    },
+    "total_monthly_obligations": {
+      "location": "Decision Snapshot.total_monthly_obligations",
+      "kind": "field"
+    },
+    "total_overdue_amount": {
+      "location": "Bureau Report Summary.total_overdue_amount",
+      "kind": "field",
+      "also": [
+        "Bureau Report Summary.source_uri"
+      ],
+      "population": "bureau-report/2 (Qoder owns the bureau change); the column stays empty and the rule returns INSUFFICIENT_DATA until then"
+    },
+    "total_unsecured_exposure": {
+      "location": "Bureau Report Summary.total_unsecured_exposure",
+      "kind": "field"
+    },
+    "treatment_date": {
+      "location": "Loan Application.custom_treatment_date",
+      "kind": "custom_field"
+    },
+    "unresolved_conflicts": {
+      "location": "Decision Snapshot.unresolved_conflicts",
+      "kind": "field"
+    },
+    "unsecured_account_count": {
+      "location": "Bureau Report Summary.unsecured_account_count",
+      "kind": "field"
+    },
+    "utilisation_ratio": {
+      "location": "Bureau Report Summary.utilisation_ratio",
+      "kind": "field"
+    },
+    "verified_income": {
+      "location": "Decision Snapshot.verified_income",
+      "kind": "field"
+    },
+    "wedding_date": {
+      "location": "Loan Application.custom_wedding_date",
+      "kind": "custom_field"
+    },
+    "written_off_account_count": {
+      "location": "Bureau Report Summary.written_off_account_count",
+      "kind": "field"
+    },
+    "written_off_within_lookback": {
+      "location": "Bureau Report Summary.written_off_within_lookback",
+      "kind": "field"
+    }
+  },
+  "never_store": {
+    "pan_full": {
+      "location": null,
+      "reason": "Used in memory for the synthetic PAN and bureau calls, then dropped; LMS keeps pan_masked + pan_hash."
+    },
+    "aadhaar_full": {
+      "location": null,
+      "reason": "Never requested or accepted. The synthetic Aadhaar API returns last 4 + verification status."
+    },
+    "otp_values": {
+      "location": null,
+      "reason": "Never stored or logged."
+    },
+    "ocr_raw_text": {
+      "location": null,
+      "reason": "PR #41 masks before values reach a dataclass; raw text is not kept."
+    }
+  },
+  "deferred": []
+}

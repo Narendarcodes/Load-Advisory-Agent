@@ -14,6 +14,7 @@ Sensitive handling: the file is read into memory, the OCR package masks PAN/Aadh
 before the value reaches a dataclass, and no recognised text is returned or logged.
 """
 
+import hashlib
 import json
 import math
 import re
@@ -43,6 +44,8 @@ from loan_advisory_portal.portal.errors import Conflict, Forbidden, ServiceUnava
 from loan_advisory_portal.portal.identity import borrower_context, owned_application
 
 DOCTYPE = "Document Extraction"
+# The doctype's `engine` Select uses display labels; the OCR chain reports lower-case ids.
+ENGINE_LABELS = {"tesseract": "Tesseract", "paddle": "PaddleOCR"}
 MAX_TEXT = 120
 NUMERIC_FIELDS = {
     "basic_salary",
@@ -233,13 +236,14 @@ def confirm(application: str, row: str, values) -> dict:
 	record = frappe.get_doc(
 		{
 			"doctype": DOCTYPE,
-			"application": doc.name,
+			"loan_application": doc.name,
 			"document_type": target.document_type,
 			"file": file_doc.name,
 			"file_name": file_doc.file_name,
-			"kind": result.kind.value,
+			"document_kind": result.kind.value,
+			"document_sha256": hashlib.sha256(_content(file_doc)).hexdigest(),
 			"status": "Confirmed",
-			"engine": result.engine,
+			"engine": ENGINE_LABELS.get(result.engine, ""),
 			"engine_version": result.engine_version,
 			"pages": result.pages,
 			"extracted_values": json.dumps(fields, sort_keys=True),
@@ -266,7 +270,7 @@ def get_extraction(application: str, row: str) -> dict | None:
 	doc, target, file_doc = _document(application, row, ctx)
 	rows = frappe.get_all(
 		DOCTYPE,
-		filters={"application": doc.name, "file": file_doc.name, "status": "Confirmed"},
+		filters={"loan_application": doc.name, "file": file_doc.name, "status": "Confirmed"},
 		fields=["name"],
 		order_by="creation desc",
 		limit_page_length=1,
@@ -278,7 +282,7 @@ def get_extraction(application: str, row: str) -> dict | None:
 		"record": record.name,
 		"status": record.status,
 		"document_type": record.document_type,
-		"kind": record.kind,
+		"kind": record.document_kind,
 		"file_name": record.file_name,
 		"confirmed_values": _loads(record.confirmed_values),
 		"extracted_values": _loads(record.extracted_values),

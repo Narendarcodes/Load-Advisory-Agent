@@ -1,0 +1,26 @@
+{
+  "schema_version": "saral-bureau-report/1",
+  "report_id": "SYN-BUR-000505",
+  "applicant_id": "SYN-APP-000505",
+  "provider_schema": "bureau-report/1",
+  "provider_report_id": "rpt-synthetic-000505",
+  "report_date": "2026-11-03",
+  "generated_at": "2026-11-03T16:40:00Z",
+  "identity_match": true,
+  "score": {
+    "value": null,
+    "status": "NO_HIT",
+    "type": "SYNTHETIC"
+  },
+  "tradelines": [],
+  "enquiries": [],
+  "aggregates": {
+    "active_emi_total": 0,
+    "max_dpd_12m": 0,
+    "max_dpd_24m": 0,
+    "enquiries_6m": 0,
+    "writeoff_or_settlement_24m": false,
+    "writeoff_or_settlement_ever": false
+  },
+  "data_quality_valid": true
+}
