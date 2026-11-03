@@ -4,7 +4,7 @@ import json
 import unittest
 from pathlib import Path
 
-from decision_engine.segmentation.classifier import classify_applicant, derive_features
+from decision_engine.segmentation.classifier import classify_applicant
 from decision_engine.segmentation.guidance import GUIDANCE, SEGMENT_NAMES
 from decision_engine.segmentation.customer_segmentation import load_applicants, find_applicant
 from loan_advisory.agent.segmentation import get_customer_segmentation, format_persona_guidance

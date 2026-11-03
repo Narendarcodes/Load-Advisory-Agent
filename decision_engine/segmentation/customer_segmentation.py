@@ -17,11 +17,9 @@ if __package__ is None or __package__ == "":
     _root = Path(__file__).resolve().parent.parent.parent
     if str(_root) not in sys.path:
         sys.path.insert(0, str(_root))
-    from decision_engine.segmentation.classifier import classify_applicant, derive_features
-    from decision_engine.segmentation.guidance import GUIDANCE, SEGMENT_NAMES
+    from decision_engine.segmentation.classifier import classify_applicant
 else:
-    from .classifier import classify_applicant, derive_features
-    from .guidance import GUIDANCE, SEGMENT_NAMES
+    from .classifier import classify_applicant
 
 
 def load_applicants(file_path: str | Path) -> list[dict[str, Any]]:
