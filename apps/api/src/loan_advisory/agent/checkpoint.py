@@ -6,9 +6,10 @@ typed checkpoint blob per `(thread_id, checkpoint_ns, checkpoint_id)` plus order
 all keyed by the same Redis URL the assertion replay store uses.
 
 Process-local memory stays the development default, and is refused when `APP_ENV` /
-`ENVIRONMENT` is production — the same fail-closed rule as `api/assertion.py`. Retention
-is deliberately not decided here: `AGENT_CHECKPOINT_TTL_S` is off unless an operator sets
-it, because the retention period is an owner decision, not a library default.
+`ENVIRONMENT` is production — the same fail-closed rule as `api/assertion.py`. The retention
+period itself is an owner decision, not a library default, so `AGENT_CHECKPOINT_TTL_S` is off
+unless an operator sets it; production is the one place where leaving it unset is refused, because
+"no expiry" is a retention policy nobody chose.
 """
 from __future__ import annotations
 
@@ -259,6 +260,12 @@ def build_checkpointer():
     if backend == "redis":
         if not url:
             raise CheckpointUnavailable("checkpoints are misconfigured: no Redis URL")
+        if environment in PRODUCTION_ENV and not ttl:
+            # A checkpoint holds the raw conversation and the loaded evidence. With no TTL the shared
+            # Redis keeps every borrower's transcript until someone notices — that is a retention
+            # policy by omission, so production has to state one.
+            raise CheckpointUnavailable("production checkpoints need AGENT_CHECKPOINT_TTL_S: "
+                                        "conversation state cannot be retained forever by default")
         try:
             client = redis.Redis.from_url(url, socket_connect_timeout=1.0, socket_timeout=1.0)
             client.ping()

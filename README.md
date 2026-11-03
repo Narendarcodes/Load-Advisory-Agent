@@ -183,6 +183,7 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 | `LANGFUSE_CAPTURE_CONTENT`, `LANGFUSE_ALLOW_REMOTE` | off, off | Include prompt/answer text; allow a non-loopback self-hosted endpoint |
 | `LANGFUSE_SAMPLE_RATE`, `LANGFUSE_TIMEOUT`, `LANGFUSE_RELEASE` | `1.0`, `5`, – | Sampling, HTTP timeout (s), optional release label |
 | `AGENT_AUDIT_LOG`, `AGENT_HANDOFF_LOG` | – | Audit rows (ids, intent, flags, timings; no message text or money values) and the handoff JSONL queue |
+| `AGENT_LOG_MAX_BYTES` | `52428800` | Size cap for each active JSONL log. At the cap the file is renamed to a dated archive and a fresh one starts, so rotation never drops a row; `0` disables rotation |
 | `AGENT_STATE_DIR` | – | Root for `turns.jsonl`, `handoffs.jsonl` and `traces/`; a per-artifact env var or an explicit argument wins. New directories are 0700 and new files 0600 on POSIX; existing files are never moved or chmodded |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | – | Voice; Frappe mints the room token (`api/livekit.py`) and returns 503 without them |
 | `AGENT_HTTP`, `STT_HTTP`, `TTS_HTTP` | `:8095`, `:8791`, `:8793` | Voice worker targets |

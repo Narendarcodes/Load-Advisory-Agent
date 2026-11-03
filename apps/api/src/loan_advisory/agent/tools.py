@@ -12,6 +12,7 @@ before the first turn runs (Phase 1 security boundary B).
 """
 import hashlib
 import json
+import sys
 import threading
 import time
 import uuid
@@ -23,7 +24,7 @@ from loan_advisory.agent.facts import SCORED, counterfactual_targets
 from loan_advisory.application.lifecycle import simulate
 from loan_advisory.application.ports import ApplicationReader, EvidenceSource, assert_reader
 from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
-from loan_advisory.state_paths import HANDOFF_LOG, append_private, resolve
+from loan_advisory.state_paths import HANDOFF_LOG, append_line, resolve
 
 FIELD_TO_DOC = {k: f"custom_{k}" for k in SCORED}
 _ZEN_LOCK = threading.Lock()   # the shared ZEN decision object is used from server/eval threads
@@ -211,18 +212,32 @@ def citation_for(label: str, c: dict, profile: dict | None) -> Citation:
 
 # ------------------------------------------------------------------ human handoff + audit
 class HandoffQueue:
+    """The escalation queue: an operational log, not a borrower record.
+
+    It is the only file this process writes during a turn (the audit row being the other). It keeps the
+    application reference because a queue nobody can act on is not a queue, and it keeps no message text —
+    only a hash and a length, so the applicant's words stay in Frappe. A row that cannot be written returns
+    no reference: the answer then says the handoff is pending instead of quoting one that was never stored.
+    """
+
     def __init__(self, path: str | None = None):
         self.path = resolve(path, "AGENT_HANDOFF_LOG", HANDOFF_LOG, "agent_out/handoffs.jsonl",
                             legacy="agent_out/handoffs.jsonl")
 
     @obs.tool("create_human_handoff")
-    def create(self, category: str, refs: list[str], message: str, request_id: str | None = None) -> str:
+    def create(self, category: str, refs: list[str], message: str, request_id: str | None = None) -> str | None:
         """Queue a handoff without the applicant's words: hash and length only (P0d)."""
         ref = f"HO-{uuid.uuid4().hex[:10]}"
-        with append_private(self.path) as f:
-            f.write(json.dumps({"handoff_ref": ref, "category": category, "refs": refs, "request_id": request_id,
-                                "message_sha256": hashlib.sha256(message.encode()).hexdigest(),
-                                "message_chars": len(message), "created_at": time.time()}) + "\n")
+        row = {"handoff_ref": ref, "category": category, "refs": refs, "request_id": request_id,
+               "message_sha256": hashlib.sha256(message.encode()).hexdigest(),
+               "message_chars": len(message), "created_at": time.time()}
+        try:
+            append_line(self.path, json.dumps(row) + "\n")
+        except OSError as e:                      # a full or read-only disk is an ops failure, not the borrower's
+            sys.stderr.write(f"handoff {ref} not queued: {type(e).__name__}: {e}\n")
+            obs.set_attrs(obs.current_span(), **{"handoff.queued": False, "handoff.error": type(e).__name__})
+            return None
+        obs.set_attrs(obs.current_span(), **{"handoff.queued": True})
         return ref
 
 

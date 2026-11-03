@@ -215,10 +215,11 @@ foreign and unknown id, chooser, stale selection, guest redirect, account key).
   LangGraph checkpointer comes from `build_checkpointer()` (`agent/checkpoint.py`): process-local memory
   in development, shared Redis (`AGENT_CHECKPOINT_REDIS_URL`, defaulting to the replay URL) as soon as
   more than one worker exists, and a refusal to start on memory when `APP_ENV`/`ENVIRONMENT` is
-  production. Retention is an owner decision — `AGENT_CHECKPOINT_TTL_S=0` keeps checkpoints until the
-  operator sets a TTL. Two-process continuation is proven in `tests/e2e/two_worker_check.py`; a
-  restored thread that predates the shared store still replays the transcript to the borrower without
-  pretending the graph saw it.
+  production. Retention is an owner decision — except in production, where leaving
+  `AGENT_CHECKPOINT_TTL_S` unset is refused at startup, because keeping every borrower transcript
+  forever is a retention policy chosen by no one. Two-process continuation is proven in
+  `tests/e2e/two_worker_check.py`; a restored thread that predates the shared store still replays the
+  transcript to the borrower without pretending the graph saw it.
 - A restored thread is adopted only when the account and application match; a stale or foreign thread
   is answered as missing (404) and the island simply starts a new conversation. Identity change and
   logout are handled by the account-scoped key plus the assertion check at mint time.
