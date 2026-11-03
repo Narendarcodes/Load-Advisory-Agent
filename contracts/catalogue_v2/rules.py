@@ -21,8 +21,8 @@ PEN = "PENDING_BUSINESS_APPROVAL"
 PRO = "PROTOTYPE_SYNTHETIC"
 # Extension (user, 2026-11-03 23:03 IST): "the 4 products are final ... treat the product list as approved".
 # The user's vocabulary has no owner-approval value, so this one is added and flagged for him to accept.
-OWN = "APPROVED_OWNER_DECISION"
-# Accepted (ADR-0007 #10 / round-1 "yes for all", 2026-11-03 23:18 IST): APPROVED_OWNER_DECISION is kept as the status for any
+OWN = "OWNER_APPROVED"
+# Renamed from APPROVED_OWNER_DECISION by ADR-0010 #2 (2026-11-03 23:58 IST). OWNER_APPROVED is the status for any
 # value the owner decided himself (product list, the Rs. 25 lakh MVP ceiling, counter-offer above a cap, flat pricing, the 700 floor).
 ADR7, ADR9 = "ADR-0007 (owner, 2026-11-03 23:18 IST)", "ADR-0009 (owner, 2026-11-03 23:34 IST)"
 
@@ -705,7 +705,8 @@ RULES = [
       [P("trace_requirement", "rule id, outcome, inputs, parameters, evidence refs, policy version", None, PRO)],
       msg="OTHER.processing", missing_msg="OTHER.processing",
       internal="Trace incomplete: {trace_gaps}.",
-      note="Supports communicating main reasons (RBI fair practices) — the specific RBI paragraph is not in the G1 corpus: UNVERIFIED.",
+      note="Supports communicating main reasons in writing: Saral policy (ADR-0010 #4), not an RBI requirement for NBFCs. No NBFC rejection-reason duty was found in the RBI NBFC RBC Directions 2025 "
+           "(paras 10-13, rbi.org.in id=12942, as updated July 1, 2026); the AIFI RBC Directions 2025 para 13 carry one (id=12968).",
       tests=[T({"rule_results": ["PL-001:PASS"], "evidence_references": ["SYN-DOC-1"], "policy_version": "saral-pl-catalogue-2.0.0-draft"}, "PASS"),
              T({"rule_results": ["PL-001:PASS"], "evidence_references": [], "policy_version": None}, "REVIEW")]),
 

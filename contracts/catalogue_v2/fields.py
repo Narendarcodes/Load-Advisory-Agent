@@ -30,12 +30,17 @@ PII = {
 }
 
 RETENTION = {
-    "LMS_SNAPSHOT": "Kept immutable with the decision record for the life of the application plus the owner's retention period "
-                    "(PROPOSED 8 years after closure or decline; UNVERIFIED: the G1 corpus states no period, and Bajaj's privacy "
-                    "policy says 'Storage of data as per company's policy in addition to regulatory and legal requirements', "
-                    "BFL-PRIVACY#003).",
+    "LMS_SNAPSHOT": "Kept immutable with the decision record (ADR-0010 #3, owner 2026-11-03 23:58 IST). Disbursed loan: at least 5 "
+                    "years after the business relationship ends (loan closure). Basis: RBI (NBFC – Know Your Customer) Directions, 2025 "
+                    "para 47(2), identification records 'for at least five years after the business relationship has ended', and para "
+                    "47(1), transaction records 'for at least five years from the date of transaction' (rbi.org.in id=12943). Declined "
+                    "or withdrawn application: 5 years from the decision date, which is SARAL'S CHOICE (no RBI period was found for "
+                    "applications that never became a relationship). The earlier 8-year proposal is withdrawn; it had no RBI basis.",
     "SOURCE_REFERENCE": "Raw payload stays at the synthetic API / object store (PROPOSED 180-day TTL for synthetic data); the LMS "
-                        "keeps reference id, sha256 and fetch time as LMS_SNAPSHOT.",
+                        "keeps reference id, sha256 and fetch time as LMS_SNAPSHOT. For digital lending RBI sets no period: the NBFC "
+                        "must define and publish 'the length of time for which data can be stored' and a 'data destruction protocol' "
+                        "(RBI (NBFC – Credit Facilities) Directions, 2025 para 14(2), rbi.org.in id=12957); data stays on servers "
+                        "in India (para 14(4)).",
     "NEVER_STORE": "Held in memory for the request only; never written to the LMS, logs or traces.",
 }
 

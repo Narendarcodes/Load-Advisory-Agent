@@ -36,7 +36,7 @@ ADR9_BATCH = "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds ap
 APPROVAL_MEANINGS = {
     BAJ: "The value matches Bajaj's published guidance (chunk cited). Indicative public guidance only (ADR-0001); ZEN is authoritative.",
     REG: "An RBI chunk states the requirement (chunk cited).",
-    OWN: "The owner decided the value himself (ADR-0003, ADR-0007, ADR-0009). Accepted and kept as a status (ADR-0007 round 1).",
+    OWN: "The owner decided the value himself (ADR-0003, ADR-0007, ADR-0009, ADR-0010). Renamed from APPROVED_OWNER_DECISION (ADR-0010 #2).",
     PEN: "An A-NN assumption in THRESHOLD_APPROVALS.md. Approved for prototype_synthetic in the ADR-0009 batch; not for live use.",
     PRO: "A prototype value. Approved for prototype_synthetic in the ADR-0009 batch; not for live use.",
     "DEPRECATED": "Kept for history; not evaluated (user vocabulary).",
@@ -208,7 +208,7 @@ def aggregation(y):
 def profiles(rules):
     return {
         "bajaj_published": {
-            "description": "Only rules whose every parameter is APPROVED_BAJAJ_SOURCE, APPROVED_REGULATORY or APPROVED_OWNER_DECISION.",
+            "description": "Only rules whose every parameter is APPROVED_BAJAJ_SOURCE, APPROVED_REGULATORY or OWNER_APPROVED.",
             "rule_ids": [r["rule_id"] for r in rules if "bajaj_published" in r["profiles"]],
             "not_for_live_use": True,
             "self_sufficient": False,
@@ -264,7 +264,7 @@ def catalogue_json():
         "lender": "Bajaj Finance Ltd", "lender_relationship": "public reference lender, not a partner",
         "corpus": CORPUS_REF,
         "products": ["PL_WEDDING", "PL_HIGHER_EDUCATION", "PL_HOME_RENOVATION", "PL_MEDICAL_EMERGENCY"],
-        "products_status": "APPROVED_OWNER_DECISION (2026-11-03 23:03 IST); per-product thresholds are ASSUMPTION, approved for prototype_synthetic (ADR-0009 batch)",
+        "products_status": "OWNER_APPROVED (2026-11-03 23:03 IST); per-product thresholds are ASSUMPTION, approved for prototype_synthetic (ADR-0009 batch)",
         "owner_decisions": {"ADR-0001": "ZEN is authoritative; Bajaj numbers are indicative guidance only",
                             "ADR-0003": "four purpose products confirmed",
                             "ADR-0007 #1": f"every product capped at Rs. {PR.MVP_AMOUNT_CEILING:,} in the MVP",
@@ -272,12 +272,17 @@ def catalogue_json():
                             "ADR-0007 #3": "one flat prototype rate per product; no risk-grade pricing (PL-125 deferred)",
                             "ADR-0007 #4": "what-if edits only amount, tenure, existing EMIs, income; result vocabulary would likely meet / wouldn't meet",
                             "ADR-0009 #1": "prototype thresholds approved as one batch under prototype_synthetic",
-                            "ADR-0009 #2": f"ZEN score floor stays {PR.ZEN_SCORE_FLOOR}; Bajaj {PR.BAJAJ_INDICATIVE_SCORE} is indicative"},
+                            "ADR-0009 #2": f"ZEN score floor stays {PR.ZEN_SCORE_FLOOR}; Bajaj {PR.BAJAJ_INDICATIVE_SCORE} is indicative",
+                            "ADR-0010 #1": f"what-if cap {WI.PER_SESSION_CAP} per session",
+                            "ADR-0010 #2": "status APPROVED_OWNER_DECISION renamed OWNER_APPROVED",
+                            "ADR-0010 #3": "retention: decision record >= 5 years after loan closure (NBFC KYC Directions 2025 para 47(2)); "
+                                           "declined or withdrawn: 5 years from the decision date (Saral's choice)",
+                            "ADR-0010 #4": "written rejection reasons stay: Saral policy, not an RBI requirement for NBFCs"},
         "mvp_scope": "Salaried applicants only (user decision 2026-11-03 22:50 IST)",
         "outcomes": y["outcomes"],
         "implementation_types": y["implementation_types"],
         "approval_status_values": y["policy_governance"]["approval_status_values"] + [OWN],
-        "approval_status_extension": f"{OWN} added for owner decisions; accepted and kept (ADR-0007 round 1, 2026-11-03 23:18 IST).",
+        "approval_status_extension": f"{OWN} added for owner decisions; accepted, and renamed from APPROVED_OWNER_DECISION by ADR-0010 #2 (2026-11-03 23:58 IST).",
         "approval_status_meanings": APPROVAL_MEANINGS,
         "required_rule_metadata": y["policy_governance"]["required_rule_metadata"],
         "borrower_reason_categories": CATEGORIES,

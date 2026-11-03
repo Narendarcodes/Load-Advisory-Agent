@@ -2,7 +2,8 @@
   "status": "DRAFT - design only; the agent owner implements it",
   "decisions": [
     "ADR-0005 (2026-11-03 22:58 IST)",
-    "ADR-0007 #4 (2026-11-03 23:18 IST)"
+    "ADR-0007 #4 (2026-11-03 23:18 IST)",
+    "ADR-0010 #1 (2026-11-03 23:58 IST)"
   ],
   "editable_fields": {
     "loan_amount": {
@@ -73,9 +74,10 @@
     "rule results"
   ],
   "per_session_cap": {
-    "value": 5,
-    "approval_status": "PROTOTYPE_SYNTHETIC",
-    "note": "ADR-0005 asks for a cap; 5 is a prototype value (approved in the ADR-0009 batch)."
+    "value": 3,
+    "approval_status": "OWNER_APPROVED",
+    "note": "ADR-0010 #1: three what-ifs per session.",
+    "config_key": "SARAL_WHAT_IF_SESSION_CAP"
   },
   "side_effects": {
     "in_memory_only": true,

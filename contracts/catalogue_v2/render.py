@@ -262,10 +262,17 @@ def reason_policy_md(cat):
          "carry values and thresholds; it is role-restricted and never reaches the borrower or the borrower-facing agent.", "",
          "Example: say \"Your employment history did not meet our stability requirement for this loan.\" Never say \"you have 4 months and we need 6\".", "",
          "## Regulatory and lender basis", "",
-         "- **RBI fair practices: communicating the main reason(s) for rejecting a loan application. UNVERIFIED in the G1 corpus.** The "
-         "corpus copy of the RBI (NBFC – Responsible Business Conduct) Directions 2025 goes from para 12 (acknowledging applications, "
-         "RBI-RBC-NBFC-2025#021) straight to para 13 (sanction letter, RBI-RBC-NBFC-2025#022); no chunk states the rejection-reason duty. "
-         "This policy assumes the duty exists and should be confirmed against the full text.",
+         "- **RBI rejection-reason duty for NBFCs: NOT FOUND in the current NBFC directions (checked on rbi.org.in, 2026-11-03).** "
+         "The Reserve Bank of India (Non-Banking Financial Companies – Responsible Business Conduct) Directions, 2025 "
+         "(RBI/DOR/2025-26/362, November 28, 2025; checked both as issued and as updated on July 1, 2026) go from para 12 "
+         "(acknowledgement of loan applications) to para 13 (sanction letter); no paragraph obliges an NBFC to give, in writing or "
+         "otherwise, the reason for rejecting a loan application (https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12942). "
+         "By contrast, the All India Financial Institutions RBC Directions, 2025, para 13, say: \"An AIFI shall convey in writing, the "
+         "main reason / reasons which, have led to rejection of the loan applications within the stipulated time for all categories of "
+         "loans irrespective of any threshold limit\" (https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12968). Whether the "
+         "superseded Scale Based Regulation Directions, 2023 carried such a duty for NBFCs is UNVERIFIED (the PDF is behind a captcha). "
+         "**Written rejection reasons stay as Saral policy (ADR-0010 #4), not an RBI requirement for NBFCs.** Saral gives the main "
+         "reason area in writing in the decision notice, modelled on the AIFI/bank standard. See project-management/RBI_VERIFICATION.md.",
          "- RBI-RBC-NBFC-2025#019: \"All communications to the borrower shall be in the vernacular language or a language as understood by "
          "the borrower.\" Messages are written so they translate cleanly (the portal supports en, hi, te).",
          "- BFL-FAQ-REJECTION#000 (Bajaj): \"We will send you an SMS on your registered mobile number regarding your rejection.\"",
@@ -457,6 +464,14 @@ def all_outputs(cat, ddj):
         "docs/saral/ZEN_INPUT_COVERAGE.md": coverage_md(cat, ddj),
         "contracts/product_matrix.json": dump(pm),
         "contracts/what_if_contract.json": dump(cat["what_if"]),
+        "config/saral_what_if.json": dump({"_generated_by": "python -m contracts.catalogue_v2.build (from contracts/catalogue_v2/what_if.py)",
+                                           "per_session_cap": cat["what_if"]["per_session_cap"]["value"],
+                                           "config_key": cat["what_if"]["per_session_cap"]["config_key"],
+                                           "editable_fields": list(cat["what_if"]["editable_fields"]),
+                                           "forbidden_fields": cat["what_if"]["forbidden_fields"],
+                                           "result_vocabulary": cat["what_if"]["result_vocabulary"],
+                                           "ui_label": cat["what_if"]["result_shape"]["label"],
+                                           "in_memory_only": True}),
         "docs/saral/PRODUCT_MATRIX.md": product_md(),
         "docs/saral/ZEN_RAG_CONSISTENCY.md": zen_rag_md(cat),
         "contracts/synthetic_sources.json": dump({"status": "BUREAU v1 built; everything else PROPOSED", "sources": S.SOURCES,

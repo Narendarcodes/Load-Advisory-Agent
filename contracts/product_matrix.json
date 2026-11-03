@@ -1,6 +1,6 @@
 {
   "status": "DRAFT - design only",
-  "products_status": "APPROVED_OWNER_DECISION (2026-11-03 23:03 IST); per-product thresholds are ASSUMPTION, approved for prototype_synthetic (ADR-0009 batch)",
+  "products_status": "OWNER_APPROVED (2026-11-03 23:03 IST); per-product thresholds are ASSUMPTION, approved for prototype_synthetic (ADR-0009 batch)",
   "bajaj_base": {
     "amount_range_inr": {
       "value": [

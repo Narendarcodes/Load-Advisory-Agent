@@ -23,14 +23,14 @@ FORBIDDEN_FIELDS = ["credit_score", "bureau_score", "employment_months", "employ
                     "employment_category", "loan_purpose"]
 RESULTS = {"WOULD_LIKELY_MEET": "would likely meet", "WOULD_NOT_MEET": "wouldn't meet"}
 UI_LABEL = "Estimate only, your application is unchanged"
-PER_SESSION_CAP = 5  # PROTOTYPE_SYNTHETIC value (ASSUMPTION); ADR-0005 asks for a cap without a number
+PER_SESSION_CAP = 3  # owner decision ADR-0010 #1 (2026-11-03 23:58 IST)
 # Words a what-if answer must never contain (approval language, thresholds, internals).
 FORBIDDEN_WORDS = ("approved", "approve", "sanction", "offer", "guarantee", "eligible amount", "threshold", "cut-off", "cutoff",
                    "minimum", "maximum", "limit", "foir", "score", "rule", "gap", "target", "pl-")
 
 CONTRACT = {
     "status": "DRAFT - design only; the agent owner implements it",
-    "decisions": ["ADR-0005 (2026-11-03 22:58 IST)", "ADR-0007 #4 (2026-11-03 23:18 IST)"],
+    "decisions": ["ADR-0005 (2026-11-03 22:58 IST)", "ADR-0007 #4 (2026-11-03 23:18 IST)", "ADR-0010 #1 (2026-11-03 23:58 IST)"],
     "editable_fields": EDITABLE_FIELDS,
     "forbidden_fields": FORBIDDEN_FIELDS,
     "result_vocabulary": RESULTS,
@@ -38,8 +38,8 @@ CONTRACT = {
                      "hypothetical_amount": "the loan amount the borrower typed (echo only)", "label": UI_LABEL,
                      "remaining_this_session": "int"},
     "never_returned": ["rule_id", "threshold", "gap", "target", "binding cap", "offered amount", "decision", "rule results"],
-    "per_session_cap": {"value": PER_SESSION_CAP, "approval_status": "PROTOTYPE_SYNTHETIC",
-                        "note": "ADR-0005 asks for a cap; 5 is a prototype value (approved in the ADR-0009 batch)."},
+    "per_session_cap": {"value": PER_SESSION_CAP, "approval_status": "OWNER_APPROVED",
+                        "note": "ADR-0010 #1: three what-ifs per session.", "config_key": "SARAL_WHAT_IF_SESSION_CAP"},
     "side_effects": {"in_memory_only": True, "writes": "none", "record_hash_unchanged": True,
                      "ingest_refuses_is_simulation": True},
     "evaluation": "WOULD_LIKELY_MEET when PL-129 sizing of the hypothetical request returns APPROVED in full at the asked tenure; "

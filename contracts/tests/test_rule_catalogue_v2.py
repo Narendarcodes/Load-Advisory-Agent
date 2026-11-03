@@ -15,7 +15,7 @@ CAT = json.loads((ROOT / "docs/saral/rule_catalogue.v2.json").read_text(encoding
 DD = json.loads((ROOT / "contracts/data_dictionary.json").read_text(encoding="utf-8"))
 FE = json.loads((ROOT / "contracts/frontend_fields.json").read_text(encoding="utf-8"))
 RULES = CAT["rules"]
-APPROVED = {"APPROVED_BAJAJ_SOURCE", "APPROVED_REGULATORY", "APPROVED_OWNER_DECISION"}
+APPROVED = {"APPROVED_BAJAJ_SOURCE", "APPROVED_REGULATORY", "OWNER_APPROVED"}
 OUTCOMES = {"PASS", "FAIL", "REVIEW", "INSUFFICIENT_DATA"}
 
 

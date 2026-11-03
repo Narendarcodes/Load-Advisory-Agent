@@ -27,7 +27,7 @@ def test_every_product_is_capped_at_25_lakh():
     for pid in PR.PRODUCTS:
         assert PR.product_cap(pid) <= PR.MVP_AMOUNT_CEILING
     p = param("PL-109", "mvp_amount_ceiling")
-    assert p["value"] == 2_500_000 and p["approval_status"] == "APPROVED_OWNER_DECISION"
+    assert p["value"] == 2_500_000 and p["approval_status"] == "OWNER_APPROVED"
     limits = CAT["profiles"]["prototype_synthetic"]["mvp_limits"]
     assert limits["amount_ceiling_inr"] == 2_500_000
     assert all(v["max_amount_inr"] <= 2_500_000 for v in limits["per_product"].values())
@@ -171,6 +171,25 @@ def test_what_if_answers_only_the_two_phrases_and_never_mutates():
     assert json.dumps(BASE, sort_keys=True) == before
 
 
+def test_what_if_cap_is_three_in_contract_and_config():
+    cfg = json.loads((ROOT / "config/saral_what_if.json").read_text(encoding="utf-8"))
+    assert WI.PER_SESSION_CAP == 3 == WIJ["per_session_cap"]["value"] == cfg["per_session_cap"]
+    assert WIJ["per_session_cap"]["approval_status"] == "OWNER_APPROVED"
+    assert cfg["editable_fields"] == list(WIJ["editable_fields"]) and cfg["result_vocabulary"] == WIJ["result_vocabulary"]
+
+
+def test_status_rename_and_rbi_wording():
+    blob = json.dumps(CAT)
+    assert "APPROVED_OWNER_DECISION" not in blob.replace("renamed from APPROVED_OWNER_DECISION", "").replace(
+        "Renamed from APPROVED_OWNER_DECISION", "").replace("status APPROVED_OWNER_DECISION renamed", "")
+    assert "OWNER_APPROVED" in CAT["approval_status_values"]
+    ddj = json.loads((ROOT / "contracts/data_dictionary.json").read_text(encoding="utf-8"))
+    ret = ddj["storage_tiers"]["LMS_SNAPSHOT"]
+    assert "para 47(2)" in ret and "SARAL'S CHOICE" in ret and "8-year proposal is withdrawn" in ret
+    policy = (ROOT / "docs/saral/REASON_DISCLOSURE_POLICY.md").read_text(encoding="utf-8")
+    assert "Saral policy (ADR-0010 #4), not an RBI requirement for NBFCs" in policy
+
+
 def test_what_if_session_cap():
     for used in range(WI.PER_SESSION_CAP):
         WI.evaluate(BASE, {"loan_amount": 300_000}, used)
@@ -197,7 +216,7 @@ def test_prototype_max_tenure_per_product():
 # ---------------------------------------------------------------- ADR-0009
 def test_score_floor_stays_700():
     p = param("PL-029", "approved_minimum_score")
-    assert p["value"] == 700 and p["approval_status"] == "APPROVED_OWNER_DECISION"
+    assert p["value"] == 700 and p["approval_status"] == "OWNER_APPROVED"
     assert "BFL-PL-ELIG-DOCS#007" in p["context_chunks"]
     assert all(v >= 700 for v in PR.BAND_MIN_SCORE.values())
     assert "ADR-0009" in CAT["conflicts"]["C2"]
