@@ -35,7 +35,7 @@ from loan_advisory.agent.contracts import AgentRequest, AgentResponse, Session
 from loan_advisory.agent.llm import LLMError
 from loan_advisory.agent.progress import PUBLIC_STAGES
 from loan_advisory.agent.tools import (FrappeUnavailable, InvalidWhatIf, NotAuthorized, UnknownApplication)
-from loan_advisory.state_paths import AUDIT_LOG, append_private, resolve
+from loan_advisory.state_paths import AUDIT_LOG, append_line, resolve
 
 INTENTS = ("explain", "improve", "what_if", "policy", "greeting", "other")
 DISPUTE = re.compile(r"\b(wrong|incorrect|mistake|error in|not correct|not mine|is false|dispute|outdated|old (data|salary|income))\b|"
@@ -727,8 +727,7 @@ class AdvisoryAgent:
                "citations": [c.document_id for c in resp.citations], "evidence_refs": resp.evidence_refs,
                "guard_flags": resp.guard_flags, "handoff_ref": resp.handoff_ref, "events": s.get("trace"), "timings": resp.timings}
         try:
-            with append_private(self.audit_path) as f:
-                f.write(json.dumps(row, default=str) + "\n")
+            append_line(self.audit_path, json.dumps(row, default=str) + "\n")
         except OSError:
             pass
 

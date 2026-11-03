@@ -418,8 +418,7 @@ def test_stream_endpoint_sends_sentences_then_the_final_response(tmp_path, monke
     assertion.replay.reset()
     llm = ScriptedLLM(intent="explain", compose="Your recorded decision is REJECTED. Your credit score is 690.")
     ag = agent_for(llm, tmp_path=tmp_path)
-    store_refs = {"APP-TEST-005": {"name": "APP-TEST-005", "applicant": "CUS-TEST-005"}}
-    app = srv.App(ag, store_refs.get)
+    app = srv.App(ag)
     response = TestClient(create_app(app)).post(
         "/api/chat/stream", json={"message": "why?", "channel": "voice"}, headers=auth(mint()))
     assertion.replay.reset()

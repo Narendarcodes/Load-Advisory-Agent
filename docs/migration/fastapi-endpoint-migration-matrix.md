@@ -60,7 +60,7 @@ Redeem starts the Frappe session itself (`services/invitations.py` calls `login_
 | POST `/api/chat` | `api/routes_legacy.py:125` | voice worker | assertion verifier + `api/voice.py:voice_assertion` + worker port | keep | migrated |
 | POST `/api/chat/stream` | `api/routes_legacy.py:131` | voice worker | same as above | keep | migrated |
 | GET `/api/decision` | `api/routes_legacy.py:114` | legacy web UI | none (agent reads Frappe evidence) | remove | retired |
-| POST `/api/bureau/run` | `api/routes_legacy.py:139` | tests / operator tooling | none | keep | migrated |
+| POST `/api/bureau/run` | `api/routes_legacy.py:139` | tests / operator tooling | none | keep → **removed 2026-11-03** (Phase 1 boundary A) | migrated, then retired |
 | GET `/healthz` | `api/routes_legacy.py:100` | deployment probes | none | keep | migrated |
 
 `GET /api/decision` duplicated what the portal now reads through `get_decision`; the route was removed

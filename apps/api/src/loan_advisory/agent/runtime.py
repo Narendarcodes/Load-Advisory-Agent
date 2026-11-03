@@ -1,15 +1,16 @@
 """Wiring: build the agent against (a) the live Frappe Lending stack or (b) offline synthetic stores.
 
-Live:    FrappeClient (system of record) + FrappeEvidenceSource (stored `Loan Decision Evidence`)
+Live:    ReadOnlyFrappeApplication + FrappeEvidenceReader (two projected reads on one read-only identity)
          + hybrid/rerank policy retriever loaded from LOAN_POLICY_DIR (GPU container) + gpt-oss-120b.
-Offline: MockStore / PersonaStore, decided ONCE by the conventional workflow (process_application ->
-         ZEN -> InMemoryEvidenceSink) before the agent sees them. The agent itself never decides.
+Offline: MockStore / PersonaStore read through their read-only views, decided ONCE by the conventional
+         workflow (process_application -> ZEN -> InMemoryEvidenceSink) before the agent sees them.
+
+Either way `DecisionTools` refuses a write-capable dependency, so the agent explains decisions and
+cannot make one (Phase 1 security boundary B).
 """
 import json
 import os
 from pathlib import Path
-
-import requests
 
 from decision_engine.paths import repo_root
 from loan_advisory.agent.checkpoint import build_checkpointer
@@ -18,8 +19,9 @@ from loan_advisory.agent.llm import ChatLLM
 from loan_advisory.agent.tools import (DecisionTools, FrappeEvidenceSource, HandoffQueue, InMemoryEvidenceSource,
                                        PolicyTools)
 from loan_advisory.application.lifecycle import process_application
-from loan_advisory.infrastructure.evidence_store import FrappeEvidenceSink, InMemoryEvidenceSink
-from loan_advisory.infrastructure.frappe_adapter import FrappeClient, MockStore, UnknownApplication
+from loan_advisory.infrastructure.evidence_store import FrappeEvidenceReader, InMemoryEvidenceSink
+from loan_advisory.infrastructure.frappe_adapter import (MockStore, ReadOnlyDocumentStore, ReadOnlyFrappeApplication,
+                                                         UnknownApplication, read_only_view, resolve_application)
 
 PERSONAS = repo_root() / "data" / "synthetic" / "personas" / "personas_v1_narrated.jsonl"
 
@@ -43,6 +45,10 @@ class PersonaStore:
         except KeyError:
             raise UnknownApplication(f"unknown application: {application_id}")
 
+    def reader(self) -> ReadOnlyDocumentStore:
+        """The agent's view: the document mapping, with no store object behind it to write through."""
+        return ReadOnlyDocumentStore(self._apps)
+
 
 def decide_offline(store, refs) -> InMemoryEvidenceSink:
     """Run the CONVENTIONAL workflow (not the agent) so there is recorded evidence to explain."""
@@ -52,12 +58,9 @@ def decide_offline(store, refs) -> InMemoryEvidenceSink:
     return sink
 
 
-def frappe_resolve(client: FrappeClient, external_ref: str) -> dict | None:
-    r = requests.get(f"{client.base_url}/api/resource/Loan Application", headers=client._headers(), timeout=15,
-                     params={"filters": json.dumps([["custom_external_ref", "=", external_ref]]),
-                             "fields": json.dumps(["name", "applicant", "custom_external_ref", "custom_lifecycle_state"])})
-    rows = r.json().get("data", []) if r.ok else []
-    return rows[0] if rows else None
+def frappe_resolve(client, external_ref: str) -> dict | None:
+    """Map a borrower-visible reference to a Loan Application through any Frappe identity or read view."""
+    return resolve_application(client.base_url, client._headers(), external_ref)
 
 
 def load_chunks(policy_dir: str | Path) -> list[dict]:
@@ -70,9 +73,10 @@ def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = 
     import torch
     from sentence_transformers import SentenceTransformer
 
+    from rag.dense_read import ReadOnlyDenseSearch
     from rag.index_meta import index_identity
-    from rag.retrieve import (BM25Index, CrossEncoderReranker, DenseIndex, DOC_PREFIX, HybridRetriever, doc_string,
-                              load_profile, load_rag_config, profile_filter)
+    from rag.retrieve import (BM25Index, CrossEncoderReranker, DOC_PREFIX, HybridRetriever, load_profile,
+                              load_rag_config, profile_filter)
 
     pdir = Path(policy_dir or os.environ.get("LOAN_POLICY_DIR", "/root/hx/loan/policy"))
     chunks = load_chunks(pdir)
@@ -91,12 +95,10 @@ def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = 
                               dimension=getattr(emb, "get_sentence_embedding_dimension", lambda: None)(),
                               doc_prefix=DOC_PREFIX, query_prompt=query_prompt,
                               query_prompt_text=(getattr(emb, "prompts", None) or {}).get(query_prompt))
-    qdir = Path(os.environ.get("AGENT_QDRANT_DIR", str(pdir / "qdrant_v2")))
-    if (qdir / "collection").exists():
-        dense = _open_dense(str(qdir), chunks, identity)
-    else:
-        vecs = emb.encode([doc_string(c) for c in chunks], batch_size=32, normalize_embeddings=True)
-        dense = DenseIndex(chunks, vecs, path=str(qdir), meta=identity)
+    # The serving process opens an index that already exists; it never embeds or builds one. Index
+    # management lives in scripts/policy/, and `AGENT_QDRANT_URL` switches between the local collection
+    # and a Qdrant Server without changing what a query does.
+    dense = ReadOnlyDenseSearch.open(chunks, identity, default_dir=str(pdir / "qdrant_v2"))
     reranker = CrossEncoderReranker(device=dev) if cfg.rerank_candidates else None
     retr = HybridRetriever(BM25Index(chunks), dense, lambda q: emb.encode(q, prompt_name=query_prompt, normalize_embeddings=True),
                            reranker=reranker, chunks_by_id=by_id, config=cfg)
@@ -114,36 +116,25 @@ def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = 
     return tools, profile
 
 
-def _open_dense(path: str, chunks: list[dict], identity: dict):
-    from qdrant_client import QdrantClient, models
+def build_live_agent(policy_tools=None, profile=None, llm=None) -> tuple[AdvisoryAgent, ReadOnlyFrappeApplication]:
+    """The live agent reads Frappe and nothing else, on one read-only identity.
 
-    from rag.index_meta import validate_collection, validate_index
-    from rag.retrieve import DenseIndex
-    d = DenseIndex.__new__(DenseIndex)  # reuse the read path (qdrant_filter/search) on an existing collection
-    d.m, d.client, d.col = models, QdrantClient(path=path), "policy_chunks_v2"
-    try:
-        validate_index(path, chunks=chunks, identity=identity, collection=d.col)
-        validate_collection(d.client, d.col, dimension=identity.get("dimension"), distance=identity["distance"],
-                            chunk_ids={c["chunk_id"] for c in chunks})
-    except Exception:
-        d.client.close()
-        raise
-    return d
-
-
-def build_live_agent(policy_tools=None, profile=None, llm=None) -> tuple[AdvisoryAgent, FrappeClient]:
-    client = FrappeClient()
-    sink = FrappeEvidenceSink()  # dedicated Evidence Service credential, never the read client
-    tools = DecisionTools(client, FrappeEvidenceSource(sink))
+    Both readers take `FRAPPE_*`: applications as a projected list read, evidence as a projected read of
+    the stored record. `FrappeEvidenceSink` and the `EVIDENCE_FRAPPE_*` ingest credential are not
+    constructed here at all — the method the sink calls requires the Evidence Service role, so using it
+    for reads would have left a write-capable secret inside the conversational process.
+    """
+    reader = ReadOnlyFrappeApplication()
+    tools = DecisionTools(reader, FrappeEvidenceSource(FrappeEvidenceReader()))
     agent = AdvisoryAgent(tools, llm or ChatLLM.from_env(), policy_tools=policy_tools, handoff=HandoffQueue(),
                           profile=profile, checkpointer=build_checkpointer())
-    return agent, client
+    return agent, reader
 
 
 def build_offline_agent(store=None, refs=None, llm=None, policy_tools=None, profile=None) -> tuple[AdvisoryAgent, object, object]:
     store = store or MockStore()
     refs = refs if refs is not None else list(store._apps)
     sink = decide_offline(store, refs)
-    tools = DecisionTools(store, InMemoryEvidenceSource(sink))
+    tools = DecisionTools(read_only_view(store), InMemoryEvidenceSource(sink))
     return (AdvisoryAgent(tools, llm or ChatLLM.from_env(), policy_tools=policy_tools, handoff=HandoffQueue(),
                           profile=profile, checkpointer=build_checkpointer()), store, sink)

@@ -212,6 +212,7 @@ def test_benchmark_size_mix_and_split_hygiene():
         assert need in cats, need
     reg = {d["document_id"]: d for d in register()}
     for q in b:
+        assert "scoreable" in q, q["qid"]  # every row declares whether its own profile can score it
         if q["expect_abstain"]:
             assert q["gold_docs"] == [] and q["gold_anchors"] == []
         else:
@@ -219,6 +220,16 @@ def test_benchmark_size_mix_and_split_hygiene():
             flt = profile_filter(load_profile(q["profile"]), q["mode"], include_education=True)
             for d in q["gold_docs"]:  # gold must be servable under the question's own filter
                 assert flt.allows({**reg[d], "approval_status": reg[d]["approval_status"]}), (q["qid"], d)
+            # Production runs profile_filter(...) WITHOUT the education exemption (agent/runtime.py never passes
+            # it). A row is scoreable while at least one gold document is reachable under that filter; gold that is
+            # only reachable when education is admitted is recorded, not silently scored as a retrieval failure.
+            prod = profile_filter(load_profile(q["profile"]), q["mode"])
+            reachable = [d for d in q["gold_docs"]
+                         if prod.allows({**reg[d], "approval_status": reg[d]["approval_status"]})]
+            assert q["scoreable"] == (bool(reachable) or q["expect_abstain"]), (q["qid"], q["gold_docs"])
+            blocked = [d for d in q["gold_docs"] if d not in reachable]
+            assert q["gold_unreachable_docs"] == blocked, q["qid"]
+            assert bool(q["scoreability_note"]) == bool(blocked), q["qid"]
 
 
 def test_retrieval_regression_on_committed_runs(tmp_path):

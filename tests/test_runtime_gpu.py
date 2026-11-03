@@ -1,6 +1,8 @@
 """runtime.load_policy_tools on a shared GPU: VRAM cap (AGENT_GPU_FRACTION) and cache release after every query.
 
-torch, sentence_transformers and rag.retrieve are replaced by fakes, so this runs without a GPU or model downloads.
+torch, sentence_transformers, rag.retrieve and rag.dense_read are replaced by fakes, so this runs
+without a GPU, a model download or a Qdrant collection. The dense handle is faked rather than built
+because the serving runtime no longer creates one: `test_index_compat.py` covers what a real open does.
 """
 import sys
 import types
@@ -22,6 +24,17 @@ class FakeCuda:
 
     def empty_cache(self):
         self.empty_calls += 1
+
+
+class FakeDense:
+    collection = "policy_chunks_v2"
+    backend = "embedded"
+
+    def search(self, qvec, mode, k=50):
+        return []
+
+    def describe(self):
+        return {"qdrant.backend": "embedded"}
 
 
 class FakeRetriever:
@@ -50,7 +63,13 @@ def fakes(monkeypatch, tmp_path):
         load_rag_config=lambda: (types.SimpleNamespace(rerank_candidates=0), {}, "current"))
     monkeypatch.setitem(sys.modules, "torch", torch)
     monkeypatch.setitem(sys.modules, "sentence_transformers", st)
+    class FakeDenseSearch:
+        @staticmethod
+        def open(chunks, identity, **kwargs):
+            return FakeDense()
+
     monkeypatch.setitem(sys.modules, "rag.retrieve", rr)
+    monkeypatch.setitem(sys.modules, "rag.dense_read", types.SimpleNamespace(ReadOnlyDenseSearch=FakeDenseSearch))
     (tmp_path / "chunks.jsonl").write_text('{"chunk_id": "c1", "title": "t", "text": "x"}\n')
     monkeypatch.setenv("AGENT_QDRANT_DIR", str(tmp_path / "qdrant"))
     monkeypatch.delenv("AGENT_GPU_FRACTION", raising=False)

@@ -60,7 +60,7 @@ def _secret(monkeypatch):
 @pytest.fixture(scope="module")
 def service():
     agent, store, _ = build_offline_agent(llm=ScriptedLLM(intent="explain"), policy_tools=FakePolicy())
-    return srv.App(agent, store.get)
+    return srv.App(agent)
 
 
 @pytest.fixture

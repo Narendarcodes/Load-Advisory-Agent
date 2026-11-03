@@ -62,13 +62,17 @@ python -m synthetic_bureau.app          # http://127.0.0.1:8001, /docs for the s
 ```
 
 The self-hosted LLM (`LLM_BASE`) also defaults to `127.0.0.1:8001`. When it runs on
-the same machine, start the bureau on another loopback port and point the chat
-server at it (loopback origins only; anything else is refused at startup):
+the same machine, start the bureau on another loopback port:
 
 ```powershell
 python -m synthetic_bureau.app --port 8011
-python -m loan_advisory.agent.server --offline --bureau-url http://127.0.0.1:8011   # or $env:BUREAU_BASE_URL
 ```
+
+> **2026-11-03 (Phase 1 boundary A).** The chat server used to take
+> `--bureau-url` / `BUREAU_BASE_URL` because `POST /api/bureau/run` lived in it. That route is
+> gone, and with it the flag and the variable: the agent has no bureau origin to configure. The
+> loopback rule still applies to the client itself — `BureauClient` refuses a non-loopback origin
+> at construction, so whoever runs the pipeline still cannot point it off-box.
 
 `POST /v1/bureau/reports` takes
 `{"application_id": "...", "applicant_id": "...", "scenario": null}`. With no
