@@ -104,7 +104,8 @@ def test_explain_states_exactly_the_zen_failed_reasons(tmp_path):
     assert r.intent == "explain" and r.action == "answer" and r.guard_flags == []
     card = r.decision_card
     assert card["decision"] == "REJECTED" and card["policy_synthetic"] is True
-    assert set(card["failed_reason_codes"]) == {"ERR_FOIR_EXCEEDED", "ERR_CREDIT_SCORE_BELOW_MINIMUM", "ERR_EMPLOYMENT_TENURE_SHORT"}
+    # Q-07: the borrower card carries reason categories, never reason codes or cut-offs
+    assert {c["key"] for c in card["reason_categories"]} == {"REPAYMENTS_TOO_HIGH", "CREDIT_HISTORY", "EMPLOYMENT_STABILITY"}
     facts = json.loads(llm.prompts[-1][1].split("FACTS (JSON):")[1].rsplit("Return only", 1)[0])
     assert [f["rule_id"] for f in facts["failed_rules_the_only_reasons"]] == ["FOIR_MAX_45", "MIN_CREDIT_SCORE", "MIN_EMPLOYMENT_TENURE"]
     assert [f["rule_id"] for f in facts["passed_rules_not_reasons"]] == ["MIN_MONTHLY_INCOME"]
@@ -157,9 +158,11 @@ def test_improvement_plan_targets_are_zen_checked(tmp_path):
     ag, store, _ = agent_for(ScriptedLLM(intent="improve", compose="1. Reduce EMIs. Synthetic policy; not a guarantee."), tmp_path=tmp_path)
     r = ask(ag, "What can I do to get approved next time?")
     assert r.intent == "improve" and len(r.improvement_plan) == 3
-    assert all(s["rule_passes_after_change"] for s in r.improvement_plan)
-    foir = next(s for s in r.improvement_plan if s["rule_id"] == "FOIR_MAX_45")
-    assert foir["target_display"] == "₹14,400" and foir["gap_display"] == "₹4,100"  # 0.45 * 32,000 ; 18,500 - 14,400
+    # Q-07: targets stay ZEN-checked server-side; the borrower gets general guidance only (no target, gap, rule id)
+    who = Session(applicant_ref="CUS-TEST-005")
+    plan = ag.tools.improvement_plan("APP-TEST-005", who, ag.tools.get_decision_evidence("APP-TEST-005", who))
+    assert all(s["rule_passes_after_change"] for s in plan["steps"])
+    assert all("target_display" not in s and "rule_id" not in s and s["general_guidance"] for s in r.improvement_plan)
     assert all(s["guidance_source"] == "general financial guidance, not lender policy" for s in r.improvement_plan)
     assert store.get("APP-TEST-005")["custom_monthly_obligations"] == 18500
 
@@ -171,8 +174,7 @@ def test_what_if_delta_is_simulated_and_original_untouched(tmp_path):
     n_records = len(sink.records)
     r = ask(ag, "What if my score was 720 and I closed an EMI of 5000?")
     assert r.action == "simulate" and r.what_if["changes"] == {"credit_score": 720, "monthly_obligations": 13500.0}
-    assert r.what_if["rule_results"]["MIN_CREDIT_SCORE"] == "PASS" and r.what_if["rule_results"]["FOIR_MAX_45"] == "PASS"
-    assert r.what_if["rule_results"]["MIN_EMPLOYMENT_TENURE"] == "FAIL" and r.what_if["simulated_decision"] == "REJECTED"
+    assert r.what_if["result"] == "WOULD_NOT_MEET" and "rule_results" not in r.what_if  # Q-07 / Q-03 shape
     assert r.what_if["original_record_unchanged"] is True and len(sink.records) == n_records
     assert r.decision_card["decision"] == "REJECTED"  # recorded outcome unchanged
 

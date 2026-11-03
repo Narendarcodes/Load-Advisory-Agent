@@ -642,7 +642,7 @@ class AdvisoryAgent:
                 done, tail = split_sentences(rest + " ")
                 for snt in done + ([tail] if tail.strip() else []):
                     self._emit(s, snt)
-        card = F.decision_card(s["record"]) if s.get("record") else None
+        card = F.decision_card_borrower(s["record"]) if s.get("record") else None  # Q-07: never the officer card
         cites = []
         if intent == "policy" and not s.get("abstained"):
             by_label = {p["label"]: p for p in s.get("passages") or []}
@@ -665,9 +665,8 @@ class AdvisoryAgent:
             action=s.get("action") or "answer", answer=draft or "", abstained=bool(s.get("abstained")), citations=cites,
             evidence_refs=[x for x in [(s.get("record") or {}).get("record_id"), (wi or {}).get("record", {}).get("record_id") if wi and "record" in wi else None] if x],
             missing_information=missing, handoff_ref=s.get("handoff_ref"), decision_card=card,
-            improvement_plan=[{k: v for k, v in st.items() if k in ("rule_id", "task", "target_display", "gap_display", "general_guidance",
-                                                                      "guidance_source", "rule_passes_after_change")} for st in plan_steps],
-            what_if=({k: v for k, v in wi.items() if k != "record"} if wi else None),
+            improvement_plan=[F.borrower_plan_step(st) for st in plan_steps],
+            what_if=(F.borrower_what_if(wi) if wi else None),
             guard_flags=gflags + (["fallback_template"] if fallback else []), timings=timings)
         self._audit(s, resp)
         hist = [{"role": "user", "text": req.message}, {"role": "assistant", "text": resp.answer[:600]}]
