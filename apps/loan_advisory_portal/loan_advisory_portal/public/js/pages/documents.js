@@ -217,7 +217,7 @@
 		hide(field("preview-close"));
 		field("preview-body").removeAttribute("aria-busy");
 		field("preview-body").innerHTML =
-			'<p class="small muted">Choose Preview for a person-review note, or Read fields to run local OCR on an attached document.</p>';
+			'<p class="small muted">Choose Preview for a person-review note, or Read fields to read the details from an attached document.</p>';
 	}
 
 	function previewHeader(doc, badge) {
@@ -364,7 +364,7 @@
 			'</p></div><span class="badge badge--info">' +
 			(alreadyConfirmed ? "Confirmed" : "Review required") +
 			"</span></div>" +
-			'<p class="small muted">OCR suggestions can be wrong. Check every value before confirming. This record does not update your application; the original document is not sent to an LLM.</p>' +
+			'<p class="small muted">These suggestions can be wrong. Check every value before confirming. This record does not update your application; your document is not sent to any AI chat service.</p>' +
 			warningHtml +
 			(keys.length ? '<div class="ocr-fields">' + fieldHtml + "</div>" : '<p class="small muted">No supported fields were recognised. Try a clearer scan or ask your advisor to review the file.</p>') +
 			suggestionHtml +
@@ -384,7 +384,7 @@
 		show(field("preview-close"));
 		field("preview-body").setAttribute("aria-busy", "true");
 		field("preview-body").innerHTML =
-			'<div class="preview-sheet"><p class="small muted">Reading the attached document on this server. The original is not sent to an LLM.</p><div class="skeleton skeleton--block" aria-hidden="true"></div></div>';
+			'<div class="preview-sheet"><p class="small muted">Reading the attached document on our own server. Your document is not sent to any AI chat service.</p><div class="skeleton skeleton--block" aria-hidden="true"></div></div>';
 		renderDocuments();
 
 		try {
