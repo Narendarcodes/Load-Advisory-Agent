@@ -29,10 +29,14 @@ A = "ASSUMPTION"
 # ---- Owner decisions, ADR-0007 (accepted 2026-11-03 23:18 IST, "remaining yes for all of your recommendations")
 ADR_0007 = "ADR-0007 (owner, 2026-11-03 23:18 IST)"
 # 1. Every product is capped at Rs. 25 lakh in the MVP. A request above it is offered the largest passing amount within the cap
-#    (COUNTER_OFFER) and told it is outside what we offer. Per-product caps below the ceiling stay ASSUMPTION (A-25..A-28).
+#    (COUNTER_OFFER) and told it is outside what we offer.
+# ADR-0011 (owner, 2026-11-04 00:29 IST): every product cap is Rs. 25 lakh (supersedes 15/20/25/10 lakh), the tenure caps
+# 60/84/84/60, FOIR flat 0.50, residual income Rs. 15,000 and the sizing rate 20% are OWNER_APPROVED for prototype_synthetic only.
+ADR_0011 = "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only"
 MVP_AMOUNT_CEILING = 2_500_000
 # 3. One flat prototype rate per product; no risk-grade pricing in the MVP. The value is A-05.
-FLAT_RATE_BASIS = "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value A-05"
+FLAT_RATE_BASIS = "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value OWNER_APPROVED by ADR-0011 (was A-05)"
+RATE_USE = "sizing-only: sizes affordability (EMI, FOIR, residual income, offer amount); not an offered or quoted rate (ADR-0011)"
 # Tenure: Bajaj's 108 months (BFL-PL-ELIG-DOCS#008) is the indicative outer bound and stays the PL-072 gate. The
 # prototype max tenure per product is the product matrix value, kept <= 84 months (ASSUMPTION).
 PROTOTYPE_TENURE_CEILING = 84
@@ -42,9 +46,9 @@ PRODUCTS = {
         "purpose": "wedding",
         "bajaj_description": {"chunk": "BFL-PL-OVERVIEW#002",
                               "quote": "Personal loan for wedding A personal loan for a wedding can help you cover major expenses"},
-        "amount_range_inr": {"value": [40000, 1500000], "basis": A, "assumption_id": "A-25",
-                             "note": "Min is Bajaj (BFL-PL-OVERVIEW#003); the cap is A-25."},
-        "tenure_range_months": {"value": [12, 60], "basis": A, "assumption_id": "A-25", "note": "Min is Bajaj; the 60-month cap is A-25 (prototype max tenure, <= 84)."},
+        "amount_range_inr": {"value": [40000, 2500000], "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-25",
+                             "note": "Min is Bajaj (BFL-PL-OVERVIEW#003); the Rs. 25 lakh cap is ADR-0011 (was A-25, Rs. 15 lakh)."},
+        "tenure_range_months": {"value": [12, 60], "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-25", "note": "Min is Bajaj; the 60-month cap is ADR-0011 (was A-25; prototype max tenure, <= 84)."},
         "required_documents": {"value": [], "basis": A},
         "optional_documents": {"value": ["WEDDING_INVITE", "VENUE_OR_VENDOR_QUOTE"], "basis": A},
         "purpose_fields": [
@@ -54,14 +58,14 @@ PRODUCTS = {
         ],
         "disbursal_mode": {"value": "BORROWER_ACCOUNT", "basis": "BAJAJ_DEFAULT", "chunk": "BFL-PL-OVERVIEW#015"},
         "fast_track": {"value": False, "basis": A},
-        "rate_for_assessment": {"value": 0.20, "basis": A, "assumption_id": "A-05", "pricing": FLAT_RATE_BASIS},
+        "rate_for_assessment": {"value": 0.20, "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-05", "pricing": FLAT_RATE_BASIS, "use": RATE_USE},
     },
     "PL_HIGHER_EDUCATION": {
         "purpose": "higher_education",
         "bajaj_description": {"chunk": "BFL-PL-OVERVIEW#002",
                               "quote": "You can use a personal loan for higher education to cover the costs of travel, tuition, extra courses, accommodation, and so on."},
-        "amount_range_inr": {"value": [40000, 2000000], "basis": A, "assumption_id": "A-26"},
-        "tenure_range_months": {"value": [12, 84], "basis": A, "assumption_id": "A-26"},
+        "amount_range_inr": {"value": [40000, 2500000], "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-26", "note": "Was A-26, Rs. 20 lakh."},
+        "tenure_range_months": {"value": [12, 84], "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-26"},
         "required_documents": {"value": ["ADMISSION_LETTER|FEE_SCHEDULE"], "basis": A},
         "optional_documents": {"value": ["INSTITUTION_BANK_DETAILS"], "basis": A},
         "purpose_fields": [
@@ -73,14 +77,14 @@ PRODUCTS = {
         ],
         "disbursal_mode": {"value": "INSTITUTION when the fee schedule names a payee account, else BORROWER_ACCOUNT", "basis": A},
         "fast_track": {"value": False, "basis": A},
-        "rate_for_assessment": {"value": 0.20, "basis": A, "assumption_id": "A-05", "pricing": FLAT_RATE_BASIS},
+        "rate_for_assessment": {"value": 0.20, "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-05", "pricing": FLAT_RATE_BASIS, "use": RATE_USE},
     },
     "PL_HOME_RENOVATION": {
         "purpose": "home_renovation",
         "bajaj_description": {"chunk": "BFL-PL-OVERVIEW#003",
                               "quote": "A personal loan for home renovation can help cover expenses such as repairs, painting, flooring, kitchen upgrades, and bathroom improvements."},
-        "amount_range_inr": {"value": [40000, 2500000], "basis": A, "assumption_id": "A-27"},
-        "tenure_range_months": {"value": [12, 84], "basis": A, "assumption_id": "A-27"},
+        "amount_range_inr": {"value": [40000, 2500000], "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-27"},
+        "tenure_range_months": {"value": [12, 84], "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-27"},
         "required_documents": {"value": ["CONTRACTOR_QUOTE|PROPERTY_PROOF"], "basis": A},
         "optional_documents": {"value": ["SITE_PHOTOS"], "basis": A},
         "purpose_fields": [
@@ -91,14 +95,14 @@ PRODUCTS = {
         ],
         "disbursal_mode": {"value": "BORROWER_ACCOUNT", "basis": "BAJAJ_DEFAULT", "chunk": "BFL-PL-OVERVIEW#015"},
         "fast_track": {"value": False, "basis": A},
-        "rate_for_assessment": {"value": 0.20, "basis": A, "assumption_id": "A-05", "pricing": FLAT_RATE_BASIS},
+        "rate_for_assessment": {"value": 0.20, "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-05", "pricing": FLAT_RATE_BASIS, "use": RATE_USE},
     },
     "PL_MEDICAL_EMERGENCY": {
         "purpose": "medical_emergency",
         "bajaj_description": {"chunk": "BFL-PL-OVERVIEW#002",
                               "quote": "Personal loan for medical emergencies With hassle-free application and quick disbursal, a personal loan for medical emergency can help you focus on the situation at hand"},
-        "amount_range_inr": {"value": [40000, 1000000], "basis": A, "assumption_id": "A-28"},
-        "tenure_range_months": {"value": [12, 60], "basis": A, "assumption_id": "A-28"},
+        "amount_range_inr": {"value": [40000, 2500000], "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-28", "note": "Was A-28, Rs. 10 lakh."},
+        "tenure_range_months": {"value": [12, 60], "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-28"},
         "required_documents": {"value": ["HOSPITAL_ESTIMATE|HOSPITAL_BILL"], "basis": A},
         "optional_documents": {"value": ["DOCTOR_PRESCRIPTION"], "basis": A},
         "purpose_fields": [
@@ -110,7 +114,7 @@ PRODUCTS = {
         "disbursal_mode": {"value": "HOSPITAL when the estimate names a payee account, else BORROWER_ACCOUNT", "basis": A},
         "fast_track": {"value": True, "basis": A,
                        "note": "Bajaj describes 'quick disbursal' for this purpose (BFL-PL-OVERVIEW#002); a priority review queue is the Saral reading."},
-        "rate_for_assessment": {"value": 0.20, "basis": A, "assumption_id": "A-05", "pricing": FLAT_RATE_BASIS},
+        "rate_for_assessment": {"value": 0.20, "basis": A, "approval_status": "OWNER_APPROVED", "owner_decision": ADR_0011, "assumption_id": "A-05", "pricing": FLAT_RATE_BASIS, "use": RATE_USE},
     },
 }
 
@@ -140,12 +144,12 @@ BAND_MIN_EMPLOYMENT_MONTHS = {"B1": 6, "B2": 6, "B3": 12, "B4": 24}
 BAND_EMPLOYER_CATEGORIES = {"B1": ["PUBLIC", "PRIVATE", "MNC"], "B2": ["PUBLIC", "PRIVATE", "MNC"],
                             "B3": ["PUBLIC", "PRIVATE", "MNC"], "B4": ["PUBLIC", "MNC"]}
 # Flat MVP sizing parameters (each is the single value its own rule carries; a test pins the equality).
-APPROVED_MAXIMUM_FOIR = 0.50      # PL-064, A-04 (pending), new EMI included
-MIN_RESIDUAL_INCOME = 15000       # PL-065, prototype
-MAX_AMOUNT_INCOME_MULTIPLE = 24   # PL-108, prototype
-NTC_INDICATIVE_CAP = 200000       # PL-118, A-22
+APPROVED_MAXIMUM_FOIR = 0.50      # PL-064, ADR-0011: flat for everyone (no PRIME/NTC variants), new EMI included
+MIN_RESIDUAL_INCOME = 15000       # PL-065, ADR-0011
+MAX_AMOUNT_INCOME_MULTIPLE = 24   # PL-108, ADR-0011: backstop only (FOIR 0.50 at 20% over <= 84 months binds near 22.5x)
+NTC_INDICATIVE_CAP = 200000       # PL-118, ADR-0011
 EVIDENCE_TOLERANCE = 1.10         # PL-126, prototype
-B3_REVIEW_FOIR = 0.45             # PL-123: a B3 amount above this FOIR goes to manual review, so sizing stays at or below it
+B3_REVIEW_FOIR = 0.45             # PL-123, ADR-0011 keeps 0.45: a B3 amount above this FOIR goes to manual review, so sizing stays at or below it
 B2_UPPER = 1000000
 EVIDENCE_PRODUCTS = ("PL_HIGHER_EDUCATION", "PL_HOME_RENOVATION", "PL_MEDICAL_EMERGENCY")
 BAJAJ_MAX_AMOUNT = 7500000        # PL-070 gate (Bajaj, indicative); above it the request is declined as outside what we offer
@@ -367,7 +371,7 @@ FLAT_WORKED_EXAMPLES = [
     dict(name="Wedding, full approval", requested_amount=500000, tenure_months=60, product_id="PL_WEDDING",
          monthly_net_income=80000, existing_monthly_obligations=10000, bureau_score=760, employment_months=30,
          employment_category="PRIVATE"),
-    dict(name="Higher education, above the product cap: counter-offer at the cap", requested_amount=2300000, tenure_months=84,
+    dict(name="Higher education, Rs. 23 lakh inside the Rs. 25 lakh cap: full approval", requested_amount=2300000, tenure_months=84,
          product_id="PL_HIGHER_EDUCATION", monthly_net_income=150000, existing_monthly_obligations=5000, bureau_score=780,
          employment_months=60, employment_category="MNC", purpose_evidence_amount=2400000),
     dict(name="Home renovation, Rs. 40 lakh: outside what we offer, counter-offer within the Rs. 25 lakh ceiling",

@@ -112,7 +112,9 @@ def rule_catalogue_md(cat):
          "## How to read the status", "",
          ] + [f"- **{k}**: {v}" for k, v in cat["approval_status_meanings"].items()] + [
          "", "**No invented value is Bajaj policy.** PENDING and PROTOTYPE values are approved for `prototype_synthetic` as one batch "
-         "(ADR-0009 #1); the ten most decision-impacting ones are listed for one-by-one review in `project-management/TOP10_THRESHOLDS.md`.", "",
+         "(ADR-0009 #1). The ten most decision-impacting ones and six runners-up (`project-management/TOP10_THRESHOLDS.md`) are "
+         "OWNER_APPROVED by ADR-0011 with `profile_scope = prototype_synthetic`: approved for that profile only, so a rule carrying one "
+         "never enters `bajaj_published`.", "",
          "A rule's status is the least-approved status among its parameters. A DECLINE on a rule that is not approved is active only in "
          "`prototype_synthetic`, with `not_for_live_use = true`.", "",
          "## Decision aggregation", "",
@@ -160,7 +162,8 @@ def rule_catalogue_md(cat):
                      e["result"]["offer_outcome"], e["result"]["eligible_amount"], e["result"]["offer_tenure_months"], e["result"]["offer_emi"],
                      e["result"]["binding_cap"], e["result"]["request_outside_mvp_range"]] for e in cat["offer_sizing"]["worked_examples"]]), "",
           "### Deferred: risk grade sizing (PL-124 / PL-125, ADR-0007 #3)", "",
-          "Kept for a later release; not evaluated in the MVP.", "",
+          "Kept for a later release; not evaluated in the MVP. The grade FOIR caps below are not the MVP FOIR: ADR-0011 sets one flat 0.50 "
+          "and drops the PRIME 0.55 and new-to-credit 0.40 variants from PL-064.", "",
           md_table(["Risk grade (PL-124)", "When", "Income multiple", "FOIR cap", "Grade amount cap"],
                    [["A", "score >= 750 and no DPD in 24 months", 24, 0.55, "product cap"],
                     ["B", "score >= 700 and no DPD in 12 months", 20, 0.50, "Rs. 25,00,000"],
@@ -397,7 +400,8 @@ def product_md():
     L = ["# Product matrix: four purpose-based personal loans", "", HDR,
          "Machine-readable: [`contracts/product_matrix.json`](../../contracts/product_matrix.json). **The four products are final** (owner, "
          "2026-11-03 23:03 IST). Every product is capped at Rs. 25 lakh in the MVP and priced at one flat prototype rate (ADR-0007 #1, #3). "
-         "Per-product thresholds are ASSUMPTION, approved for `prototype_synthetic` in the ADR-0009 batch. Bajaj publishes "
+         "The per-product caps (Rs. 25 lakh for all four), tenure caps (60/84/84/60) and the 20% sizing-only rate are OWNER_APPROVED by "
+         "ADR-0011 for `prototype_synthetic` only; other per-product values are ASSUMPTION (ADR-0009 batch). Bajaj publishes "
          "no per-purpose limits, documents or disbursal routes; every Bajaj fact below is quoted from the G1 corpus.", "",
          "## Shared Bajaj terms (indicative public guidance)", "",
          md_table(["Term", "Value", "Chunk", "Quote"], [[k, v.get("value", ""), v["chunk"], v["quote"]] for k, v in PR.BAJAJ_BASE.items()]), "",
@@ -429,17 +433,17 @@ OVERLAPS = [
     ("Credit score minimum", "BFL-PL-ELIG-DOCS#007", "CIBIL Score: 650 or higher.", "700 (PL-029, ADR-0009 #2)", "700 (personal_loan_synthetic_v1 MIN_CREDIT_SCORE)", "CONSISTENT with live; differs from indicative 650 by owner decision"),
     ("Credit score (education article)", "BFL-INSIGHT-REJECTION#001", "A CIBIL score of 685 or higher is generally considered the minimum acceptable score for most lenders, but a score of 750 and above is the ideal range", "700 floor (ADR-0009); band minimum 725 for B4 only (outside the MVP); grade sizing deferred", "-", "CONFLICT C2 (article vs product pages)"),
     ("Credit score bands", "BFL-PL-RATES-FEES#007", "Average 650 to 749 Meets the minimum score for a Bajaj Finance Personal Loan", "700 floor", "-", "differs by owner decision (ADR-0009 #2)"),
-    ("Minimum monthly income (non-metro)", "BFL-PL-SALARIED#004", "Monthly salary: Starting Rs. 25,001, based on the city you live in.", "25,001 (PL-008)", "25,000 (MIN_MONTHLY_INCOME)", "MISMATCH: live 25,000 vs guidance 25,001"),
-    ("Minimum monthly income (metro)", "BFL-PL-SALARIED#012", "your minimum monthly salary should be Rs. 40,000 if you reside in Pune, Bangalore, Mumbai, or Delhi.", "40,000 for the four named cities (PL-008, A-03)", "not modelled", "MISMATCH: live has no metro floor"),
+    ("Minimum monthly income (non-metro)", "BFL-PL-SALARIED#004", "Monthly salary: Starting Rs. 25,001, based on the city you live in.", "25,001 for every city (PL-008, ADR-0011)", "25,000 (MIN_MONTHLY_INCOME)", "MISMATCH: live 25,000 vs 25,001"),
+    ("Minimum monthly income (metro)", "BFL-PL-SALARIED#012", "your minimum monthly salary should be Rs. 40,000 if you reside in Pune, Bangalore, Mumbai, or Delhi.", "dropped: no metro floor (ADR-0011)", "not modelled", "CONSISTENT with live; differs from indicative guidance by owner decision"),
     ("Age", "BFL-PL-ELIG-DOCS#007", "Age: 21 years to 80 years*.", "21 min (PL-001)", "not modelled", "live has no age rule"),
     ("Age at maturity", "BFL-PL-ELIG-DOCS#001", "*You must be 80 years * or younger, at the end of the loan tenure.", "80 (PL-002, PL-073)", "not modelled", "live has no age rule"),
-    ("Loan amount", "BFL-PL-OVERVIEW#003", "Borrow from Rs. 40,000 to Rs. 75 lakh to meet small or large expenses.", "40,000 to 75,00,000 gate (PL-069, PL-070); MVP ceiling 25 lakh, purpose caps 10-25 lakh, above-cap = COUNTER_OFFER (PL-109, PL-129)", "Loan Product.maximum_loan_amount (UNVERIFIED value)", "CONFLICT C1 (55 lakh tables)"),
+    ("Loan amount", "BFL-PL-OVERVIEW#003", "Borrow from Rs. 40,000 to Rs. 75 lakh to meet small or large expenses.", "40,000 to 75,00,000 gate (PL-069, PL-070); MVP ceiling 25 lakh, purpose caps 25 lakh each (ADR-0011), above-cap = COUNTER_OFFER (PL-109, PL-129)", "Loan Product.maximum_loan_amount (UNVERIFIED value)", "CONFLICT C1 (55 lakh tables)"),
     ("Loan amount (rate tables)", "BFL-PL-RATES-FEES#011", "Rs. 55 lakh Rs. 2,27,150", "75 lakh chosen", "bajaj_v1 anchors say 55 lakh", "CONFLICT C1"),
     ("Tenure", "BFL-PL-OVERVIEW#017", "Flexible tenures ranging from 12 months to 108 months", "12 to 108 gate (PL-071, PL-072); prototype max 60/84/84/60 (PL-110)", "UnderwritingInput, bureau gates and the portal allow 360", "MISMATCH: validators 360 vs 108 (Qoder handoff)"),
     ("Employer", "BFL-PL-ELIG-DOCS#007", "Employed with: Public, private, or MNC.", "PUBLIC/PRIVATE/MNC (PL-005); B4 internal PUBLIC/MNC (PL-122)", "not modelled", "-"),
-    ("Employment length", "BFL-PL-OVERVIEW#018", "Being on probation at a new job", "6 months (PL-014, A-07); band 12/24 internal (PL-122)", "12 months (MIN_EMPLOYMENT_TENURE)", "Bajaj gives no number; live 12 vs proposed 6"),
-    ("FOIR", "BFL-PL-OVERVIEW#018", "High FOIR (as per lender criteria)", "0.50 (PL-064, A-04); grade caps 0.40-0.55 internal (PL-125)", "0.45 (FOIR_MAX_45, excludes the new EMI)", "Bajaj gives no number; definitions differ"),
-    ("Interest rate", "BFL-PL-RATES-FEES#003", "Interest rate 10% to 30.5% p.a.", "range check (PL-075); assessment rate 20% (A-05)", "Loan Product.rate_of_interest", "-"),
+    ("Employment length", "BFL-PL-OVERVIEW#018", "Being on probation at a new job", "6 months (PL-014, ADR-0011); band 12/24 internal (PL-122)", "12 months (MIN_EMPLOYMENT_TENURE)", "Bajaj gives no number; live 12 vs proposed 6"),
+    ("FOIR", "BFL-PL-OVERVIEW#018", "High FOIR (as per lender criteria)", "0.50 flat (PL-064, ADR-0011); PRIME/NTC variants dropped; deferred grade caps (PL-125) unused", "0.45 (FOIR_MAX_45, excludes the new EMI)", "Bajaj gives no number; definitions differ"),
+    ("Interest rate", "BFL-PL-RATES-FEES#003", "Interest rate 10% to 30.5% p.a.", "range check (PL-075); assessment rate 20%, sizing-only (PL-107, ADR-0011)", "Loan Product.rate_of_interest", "-"),
     ("Documents", "BFL-PL-ELIG-DOCS#009", "PAN card Employee ID card Salary slips of the last 3 months Bank account statements of the previous 3 months", "PL-088; 6 months for B3/B4 internal (PL-121)", "not modelled", "-"),
 ]
 

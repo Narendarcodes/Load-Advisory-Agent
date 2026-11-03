@@ -1,6 +1,6 @@
 {
   "status": "DRAFT - design only",
-  "products_status": "OWNER_APPROVED (2026-11-03 23:03 IST); per-product thresholds are ASSUMPTION, approved for prototype_synthetic (ADR-0009 batch)",
+  "products_status": "OWNER_APPROVED (2026-11-03 23:03 IST); per-product caps (Rs. 25 lakh each), tenure caps and the flat 20% sizing rate are OWNER_APPROVED by ADR-0011 for prototype_synthetic only",
   "bajaj_base": {
     "amount_range_inr": {
       "value": [
@@ -62,11 +62,13 @@
       "amount_range_inr": {
         "value": [
           40000,
-          1500000
+          2500000
         ],
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-25",
-        "note": "Min is Bajaj (BFL-PL-OVERVIEW#003); the cap is A-25."
+        "note": "Min is Bajaj (BFL-PL-OVERVIEW#003); the Rs. 25 lakh cap is ADR-0011 (was A-25, Rs. 15 lakh)."
       },
       "tenure_range_months": {
         "value": [
@@ -74,8 +76,10 @@
           60
         ],
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-25",
-        "note": "Min is Bajaj; the 60-month cap is A-25 (prototype max tenure, <= 84)."
+        "note": "Min is Bajaj; the 60-month cap is ADR-0011 (was A-25; prototype max tenure, <= 84)."
       },
       "required_documents": {
         "value": [],
@@ -123,8 +127,11 @@
       "rate_for_assessment": {
         "value": 0.2,
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-05",
-        "pricing": "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value A-05"
+        "pricing": "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value OWNER_APPROVED by ADR-0011 (was A-05)",
+        "use": "sizing-only: sizes affordability (EMI, FOIR, residual income, offer amount); not an offered or quoted rate (ADR-0011)"
       }
     },
     "PL_HIGHER_EDUCATION": {
@@ -136,10 +143,13 @@
       "amount_range_inr": {
         "value": [
           40000,
-          2000000
+          2500000
         ],
         "basis": "ASSUMPTION",
-        "assumption_id": "A-26"
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
+        "assumption_id": "A-26",
+        "note": "Was A-26, Rs. 20 lakh."
       },
       "tenure_range_months": {
         "value": [
@@ -147,6 +157,8 @@
           84
         ],
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-26"
       },
       "required_documents": {
@@ -205,8 +217,11 @@
       "rate_for_assessment": {
         "value": 0.2,
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-05",
-        "pricing": "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value A-05"
+        "pricing": "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value OWNER_APPROVED by ADR-0011 (was A-05)",
+        "use": "sizing-only: sizes affordability (EMI, FOIR, residual income, offer amount); not an offered or quoted rate (ADR-0011)"
       }
     },
     "PL_HOME_RENOVATION": {
@@ -221,6 +236,8 @@
           2500000
         ],
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-27"
       },
       "tenure_range_months": {
@@ -229,6 +246,8 @@
           84
         ],
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-27"
       },
       "required_documents": {
@@ -282,8 +301,11 @@
       "rate_for_assessment": {
         "value": 0.2,
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-05",
-        "pricing": "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value A-05"
+        "pricing": "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value OWNER_APPROVED by ADR-0011 (was A-05)",
+        "use": "sizing-only: sizes affordability (EMI, FOIR, residual income, offer amount); not an offered or quoted rate (ADR-0011)"
       }
     },
     "PL_MEDICAL_EMERGENCY": {
@@ -295,10 +317,13 @@
       "amount_range_inr": {
         "value": [
           40000,
-          1000000
+          2500000
         ],
         "basis": "ASSUMPTION",
-        "assumption_id": "A-28"
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
+        "assumption_id": "A-28",
+        "note": "Was A-28, Rs. 10 lakh."
       },
       "tenure_range_months": {
         "value": [
@@ -306,6 +331,8 @@
           60
         ],
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-28"
       },
       "required_documents": {
@@ -361,8 +388,11 @@
       "rate_for_assessment": {
         "value": 0.2,
         "basis": "ASSUMPTION",
+        "approval_status": "OWNER_APPROVED",
+        "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
         "assumption_id": "A-05",
-        "pricing": "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value A-05"
+        "pricing": "FLAT_PER_PRODUCT (ADR-0007 #3: no risk-grade pricing in the MVP); value OWNER_APPROVED by ADR-0011 (was A-05)",
+        "use": "sizing-only: sizes affordability (EMI, FOIR, residual income, offer amount); not an offered or quoted rate (ADR-0011)"
       }
     }
   },
@@ -405,7 +435,8 @@
     },
     "mvp_amount_ceiling": 2500000,
     "minimum_amount": 40000,
-    "basis": "prototype_synthetic (ADR-0009 batch) except the minimum amount (BFL-PL-OVERVIEW#003) and the owner decisions",
+    "basis": "prototype_synthetic: owner decisions ADR-0007 and ADR-0011, the ADR-0009 batch for the rest, and the minimum amount (BFL-PL-OVERVIEW#003)",
+    "rate_use": "sizing-only: sizes affordability (EMI, FOIR, residual income, offer amount); not an offered or quoted rate (ADR-0011)",
     "worked_examples": [
       {
         "name": "Wedding, full approval",
@@ -429,7 +460,7 @@
           "request_outside_mvp_range": false,
           "caps_at_offer_tenure": {
             "requested": 500000,
-            "product_cap": 1500000,
+            "product_cap": 2500000,
             "income_cap": 1920000,
             "foir_principal": 1132337,
             "band_cap": 2500000
@@ -438,7 +469,7 @@
         }
       },
       {
-        "name": "Higher education, above the product cap: counter-offer at the cap",
+        "name": "Higher education, Rs. 23 lakh inside the Rs. 25 lakh cap: full approval",
         "input": {
           "requested_amount": 2300000,
           "tenure_months": 84,
@@ -451,22 +482,22 @@
           "purpose_evidence_amount": 2400000
         },
         "result": {
-          "offer_outcome": "COUNTER_OFFER",
-          "eligible_amount": 2000000,
+          "offer_outcome": "APPROVED",
+          "eligible_amount": 2300000,
           "offer_tenure_months": 84,
-          "offer_emi": 44412,
+          "offer_emi": 51074,
           "offer_rate": 0.2,
-          "binding_cap": "product_cap",
+          "binding_cap": "requested",
           "request_outside_mvp_range": false,
           "caps_at_offer_tenure": {
             "requested": 2300000,
-            "product_cap": 2000000,
+            "product_cap": 2500000,
             "income_cap": 3600000,
             "foir_principal": 3152273,
             "band_cap": 2500000,
             "evidence_cap": 2640000
           },
-          "internal_reason": "flat rate 20%; binding cap product_cap; max EMI 70000 over 84 months"
+          "internal_reason": "flat rate 20%; binding cap requested; max EMI 70000 over 84 months"
         }
       },
       {
@@ -524,7 +555,7 @@
           "request_outside_mvp_range": false,
           "caps_at_offer_tenure": {
             "requested": 800000,
-            "product_cap": 1000000,
+            "product_cap": 2500000,
             "income_cap": 1080000,
             "foir_principal": 622785,
             "band_cap": 2500000,
@@ -555,7 +586,7 @@
           "request_outside_mvp_range": false,
           "caps_at_offer_tenure": {
             "requested": 300000,
-            "product_cap": 1500000,
+            "product_cap": 2500000,
             "income_cap": 720000,
             "foir_principal": 18872,
             "band_cap": 2500000
@@ -569,12 +600,12 @@
     "amount_ceiling_inr": 2500000,
     "per_product": {
       "PL_WEDDING": {
-        "max_amount_inr": 1500000,
+        "max_amount_inr": 2500000,
         "max_tenure_months": 60,
         "flat_rate": 0.2
       },
       "PL_HIGHER_EDUCATION": {
-        "max_amount_inr": 2000000,
+        "max_amount_inr": 2500000,
         "max_tenure_months": 84,
         "flat_rate": 0.2
       },
@@ -584,7 +615,7 @@
         "flat_rate": 0.2
       },
       "PL_MEDICAL_EMERGENCY": {
-        "max_amount_inr": 1000000,
+        "max_amount_inr": 2500000,
         "max_tenure_months": 60,
         "flat_rate": 0.2
       }

@@ -12,7 +12,7 @@
     "PL_HOME_RENOVATION",
     "PL_MEDICAL_EMERGENCY"
   ],
-  "products_status": "OWNER_APPROVED (2026-11-03 23:03 IST); per-product thresholds are ASSUMPTION, approved for prototype_synthetic (ADR-0009 batch)",
+  "products_status": "OWNER_APPROVED (2026-11-03 23:03 IST); per-product caps (Rs. 25 lakh each), tenure caps and the flat 20% sizing rate are OWNER_APPROVED by ADR-0011 for prototype_synthetic only",
   "owner_decisions": {
     "ADR-0001": "ZEN is authoritative; Bajaj numbers are indicative guidance only",
     "ADR-0003": "four purpose products confirmed",
@@ -25,7 +25,8 @@
     "ADR-0010 #1": "what-if cap 3 per session",
     "ADR-0010 #2": "status APPROVED_OWNER_DECISION renamed OWNER_APPROVED",
     "ADR-0010 #3": "retention: decision record >= 5 years after loan closure (NBFC KYC Directions 2025 para 47(2)); declined or withdrawn: 5 years from the decision date (Saral's choice)",
-    "ADR-0010 #4": "written rejection reasons stay: Saral policy, not an RBI requirement for NBFCs"
+    "ADR-0010 #4": "written rejection reasons stay: Saral policy, not an RBI requirement for NBFCs",
+    "ADR-0011": "ADR-0011 (owner, 2026-11-04 00:29 IST): the top-10 thresholds and the runners-up are OWNER_APPROVED for prototype_synthetic only, never Bajaj policy. FOIR flat 0.50 (PRIME 0.55 / new-to-credit 0.40 dropped); product caps Rs. 25 lakh for all four; minimum net income Rs. 25,001 (metro Rs. 40,000 floor dropped); 90+ DPD in 24 months and settlement/write-off in 24 months decline; 60+ DPD in 12 months goes to MANUAL_REVIEW; residual income Rs. 15,000; tenure max 60/84/84/60; 24x income kept as a backstop; B3 review trigger FOIR > 0.45 kept; employer tenure 6 months; <= 4 enquiries in 180 days; decline at 3 bounces; new-to-credit cap Rs. 2 lakh; OCR confidence 60; bureau report <= 30 days old; the 20% rate is sizing-only."
   },
   "mvp_scope": "Salaried applicants only (user decision 2026-11-03 22:50 IST)",
   "outcomes": [
@@ -51,7 +52,7 @@
   "approval_status_meanings": {
     "APPROVED_BAJAJ_SOURCE": "The value matches Bajaj's published guidance (chunk cited). Indicative public guidance only (ADR-0001); ZEN is authoritative.",
     "APPROVED_REGULATORY": "An RBI chunk states the requirement (chunk cited).",
-    "OWNER_APPROVED": "The owner decided the value himself (ADR-0003, ADR-0007, ADR-0009, ADR-0010). Renamed from APPROVED_OWNER_DECISION (ADR-0010 #2).",
+    "OWNER_APPROVED": "The owner decided the value himself (ADR-0003, ADR-0007, ADR-0009, ADR-0010, ADR-0011). Renamed from APPROVED_OWNER_DECISION (ADR-0010 #2). A value with profile_scope prototype_synthetic (ADR-0011) is approved for that profile only and keeps its rule out of bajaj_published.",
     "PENDING_BUSINESS_APPROVAL": "An A-NN assumption in THRESHOLD_APPROVALS.md. Approved for prototype_synthetic in the ADR-0009 batch; not for live use.",
     "PROTOTYPE_SYNTHETIC": "A prototype value. Approved for prototype_synthetic in the ADR-0009 batch; not for live use.",
     "DEPRECATED": "Kept for history; not evaluated (user vocabulary)."
@@ -143,7 +144,7 @@
   },
   "profiles": {
     "bajaj_published": {
-      "description": "Only rules whose every parameter is APPROVED_BAJAJ_SOURCE, APPROVED_REGULATORY or OWNER_APPROVED.",
+      "description": "Only rules whose every parameter is APPROVED_BAJAJ_SOURCE, APPROVED_REGULATORY or OWNER_APPROVED, and none of them is scoped to prototype_synthetic (ADR-0011 values never enter this profile).",
       "rule_ids": [
         "PL-001",
         "PL-002",
@@ -151,7 +152,6 @@
         "PL-004",
         "PL-005",
         "PL-006",
-        "PL-008",
         "PL-029",
         "PL-069",
         "PL-070",
@@ -303,17 +303,20 @@
       ],
       "not_for_live_use": true,
       "batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "owner_approvals": {
+        "ADR-0011": "ADR-0011 (owner, 2026-11-04 00:29 IST): the top-10 thresholds and the runners-up are OWNER_APPROVED for prototype_synthetic only, never Bajaj policy. FOIR flat 0.50 (PRIME 0.55 / new-to-credit 0.40 dropped); product caps Rs. 25 lakh for all four; minimum net income Rs. 25,001 (metro Rs. 40,000 floor dropped); 90+ DPD in 24 months and settlement/write-off in 24 months decline; 60+ DPD in 12 months goes to MANUAL_REVIEW; residual income Rs. 15,000; tenure max 60/84/84/60; 24x income kept as a backstop; B3 review trigger FOIR > 0.45 kept; employer tenure 6 months; <= 4 enquiries in 180 days; decline at 3 bounces; new-to-credit cap Rs. 2 lakh; OCR confidence 60; bureau report <= 30 days old; the 20% rate is sizing-only."
+      },
       "top_thresholds_for_one_by_one_review": "project-management/TOP10_THRESHOLDS.md",
       "mvp_limits": {
         "amount_ceiling_inr": 2500000,
         "per_product": {
           "PL_WEDDING": {
-            "max_amount_inr": 1500000,
+            "max_amount_inr": 2500000,
             "max_tenure_months": 60,
             "flat_rate": 0.2
           },
           "PL_HIGHER_EDUCATION": {
-            "max_amount_inr": 2000000,
+            "max_amount_inr": 2500000,
             "max_tenure_months": 84,
             "flat_rate": 0.2
           },
@@ -323,7 +326,7 @@
             "flat_rate": 0.2
           },
           "PL_MEDICAL_EMERGENCY": {
-            "max_amount_inr": 1000000,
+            "max_amount_inr": 2500000,
             "max_tenure_months": 60,
             "flat_rate": 0.2
           }
@@ -335,16 +338,10 @@
   },
   "profile_dependencies": [
     {
-      "rule_id": "PL-008",
-      "input": "monthly_net_income",
-      "computed_by": "PL-009",
-      "computed_by_status": "PENDING_BUSINESS_APPROVAL"
-    },
-    {
       "rule_id": "PL-075",
       "input": "interest_rate",
       "computed_by": "PL-107",
-      "computed_by_status": "PENDING_BUSINESS_APPROVAL"
+      "computed_by_status": "OWNER_APPROVED"
     }
   ],
   "amount_bands": {
@@ -421,7 +418,8 @@
     },
     "mvp_amount_ceiling": 2500000,
     "minimum_amount": 40000,
-    "basis": "prototype_synthetic (ADR-0009 batch) except the minimum amount (BFL-PL-OVERVIEW#003) and the owner decisions",
+    "basis": "prototype_synthetic: owner decisions ADR-0007 and ADR-0011, the ADR-0009 batch for the rest, and the minimum amount (BFL-PL-OVERVIEW#003)",
+    "rate_use": "sizing-only: sizes affordability (EMI, FOIR, residual income, offer amount); not an offered or quoted rate (ADR-0011)",
     "worked_examples": [
       {
         "name": "Wedding, full approval",
@@ -445,7 +443,7 @@
           "request_outside_mvp_range": false,
           "caps_at_offer_tenure": {
             "requested": 500000,
-            "product_cap": 1500000,
+            "product_cap": 2500000,
             "income_cap": 1920000,
             "foir_principal": 1132337,
             "band_cap": 2500000
@@ -454,7 +452,7 @@
         }
       },
       {
-        "name": "Higher education, above the product cap: counter-offer at the cap",
+        "name": "Higher education, Rs. 23 lakh inside the Rs. 25 lakh cap: full approval",
         "input": {
           "requested_amount": 2300000,
           "tenure_months": 84,
@@ -467,22 +465,22 @@
           "purpose_evidence_amount": 2400000
         },
         "result": {
-          "offer_outcome": "COUNTER_OFFER",
-          "eligible_amount": 2000000,
+          "offer_outcome": "APPROVED",
+          "eligible_amount": 2300000,
           "offer_tenure_months": 84,
-          "offer_emi": 44412,
+          "offer_emi": 51074,
           "offer_rate": 0.2,
-          "binding_cap": "product_cap",
+          "binding_cap": "requested",
           "request_outside_mvp_range": false,
           "caps_at_offer_tenure": {
             "requested": 2300000,
-            "product_cap": 2000000,
+            "product_cap": 2500000,
             "income_cap": 3600000,
             "foir_principal": 3152273,
             "band_cap": 2500000,
             "evidence_cap": 2640000
           },
-          "internal_reason": "flat rate 20%; binding cap product_cap; max EMI 70000 over 84 months"
+          "internal_reason": "flat rate 20%; binding cap requested; max EMI 70000 over 84 months"
         }
       },
       {
@@ -540,7 +538,7 @@
           "request_outside_mvp_range": false,
           "caps_at_offer_tenure": {
             "requested": 800000,
-            "product_cap": 1000000,
+            "product_cap": 2500000,
             "income_cap": 1080000,
             "foir_principal": 622785,
             "band_cap": 2500000,
@@ -571,7 +569,7 @@
           "request_outside_mvp_range": false,
           "caps_at_offer_tenure": {
             "requested": 300000,
-            "product_cap": 1500000,
+            "product_cap": 2500000,
             "income_cap": 720000,
             "foir_principal": 18872,
             "band_cap": 2500000
@@ -621,8 +619,8 @@
           "binding_cap": "requested",
           "caps_at_offer_tenure": {
             "requested": 500000,
-            "product_cap": 1500000,
-            "grade_band_cap": 1500000,
+            "product_cap": 2500000,
+            "grade_band_cap": 2500000,
             "income_cap": 1920000,
             "foir_principal": 1283315
           },
@@ -647,7 +645,7 @@
           "binding_cap": "foir_principal",
           "caps_at_offer_tenure": {
             "requested": 1000000,
-            "product_cap": 2000000,
+            "product_cap": 2500000,
             "grade_band_cap": 1000000,
             "income_cap": 675000,
             "foir_principal": 641713
@@ -698,7 +696,7 @@
           "binding_cap": "grade_band_cap",
           "caps_at_offer_tenure": {
             "requested": 400000,
-            "product_cap": 1000000,
+            "product_cap": 2500000,
             "grade_band_cap": 200000,
             "income_cap": 320000,
             "foir_principal": 430529
@@ -724,7 +722,7 @@
           "binding_cap": "foir_principal",
           "caps_at_offer_tenure": {
             "requested": 300000,
-            "product_cap": 1500000,
+            "product_cap": 2500000,
             "grade_band_cap": 1000000,
             "income_cap": 450000,
             "foir_principal": 18872
@@ -1253,7 +1251,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -1282,6 +1282,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -1393,7 +1394,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -1422,6 +1425,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -1516,7 +1520,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -1545,6 +1551,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -1636,7 +1643,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -1667,6 +1676,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -1762,7 +1772,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -1793,6 +1805,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -1895,7 +1908,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": "PAN and a KYC document are on Bajaj's list; name and DOB are what those documents carry."
+          "note": "PAN and a KYC document are on Bajaj's list; name and DOB are what those documents carry.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -1924,6 +1939,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -2017,7 +2033,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -2044,6 +2062,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -2124,46 +2143,24 @@
           "declared_in_user_catalogue": true
         }
       ],
-      "condition": "monthly_net_income >= minimum_income(applicant_city)",
+      "condition": "monthly_net_income >= minimum_income (one floor for every city; applicant_city is read but sets no higher floor)",
       "applies_when": "ALL",
       "parameters": [
         {
           "name": "minimum_income",
           "value": 25001,
           "unit": "INR/month",
-          "approval_status": "APPROVED_BAJAJ_SOURCE",
-          "source_chunk": "BFL-PL-SALARIED#004",
+          "approval_status": "OWNER_APPROVED",
+          "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "BAJAJ_PUBLISHED",
-          "context_chunks": [],
-          "note": ""
-        },
-        {
-          "name": "minimum_income_metro",
-          "value": 40000,
-          "unit": "INR/month",
-          "approval_status": "APPROVED_BAJAJ_SOURCE",
-          "source_chunk": "BFL-PL-SALARIED#012",
-          "assumption_id": null,
-          "value_origin": "BAJAJ_PUBLISHED",
-          "context_chunks": [],
-          "note": ""
-        },
-        {
-          "name": "metro_cities",
-          "value": [
-            "Pune",
-            "Bengaluru",
-            "Mumbai",
-            "Delhi"
+          "value_origin": "OWNER_DECISION",
+          "context_chunks": [
+            "BFL-PL-SALARIED#004",
+            "BFL-PL-SALARIED#012"
           ],
-          "unit": null,
-          "approval_status": "APPROVED_BAJAJ_SOURCE",
-          "source_chunk": "BFL-PL-SALARIED#012",
-          "assumption_id": null,
-          "value_origin": "BAJAJ_PUBLISHED",
-          "context_chunks": [],
-          "note": "Bajaj names these four 'for instance'; treating the list as complete is A-03 (pending)."
+          "note": "Flat floor for every city. The Rs. 40,000 metro floor (A-03) is dropped. The value equals Bajaj's indicative 25,001. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -2176,33 +2173,32 @@
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
         "low_confidence_downgrades_decline_to_review": true,
-        "decline_active_only_in": null
+        "decline_active_only_in": "prototype_synthetic (not_for_live_use)"
       },
       "severity": "HARD_DECLINE",
       "risk_signal": false,
       "policy_source": {
-        "source_chunks": [
+        "source_chunks": [],
+        "context_chunks": [
           "BFL-PL-SALARIED#004",
           "BFL-PL-SALARIED#012"
         ],
-        "context_chunks": [],
         "assumption_ids": [],
         "conflict": null,
         "open_interpretations": [
-          "A-01: compare NET take-home (Bajaj says 'monthly salary').",
-          "A-03: only the four named cities take the higher floor."
+          "A-01: compare NET take-home (Bajaj says 'monthly salary')."
         ],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
-      "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
-      "effective_from": "2026-11-03",
+      "public_guidance": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
-        "bajaj_published",
         "prototype_synthetic"
       ],
       "mvp_status": "ACTIVE",
@@ -2211,7 +2207,7 @@
       "borrower_message": "Your income did not meet our requirement for this loan.",
       "borrower_message_when_missing": "We need more information about your income to complete the assessment.",
       "borrower_message_when_missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
-      "internal_reason": "Assessed net income {monthly_net_income} is below the {applicant_city} floor {minimum_income}.",
+      "internal_reason": "Assessed net income {monthly_net_income} is below the floor {minimum_income}.",
       "v2_ids": [
         "E08"
       ],
@@ -2232,17 +2228,27 @@
         {
           "case_id": "PL-008-T2",
           "inputs": {
-            "monthly_net_income": 39999,
+            "monthly_net_income": 30000,
             "applicant_city": "Pune"
+          },
+          "expected_outcome": "PASS",
+          "description": "no metro floor (ADR-0011)",
+          "expected_value": null
+        },
+        {
+          "case_id": "PL-008-T3",
+          "inputs": {
+            "monthly_net_income": 25000,
+            "applicant_city": "Mahabubnagar"
           },
           "expected_outcome": "FAIL",
           "description": "",
           "expected_value": null
         },
         {
-          "case_id": "PL-008-T3",
+          "case_id": "PL-008-T4",
           "inputs": {
-            "monthly_net_income": 39999,
+            "monthly_net_income": 25000,
             "applicant_city": "Pune",
             "low_confidence": true
           },
@@ -2251,14 +2257,14 @@
           "expected_value": null
         },
         {
-          "case_id": "PL-008-T4",
+          "case_id": "PL-008-T5",
           "inputs": {},
           "expected_outcome": "INSUFFICIENT_DATA",
           "description": "all inputs missing: never a FAIL",
           "expected_value": null
         }
       ],
-      "note": ""
+      "note": "ADR-0011: one floor of Rs. 25,001 everywhere; the Rs. 40,000 floor for Pune, Bengaluru, Mumbai and Delhi is dropped."
     },
     {
       "rule_id": "PL-009",
@@ -2318,7 +2324,9 @@
           "assumption_id": "A-02",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "income_definition",
@@ -2329,7 +2337,9 @@
           "assumption_id": "A-01",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -2359,6 +2369,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -2455,7 +2466,9 @@
           "context_chunks": [
             "BFL-PL-ELIG-DOCS#009"
           ],
-          "note": "Bajaj asks for 3 months of slips and statements; using that as the averaging window is a Saral reading."
+          "note": "Bajaj asks for 3 months of slips and statements; using that as the averaging window is a Saral reading.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -2486,6 +2499,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -2575,7 +2589,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -2602,6 +2618,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -2699,7 +2716,9 @@
           "assumption_id": "A-11",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -2728,6 +2747,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -2824,7 +2844,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -2851,6 +2873,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -2936,14 +2959,16 @@
           "name": "minimum_employment_months",
           "value": 6,
           "unit": "months",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-07",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [
             "BFL-PL-OVERVIEW#018"
           ],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -2973,11 +2998,12 @@
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -3061,7 +3087,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -3088,6 +3116,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -3175,7 +3204,9 @@
           "context_chunks": [
             "BFL-PL-OVERVIEW#018"
           ],
-          "note": "Bajaj names 'Being on probation at a new job' as a rejection reason without a rule."
+          "note": "Bajaj names 'Being on probation at a new job' as a rejection reason without a rule.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -3204,6 +3235,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -3296,7 +3328,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -3323,6 +3357,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -3415,7 +3450,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -3442,6 +3479,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -3520,7 +3558,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -3547,6 +3587,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -3639,7 +3680,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -3666,6 +3709,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -3767,7 +3811,9 @@
           "context_chunks": [
             "BFL-PL-OVERVIEW#018"
           ],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -3798,6 +3844,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -3888,7 +3935,9 @@
           "assumption_id": "A-15",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -3917,6 +3966,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -4016,7 +4066,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -4043,6 +4095,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -4128,12 +4181,14 @@
           "name": "maximum_report_age_days",
           "value": 30,
           "unit": "days",
-          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "V2_PROPOSAL",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -4159,11 +4214,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PROTOTYPE_SYNTHETIC",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -4247,7 +4303,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -4274,6 +4332,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -4357,7 +4416,9 @@
           "assumption_id": "A-22",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -4386,6 +4447,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -4474,7 +4536,9 @@
           "assumption_id": "A-22",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -4503,6 +4567,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -4583,7 +4648,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -4610,6 +4677,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -4703,7 +4771,9 @@
             "BFL-PL-ELIG-DOCS#007",
             "BFL-PL-RATES-FEES#023"
           ],
-          "note": "ADR-0009 #2: the ZEN floor stays 700. Bajaj's published 650 (BFL-PL-ELIG-DOCS#007) is indicative public guidance only."
+          "note": "ADR-0009 #2: the ZEN floor stays 700. Bajaj's published 650 (BFL-PL-ELIG-DOCS#007) is indicative public guidance only.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -4733,6 +4803,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "OWNER_APPROVED",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": null,
@@ -4837,7 +4908,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -4864,6 +4937,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -4962,7 +5036,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -4989,6 +5065,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -5084,7 +5161,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -5111,6 +5190,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -5214,7 +5294,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -5241,6 +5323,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -5341,6 +5424,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -5431,7 +5515,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -5458,6 +5544,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -5565,6 +5652,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -5654,7 +5742,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -5681,6 +5771,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -5781,6 +5872,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -5870,7 +5962,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -5897,6 +5991,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -5987,7 +6082,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -6014,6 +6111,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -6106,7 +6204,9 @@
           "assumption_id": "A-08",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -6135,6 +6235,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -6217,45 +6318,49 @@
           "declared_in_user_catalogue": false
         }
       ],
-      "condition": "max DPD in the last 12 months < 60",
+      "condition": "max DPD in the last 12 months < 60; a breach goes to manual review (ADR-0011), not a decline",
       "applies_when": "ALL",
       "parameters": [
         {
           "name": "assessment_window",
           "value": 12,
           "unit": "months",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-08",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "dpd_bucket",
           "value": 60,
           "unit": "days",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-08",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
         "when_condition_true": "PASS",
-        "when_condition_false": "FAIL",
+        "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
       "amount_dependent": false,
       "decision_effect": {
-        "on_fail": "DECLINE",
+        "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
-        "low_confidence_downgrades_decline_to_review": true,
-        "decline_active_only_in": "prototype_synthetic (not_for_live_use)"
+        "low_confidence_downgrades_decline_to_review": false,
+        "decline_active_only_in": null
       },
-      "severity": "HARD_DECLINE",
+      "severity": "REVIEW",
       "risk_signal": false,
       "policy_source": {
         "source_chunks": [],
@@ -6268,11 +6373,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -6305,8 +6411,8 @@
           "inputs": {
             "max_dpd_12m": 60
           },
-          "expected_outcome": "FAIL",
-          "description": "",
+          "expected_outcome": "REVIEW",
+          "description": "manual review, not a decline (ADR-0011)",
           "expected_value": null
         },
         {
@@ -6358,23 +6464,27 @@
           "name": "assessment_window",
           "value": 24,
           "unit": "months",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-08",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "dpd_bucket",
           "value": 90,
           "unit": "days",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-08",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -6402,11 +6512,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -6490,7 +6601,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -6517,6 +6630,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -6607,7 +6721,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -6634,6 +6750,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -6717,7 +6834,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -6744,6 +6863,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -6831,14 +6951,16 @@
           "name": "lookback_months",
           "value": 24,
           "unit": "months",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-10",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [
             "BFL-PL-OVERVIEW#018"
           ],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -6868,11 +6990,12 @@
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -6971,14 +7094,16 @@
           "name": "lookback_months",
           "value": 24,
           "unit": "months",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-10",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [
             "BFL-PL-OVERVIEW#018"
           ],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -7008,11 +7133,12 @@
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -7109,7 +7235,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -7136,6 +7264,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -7219,7 +7348,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -7246,6 +7377,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -7329,7 +7461,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -7356,6 +7490,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -7439,7 +7574,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -7466,6 +7603,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -7560,25 +7698,29 @@
           "name": "approved_enquiry_threshold",
           "value": 4,
           "unit": "count",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-09",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [
             "BFL-PL-OVERVIEW#018"
           ],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "enquiry_window_days",
           "value": 180,
           "unit": "days",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-09",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "The user's catalogue names a 90-day input; A-09 and v2 C11 use 6 months. Window is a user decision."
+          "note": "The user's catalogue names a 90-day input; A-09 and v2 C11 use 6 months. Window is a user decision. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -7608,11 +7750,12 @@
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -7696,7 +7839,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -7723,6 +7868,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -7808,7 +7954,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -7835,6 +7983,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -7925,7 +8074,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -7952,6 +8103,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -8052,6 +8204,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -8137,7 +8290,9 @@
           "assumption_id": "A-06",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -8166,6 +8321,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -8263,7 +8419,9 @@
           "assumption_id": "A-06",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -8292,6 +8450,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -8385,6 +8544,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -8482,18 +8642,22 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "interest_rate",
           "value": 0.2,
           "unit": "per annum",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-05",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "Assessment rate from PL-107."
+          "note": "Assessment rate from PL-107; sizing-only: the 20% flat rate sizes affordability (EMI, FOIR, residual income, offer amount); it is not an offered or quoted rate (ADR-0011). OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -8523,11 +8687,12 @@
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
-      "public_guidance": null,
-      "effective_from": null,
+      "prototype_batch_approval": null,
+      "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -8640,6 +8805,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -8734,7 +8900,9 @@
           "assumption_id": "A-04",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -8763,6 +8931,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -8836,43 +9005,23 @@
           "declared_in_user_catalogue": true
         }
       ],
-      "condition": "foir <= approved_maximum_foir (segment: PRIME 0.55, NEW_TO_CREDIT 0.40)",
+      "condition": "foir <= approved_maximum_foir (one flat cap for every applicant)",
       "applies_when": "ALL",
       "parameters": [
         {
           "name": "approved_maximum_foir",
           "value": 0.5,
           "unit": "ratio",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-04",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [
             "BFL-PL-OVERVIEW#018"
           ],
-          "note": ""
-        },
-        {
-          "name": "approved_maximum_foir_prime",
-          "value": 0.55,
-          "unit": "ratio",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
-          "source_chunk": null,
-          "assumption_id": "A-21",
-          "value_origin": "DRAFT_ASSUMPTION",
-          "context_chunks": [],
-          "note": ""
-        },
-        {
-          "name": "approved_maximum_foir_new_to_credit",
-          "value": 0.4,
-          "unit": "ratio",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
-          "source_chunk": null,
-          "assumption_id": "A-22",
-          "value_origin": "DRAFT_ASSUMPTION",
-          "context_chunks": [],
-          "note": ""
+          "note": "Flat 0.50; the PRIME 0.55 (A-21) and new-to-credit 0.40 (A-22) variants are dropped. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -8895,20 +9044,19 @@
           "BFL-PL-OVERVIEW#018"
         ],
         "assumption_ids": [
-          "A-04",
-          "A-21",
-          "A-22"
+          "A-04"
         ],
         "conflict": null,
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -9004,12 +9152,14 @@
           "name": "min_residual_income",
           "value": 15000,
           "unit": "INR/month",
-          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "V2_PROPOSAL",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -9035,11 +9185,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PROTOTYPE_SYNTHETIC",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -9145,6 +9296,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -9234,12 +9386,14 @@
           "name": "approved_maximum_foir",
           "value": 0.5,
           "unit": "ratio",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-04",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -9267,11 +9421,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -9362,12 +9517,14 @@
           "name": "interest_rate",
           "value": 0.2,
           "unit": "per annum",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-05",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "sizing-only: the 20% flat rate sizes affordability (EMI, FOIR, residual income, offer amount); it is not an offered or quoted rate (ADR-0011). OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -9395,11 +9552,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -9485,7 +9643,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -9514,6 +9674,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -9602,7 +9763,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -9631,6 +9794,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -9719,7 +9883,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -9748,6 +9914,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -9836,7 +10003,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -9865,6 +10034,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -9953,7 +10123,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -9982,6 +10154,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -10091,7 +10264,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "emi_tolerance",
@@ -10102,7 +10277,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -10131,6 +10308,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -10226,7 +10404,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -10255,6 +10435,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -10347,7 +10528,9 @@
             "BFL-PL-OVERVIEW#002",
             "BFL-PL-OVERVIEW#003"
           ],
-          "note": "Owner confirmed the four products as final on 2026-11-03 23:03 IST. Bajaj describes these purposes; it does not restrict to them. Per-product thresholds stay ASSUMPTION."
+          "note": "Owner confirmed the four products as final on 2026-11-03 23:03 IST. Bajaj describes these purposes; it does not restrict to them. Per-product thresholds stay ASSUMPTION.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -10377,6 +10560,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "OWNER_APPROVED",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": null,
@@ -10470,7 +10654,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -10497,6 +10683,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -10600,7 +10787,9 @@
           "context_chunks": [
             "BFL-PL-ELIG-DOCS#009"
           ],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -10631,6 +10820,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -10727,7 +10917,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -10754,6 +10946,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -10841,7 +11034,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -10868,6 +11063,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -10951,18 +11147,22 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "decline_at",
           "value": 3,
           "unit": "count",
-          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "V2_PROPOSAL",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -10989,6 +11189,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -11090,7 +11291,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -11117,6 +11320,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -11202,7 +11406,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -11229,6 +11435,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -11314,7 +11521,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -11341,6 +11550,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -11424,7 +11634,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -11451,6 +11663,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -11543,7 +11756,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -11570,6 +11785,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -11655,7 +11871,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -11682,6 +11900,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -11773,7 +11992,9 @@
           "context_chunks": [
             "BFL-PL-SALARIED#004"
           ],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -11804,6 +12025,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -11895,12 +12117,14 @@
           "name": "minimum_confidence",
           "value": 60,
           "unit": "Tesseract 0-100",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-16",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -11928,11 +12152,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -12016,7 +12241,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -12043,6 +12270,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -12132,7 +12360,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -12159,6 +12389,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -12251,7 +12482,9 @@
           "context_chunks": [
             "BFL-PL-OVERVIEW#018"
           ],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -12280,6 +12513,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -12365,7 +12599,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -12392,6 +12628,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -12510,7 +12747,9 @@
             "BFL-PL-OVERVIEW#018",
             "BFL-PL-ELIG-DOCS#003"
           ],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "dob_and_last4_match",
@@ -12521,7 +12760,9 @@
           "assumption_id": "A-15",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -12554,6 +12795,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -12657,7 +12899,9 @@
           "context_chunks": [
             "BFL-APP-TNC-2023#018"
           ],
-          "note": "RBI requires prior, explicit consent with an audit trail for data a DLA collects; the consent list is Saral's mapping of that rule."
+          "note": "RBI requires prior, explicit consent with an audit trail for data a DLA collects; the consent list is Saral's mapping of that rule.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -12688,6 +12932,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_REGULATORY",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": null,
@@ -12783,7 +13028,9 @@
           "assumption_id": "A-18",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -12812,6 +13059,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -12910,7 +13158,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -12937,6 +13187,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -13029,7 +13280,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -13056,6 +13309,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -13152,7 +13406,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -13179,6 +13435,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -13265,7 +13522,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -13292,6 +13551,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -13370,7 +13630,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -13397,6 +13659,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -13475,7 +13738,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -13502,6 +13767,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -13603,7 +13869,9 @@
           "context_chunks": [
             "BFL-PL-ELIG-DOCS#003"
           ],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "max_statement_age_days",
@@ -13614,7 +13882,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -13643,6 +13913,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -13744,7 +14015,9 @@
           "assumption_id": "A-17",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -13773,6 +14046,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -13876,7 +14150,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": "v2 I03 said 'match' without a number."
+          "note": "v2 I03 said 'match' without a number.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -13903,6 +14179,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -13997,7 +14274,9 @@
           "assumption_id": "A-13",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -14026,6 +14305,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -14101,14 +14381,16 @@
           "name": "assessment_rate",
           "value": 0.2,
           "unit": "per annum",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-05",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [
             "BFL-PL-RATES-FEES#003"
           ],
-          "note": ""
+          "note": "sizing-only: the 20% flat rate sizes affordability (EMI, FOIR, residual income, offer amount); it is not an offered or quoted rate (ADR-0011). OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -14138,11 +14420,12 @@
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -14217,12 +14500,14 @@
           "name": "max_amount_income_multiple",
           "value": 24,
           "unit": "x net monthly income",
-          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "V2_PROPOSAL",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "A backstop: at FOIR 0.50, 20% and at most 84 months the FOIR cap already binds near 22.5x income, so 24x rarely decides. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -14248,11 +14533,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PROTOTYPE_SYNTHETIC",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -14330,18 +14616,20 @@
         {
           "name": "purpose_amount_cap",
           "value": {
-            "wedding": 1500000,
-            "higher_education": 2000000,
+            "wedding": 2500000,
+            "higher_education": 2500000,
             "home_renovation": 2500000,
-            "medical_emergency": 1000000
+            "medical_emergency": 2500000
           },
           "unit": "INR",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-25..A-28",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "Rs. 25 lakh for all four products (supersedes 15/20/25/10 lakh). OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "mvp_amount_ceiling",
@@ -14352,7 +14640,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "ADR-0007 #1: every product is capped at Rs. 25 lakh in the MVP; above that, offer the cap or say it's outside what we offer."
+          "note": "ADR-0007 #1: every product is capped at Rs. 25 lakh in the MVP; above that, offer the cap or say it's outside what we offer.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -14380,11 +14670,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -14420,11 +14711,11 @@
         {
           "case_id": "PL-109-T2",
           "inputs": {
-            "requested_amount": 1200000,
+            "requested_amount": 2600000,
             "loan_purpose": "medical_emergency"
           },
           "expected_outcome": "FAIL",
-          "description": "counter-offer at the medical cap",
+          "description": "counter-offer at the Rs. 25 lakh medical cap",
           "expected_value": null
         },
         {
@@ -14484,12 +14775,14 @@
             "medical_emergency": 60
           },
           "unit": "months",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-25..A-28",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "Prototype max tenure per product, ASSUMPTION <= 84 months (product matrix values). Bajaj's 108 (PL-072) is the outer gate."
+          "note": "Prototype max tenure per product, <= 84 months (product matrix values). Bajaj's 108 (PL-072) is the outer gate. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -14517,11 +14810,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -14631,7 +14925,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "User directive 2026-11-03 22:53 asks for purpose documents; this supersedes the A-29 proposal (no purpose proof) in the prototype profile only. ASSUMPTION: Bajaj publishes no purpose-document list."
+          "note": "User directive 2026-11-03 22:53 asks for purpose documents; this supersedes the A-29 proposal (no purpose proof) in the prototype profile only. ASSUMPTION: Bajaj publishes no purpose-document list.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -14658,6 +14954,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -14758,7 +15055,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -14787,6 +15086,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
@@ -14875,7 +15175,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -14902,6 +15204,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -15001,7 +15304,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -15028,6 +15333,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -15120,7 +15426,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -15147,6 +15455,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -15232,7 +15541,9 @@
           "assumption_id": null,
           "value_origin": "V2_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -15259,6 +15570,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -15337,7 +15649,9 @@
           "assumption_id": "A-23",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -15366,6 +15680,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -15446,12 +15761,14 @@
           "name": "ntc_indicative_cap",
           "value": 200000,
           "unit": "INR",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-22",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         }
       ],
       "outcome": {
@@ -15479,11 +15796,12 @@
         "corpus": null
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
-      "approval_status": "PENDING_BUSINESS_APPROVAL",
+      "approval_status": "OWNER_APPROVED",
+      "owner_approval": "ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only",
       "zen_authority": "authoritative (prototype_synthetic)",
-      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "prototype_batch_approval": null,
       "public_guidance": null,
-      "effective_from": null,
+      "effective_from": "2026-11-04",
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
@@ -15577,7 +15895,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "Band edges from the user's example (22:53). B4 (> Rs. 25 lakh) is outside the MVP (ADR-0007 #1): a B4 request is sized into B1..B3 by PL-129 and flagged outside what we offer."
+          "note": "Band edges from the user's example (22:53). B4 (> Rs. 25 lakh) is outside the MVP (ADR-0007 #1): a B4 request is sized into B1..B3 by PL-129 and flagged outside what we offer.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -15604,6 +15924,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -15692,7 +16013,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "Lifted to the 700 ZEN floor (ADR-0009 #2) where the earlier 650/680 sat below it. B4 is outside the MVP."
+          "note": "Lifted to the 700 ZEN floor (ADR-0009 #2) where the earlier 650/680 sat below it. B4 is outside the MVP.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -15719,6 +16042,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -15816,7 +16140,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": "3 slips is the Bajaj list for every amount."
+          "note": "3 slips is the Bajaj list for every amount.",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "band_statement_months",
@@ -15832,7 +16158,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "3 months is Bajaj (BFL-PL-ELIG-DOCS#009); 6 months for B3/B4 is ASSUMPTION."
+          "note": "3 months is Bajaj (BFL-PL-ELIG-DOCS#009); 6 months for B3/B4 is ASSUMPTION.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -15861,6 +16189,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -15967,7 +16296,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "band_employer_categories",
@@ -15998,7 +16329,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "B4 restricting to PUBLIC/MNC is ASSUMPTION; Bajaj lists public, private or MNC for every amount (BFL-PL-ELIG-DOCS#007)."
+          "note": "B4 restricting to PUBLIC/MNC is ASSUMPTION; Bajaj lists public, private or MNC for every amount (BFL-PL-ELIG-DOCS#007).",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -16025,6 +16358,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -16118,12 +16452,14 @@
             "B3": 0.45
           },
           "unit": "ratio",
-          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "OWNER_DIRECTIVE",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": ""
+          "note": "Kept at 0.45, not raised to 0.50. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "always_review_bands",
@@ -16136,7 +16472,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -16163,6 +16501,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -16280,7 +16619,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "750 is the PRIME edge (A-20) and 650 the Bajaj floor; the grade scheme itself is ASSUMPTION."
+          "note": "750 is the PRIME edge (A-20) and 650 the Bajaj floor; the grade scheme itself is ASSUMPTION.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -16307,6 +16648,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -16436,7 +16778,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "A = v2 A04 (24x); lower grades are ASSUMPTION."
+          "note": "A = v2 A04 (24x); lower grades are ASSUMPTION.",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "grade_foir_cap",
@@ -16452,7 +16796,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "0.55/0.50/0.40 are A-21/A-04/A-22 (pending); 0.45 for C is ASSUMPTION."
+          "note": "0.55/0.50/0.40 are A-21/A-04/A-22 (pending); 0.45 for C is ASSUMPTION.",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "grade_band_cap",
@@ -16468,7 +16814,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "NTC 2 lakh = A-22; others ASSUMPTION. None = product cap only."
+          "note": "NTC 2 lakh = A-22; others ASSUMPTION. None = product cap only.",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "offer_rate",
@@ -16479,7 +16827,9 @@
           "assumption_id": "A-05",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "rounding",
@@ -16490,7 +16840,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -16519,6 +16871,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -16621,7 +16974,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -16648,6 +17003,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -16780,7 +17136,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -16807,6 +17165,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -16894,7 +17253,9 @@
           "context_chunks": [
             "BFL-PL-OVERVIEW#003"
           ],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "direct_to_payee",
@@ -16908,7 +17269,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "ASSUMPTION: Bajaj publishes disbursal to the borrower's bank account only."
+          "note": "ASSUMPTION: Bajaj publishes disbursal to the borrower's bank account only.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -16939,6 +17302,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -17087,7 +17451,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "ADR-0007 #1."
+          "note": "ADR-0007 #1.",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "counter_offer_above_cap",
@@ -17098,7 +17464,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "ADR-0007 #2. Supersedes v2 P05 (refer)."
+          "note": "ADR-0007 #2. Supersedes v2 P05 (refer).",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "pricing",
@@ -17109,7 +17477,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "ADR-0007 #3."
+          "note": "ADR-0007 #3.",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "flat_rate_by_product",
@@ -17120,69 +17490,81 @@
             "medical_emergency": 0.2
           },
           "unit": "per annum",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-05",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [
             "BFL-PL-RATES-FEES#003"
           ],
-          "note": "Inside Bajaj's indicative 10%-30.5% range (PL-075)."
+          "note": "Inside Bajaj's indicative 10%-30.5% range (PL-075); sizing-only: the 20% flat rate sizes affordability (EMI, FOIR, residual income, offer amount); it is not an offered or quoted rate (ADR-0011). OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "approved_maximum_foir",
           "value": 0.5,
           "unit": "ratio",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-04",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "Same value as PL-064."
+          "note": "Same value as PL-064. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "min_residual_income",
           "value": 15000,
           "unit": "INR/month",
-          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "V2_PROPOSAL",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "Same value as PL-065."
+          "note": "Same value as PL-065. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "max_amount_income_multiple",
           "value": 24,
           "unit": "x net monthly income",
-          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "V2_PROPOSAL",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "Same value as PL-108."
+          "note": "Same value as PL-108; a backstop. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "ntc_indicative_cap",
           "value": 200000,
           "unit": "INR",
-          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": "A-22",
-          "value_origin": "DRAFT_ASSUMPTION",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "Same value as PL-118."
+          "note": "Same value as PL-118. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "b3_review_foir",
           "value": 0.45,
           "unit": "ratio",
-          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "approval_status": "OWNER_APPROVED",
           "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "OWNER_DIRECTIVE",
+          "value_origin": "OWNER_DECISION",
           "context_chunks": [],
-          "note": "Same value as PL-123: above Rs. 10 lakh the offer is sized at or below it, so a counter-offer never needs manual review on FOIR alone."
+          "note": "Same value as PL-123: above Rs. 10 lakh the offer is sized at or below it, so a counter-offer never needs manual review on FOIR alone. OWNER_APPROVED by ADR-0011 for prototype_synthetic only; not Bajaj policy.",
+          "owner_decision": "ADR-0011 (owner, 2026-11-04 00:29 IST)",
+          "profile_scope": "prototype_synthetic"
         },
         {
           "name": "evidence_tolerance",
@@ -17193,7 +17575,9 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "Same value as PL-126."
+          "note": "Same value as PL-126.",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "rounding",
@@ -17204,7 +17588,9 @@
           "assumption_id": null,
           "value_origin": "HARK_NEW_PROPOSAL",
           "context_chunks": [],
-          "note": ""
+          "note": "",
+          "owner_decision": null,
+          "profile_scope": null
         },
         {
           "name": "minimum_loan_amount",
@@ -17215,7 +17601,9 @@
           "assumption_id": null,
           "value_origin": "BAJAJ_PUBLISHED",
           "context_chunks": [],
-          "note": "Same value as PL-069; below it a counter-offer is impossible."
+          "note": "Same value as PL-069; below it a counter-offer is impossible.",
+          "owner_decision": null,
+          "profile_scope": null
         }
       ],
       "outcome": {
@@ -17250,6 +17638,7 @@
       },
       "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
       "zen_authority": "authoritative (prototype_synthetic)",
       "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
@@ -17303,8 +17692,8 @@
             "purpose_evidence_amount": 2400000
           },
           "expected_outcome": "PASS",
-          "description": "above the product cap: counter-offer at the cap, not a referral",
-          "expected_value": "COUNTER_OFFER"
+          "description": "Rs. 23 lakh is inside the Rs. 25 lakh cap (ADR-0011): approved in full",
+          "expected_value": "APPROVED"
         },
         {
           "case_id": "PL-129-T3",

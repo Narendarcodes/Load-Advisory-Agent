@@ -63,7 +63,8 @@ def test_approved_values_cite_the_right_corpus():
 def test_profiles_are_separate():
     pub = set(CAT["profiles"]["bajaj_published"]["rule_ids"])
     for r in RULES:
-        assert (r["rule_id"] in pub) == (r["approval_status"] in APPROVED and r["enabled"]), r["rule_id"]
+        proto_only = any(p.get("profile_scope") == "prototype_synthetic" for p in r["parameters"])  # ADR-0011
+        assert (r["rule_id"] in pub) == (r["approval_status"] in APPROVED and r["enabled"] and not proto_only), r["rule_id"]
     assert CAT["profiles"]["prototype_synthetic"]["not_for_live_use"] and CAT["profiles"]["bajaj_published"]["not_for_live_use"]
 
 
