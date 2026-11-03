@@ -5,6 +5,8 @@ corpus v3 chunks (saral_nbfc_policy, rbi_regulatory), retrieves the final top 5 
 writes:
   results/retrieval.jsonl           per item: per-collection hits and the final top 5 (chunk id, doc id, collection, score)
   results/retrieved_contexts.jsonl  per item: the final top 5 with ids, scores and chunk text (input to generation/judge)
+  results/candidates.jsonl          when queries.jsonl is shipped: per item, per query, per collection reranked top 20
+                                    at candidate depths 50 and 100 (merged into the final top 5 in the sandbox)
   results/retrieval_info.json, ir_metrics.jsonl, ir_summary.json (no-LLM recall@5 / MRR / nDCG), nvidia_smi_*.txt
 Generation and the DeepEval judge then run from the Hark sandbox through OmniRoute (eval_saral_deepeval.py generate/judge).
 Pushed as a private script kernel with GPU (2x T4) and internet, with the private dataset holding the chunks, the dev
@@ -22,6 +24,7 @@ LOG = OUT / "kernel_log.txt"
 T = {"start": time.time()}
 os.environ.setdefault("HF_HOME", "/tmp/hf")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+RERANK_DTYPE, RERANK_SET, CAND_K = "float16", "50,100", 20
 
 
 def log(msg):
@@ -75,7 +78,10 @@ def main():
        "transformers.__version__,torch.__version__)'", check=False)
     status["phases"]["install_s"] = round(time.time() - t)
     t = time.time()
-    r = sh(f"python {ev} retrieve --data {data} --repo {work} --out {OUT}", check=False)
+    # float16 reranker on T4 (no native bf16); when the dataset ships queries.jsonl (sandbox-written sub-queries) the
+    # retrieve phase also writes candidates.jsonl at each candidate depth for the sandbox merge phase
+    env = f"RERANK_DTYPE={RERANK_DTYPE} RERANK_CANDIDATES_SET={RERANK_SET} CAND_K={CAND_K}"
+    r = sh(f"{env} python {ev} retrieve --data {data} --repo {work} --out {OUT}", check=False)
     status["phases"]["retrieve_s"] = round(time.time() - t)
     log(gpu_snapshot("after_retrieval"))
     if r.returncode:

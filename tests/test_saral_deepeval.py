@@ -75,3 +75,42 @@ def test_report_reports_bars_and_breakdowns(tmp_path):
     assert compact["headline"]["AnswerRelevancy"]["pass"] is True
     assert "automated" in md and "## 8. Limitations (automated)" in md and "| hi |" in md and "| paraphrase |" in md
     assert compact["behaviour"]["refuse"]["deterministic_rate"] == 1.0
+
+
+# ------------------------------------------------------------------ v2 run: multi-query merge in the sandbox
+def _cand():
+    return {"qid": "A", "queries": ["Is there a wedding limit and how long can I repay?", "wedding loan limit",
+                                    "personal loan repayment tenure"],
+            "by_depth": {"50": [
+                {"saral_nbfc_policy": [["N1", 0.9], ["N2", 0.8], ["N3", 0.7], ["N4", 0.6], ["N5", 0.5]],
+                 "rbi_regulatory": [["R1", 0.4]]},
+                {"saral_nbfc_policy": [["W1", 0.95], ["N1", 0.9]], "rbi_regulatory": [["R2", 0.01]]},
+                {"saral_nbfc_policy": [["T1", 0.85]], "rbi_regulatory": []}]}}
+
+
+def test_merge_top_single_query_matches_the_baseline_union_cut():
+    ev = _load("eval_saral_deepeval")
+    conf = {"depth": "50", "router": False, "demote": 0.7, "subqueries": False, "original_first": 1, "min_score": 0.0}
+    assert [c for c, _ in ev.merge_top(_cand(), conf)] == ["N1", "N2", "N3", "N4", "N5"]
+
+
+def test_merge_top_gives_each_sub_query_a_slot():
+    ev = _load("eval_saral_deepeval")
+    conf = {"depth": "50", "router": False, "demote": 0.7, "subqueries": True, "original_first": 1, "min_score": 0.05}
+    got = [c for c, _ in ev.merge_top(_cand(), conf)]
+    assert got[0] == "N1" and "W1" in got and "T1" in got and "R2" not in got and len(got) == 5
+
+
+def test_cached_reranker_scores_each_pair_once():
+    ev = _load("eval_saral_deepeval")
+
+    class R:
+        calls = 0
+
+        def score(self, q, chunks):
+            R.calls += len(chunks)
+            return [len(c["text"]) for c in chunks]
+    cr = ev._CachedReranker(R())
+    a = cr.score("q", [{"chunk_id": "x", "text": "ab"}, {"chunk_id": "y", "text": "abc"}])
+    b = cr.score("q", [{"chunk_id": "y", "text": "abc"}, {"chunk_id": "z", "text": "a"}])
+    assert a == [2, 3] and b == [3, 1] and R.calls == 3

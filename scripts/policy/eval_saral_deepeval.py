@@ -71,6 +71,51 @@ def query_text(g):
 
 
 # ----------------------------------------------------------------------------------------------- retrieve
+class _CachedReranker:
+    """Memoise cross-encoder scores per (query, chunk): the same pair is scored once across candidate-depth settings."""
+
+    def __init__(self, inner):
+        self.inner, self.cache, self.model = inner, {}, getattr(inner, "model", None)
+
+    def score(self, query, chunks):
+        keys = [(query, c.get("chunk_id") or (c.get("title"), c.get("text"))) for c in chunks]
+        todo = [(k, c) for k, c in zip(keys, chunks) if k not in self.cache]
+        if todo:
+            for (k, _), s in zip(todo, self.inner.score(query, [c for _, c in todo])):
+                self.cache[k] = s
+        return [self.cache[k] for k in keys]
+
+
+CAND_K = int(os.environ.get("CAND_K", "20"))
+
+
+def _retrieve_candidates(a, gold_rows, queries, retrievers, flt, cfg, by_id):
+    """Per item, per query (original first, then the sandbox-written sub-queries), per collection: the reranked top
+    CAND_K, for each candidate depth in RERANK_CANDIDATES_SET. Written to candidates.jsonl; the sandbox `merge` phase
+    turns them into the final top 5 (rag.multiquery). No LLM runs here."""
+    sets = [int(x) for x in os.environ.get("RERANK_CANDIDATES_SET", str(cfg.rerank_candidates)).split(",") if x]
+    out, t0, d0, n0 = [], time.time(), cfg.depth, cfg.rerank_candidates  # the retrievers share this cfg object
+    for g in gold_rows:
+        q0 = query_text(g)
+        qs = [q0] + list((queries.get(g["qid"]) or {}).get("subqueries") or [])
+        row = {"qid": g["qid"], "queries": qs, "by_depth": {}}
+        for n in sets:
+            per_q = []
+            for q in qs:
+                per_col = {}
+                for col, r in retrievers.items():
+                    r.cfg.depth, r.cfg.rerank_candidates = max(d0, n), n
+                    per_col[col] = [[cid, round(float(sc), 5)] for cid, sc in r.search(q, flt, k=CAND_K)["results"]]
+                per_q.append(per_col)
+            row["by_depth"][str(n)] = per_q
+        out.append(row)
+    for r in retrievers.values():
+        r.cfg.depth, r.cfg.rerank_candidates = d0, n0
+    wjl(Path(a.out) / "candidates.jsonl", out)
+    return {"items": len(out), "queries": sum(len(r["queries"]) for r in out), "depth_settings": sets, "cand_k": CAND_K,
+            "seconds": round(time.time() - t0, 1)}
+
+
 def retrieve(a):
     sys.path.insert(0, a.repo)
     import torch
@@ -85,16 +130,20 @@ def retrieve(a):
     identity = index_identity(embed_model=EMBED, dimension=emb.get_sentence_embedding_dimension(), doc_prefix=DOC_PREFIX,
                               query_prompt=QUERY_PROMPT, query_prompt_text=(getattr(emb, "prompts", {}) or {}).get(QUERY_PROMPT))
     cfg, _, _ = load_rag_config(Path(a.repo) / "config" / "rag.yaml")
+    want = os.environ.get("RERANK_DTYPE", "bfloat16")  # T4 has no native bf16: float16 is ~20x faster there
     try:
+        if want != "bfloat16":
+            raise RuntimeError(f"RERANK_DTYPE={want}")
         reranker = CrossEncoderReranker(device=dev)
         reranker.score("probe", [{"title": "t", "text": "probe"}])
         rr_dtype = "bfloat16 (repo default)"
-    except Exception as e:  # T4: fall back to float32, same model
+    except Exception as e:  # T4: float16 when asked, else float32; same model
         from sentence_transformers import CrossEncoder
+        dt = torch.float16 if want == "float16" else torch.float32
         reranker = CrossEncoderReranker.__new__(CrossEncoderReranker)
-        reranker.model = CrossEncoder("BAAI/bge-reranker-v2-m3", device=dev, max_length=512,
-                                      model_kwargs={"torch_dtype": torch.float32})
-        rr_dtype = f"float32 (bf16 failed: {type(e).__name__})"
+        reranker.model = CrossEncoder("BAAI/bge-reranker-v2-m3", device=dev, max_length=512, model_kwargs={"torch_dtype": dt})
+        rr_dtype = f"{str(dt).split('.')[-1]} ({e if want != 'bfloat16' else 'bf16 failed: ' + type(e).__name__})"
+    reranker = _CachedReranker(reranker)
     embed_q = lambda q: emb.encode(q, prompt_name=QUERY_PROMPT, normalize_embeddings=True)  # noqa: E731
     from qdrant_client import QdrantClient, models
     retrievers, by_id, info = {}, {}, {"embed_model": EMBED, "embed_dtype": "float32", "reranker_dtype": rr_dtype,
@@ -115,8 +164,12 @@ def retrieve(a):
         retrievers[col] = HybridRetriever(BM25Index(chunks), dense, embed_q, reranker=reranker,
                                           chunks_by_id={c["chunk_id"]: c for c in chunks}, config=cfg)
     flt = RetrievalFilter(mode="current")  # as the G1 smoke test
+    gold_rows = load_golden(a.data, a.golden)
+    qpath = Path(a.data) / "queries.jsonl"
+    if qpath.exists():  # multi-query candidates (sub-queries written in the sandbox by the decompose phase)
+        info["candidates"] = _retrieve_candidates(a, gold_rows, {r["qid"]: r for r in jl(qpath)}, retrievers, flt, cfg, by_id)
     rows = []
-    for g in load_golden(a.data, a.golden):
+    for g in gold_rows:
         q, per, union = query_text(g), {}, []
         t = time.time()
         for col, r in retrievers.items():
@@ -138,6 +191,95 @@ def retrieve(a):
     info["seconds"] = round(time.time() - t0, 1)
     Path(a.out, "retrieval_info.json").write_text(json.dumps(info, indent=1), encoding="utf-8")
     print(json.dumps(info, indent=1))
+
+
+# ----------------------------------------------------------------------------------------------- decompose (sandbox)
+def decompose(a):
+    """Sub-queries for multi-query retrieval, written in the Hark sandbox through OmniRoute BEFORE retrieval (the Kaggle
+    kernel runs no LLM). rag.multiquery.DECOMPOSE_PROMPT, temperature 0, JSON mode; parse failures fall back to the
+    original question alone. Output: <data>/queries.jsonl, shipped to Kaggle with the chunks."""
+    sys.path.insert(0, a.repo)
+    from rag.multiquery import DECOMPOSE_PROMPT, parse_subqueries
+    gold = load_golden(a.data, a.golden)
+    models = [a.llm_model] + [m for m in os.environ.get("LLM_FALLBACK", "").split(",") if m]
+
+    def run(g):
+        users = [t["content"] for t in g["turns"] if t["role"] == "user"]
+        hist = ("Earlier in the conversation: " + " | ".join(users[:-1])) if len(users) > 1 else ""
+        body = {"temperature": 0.0, "max_tokens": 300, "response_format": {"type": "json_object"},
+                "messages": [{"role": "user", "content": DECOMPOSE_PROMPT.format(question=users[-1], history=hist)}]}
+        res, used, fb = chat_with_fallback(a.llm_base, body, models)
+        raw = (res or {}).get("choices", [{}])[0].get("message", {}).get("content") if res else None
+        return {"qid": g["qid"], "query": query_text(g), "subqueries": parse_subqueries(raw or "", query_text(g)),
+                "model_used": used, "fallback_used": fb, "llm_error": res is None}
+    import threading
+    part, lock = Path(a.data) / "queries.partial.jsonl", threading.Lock()
+    done = {r["qid"]: r for r in jl(part) if not r.get("llm_error")} if part.exists() else {}  # resumable in chunks
+    part.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in done.values()), encoding="utf-8")
+
+    def run_logged(g):
+        row = run(g)
+        with lock, part.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        return row
+    with ThreadPoolExecutor(int(os.environ.get("GEN_WORKERS", "4"))) as ex:
+        new_rows = {r["qid"]: r for r in ex.map(run_logged, [g for g in gold if g["qid"] not in done])}
+    rows = [done.get(g["qid"]) or new_rows[g["qid"]] for g in gold]
+    wjl(Path(a.data) / "queries.jsonl", rows)
+    print(json.dumps({"items": len(rows), "with_subqueries": sum(bool(r["subqueries"]) for r in rows),
+                      "llm_error": sum(r["llm_error"] for r in rows), "fallback": sum(r["fallback_used"] for r in rows)}))
+
+
+# ----------------------------------------------------------------------------------------------- merge (sandbox)
+def merge_config():
+    """MERGE_* env: candidate depth, router on/off and demotion, original-first slots, sub-query score floor."""
+    return {"depth": os.environ.get("MERGE_DEPTH", "50"), "router": os.environ.get("MERGE_ROUTER", "0") == "1",
+            "demote": float(os.environ.get("MERGE_DEMOTE", "0.7")), "subqueries": os.environ.get("MERGE_SUBQ", "1") == "1",
+            "original_first": int(os.environ.get("MERGE_ORIGINAL_FIRST", "1")),
+            "min_score": float(os.environ.get("MERGE_MIN_SCORE", "0.0"))}
+
+
+def merge_top(cand_row, conf, k=K):
+    from rag.multiquery import merge_collections, merge_multi_query, route_collections
+    per_q = cand_row["by_depth"][str(conf["depth"])]
+    if not conf["subqueries"]:
+        per_q = per_q[:1]
+    ranked = []
+    for q, per_col in zip(cand_row["queries"], per_q):
+        w = route_collections(q, conf["demote"]) if conf["router"] else None
+        ranked.append(merge_collections({c: [tuple(x) for x in v] for c, v in per_col.items()}, w))
+    return merge_multi_query(ranked, k=k, original_first=conf["original_first"], min_score=conf["min_score"])
+
+
+def merge(a):
+    """Final top 5 per item from Kaggle's candidates.jsonl (rag.multiquery), replacing retrieval.jsonl and
+    retrieved_contexts.jsonl. The Kaggle original-query top 5 is kept as retrieval_kaggle_single.jsonl."""
+    sys.path.insert(0, a.repo)
+    by_id = {c["chunk_id"]: c for col in COLLECTIONS for c in jl(Path(a.data) / f"{col}.chunks.jsonl")}
+    conf = merge_config()
+    cands = {r["qid"]: r for r in jl(Path(a.out) / "candidates.jsonl")}
+    single = Path(a.out) / "retrieval.jsonl"
+    keep = Path(a.out) / "retrieval_kaggle_single.jsonl"
+    if single.exists() and not keep.exists():
+        keep.write_text(single.read_text(encoding="utf-8"), encoding="utf-8")
+    rows = []
+    for g in load_golden(a.data, a.golden):
+        c = cands[g["qid"]]
+        top = merge_top(c, conf)
+        rows.append({"qid": g["qid"], "query": c["queries"][0], "queries": c["queries"], "merge": conf,
+                     "top5": [{"rank": i + 1, "chunk_id": cid, "document_id": by_id[cid]["document_id"],
+                               "collection": by_id[cid]["collection"], "score": round(sc, 4)} for i, (cid, sc) in enumerate(top)]})
+    wjl(Path(a.out) / "retrieval.jsonl", rows)
+    wjl(Path(a.out) / "retrieved_contexts.jsonl",
+        [{"qid": r["qid"], "query": r["query"],
+          "contexts": [{**h, "title": by_id[h["chunk_id"]]["title"], "section": by_id[h["chunk_id"]].get("section"),
+                        "approval_status": by_id[h["chunk_id"]].get("approval_status"), "text": by_id[h["chunk_id"]]["text"]}
+                       for h in r["top5"]]} for r in rows])
+    ri = Path(a.out) / "retrieval_info.json"
+    info = json.loads(ri.read_text(encoding="utf-8")) if ri.exists() else {}
+    info["merge"] = conf
+    ri.write_text(json.dumps(info, indent=1), encoding="utf-8")
+    print(json.dumps({"items": len(rows), "merge": conf}))
 
 
 # ----------------------------------------------------------------------------------------------- generate
@@ -291,9 +433,13 @@ def generate(a):
                     "llm_error": res is None, "prompt_tokens": ptok, "completion_tokens": ctok,
                     "seconds": round(time.time() - t, 2)}
         ab = bool(out.get("abstain"))
-        ans = str(out.get("answer") or "").strip() or P.template("policy_abstain", loc)
+        raw_ans = str(out.get("answer") or "").strip() or P.template("policy_abstain", loc)
+        # what the borrower sees: guards.sanitize_answer strips passage labels / retrieval words when the agent code
+        # has it (PR #46); the raw draft is kept so the report counts leaks before and after the sanitiser
+        ans = G.sanitize_answer(raw_ans) if hasattr(G, "sanitize_answer") else raw_ans
         cl = [] if ab else (out.get("citations") or [])
-        return {**base, "abstain": ab, "answer": ans, "citation_labels": cl, "cited": _labels_to_ids(cl, ids),
+        return {**base, "abstain": ab, "clarify": bool(out.get("clarify")), "answer": ans, "answer_raw": raw_ans,
+                "sanitised": ans != raw_ans, "citation_labels": cl, "cited": _labels_to_ids(cl, ids),
                 "parse_error": False, "llm_error": False, "prompt_tokens": ptok, "completion_tokens": ctok,
                 "seconds": round(time.time() - t, 2)}
 
@@ -562,6 +708,11 @@ def summarise(a):
                "cited_gold_doc": bool(gd & {c.split("#")[0] for c in r["cited"]}) if gd else None,
                "cited_any": bool(r["cited"]),
                "leak_hits": sorted(set(LEAK_CASED.findall(text)) | {w.lower() for w in LEAK_WORDS.findall(text)}),
+               "leak_hits_raw": sorted(set(LEAK_CASED.findall(r.get("answer_raw", text)))
+                                       | {w.lower() for w in LEAK_WORDS.findall(r.get("answer_raw", text))}),
+               "passage_label_leak": bool(re.search(r"\bP[1-5]\b|\bpassages?\b", text, re.I)),
+               "passage_label_leak_raw": bool(re.search(r"\bP[1-5]\b|\bpassages?\b", r.get("answer_raw", text), re.I)),
+               "clarify_flag": bool(r.get("clarify")),
                "script_ok": (len(SCRIPT[g["language"]].findall(text)) >= 0.3 * max(1, len(re.findall(r"\w", text))))
                if g["language"] in SCRIPT else None,
                "asked_question": "?" in text or "？" in text or "।?" in text,
@@ -611,6 +762,9 @@ def summarise(a):
     ansr = [p for p in per if p["expected_behavior"] in ("answer", "answer_note")]
     det_agg = {k: rate(k, ansr) for k in ("gold_chunk_in_top5", "gold_doc_in_top5", "cited_gold_chunk", "cited_gold_doc")}
     det_agg["leak_any"] = {"n": len(per), "true": sum(bool(p["leak_hits"]) for p in per)}
+    det_agg["leak_any_raw"] = {"n": len(per), "true": sum(bool(p["leak_hits_raw"]) for p in per)}
+    det_agg["passage_label_leak"] = {"n": len(per), "true": sum(p["passage_label_leak"] for p in per)}
+    det_agg["passage_label_leak_raw"] = {"n": len(per), "true": sum(p["passage_label_leak_raw"] for p in per)}
     det_agg["script_ok"] = rate("script_ok", per)
     from collections import Counter
     tax = Counter(t for p in per for t in p["failures"])
@@ -747,7 +901,7 @@ def provenance(a):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("phase", choices=["retrieve", "generate", "judge", "summarise", "ir", "provenance"])
+    ap.add_argument("phase", choices=["decompose", "retrieve", "merge", "generate", "judge", "summarise", "ir", "provenance"])
     ap.add_argument("--data", required=True)
     ap.add_argument("--repo", default=str(Path(__file__).resolve().parents[2]))
     ap.add_argument("--out", required=True)
@@ -756,7 +910,7 @@ def main(argv=None):
     ap.add_argument("--golden", default=None, help="golden file (default <data>/golden.jsonl)")
     a = ap.parse_args(argv)
     Path(a.out).mkdir(parents=True, exist_ok=True)
-    {"retrieve": retrieve, "generate": generate, "judge": judge, "summarise": summarise, "ir": ir,
+    {"decompose": decompose, "merge": merge, "retrieve": retrieve, "generate": generate, "judge": judge, "summarise": summarise, "ir": ir,
      "provenance": provenance}[a.phase](a)
 
 
