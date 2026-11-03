@@ -1,9 +1,6 @@
-import type { DecisionCard } from "../types";
-import { limitText } from "./meter";
-
 /**
- * Plain words for the activity trail. Each line is either a real graph stage the server reported
- * (PROGRESS_LABELS' allowlist) or a rule row from the recorded decision card. Nothing is inferred.
+ * Plain words for the activity trail. Each line is a real graph stage the server reported
+ * (PROGRESS_LABELS' allowlist). There is no line per rule: a recorded value or cut-off is never repeated.
  */
 const STAGES: Record<string, { doing: string; done: string }> = {
   authenticate: { doing: "Confirming this is your application", done: "Confirmed this is your application" },
@@ -19,19 +16,7 @@ export function trailLabel(stage: string | null | undefined, done: boolean): str
   return done ? entry.done : entry.doing;
 }
 
-function lower(name: string): string {
-  return name.replace(/\s*\([^)]*\)\s*$/, "").replace(/^\w/, (c) => c.toLowerCase());
-}
-
-/** "Compared credit score: 612 against a minimum of 650 (not met)", for each evaluated rule. */
-export function ruleTrailLines(card: DecisionCard | undefined): string[] {
-  if (!card) return [];
-  return card.rules
-    .filter((rule) => (rule.result === "PASS" || rule.result === "FAIL") && rule.actual && rule.operator)
-    .map((rule) => {
-      const bound = rule.operator === ">=" ? "a minimum of" : "a limit of";
-      const limit = limitText(rule.threshold, rule.threshold_value ?? 0);
-      const outcome = rule.result === "PASS" ? "met" : "not met";
-      return `Compared ${lower(rule.name)}: ${rule.actual} against ${bound} ${limit} (${outcome})`;
-    });
+/** The finished turn's trail: one line per real stage, unknown stages dropped. */
+export function trailLines(stages: readonly string[]): string[] {
+  return stages.map((stage) => trailLabel(stage, true)).filter((line): line is string => Boolean(line));
 }

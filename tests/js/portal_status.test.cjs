@@ -59,3 +59,17 @@ test("history is dated, in borrower words, and marks only the newest entry as cu
 	assert.equal(S.historyItems([{ at: "x", event: "Evaluated (ERROR)" }])[0].label, "Checks could not finish");
 	assert.equal(S.historyItems([{ at: "x", event: "Evaluated (REVIEW)" }])[0].label, "Checks finished: needs a person's review");
 });
+
+test("history never shows raw engine text: digits, rule ids, cut-offs or scores become a plain label", () => {
+	const items = S.historyItems([
+		{ at: "2026-10-22 09:00:00", event: "Started" },
+		{ at: "2026-10-22 14:30:00", event: "Rule PL-014 failed: 4 months < 6" },
+		{ at: "2026-10-22 14:30:01", event: "FOIR above threshold" },
+		{ at: "2026-10-22 14:30:02", event: "Credit score low" },
+		{ at: "2026-10-22 14:30:03", event: "Evaluated (REJECTED)" },
+	]);
+	assert.deepEqual(
+		items.map((item) => item.label),
+		["Started", "Update recorded", "Update recorded", "Update recorded", "Checks finished: not approved"],
+	);
+});

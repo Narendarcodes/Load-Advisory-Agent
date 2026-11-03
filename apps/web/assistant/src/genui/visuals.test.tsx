@@ -1,9 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { meterModel, whatIfComparisons } from "./meter";
-import { ruleTrailLines, trailLabel } from "./trail";
-import { parseCitation, parseDecisionCard, parseDecisionRule, parsePublicState } from "./schema";
+import { trailLabel, trailLines } from "./trail";
+import { parseCitation, parseDecisionCard, parsePublicState } from "./schema";
 import { buildBlocks, renderBlock, type GenUiContext } from "./registry";
 
 const context: GenUiContext = { application: "ACC-1", busy: false, onAsk: () => {} };
@@ -39,67 +38,11 @@ function rejectedCard() {
   })!;
 }
 
-describe("schema: v2 additive fields", () => {
-  it("keeps the engine numbers and operator on a rule row, and drops anything malformed", () => {
-    const rule = parseDecisionRule(FOIR)!;
-    expect([rule.actual_value, rule.threshold_value, rule.operator]).toEqual([0.5, 0.45, "<="]);
-    const bad = parseDecisionRule({ ...FOIR, actual_value: "0.5", threshold_value: Number.NaN, operator: "==" })!;
-    expect([bad.actual_value, bad.threshold_value, bad.operator]).toEqual([null, null, null]);
-  });
-
+describe("schema", () => {
   it("keeps a citation excerpt as bounded plain text", () => {
     const citation = parseCitation({ label: "S1", document_id: "D", title: "T", excerpt: "x".repeat(900) })!;
     expect(citation.excerpt!.length).toBeLessThanOrEqual(601);
     expect(parseCitation({ label: "S1", document_id: "D", title: "T", excerpt: 7 })!.excerpt).toBeNull();
-  });
-});
-
-describe("meterModel", () => {
-  it("places a ceiling rule's value and limit on one scale and says which side passes", () => {
-    const model = meterModel(parseDecisionRule(FOIR)!)!;
-    expect(model.passes).toBe(false);
-    expect(model.direction).toBe("at_most");
-    expect(model.valuePct).toBeGreaterThan(model.limitPct);
-    expect(model.valueLabel).toBe("50.0%");
-    expect(model.limitLabel).toBe("45.0%");
-  });
-
-  it("uses the 300 to 900 bureau range for a credit score", () => {
-    const model = meterModel(parseDecisionRule(SCORE)!)!;
-    expect(model.min).toBe(300);
-    expect(model.max).toBe(900);
-    expect(model.valuePct).toBeCloseTo(((612 - 300) / 600) * 100, 5);
-    expect(model.limitPct).toBeCloseTo(((650 - 300) / 600) * 100, 5);
-    expect(model.direction).toBe("at_least");
-  });
-
-  it("draws nothing for a rule the engine did not evaluate or without an operator", () => {
-    expect(meterModel(parseDecisionRule({ ...SCORE, actual_value: null })!)).toBeNull();
-    expect(meterModel(parseDecisionRule({ ...SCORE, operator: undefined })!)).toBeNull();
-    expect(meterModel(parseDecisionRule({ rule_id: "X", result: "PASS" })!)).toBeNull();
-  });
-
-  it("reports pass from the recorded result, never recomputes it", () => {
-    const model = meterModel(parseDecisionRule({ ...SCORE, result: "PASS" })!)!;
-    expect(model.passes).toBe(true);
-  });
-});
-
-describe("whatIfComparisons", () => {
-  it("pairs a changed field with its recorded rule value and the simulated result", () => {
-    const rows = whatIfComparisons(
-      { changes: { credit_score: 720 }, rule_results: { MIN_CREDIT_SCORE: "PASS", FOIR_MAX_45: "FAIL" } },
-      rejectedCard(),
-    );
-    expect(rows).toEqual([
-      expect.objectContaining({ field: "credit_score", label: "Credit score", before: 612, after: 720, recorded: "FAIL", simulated: "PASS" }),
-    ]);
-  });
-
-  it("does not invent a before value for a field with no single recorded rule", () => {
-    const rows = whatIfComparisons({ changes: { monthly_obligations: 9000 }, rule_results: { FOIR_MAX_45: "PASS" } }, rejectedCard());
-    expect(rows[0].before).toBeNull();
-    expect(rows[0].after).toBe(9000);
   });
 });
 
@@ -110,21 +53,18 @@ describe("activity trail", () => {
     expect(trailLabel("made_up", true)).toBeNull();
   });
 
-  it("adds one line per evaluated rule with the recorded figures", () => {
-    const lines = ruleTrailLines(rejectedCard());
-    expect(lines).toEqual([
-      "Compared existing EMIs vs income: 50.0% against a limit of 45.0% (not met)",
-      "Compared credit score: 612 against a minimum of 650 (not met)",
-    ]);
+  it("never adds a line per rule: the trail names the stages only", () => {
+    expect(trailLines(["load_evidence", "compose"])).toEqual(["Read your recorded decision", "Wrote the explanation"]);
+    expect(trailLines(["load_evidence", "made_up"]).join(" ")).not.toMatch(/\d|score|limit|minimum/i);
   });
 });
 
 describe("rendered v2 blocks", () => {
-  it("draws a meter per evaluated rule and lists unevaluated ones without a bar", () => {
+  it("draws no meter and no rule row on a recorded decision", () => {
     const markup = renderToStaticMarkup(<>{renderBlock({ type: "decision_card", card: rejectedCard() }, context)}</>);
-    expect(markup.match(/class="meter"/g)?.length).toBe(2);
-    expect(markup).toContain("Time in job");
-    expect(markup).toContain("Not checked");
+    expect(markup).not.toContain("meter");
+    expect(markup).not.toContain("Time in job");
+    expect(markup).not.toMatch(/612|650|45/);
   });
 
   it("renders citations as expandable chips that show the excerpt as text", () => {

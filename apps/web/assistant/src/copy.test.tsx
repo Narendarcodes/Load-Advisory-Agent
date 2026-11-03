@@ -53,12 +53,12 @@ describe("borrower-visible copy in the assistant", () => {
     const blocks = [
       ...answerBlocks(state, context),
       { type: "what_if_form" as const, card: state.decision_card },
-      { type: "application_context" as const, application: "LA-1" },
     ];
-    expect(blocks.length).toBeGreaterThan(6);
+    expect(blocks.length).toBeGreaterThan(5);
     const text = visible(renderToStaticMarkup(<>{blocks.map((block, i) => <div key={i}>{renderBlock(block, context)}</div>)}</>));
     expect(text).not.toMatch(ACRONYMS);
     expect(text).not.toMatch(WORDS);
-    expect(text).toContain("Simulation, not your decision");
+    expect(text).toContain("Estimate only, your application is unchanged");
+    expect(text).not.toMatch(/CIBIL|FOIR|threshold|cut-?off|PL-|score/i);
   });
 });

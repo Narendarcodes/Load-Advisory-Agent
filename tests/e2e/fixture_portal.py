@@ -84,7 +84,10 @@ REASONS = {
 		{"code": "CREDIT_SCORE_LOW", "text": "Your credit score is below the minimum this product accepts (650)."},
 	],
 	"APPROVED": [],
-	"REVIEW": [],
+	# Raw engine text on purpose: the portal must show only the plain theme, never this wording or its numbers.
+	"REVIEW": [
+		{"code": "PL-104", "text": "Signature similarity 0.41 is below the 0.60 cut-off."},
+	],
 }
 
 
@@ -186,7 +189,7 @@ class Fixtures:
 
 	def decision(self, name: str) -> dict:
 		row = self.row(name)
-		if not row["decision"] or row["state"] == "MANUAL_REVIEW":
+		if not row["decision"]:
 			return {"available": False}
 		return {
 			"available": True, "decision": row["decision"], "lifecycle": row["state"],

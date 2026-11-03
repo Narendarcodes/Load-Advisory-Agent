@@ -152,6 +152,7 @@ export function Island({ context }: { context: AssistantContext }) {
         onConversationReset={conversationConflict}
         storageKey={turnsStorage}
         csrfToken={context.csrfToken}
+        locale={context.locale}
       />
       <aside className="assistant__aside tools-drawer" aria-label="Conversation controls" hidden={!drawer}>
         <div className="drawer__head">
@@ -206,7 +207,7 @@ export function Island({ context }: { context: AssistantContext }) {
           </p>
         </section>
         <div id="drawer-plan" hidden={drawer !== "plan"}>
-          <PlanPanel plan={state.improvement_plan ?? []} />
+          <PlanPanel plan={state.improvement_plan ?? []} locale={context.locale} />
         </div>
       </aside>
     </div>

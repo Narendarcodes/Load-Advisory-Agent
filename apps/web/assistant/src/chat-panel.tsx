@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import type { AbstractAgent, Message } from "@copilotkit/react-core/v2";
 
-import type { PublicState } from "./types";
+import type { Locale, PublicState } from "./types";
 import { buildBlocks, renderBlock, type GenUiBlock, type GenUiContext } from "./genui/registry";
 import { parsePublicState } from "./genui/schema";
-import { trailLabel, ruleTrailLines } from "./genui/trail";
+import { trailLabel, trailLines } from "./genui/trail";
 import { Markdown } from "./markdown";
 import { sendAnswerFeedback } from "./feedback";
 import {
@@ -127,12 +127,9 @@ function LiveSteps({ stages }: { stages: string[] }) {
   );
 }
 
-/** After the answer: the stages that really ran, then the recorded figures the answer read. */
-function DoneSteps({ stages, state, open }: { stages: string[]; state?: PublicState; open: boolean }) {
-  const lines = [
-    ...stages.map((stage) => trailLabel(stage, true)).filter((line): line is string => Boolean(line)),
-    ...ruleTrailLines(state?.decision_card),
-  ];
+/** After the answer: the stages that really ran. Never a recorded value, cut-off or rule. */
+function DoneSteps({ stages, open }: { stages: string[]; state?: PublicState; open: boolean }) {
+  const lines = trailLines(stages);
   if (!lines.length) return null;
   return (
     <details className="run-steps trail" open={open}>
@@ -187,6 +184,8 @@ interface ChatPanelProps {
   storageKey?: string;
   /** Present when the page can post feedback; thumbs are hidden otherwise. */
   csrfToken?: string;
+  /** The profile language for reason copy on the cards. */
+  locale?: Locale;
 }
 
 export function ChatPanel({
@@ -199,6 +198,7 @@ export function ChatPanel({
   onConversationReset,
   storageKey,
   csrfToken,
+  locale = "en",
 }: ChatPanelProps) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -329,6 +329,7 @@ export function ChatPanel({
   const disabled = busy || !isReady;
   const genui: GenUiContext = {
     application,
+    locale,
     busy: disabled,
     onAsk: (question) => void run(question, true),
     onOpenWhatIf: () => setWhatIfOpen(true),
