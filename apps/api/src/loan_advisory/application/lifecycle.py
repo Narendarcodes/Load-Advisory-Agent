@@ -281,6 +281,13 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
                        now=now, outcome=blocks["outcome"], review=blocks["review"],
                        bureau=blocks["bureau"])
     rec["flags"] = flags
+    if gate.review_required and gate.category != "PROVIDER_FAILURE" and configured_policy_version() == V2_VERSION:
+        # Catalogue v2 vocabulary: a bureau no-hit / thin-file / data-quality gate is a referral (or an info
+        # request), not an engine error. The DQ codes stay in rec["review"] for the officer; the borrower gets a
+        # plain reason category only.
+        rec["decision"] = rec["outcome"] = "MORE_INFORMATION_REQUIRED" if to == "INFO_REQUESTED" else "MANUAL_REVIEW"
+        rec["reason_categories"] = ["DETAILS_NOT_VERIFIED"]
+        rec["error"] = None
     sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=ev.get("zen_trace") or {},
                  expected_application=application_ref)
     return Outcome(application_ref, current_state, to, rec, missing, flags)

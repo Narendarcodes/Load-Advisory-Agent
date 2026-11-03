@@ -5,6 +5,7 @@ application id is indistinguishable from a missing one (404).
 """
 
 import json
+import re
 import uuid
 
 import frappe
@@ -270,7 +271,14 @@ def _borrower_detail(record, application_state: str) -> dict:
 		if entry.get("customer_visible") and entry.get("result") == "FAIL"
 	]
 	review = detail.get("review") or {}
-	missing = (detail.get("inputs") or {}).get("missing_fields") or []
+	missing = _plain_missing((detail.get("inputs") or {}).get("missing_fields") or [])
+	if not reasons:
+		# A referral or info request carries no failed customer-visible rule; give the plain category instead.
+		reasons = [
+			{"code": key, "category": key, "text": REASON_TEXT[key]}
+			for key in detail.get("reason_categories") or []
+			if key in REASON_TEXT
+		]
 	return {
 		"outcome": detail.get("outcome") or record.decision,
 		"reasons": reasons,
@@ -283,6 +291,34 @@ def _borrower_detail(record, application_state: str) -> dict:
 		# D-06: the borrower's own offer (amount, EMI, tenure, whether it is a counter-offer) and nothing else.
 		"offer": _borrower_offer(detail.get("offer")),
 	}
+
+
+# D-07: catalogue-v2 rule ids must never reach the borrower; each maps to the plain thing they can supply.
+RULE_FIELD = {
+	"PL-001": "date_of_birth", "PL-002": "date_of_birth", "PL-073": "date_of_birth", "PL-003": "nationality",
+	"PL-004": "employment_type", "PL-005": "employment_type", "PL-006": "identity_verification",
+	"PL-008": "monthly_income", "PL-012": "salary_credits", "PL-078": "salary_credits",
+	"PL-014": "employment_months", "PL-019": "credit_history_details", "PL-020": "credit_history_details",
+	"PL-024": "credit_history_details", "PL-028": "credit_history_details", "PL-069": "loan_amount",
+	"PL-070": "loan_amount", "PL-071": "tenure", "PL-072": "tenure", "PL-076": "loan_purpose",
+	"PL-088": "documents", "PL-094": "identity_documents", "PL-095": "consents", "PL-102": "pan",
+	"PL-111": "purpose_documents", "PL-112": "loan_purpose", "PL-121": "income_documents",
+}
+REASON_TEXT = {
+	"DETAILS_NOT_VERIFIED": "We couldn't verify some details.",
+	"DOCUMENTS_INCOMPLETE_OR_UNCLEAR": "Some documents are missing or unclear.",
+}
+
+
+def _plain_missing(fields) -> list[str]:
+	out = []
+	for field in fields:
+		name = str(field)
+		if re.match(r"^[A-Z]{2,}-\d+$", name):
+			name = RULE_FIELD.get(name, "other_details")
+		if name not in out:
+			out.append(name)
+	return out
 
 
 def _borrower_offer(offer) -> dict | None:

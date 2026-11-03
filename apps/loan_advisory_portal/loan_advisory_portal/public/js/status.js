@@ -74,7 +74,34 @@
 		});
 	}
 
-	var api = { statusSentence: statusSentence, historyItems: historyItems };
+	/* D-05: evaluation times are stored in UTC (a value without a zone is UTC); borrowers read them in IST. */
+	function assessedText(value) {
+		if (!value) return "";
+		var text = String(value).trim().replace(" ", "T");
+		if (!/(Z|[+-]\d\d:?\d\d)$/.test(text)) text += "Z";
+		var when = new Date(text);
+		if (isNaN(when.getTime())) return "";
+		var parts = {};
+		new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric",
+			hour: "numeric", minute: "2-digit", hour12: true }).formatToParts(when).forEach(function (p) { parts[p.type] = p.value; });
+		return "Assessed " + parts.day + " " + parts.month + " " + parts.year + ", " + parts.hour + ":" + parts.minute + " " +
+			String(parts.dayPeriod || "").toLowerCase() + " IST";
+	}
+
+	/* D-03: document type codes (PAYSLIP_1) become plain labels (Payslip 1) in the borrower picker. */
+	var DOC_WORDS = { PAN: "PAN card", AADHAAR: "Aadhaar card", AADHAAR_LAST4: "Aadhaar card", ITR: "Income tax return",
+		FORM_16: "Form 16", KYC: "KYC document", GST: "GST certificate" };
+	function docLabel(code) {
+		var text = String(code == null ? "" : code).trim();
+		if (!/^[A-Z0-9_]+$/.test(text)) return text;
+		if (DOC_WORDS[text]) return DOC_WORDS[text];
+		var number = /_(\d+)$/.exec(text);
+		var base = number ? text.slice(0, -number[0].length) : text;
+		var words = DOC_WORDS[base] || base.toLowerCase().replace(/_/g, " ").replace(/^./, function (c) { return c.toUpperCase(); });
+		return number ? words + " " + number[1] : words;
+	}
+
+	var api = { statusSentence: statusSentence, historyItems: historyItems, assessedText: assessedText, docLabel: docLabel };
 	if (typeof module === "object" && module.exports) module.exports = api;
 	else root.PortalStatus = api;
 })(this);
