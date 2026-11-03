@@ -119,7 +119,8 @@ SCENARIOS: tuple[Scenario, ...] = (
     # ---- E repayment and delinquency
     S("DPD_30", ("E",), ("PL-040", "PL-041", "PL-051"), ("C04",), "REFER", "One 30-DPD on the card; score stays above the 700 floor.",
       bureau="overlay:DPD_30"),
-    S("DPD_60", ("E",), ("PL-042", "PL-044", "PL-045"), ("C05",), "DECLINE", "60-DPD on the PL within 12 months.",
+    S("DPD_60", ("E",), ("PL-042", "PL-044", "PL-045"), ("C05",), "REFER",
+      "60-DPD on the PL within 12 months: manual review, not a decline (ADR-0011). A score below 700 still declines (PL-029).",
       bureau="overlay:DPD_60", also_triggers=("C01",)),
     S("DPD_90", ("E",), ("PL-043",), ("C06",), "DECLINE", "90+ DPD on the auto loan within 24 months.",
       bureau="overlay:DPD_90", also_triggers=("C01",)),
@@ -140,7 +141,8 @@ SCENARIOS: tuple[Scenario, ...] = (
     # ---- H loan request
     S("PURPOSE_NOT_OFFERED", ("H",), ("PL-076",), ("P06",), "DECLINE", "Purpose is speculative trading."),
     S("PURPOSE_OVER_CAP", ("H",), ("PL-109",), ("P01", "P05"), "COUNTER_OFFER",
-      "Wedding loan of 18L (cap 15L): COUNTER_OFFER at the largest passing amount (ADR-0007 #2; v2 P05 'refer' superseded)."),
+      "Wedding loan of 28L (cap 25L, ADR-0011): COUNTER_OFFER at the largest passing amount, outside what we offer "
+      "(ADR-0007 #2; v2 P05 'refer' superseded).", also_triggers=("PL-123",)),
     S("AMOUNT_BELOW_MIN", ("H",), ("PL-069",), ("E04",), "DECLINE", "Requested 30,000 (minimum 40,000)."),
     S("TENURE_OUT_OF_RANGE", ("H",), ("PL-071", "PL-072"), ("E06",), "DECLINE",
       "Tenure 120 months (range 12-108).", also_triggers=("P05",)),

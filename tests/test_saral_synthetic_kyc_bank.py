@@ -278,7 +278,29 @@ def test_each_scenario_raises_its_target_and_prime_raises_nothing():
         assert EXPECTED[sc.id] <= fired, (a["applicant_id"], sc.id, fired)
         unexpected = fired - EXPECTED[sc.id] - allowed
         assert not unexpected, (a["applicant_id"], sc.id, unexpected)
+        if sc.id == "DPD_60" and path == "DECLINE:CREDIT_SCORE":  # ADR-0011: review, but a score under 700 declines (PL-029)
+            assert a["zen_inputs"]["bureau_score"] < product.ZEN_SCORE_FLOOR, a["applicant_id"]
+            continue
         assert a["expected_outcome_hint"]["outcome"] == sc.outcome
+
+
+def test_adr_0011_labels():
+    """ADR-0011 (owner, 2026-11-04 00:29 IST), prototype_synthetic only: 60+ DPD in 12 months is manual review,
+    every product is capped at Rs. 25 lakh, and the minimum income is Rs. 25,001 in every city."""
+    assert BY_ID["DPD_60"].outcome == "REFER"
+    assert all(p["max_amount"] == 2_500_000 for p in product.PRODUCTS.values())
+    assert [p["max_tenure"] for p in product.PRODUCTS.values()] == [60, 84, 84, 60]
+    assert {product.income_floor(c) for c in ("Pune", "Mumbai", "Delhi", "Bengaluru", "Mahabubnagar")} == {25_001}
+    n = 0
+    for a in universe()["applicants"]:
+        path, score = a["label"]["expected_path"], a["zen_inputs"]["bureau_score"]
+        if a["scenario"]["id"] == "DPD_60":
+            n += 1
+            want = "DECLINE:CREDIT_SCORE" if score is not None and score < product.ZEN_SCORE_FLOOR else "REFER:DELINQUENCY"
+            assert path == want, (a["applicant_id"], score, path)
+        if path == "DECLINE:INCOME":
+            assert a["zen_inputs"]["monthly_net_income"] < 25_001, a["applicant_id"]
+    assert n >= 2
 
 
 def test_decision_paths_all_exercised():
