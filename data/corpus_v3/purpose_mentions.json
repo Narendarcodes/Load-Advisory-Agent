@@ -1,0 +1,89 @@
+{
+ "wedding": {
+  "pattern": "\\bwedding|\\bmarriage",
+  "documents": [
+   "BFL-PL-OVERVIEW",
+   "BFL-PL-SALARIED"
+  ],
+  "chunks": [
+   "BFL-PL-OVERVIEW#002",
+   "BFL-PL-OVERVIEW#016",
+   "BFL-PL-SALARIED#002"
+  ]
+ },
+ "higher_education": {
+  "pattern": "\\beducation|\\bstudy abroad|\\bhigher stud|\\btuition|\\bcollege fee|\\bcourse fee",
+  "documents": [
+   "BFL-PL-ELIG-DOCS",
+   "BFL-PL-OVERVIEW",
+   "BFL-PL-SALARIED"
+  ],
+  "chunks": [
+   "BFL-PL-OVERVIEW#002",
+   "BFL-PL-OVERVIEW#016",
+   "BFL-PL-ELIG-DOCS#002",
+   "BFL-PL-SALARIED#002"
+  ]
+ },
+ "home_renovation": {
+  "pattern": "\\brenovat|\\bhome improvement|\\bhome repair|\\bhome makeover|\\brefurbish",
+  "documents": [
+   "BFL-PL-ELIG-DOCS",
+   "BFL-PL-OVERVIEW",
+   "BFL-PL-SALARIED"
+  ],
+  "chunks": [
+   "BFL-PL-OVERVIEW#002",
+   "BFL-PL-OVERVIEW#003",
+   "BFL-PL-OVERVIEW#016",
+   "BFL-PL-OVERVIEW#026",
+   "BFL-PL-ELIG-DOCS#002",
+   "BFL-PL-SALARIED#002"
+  ]
+ },
+ "medical_emergency": {
+  "pattern": "\\bmedical|\\bhospital|\\bhealth ?care|\\bsurgery|\\bemergenc",
+  "documents": [
+   "BFL-PL-ELIG-DOCS",
+   "BFL-PL-OVERVIEW",
+   "BFL-PL-SALARIED"
+  ],
+  "chunks": [
+   "BFL-PL-OVERVIEW#002",
+   "BFL-PL-OVERVIEW#012",
+   "BFL-PL-OVERVIEW#016",
+   "BFL-PL-OVERVIEW#025",
+   "BFL-PL-ELIG-DOCS#002",
+   "BFL-PL-ELIG-DOCS#008",
+   "BFL-PL-SALARIED#002",
+   "BFL-PL-SALARIED#008",
+   "BFL-PL-SALARIED#009"
+  ]
+ },
+ "travel": {
+  "pattern": "\\btravel|\\bvacation|\\bholiday",
+  "documents": [
+   "BFL-GRIEVANCE",
+   "BFL-PL-OVERVIEW",
+   "BFL-PL-SALARIED"
+  ],
+  "chunks": [
+   "BFL-PL-OVERVIEW#001",
+   "BFL-PL-OVERVIEW#002",
+   "BFL-PL-OVERVIEW#016",
+   "BFL-PL-SALARIED#002",
+   "BFL-PL-SALARIED#009",
+   "BFL-GRIEVANCE#000",
+   "BFL-GRIEVANCE#001"
+  ]
+ },
+ "debt_consolidation": {
+  "pattern": "\\bdebt consolidation|\\bconsolidat\\w* (?:your |multiple |existing )?(?:debt|loan)",
+  "documents": [
+   "BFL-PL-OVERVIEW"
+  ],
+  "chunks": [
+   "BFL-PL-OVERVIEW#016"
+  ]
+ }
+}
