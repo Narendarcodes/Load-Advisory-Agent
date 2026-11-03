@@ -14,6 +14,19 @@
         "effective_from": "2026-10-08",
         "effective_to": null,
         "supersedes": null
+      },
+      "synthetic-v2": {
+        "policy_file": "personal_loan_synthetic_v2.json",
+        "jdm_file": "../decisions/personal_loan_v2.json",
+        "policy_sha256": "4d40c1803492e701194acc1ac2c7634e4ed4434d5ac6ea9f2d8a2caeff09976b",
+        "jdm_sha256": "eea3581640ff15566fe7d719681b5211eab73b96ab57a0adda82a3d85a6cad34",
+        "status": "selectable",
+        "synthetic": true,
+        "threshold_source": "Catalogue v2 compiled to JDM (decision_engine/catalogue_v2/compile.py); ADR-0011 values OWNER_APPROVED for prototype_synthetic only. NOT a lender policy.",
+        "effective_from": "2026-11-04",
+        "effective_to": null,
+        "supersedes": null,
+        "selected_by": "SARAL_POLICY_VERSION=synthetic-v2 (bureau-backed runs); v1 stays active and is the fallback"
       }
     }
   }

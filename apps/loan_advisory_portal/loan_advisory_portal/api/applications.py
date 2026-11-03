@@ -46,6 +46,8 @@ LIST_FIELDS = (
 
 # Copy of decision_engine.schemas.underwriting MIN/MAX_TENURE_MONTHS (Q-01); pinned by a repo test.
 MIN_TENURE, MAX_TENURE = 12, 108
+# Copy of the catalogue-v2 PL-070 maximum (decision_engine/policies/personal_loan_synthetic_v2.json); pinned by a repo test.
+MAX_REQUEST_AMOUNT = 7_500_000
 MIN_CREDIT_SCORE, MAX_CREDIT_SCORE = 300, 900
 MAX_EMPLOYMENT_MONTHS = 720
 MAX_PURPOSE = 200
@@ -298,8 +300,10 @@ def create_application(
 	amount = _number(loan_amount, "loan amount", minimum=1)
 	if not amount:
 		raise Forbidden(_("Enter the amount you need."))
-	if product.maximum_loan_amount and amount > product.maximum_loan_amount:
-		raise Forbidden(_("The amount exceeds this product's maximum of {0}.").format(product.maximum_loan_amount))
+	# Q-15 / ADR-0007 #2: above the product cap (Rs. 25 lakh) ZEN counter-offers at the largest passing amount,
+	# so the portal accepts the request; only amounts above the outer limit (PL-070) are outside what we offer.
+	if amount > MAX_REQUEST_AMOUNT:
+		raise Forbidden(_("This amount is outside what we offer. The most you can request is {0}.").format(MAX_REQUEST_AMOUNT))
 	tenure = _number(tenure_months, "tenure", minimum=MIN_TENURE, maximum=MAX_TENURE)
 	if not tenure:
 		raise Forbidden(_("Choose a repayment tenure."))

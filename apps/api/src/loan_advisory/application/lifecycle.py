@@ -19,6 +19,7 @@ Bureau-backed runs add one step: a data-quality hold becomes outcome=REVIEW whil
 failure becomes outcome=ERROR. The resolved score is what ZEN evaluates.
 """
 import json
+import os
 from dataclasses import dataclass, field
 
 from decision_engine.paths import repo_root
@@ -111,6 +112,59 @@ def _active_policy():
     return pv
 
 
+V2_VERSION = "synthetic-v2"
+
+
+def configured_policy_version() -> str | None:
+    """`SARAL_POLICY_VERSION` selects the policy for bureau-backed runs (e.g. synthetic-v2 = catalogue v2).
+    Unset keeps the registry's active version (v1), which stays the fallback."""
+    return (os.environ.get("SARAL_POLICY_VERSION") or "").strip() or None
+
+
+def _v2_data_points(doc: dict, inputs: dict, score, kyc_points: dict | None) -> dict:
+    """ZEN v2 input: the KYC/AA consumer's preprocessed data points, then the application's own request values,
+    then the bureau-resolved score. An off-product purpose is passed through so PL-076 declines it."""
+    dp = dict(kyc_points or {})
+    purpose = doc.get("custom_purpose_code") or "_".join((doc.get("custom_loan_purpose") or "").lower().split()) or None
+    dp.update({
+        "requested_amount": doc.get("loan_amount"),
+        "tenure_months": doc.get("repayment_periods", doc.get("loan_tenure_months")),
+        "loan_purpose": purpose,
+        "declared_income": inputs.get("monthly_income"),
+        "declared_obligations": inputs.get("monthly_obligations"),
+        "bureau_score": score,
+    })
+    if kyc_points is None:  # no verified figures: the declared ones are all ZEN gets
+        dp.update({"monthly_net_income": inputs.get("monthly_income"),
+                   "existing_monthly_obligations": inputs.get("monthly_obligations"),
+                   "employment_months": inputs.get("employment_months")})
+    return dp
+
+
+def _decide_v2(application_ref, doc, inputs, applicant, gate_score, kyc_client, pv, sink, current_state,
+               blocks, flags, now):
+    from decision_engine.catalogue_v2.engine import LIFECYCLE_FOR, build_record_v2, decide_v2
+    from loan_advisory.infrastructure.kyc_aa_client import KycAaClient
+
+    kyc = (kyc_client or KycAaClient()).data_points(applicant)
+    if kyc.data_points is None:
+        flags.append(kyc.error or "KYC_AA_UNAVAILABLE")
+    dp = _v2_data_points(doc, inputs, gate_score, kyc.data_points)
+    result = decide_v2(dp)
+    to = LIFECYCLE_FOR[result["decision"]]
+    if to in ("APPROVED", "REJECTED") and _contradictory_obligations(inputs):
+        flags.append("CONTRADICTION_OBLIGATIONS_EXCEED_INCOME")
+        to = "MANUAL_REVIEW"
+    check_transition("UNDER_REVIEW", to)
+    rec = build_record_v2(result, pv, dp, application_ref=application_ref, applicant_ref=applicant, lifecycle_state=to,
+                          missing_fields=[e["rule_id"] for e in result["rule_evaluations"] if e["result"] == "INSUFFICIENT_DATA"
+                                          and e["effect"] == "MORE_INFORMATION_REQUIRED"],
+                          flags=flags, now=now, bureau=blocks["bureau"], review=blocks["review"])
+    sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=result.get("zen_trace") or {},
+                 expected_application=application_ref)
+    return Outcome(application_ref, current_state, to, rec, rec["inputs"]["missing_fields"], flags)
+
+
 def process_application(application_ref: str, store, sink, current_state: str | None = None, now=None) -> Outcome:
     """Run one SUBMITTED application through automated review and persist evidence.
 
@@ -151,7 +205,7 @@ def process_application(application_ref: str, store, sink, current_state: str | 
 
 def process_bureau_application(application_ref: str, store, sink, bureau_client, *,
                                scenario: str | None = None, current_state: str | None = None,
-                               now=None) -> Outcome:
+                               now=None, kyc_client=None) -> Outcome:
     """Run one application through the synthetic bureau gate, then ZEN.
 
     Data-quality holds become outcome=REVIEW while `decision` stays the legacy
@@ -205,6 +259,9 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
               "error": f"BUREAU_REVIEW: {', '.join(gate.reason_codes)}"}
         to = "INFO_REQUESTED" if gate.info_requested else "MANUAL_REVIEW"
         flags.append("BUREAU_REVIEW")
+    elif configured_policy_version() == V2_VERSION:
+        return _decide_v2(application_ref, doc, inputs, applicant, gate.score.value, kyc_client,
+                          load_policy("PERSONAL_LOAN", V2_VERSION), sink, current_state, blocks, flags, now)
     else:
         evidence_inputs = {**inputs, "credit_score": gate.score.value}
         ev = decide(application_ref, store=store,

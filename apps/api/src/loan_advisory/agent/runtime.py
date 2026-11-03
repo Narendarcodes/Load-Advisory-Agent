@@ -67,6 +67,12 @@ def load_chunks(policy_dir: str | Path) -> list[dict]:
 
 def load_policy_tools(policy_dir: str | None = None, profile_name: str | None = None, device: str | None = None):
     """Hybrid (EmbeddingGemma 2 / Qdrant + BM25, weighted RRF) + bge-reranker-v2-m3, lender-profile filtered."""
+    from rag.routed import configured_collections, load_routed_policy_tools
+
+    cols = configured_collections()
+    if cols and policy_dir is None:  # Q-16: one retriever per G1 collection, routed by intent
+        return load_routed_policy_tools(load_policy_tools, cols, os.environ.get("LOAN_POLICY_DIR", "/root/hx/loan/policy"),
+                                        profile_name=profile_name, device=device)
     import torch
     from sentence_transformers import SentenceTransformer
 
