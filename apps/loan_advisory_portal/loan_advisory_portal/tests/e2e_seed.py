@@ -126,6 +126,13 @@ def _document(application: str) -> None:
 	documents.attach_document(application, utils.DOCUMENT_TYPE, file.name)
 
 
+def _stamp_bureau_score(application: str, score: int) -> None:
+	"""Stand in for the synthetic bureau pull: applicants can no longer type a score, so the
+	seed writes the deterministic score the recorded decision expects, as the bureau would."""
+	frappe.db.set_value("Loan Application", application,
+	                    {"custom_credit_score": score, "custom_credit_score_origin": "BUREAU"}, update_modified=False)
+
+
 def seed(tag: str | None = None) -> dict:
 	"""Create both borrowers, one submitted + one draft application, and service keys."""
 	tag = tag or f"e2e-{uuid.uuid4().hex[:8]}"
@@ -138,11 +145,15 @@ def seed(tag: str | None = None) -> dict:
 
 	with utils.as_user(victim):
 		victim_app = applications.create_application(**REJECTED_INPUTS)
+	_stamp_bureau_score(victim_app["name"], REJECTED_INPUTS["credit_score"])
+	with utils.as_user(victim):
 		_document(victim_app["name"])
 		applications.submit_application(victim_app["name"])
 
 	with utils.as_user(other):
 		other_app = applications.create_application(**OTHER_INPUTS)
+	_stamp_bureau_score(other_app["name"], OTHER_INPUTS["credit_score"])
+	with utils.as_user(other):
 		_document(other_app["name"])
 
 	# The evidence service holds no DocType grants: it may only call the trusted
