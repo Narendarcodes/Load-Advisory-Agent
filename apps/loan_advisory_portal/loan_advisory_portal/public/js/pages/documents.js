@@ -152,7 +152,8 @@
 		state.labels = {};
 		var options = ['<option value="">Choose a type</option>'];
 		state.types.forEach(function (type) {
-			var label = type.loan_document_type || type.name;
+			var code = type.loan_document_type || type.name;
+			var label = window.PortalStatus ? window.PortalStatus.docLabel(code) : code;
 			state.labels[type.name] = label;
 			options.push('<option value="' + Portal.esc(type.name) + '">' + Portal.esc(label) + "</option>");
 		});

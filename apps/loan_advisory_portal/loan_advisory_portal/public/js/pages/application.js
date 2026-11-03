@@ -87,7 +87,7 @@
 			detailRow("Product", Portal.esc(product.product_name || application.loan_product)),
 			detailRow(
 				"Interest rate",
-				product.rate_of_interest ? Portal.esc(product.rate_of_interest) + "% per year" : null
+				product.rate_of_interest ? Portal.esc(product.rate_of_interest) + "% a year, flat (indicative)" : null
 			),
 			detailRow("Started", Portal.esc(Portal.date(application.posting_date))),
 			detailRow(
@@ -314,7 +314,7 @@
 		};
 		var guidance = application.guidance || {};
 		var has = decision && decision.available;
-		var when = has && decision.evaluated_at ? "Assessed " + Portal.date(decision.evaluated_at) : "";
+		var when = has && decision.evaluated_at && window.PortalStatus ? window.PortalStatus.assessedText(decision.evaluated_at) : "";
 		var lead = guidance.summary || "";
 		if (lifecycle === "UNDER_REVIEW") lead = "Your details are being checked against the lending policy. Nothing is needed from you right now.";
 		if (lifecycle === "SUBMITTED") lead = "The checks are queued and run without any action from you.";
@@ -437,7 +437,6 @@
 		[
 			["resubmit-income", inputs.monthly_income],
 			["resubmit-obligations", inputs.monthly_obligations],
-			["resubmit-credit", inputs.credit_score],
 			["resubmit-employment", inputs.employment_months],
 		].forEach(function (entry) {
 			document.getElementById(entry[0]).value =
@@ -478,7 +477,6 @@
 		var button = document.getElementById("resubmit-button");
 		var income = inputNumber("resubmit-income");
 		var obligations = inputNumber("resubmit-obligations");
-		var credit = inputNumber("resubmit-credit");
 		var months = inputNumber("resubmit-employment");
 
 		var problem = null;
@@ -486,8 +484,6 @@
 			problem = "Enter your monthly income as a number.";
 		} else if (obligations === null || !isFinite(obligations) || obligations < 0) {
 			problem = "Enter your monthly obligations as a number.";
-		} else if (credit !== null && (!isFinite(credit) || credit < 300 || credit > 900)) {
-			problem = "A credit score is between 300 and 900.";
 		} else if (months !== null && (!isFinite(months) || months < 0 || months > 720)) {
 			problem = "Months in employment must be between 0 and 720.";
 		}
@@ -503,7 +499,6 @@
 				application: reference,
 				monthly_income: income,
 				monthly_obligations: obligations,
-				credit_score: credit,
 				employment_months: months,
 			});
 			Portal.flash("success", "Application resubmitted", "We will review it again.");
