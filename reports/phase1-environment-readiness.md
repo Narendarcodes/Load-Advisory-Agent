@@ -12,7 +12,7 @@ secret value appears in this document, and none was printed while it was assembl
 | Langfuse 4.70.0 (web, worker, postgres 17, clickhouse 25.12, minio, redis 7) | **already running**, project `loan-advisory-local`, health `OK` | keys in `infra/langfuse/.env` |
 | Redis (Frappe cache + queue) | running, **no host port published** — not used and not modified | — |
 | Redis (Langfuse) | running, no host port — not used and not modified | — |
-| **Qdrant** | **absent**: no container, no service in any compose file, and no server-capable code path in the serving runtime | — |
+| **Qdrant** | **absent**: no container, no service in any compose file, and no server-capable code path in the serving runtime — *Phase 1.6 note: the code path and a disposable server now exist; see `reports/phase1-qdrant-server-integration.md`* | — |
 | Synthetic bureau service | not started, and §2 of the task forbids starting it | — |
 
 Sites present in the bench, with fixture counts read live:
@@ -76,10 +76,10 @@ now say the same thing.
 | `EVIDENCE_FRAPPE_*` | **bureau/decision pipeline only** | the agent never reads these. Giving them to an agent deployment re-introduces the exact condition boundary B removed; the README and `.env.example` now say so |
 | `ASSERTION_REPLAY_REDIS_URL`, `AGENT_CHECKPOINT_REDIS_URL`, `AGENT_CHECKPOINT_BACKEND` | agent | production may not fall back to process-local state |
 | `AGENT_CHECKPOINT_TTL_S` | agent | **mandatory in production**: unset/zero now refuses to start |
-| `AGENT_CHECKPOINT_PREFIX` | agent | set it per deployment. Measured live: one run wrote **434** keys under the default `advisory:graph:v1:` namespace. Two deployments sharing a Redis on the default can read each other's threads |
+| `AGENT_CHECKPOINT_PREFIX` | agent | **mandatory in production** as of Phase 1.6 §C: `APP_ENV=production` refuses to start with it unset, and naming the shared default is refused anywhere. Measured live: one run wrote **434** keys under the default `advisory:graph:v1:` namespace; two deployments sharing a Redis on the default can read each other's threads |
 | `AGENT_LOG_MAX_BYTES` | agent | cap per active JSONL log; rotation renames, never deletes |
 | `AGENT_STATE_DIR`, `AGENT_AUDIT_LOG`, `AGENT_HANDOFF_LOG` | agent | unchanged precedence; new files 0600, new directories 0700 |
-| `LOAN_POLICY_DIR`, `AGENT_QDRANT_DIR` | agent (RAG on) | a local directory today; see §5 |
+| `LOAN_POLICY_DIR`, `AGENT_QDRANT_DIR`, `AGENT_QDRANT_URL` (+ `AGENT_QDRANT_COLLECTION`, `AGENT_QDRANT_API_KEY`) | agent (RAG on) | embedded directory by default; `AGENT_QDRANT_URL` switches to a Qdrant Server. Both locations at once is refused, not resolved by precedence. See `reports/phase1-qdrant-server-integration.md` |
 | `LANGFUSE_ENABLED`, `LANGFUSE_BASE_URL`, keys, `LANGFUSE_CAPTURE_CONTENT` | agent | optional; content capture off is the default and was verified against what actually arrived |
 | `--bureau-url`, `BUREAU_BASE_URL`, `POST /api/bureau/run` | — | **removed.** Nothing in compose, launchers, `.env*`, docs-as-config or the runtime still references them except tests asserting their absence |
 
@@ -100,6 +100,29 @@ still read-only — that is a test, not an endpoint.
 | 7 | **No alerting behind the two operational logs** | noticing a lost audit row or an unqueued handoff | Ops wiring, outside this milestone |
 
 Items 1 and 2 are the only ones that block a *gate*; 3–7 are gaps in coverage or comfort.
+
+> **Status after Phase 1.6 (2026-11-03).** Item **1 is closed**: `AGENT_QDRANT_URL` selects a server-backed,
+> query-only dense read path, verified live against `qdrant/qdrant:v1.19.1` with an isolated synthetic
+> collection built by a separate setup client (`reports/phase1-qdrant-server-integration.md`). Item **2 is
+> closed**: one explicitly synthetic bureau-backed `Loan Decision Evidence` record now exists on
+> `loanportal.local` (`ACC-LOAP-2026-00020`, record `2e0ed0da-…`), produced by the unchanged pipeline with
+> the project's own deterministic report generator and no bureau service running
+> (`reports/phase1-bureau-evidence-fixture.md`). Item **5** changed shape: the agent now provably does not
+> need `EVIDENCE_FRAPPE_*`; those slots are used only by the pipeline's own provisioning runs, in-process,
+> from a fixture file mode 600 that was never echoed. Item 4 is unchanged — the verification used a
+> separate synthetic policy directory, so `runs/policy_local` was never opened by the server test.
+>
+> Two **new** gaps surfaced while closing 1 and 2, both owner decisions rather than test work:
+>
+> 8. **Server mode has no provenance sidecar.** `index_compat.json` is a directory artefact; in server mode
+>    the only identity check is `validate_collection` (vector size, distance, point count, `chunk_id` set).
+>    A same-dimension model swap or a query-prompt change would pass it. Needs a provenance store for
+>    server collections before the production corpus is served from one.
+> 9. **The bureau wire schema and the synthetic seeder disagree.** `BureauReportRequest.applicant_id` is
+>    `^[A-Za-z0-9][A-Za-z0-9_-]*$`; every seeded Customer name contains a space, so the real client → real
+>    service path is refused for every synthetic borrower. Separately, `custom_credit_score` is
+>    `int NOT NULL DEFAULT 0`, so documented precedence rule 1 ("no local score → use the bureau score") is
+>    unreachable from the system of record. Details and options: `reports/phase1-bureau-evidence-fixture.md` §1 and §6.
 
 ## 6. Isolation properties of this environment, as measured
 

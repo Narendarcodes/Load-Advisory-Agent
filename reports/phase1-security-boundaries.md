@@ -80,6 +80,22 @@ own installer, because requesting a field Frappe does not have is an error, not 
 why `credit_score_origin` (a synthetic-fixture key, not a DocType field) was excluded rather than
 projected.
 
+> **Corrected again 2026-11-03 by Phase 1.6.** Two things changed once the pipeline and the agent were
+> examined as separate consumers rather than as one "read path".
+> 1. `b663df2` had made *both* readers projected, because both called the one helper. That was wrong for
+>    the underwriting pipeline: `resolve_credit_score` reads `credit_score_origin`, which is not a decision
+>    input, so a field list chosen for a conversational boundary silently narrowed underwriting. The
+>    projection now belongs to the agent alone — `FrappeClient.get()` reads the whole document again, and is
+>    unreachable from the agent because the same object also exposes `create` and `call_method`, which
+>    `assert_reader` refuses at construction (`408b93f`).
+> 2. `assert_reader` matched `save` and `insert` on every object in the graph. The real retriever holds a
+>    cross-encoder, whose library spells "write these weights" exactly that way, so the guard refused the
+>    live serving object and passed every fake retriever in the suite. Those two names are now matched only
+>    on adapters this project owns; `upsert`, `create_collection`, `call_method`, `create` and the rest are
+>    still matched on any object at any depth (`7503b7a`). This is a narrowing of the *rule*, not of the
+>    guarantee: `tests/test_agent_read_boundary.py` proves both the homonym exemption and that a project
+>    writer nested inside a foreign object is still refused.
+
 `App.resolve` was deleted instead of narrowed: nothing called it, and in the live wiring it closed
 over the full `FrappeClient`. `vars(App)` is now `{"agent": …}`.
 

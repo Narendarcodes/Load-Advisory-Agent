@@ -198,3 +198,91 @@ docker rm -f p15-redis p15-acceptance-proxy 2>/dev/null; rm -f "$TEMP/p15-proxy.
 ```
 
 Without step 3's variables the module skips cleanly, which is why it is committed and CI-safe.
+
+---
+
+## 7. Phase 1.6 — both blockers closed, and the counts they changed
+
+Date: 2026-11-03 (IST), same machine and stacks. Commits `408b93f`, `c3f8010`, `e04dc78`, `7503b7a`,
+`4758cb2`, `5bda104`. This section supersedes §1's rows for **C — live Qdrant Server** and for the
+**A3-BUREAU** case; everything above it stands as recorded, including the two defects it found.
+
+| Service | Phase 1.5 | Phase 1.6 |
+|---|---|---|
+| A — live Frappe | 8 of 9 PASS, 1 BLOCKED | **10 of 10 PASS** (the bureau case now has a fixture: `test_a6_*` × 6, and `test_a3_bureau_backed_evidence…` no longer skips) |
+| B — live Redis | 7 of 7 PASS | **9 of 9 PASS** (+ the production namespace refusal, + two-prefix isolation on the real server) |
+| C — live Qdrant Server | 0 of 4 BLOCKED | **14 of 14 PASS** — `tests/test_qdrant_server_live.py`, `qdrant/qdrant:v1.19.1`, keyed, loopback-only, isolated synthetic collection built by a separate setup client. See `reports/phase1-qdrant-server-integration.md` |
+| D — live Langfuse | 2 of 2 PASS | **2 of 2 PASS** (unchanged, re-run) |
+| §7 cross-service journey | 2 of 2 PASS | **2 of 2 PASS** (re-run, portal-minted assertions over live HTTP) |
+| Live module | 19 passed, 1 skipped | **27 passed, 0 skipped** |
+| Offline regression | 763 passed, 35 skipped | **792 passed, 56 skipped** |
+
+### Count change, derived rather than asserted
+
+`--collect-only` on the Phase 1.5 commit (`12874a1`) gives 798 items; the current tree gives 848. The +50
+is exactly six files, and the pass/skip split follows from where each file's tests can run:
+
+| File | Before | After | Change |
+|---|---:|---:|---|
+| `tests/test_qdrant_server_mode.py` | — | 21 | new, offline: selection matrix, malformed config, ambiguity, missing-collection refusals, key plumbing, query-only handle. **+21 passed** |
+| `tests/test_qdrant_server_live.py` | — | 14 | new, **live only**: +14 collected, skipped without a server |
+| `tests/test_checkpoint_prefix_isolation.py` | — | 5 | new, offline: §C's four proofs. **+5 passed** |
+| `tests/test_phase1_live_integration.py` | 20 | 27 | +6 `test_a6_*` bureau proofs, +1 live two-prefix isolation. **+7 skips → 7 live passes** |
+| `tests/test_agent_read_boundary.py` | 18 | 20 | the projection parametrization (2 items over both readers) became one agent test + one pipeline test (net 0 — and the pipeline item now asserts the *whole* document, so the split is proven rather than described), plus +2 for the `assert_reader` homonym exemption and the nested-project-writer refusal. **+2 passed** |
+| `tests/test_index_compat.py` | 23 | 24 | +1 server-mode provenance case. **+1 passed** |
+| **total** | **798** | **848** | **+29 passed (763 → 792), +21 skipped (35 → 56)** |
+
+No test was removed, weakened or marked skip to hide a failure. Two of my own live assertions were wrong
+and fixed by correcting the assertion after observing the real behaviour — `voice.list(thread)` passes a
+config dict, not a thread id (`test_b3_two_deployments…`), and the bureau-mode expectation that a bare mode
+string applies the lender profile (§4 of the Qdrant report). The code was right in both cases.
+
+### Corrections to §2 that Phase 1.6 forced
+
+- **A2's claim covered too much.** The Phase 1.5 fix narrowed `read_application()`, which both the agent and
+  the underwriting pipeline called, so the pipeline inherited a conversational boundary's field list and
+  `resolve_credit_score` lost `credit_score_origin`. The projection is now the agent's alone;
+  `FrappeClient.get()` reads the whole document, and `test_the_pipeline_read_is_the_whole_document_and_cannot_be_the_agents_store`
+  proves both halves and the refusal that makes it safe.
+- **The `assert_reader` rule was over-broad and under-observed.** It refused the real retriever (a
+  cross-encoder's `save`) while accepting every fake. Narrowed to project-owned adapters for the two
+  ambiguous names; the unambiguous ones still apply to any object.
+
+### §5 risk items — status after Phase 1.6
+
+| # | Item | Status |
+|---|---|---|
+| 3 | Qdrant remains embedded-only | **Closed** — server-backed retrieval exists, is selected by configuration, and is query-only. New residual gaps are named in `reports/phase1-qdrant-server-integration.md` §7 (no provenance sidecar in server mode; the production corpus has never been served from a server) |
+| 4 | Bureau-backed explanation unverified live | **Closed** for the explanation path. Two *new* blockers surfaced while provisioning it — the applicant-id pattern vs Customer naming, and `custom_credit_score` being `NOT NULL DEFAULT 0` — both in `reports/phase1-bureau-evidence-fixture.md` §6 |
+| 5 | `AGENT_CHECKPOINT_PREFIX` matters more than shown | **Closed** — production refuses it unset *and* refuses the shared default anywhere; isolation proven offline and on the live Redis |
+| 1, 2, 6 | shared site unverified, field-level restriction observed not designed, log-failure alerting | **Unchanged** |
+
+### Reproduce the Phase 1.6 run
+
+The Phase 1.5 recipe above still works, with three additions — `P15_BUREAU_APP=ACC-LOAP-2026-00020`, the
+Qdrant server and its fixture collection, and a prefix for the production-refusal test to get past:
+
+```sh
+# bureau-backed fixture (pipeline side). ACC-LOAP-2026-00020 is already a SUBMITTED synthetic application,
+# so the shipped fixture needs no site-side prepare — only a credential-less run of the real pipeline.
+# If the target is a DRAFT (e.g. ACC-LOAP-2026-00003), prepare it first through the portal's own methods:
+docker cp apps/loan_advisory_portal/loan_advisory_portal/tests/bureau_fixture.py \
+  loanrangers-backend-1:/home/frappe/frappe-bench/apps/loan_advisory_portal/loan_advisory_portal/tests/
+docker exec loanrangers-backend-1 bash -lc 'cd /home/frappe/frappe-bench && \
+  bench --site loanportal.local execute loan_advisory_portal.tests.bureau_fixture.prepare \
+  --kwargs "{\"application\": \"ACC-LOAP-2026-00003\"}"'
+
+python tests/e2e/seed_bureau_evidence.py --seed /c/tmp/p16/manualqa1.json \
+  --application ACC-LOAP-2026-00020 --trace-dir /c/tmp/p16/traces
+
+# Qdrant server + isolated synthetic collection + the live 14
+#   (commands in reports/phase1-qdrant-server-integration.md §6; run that module with .venv-embed)
+
+# the live module, everything else
+PYTHONIOENCODING=utf-8 PYTHONPATH=".:apps/api/src" \
+  python -m pytest -q -rs tests/test_phase1_live_integration.py     # expected: 27 passed, 0 skipped
+```
+
+The containers used here (`p16-qdrant`, `p16-redis`, `p16-acceptance-proxy`) were started with `--rm` and
+published on loopback only; the Qdrant instance has no volume, so its keyspace left with it. No Redis
+database was flushed, and cleanup is by explicit prefix.
