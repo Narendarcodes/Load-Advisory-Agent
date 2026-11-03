@@ -66,3 +66,13 @@ def test_partner_table_numbering_is_not_a_section_break():
     out = b.fix_unnumber_partner_table("X", body, {"table_end_prefix": "1. Bajaj Finance Limited (“BFL”) is a Non-Banking"}, None, [])
     assert out.split("\n")[1:3] == ["1) Customer acquisition", "2) Servicing"]
     assert out.split("\n")[3].startswith("1. Bajaj")
+
+
+def test_decisions_have_only_known_keys():
+    """A comma in an unquoted flow-style reason silently becomes an extra YAML key; catch that."""
+    known = {"collection", "include", "reason", "fixes", "flags", "start_marker", "end_marker", "banner_prefix",
+             "table_end_prefix"}
+    docs = yaml.safe_load((V3 / "collections.yaml").read_text(encoding="utf-8"))["documents"]
+    for did, d in docs.items():
+        assert set(d) <= known, (did, set(d) - known)
+        assert isinstance(d["reason"], str) and d["reason"].strip(), did

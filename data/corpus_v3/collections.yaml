@@ -33,9 +33,9 @@ documents:
     reason: Core personal-loan page (purposes, amount, tenure, rates, eligibility); the site's AI Overview blocks and its machine-generated review summary are removed
     fixes: [drop_ai_overview]
     flags: [contains_customer_testimonials_not_policy]
-  BFL-PL-ELIG-DOCS: {collection: saral_nbfc_policy, include: true, reason: Personal-loan eligibility and documents page}
-  BFL-PL-RATES-FEES: {collection: saral_nbfc_policy, include: true, reason: Personal-loan rates, fees and charges page}
-  BFL-PL-SALARIED: {collection: saral_nbfc_policy, include: true, reason: Salaried personal-loan eligibility (city-based minimum salary)}
+  BFL-PL-ELIG-DOCS: {collection: saral_nbfc_policy, include: true, reason: "Personal-loan eligibility and documents page"}
+  BFL-PL-RATES-FEES: {collection: saral_nbfc_policy, include: true, reason: "Personal-loan rates, fees and charges page"}
+  BFL-PL-SALARIED: {collection: saral_nbfc_policy, include: true, reason: "Salaried personal-loan eligibility (city-based minimum salary)"}
   BFL-FAQ-REJECTION:
     collection: saral_nbfc_policy
     include: true
@@ -44,12 +44,12 @@ documents:
     # Mirrors commit 9afb5fc on origin/feat/agent-boundary-corpus-reset (register markers, both unique in the page)
     start_marker: How will I know the reason for my loan rejection?
     end_marker: How will I find out the due date of my EMI?
-  BFL-FPC-2026: {collection: saral_nbfc_policy, include: true, reason: Current Fair Practice Code v7.1 (Jan 2026) - NBFC conduct}
-  BFL-IRP-2026: {collection: saral_nbfc_policy, include: true, reason: Current Interest Rate Policy (Mar 2026)}
-  BFL-CITIZENS-CHARTER-2025: {collection: saral_nbfc_policy, include: true, reason: Citizen's Charter v7.0 - service timelines and borrower rights}
-  BFL-PRIVACY: {collection: saral_nbfc_policy, include: true, reason: Privacy policy - how borrower data is used}
-  BFL-APP-TNC-2023: {collection: saral_nbfc_policy, include: true, reason: Loan application terms (discretion to reject, consents)}
-  BFL-KYC-TNC: {collection: saral_nbfc_policy, include: true, reason: Customer-facing KYC terms (CKYC, Aadhaar e-KYC, Video KYC)}
+  BFL-FPC-2026: {collection: saral_nbfc_policy, include: true, reason: "Current Fair Practice Code v7.1 (Jan 2026) - NBFC conduct"}
+  BFL-IRP-2026: {collection: saral_nbfc_policy, include: true, reason: "Current Interest Rate Policy (Mar 2026)"}
+  BFL-CITIZENS-CHARTER-2025: {collection: saral_nbfc_policy, include: true, reason: "Citizen's Charter v7.0 - service timelines and borrower rights"}
+  BFL-PRIVACY: {collection: saral_nbfc_policy, include: true, reason: "Privacy policy - how borrower data is used"}
+  BFL-APP-TNC-2023: {collection: saral_nbfc_policy, include: true, reason: "Loan application terms (discretion to reject, consents)"}
+  BFL-KYC-TNC: {collection: saral_nbfc_policy, include: true, reason: "Customer-facing KYC terms (CKYC, Aadhaar e-KYC, Video KYC)"}
   BFL-GRIEVANCE:
     collection: saral_nbfc_policy
     include: true
@@ -87,10 +87,10 @@ documents:
     flags: [staging_site_origin]
 
   # ---------------------------------------------------------------- RBI -> rbi_regulatory
-  RBI-RBC-NBFC-2025: {collection: rbi_regulatory, include: true, reason: NBFC Responsible Business Conduct Directions 2025 (FPC, KFS, penal charges) - current}
-  RBI-NBFC-CF-2025: {collection: rbi_regulatory, include: true, reason: NBFC Credit Facilities Directions 2025 incl. digital lending - current}
-  RBI-IOS-2026: {collection: rbi_regulatory, include: true, reason: Integrated Ombudsman Scheme 2026 - current complaint route}
-  RBI-IOS-2026-FAQ: {collection: rbi_regulatory, include: true, reason: RBI FAQ on RB-IOS 2026 - current}
+  RBI-RBC-NBFC-2025: {collection: rbi_regulatory, include: true, reason: "NBFC Responsible Business Conduct Directions 2025 (FPC, KFS, penal charges) - current"}
+  RBI-NBFC-CF-2025: {collection: rbi_regulatory, include: true, reason: "NBFC Credit Facilities Directions 2025 incl. digital lending - current"}
+  RBI-IOS-2026: {collection: rbi_regulatory, include: true, reason: "Integrated Ombudsman Scheme 2026 - current complaint route"}
+  RBI-IOS-2026-FAQ: {collection: rbi_regulatory, include: true, reason: "RBI FAQ on RB-IOS 2026 - current"}
   RBI-CIC-COMP-2023:
     collection: rbi_regulatory
     include: true
@@ -133,9 +133,9 @@ documents:
     reason: Superseded by RB-IOS 2026 (in force 1 Jul 2026)
 
   # ---------------------------------------------------------------- not Bajaj, not RBI -> no collection
-  HDFC-PL-ELIG: {collection: null, include: false, reason: Another lender (HDFC Bank) - not Saral's reference NBFC}
-  ICICI-PL-ELIG: {collection: null, include: false, reason: Another lender (ICICI Bank) - not Saral's reference NBFC}
-  SYN-POLICY-V1: {collection: null, include: false, reason: Synthetic team policy - evaluation-only fixture}
-  SYN-INJECT-001: {collection: null, include: false, reason: Adversarial prompt-injection test fixture}
-  SYN-INJECT-002: {collection: null, include: false, reason: Adversarial fixture impersonating Bajaj (fake guaranteed approval)}
-  IN-DPDP-2023: {collection: null, include: false, reason: Statute (GoI), neither Bajaj nor RBI, and never fetched (registered_not_ingested); no new fetching allowed}
+  HDFC-PL-ELIG: {collection: null, include: false, reason: "Another lender (HDFC Bank) - not Saral's reference NBFC"}
+  ICICI-PL-ELIG: {collection: null, include: false, reason: "Another lender (ICICI Bank) - not Saral's reference NBFC"}
+  SYN-POLICY-V1: {collection: null, include: false, reason: "Synthetic team policy - evaluation-only fixture"}
+  SYN-INJECT-001: {collection: null, include: false, reason: "Adversarial prompt-injection test fixture"}
+  SYN-INJECT-002: {collection: null, include: false, reason: "Adversarial fixture impersonating Bajaj (fake guaranteed approval)"}
+  IN-DPDP-2023: {collection: null, include: false, reason: "Statute (GoI), neither Bajaj nor RBI, and never fetched (registered_not_ingested); no new fetching allowed"}
