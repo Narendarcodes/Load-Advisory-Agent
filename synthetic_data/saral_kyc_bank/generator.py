@@ -275,7 +275,7 @@ def _loan_design(i: int, sc: str, occ: int, rng: random.Random, city: str) -> di
     elif sc == "RESIDUAL_INCOME_LOW":
         loan, income = {"purpose": "medical_emergency", "amount": 50_000, "tenure_months": 36}, 27_500
     elif sc == "PURPOSE_OVER_CAP":
-        loan, income = {"purpose": "wedding", "amount": 1_800_000, "tenure_months": 60}, 250_000
+        loan, income = {"purpose": "wedding", "amount": 2_800_000, "tenure_months": 60}, 250_000
     elif sc == "AMOUNT_BELOW_MIN":
         loan, income = {"purpose": purpose, "amount": 30_000, "tenure_months": 12}, rng.choice([52_000, 68_000])
     elif sc == "TENURE_OUT_OF_RANGE":
@@ -808,7 +808,19 @@ def build_universe(count: int = 200, *, seed: int = DEFAULT_SEED) -> dict:
     }
     attach_zen_inputs(u)
     relabel_offers(u)
+    relabel_review_under_score_floor(u)
     return u
+
+
+def relabel_review_under_score_floor(u: dict) -> None:
+    """ADR-0011: 60+ DPD in 12 months is manual review, not a decline. A DPD_60 applicant whose score is below the
+    700 floor is still declined, by PL-029 (the only score decline), so the label names the score."""
+    for a in u["applicants"]:
+        h, lab = a["expected_outcome_hint"], a["label"]
+        score = a["zen_inputs"]["bureau_score"]
+        if a["scenario"]["id"] == "DPD_60" and score is not None and score < product.ZEN_SCORE_FLOOR:
+            lab["expected_path"] = h["decision_path"] = "DECLINE:CREDIT_SCORE"
+            h["outcome"], h["reason_category"] = "DECLINE", "CREDIT_SCORE"
 
 
 OFFER_PATHS = {"APPROVE", "COUNTER_OFFER"}

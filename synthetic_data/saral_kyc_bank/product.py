@@ -1,14 +1,15 @@
 """Product (purpose) and amount-band design: caps, product documents, affordability.
 
-The four personal-loan products and their caps follow the ZEN design draft
-(feat/saral-contracts-zen-design: docs/saral/rule_catalogue.draft.json product_rules and
-contracts/zen.py ProductId): wedding <= 15L / 60m, higher education <= 20L / 84m,
-home renovation <= 25L / 84m, medical emergency <= 10L / 60m (A-25..A-28, approved for
-prototype_synthetic in the ADR-0009 batch). Owner decisions applied (ADR-0007, 2026-11-03 23:18 IST):
+The four personal-loan products and their caps follow catalogue v2 (feat/saral-contracts-zen-design,
+contracts/catalogue_v2/products.py): every product <= 25L (wedding / 60m, higher education / 84m,
+home renovation / 84m, medical emergency / 60m), OWNER_APPROVED by ADR-0011 (2026-11-04 00:29 IST) for
+prototype_synthetic only; it superseded the 15/20/25/10L draft caps. ADR-0011 also drops the Rs. 40,000 metro
+income floor (Rs. 25,001 everywhere) and sends 60+ DPD in 12 months to manual review instead of a decline.
+Owner decisions applied (ADR-0007, 2026-11-03 23:18 IST):
 every product is capped at Rs. 25 lakh in the MVP; a request above a product's cap gets a COUNTER_OFFER at
 the largest passing amount (never a referral; v2 P05 superseded); one flat prototype rate per product and
 no risk-grade pricing. ``pl129_offer`` mirrors catalogue rule PL-129 (contracts/catalogue_v2/products.py
-size_offer_flat @ cc202ae) and labels every offer in the dataset.
+size_offer_flat @ 6cccc1e, ADR-0011) and labels every offer in the dataset.
 """
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ import math
 import random
 from datetime import date, timedelta
 
-ASSESSMENT_RATE = 0.20  # A-05; the flat prototype rate of every product (ADR-0007 #3)
+ASSESSMENT_RATE = 0.20  # ADR-0011: the flat 20% rate of every product (ADR-0007 #3); sizing-only, not an offered rate
 FLAT_RATE = {"PL_WEDDING": 0.20, "PL_HIGHER_EDUCATION": 0.20, "PL_HOME_RENOVATION": 0.20, "PL_MEDICAL_EMERGENCY": 0.20}
 MVP_AMOUNT_CEILING = 2_500_000   # ADR-0007 #1
 ZEN_SCORE_FLOOR = 700            # ADR-0009 #2 (Bajaj's 650 is indicative only)
@@ -26,17 +27,19 @@ MIN_RESIDUAL = 15_000
 MAX_INCOME_MULTIPLE = 24
 MIN_AMOUNT, MAX_AMOUNT = 40_000, 7_500_000
 MIN_TENURE, MAX_TENURE = 12, 108
-HIGH_FLOOR_CITIES = {"Pune", "Bengaluru", "Mumbai", "Delhi"}  # BFL-PL-SALARIED#012: Rs 40,000
-INCOME_FLOOR_HIGH, INCOME_FLOOR = 40_000, 25_001              # BFL-PL-SALARIED#004: from Rs 25,001
+# Bajaj's named metros (BFL-PL-SALARIED#012). ADR-0011 drops their Rs. 40,000 floor; the set only steers a few scenarios to a
+# non-metro city so the committed universe keeps its cities.
+HIGH_FLOOR_CITIES = {"Pune", "Bengaluru", "Mumbai", "Delhi"}
+INCOME_FLOOR = 25_001  # PL-008, ADR-0011: one floor for every city
 
 PRODUCTS = {
-    "wedding": {"product_id": "PL_WEDDING", "max_amount": 1_500_000, "max_tenure": 60,
+    "wedding": {"product_id": "PL_WEDDING", "max_amount": 2_500_000, "max_tenure": 60,
                 "docs": [("WEDDING_QUOTE", False)]},
-    "higher_education": {"product_id": "PL_HIGHER_EDUCATION", "max_amount": 2_000_000, "max_tenure": 84,
+    "higher_education": {"product_id": "PL_HIGHER_EDUCATION", "max_amount": 2_500_000, "max_tenure": 84,
                          "docs": [("ADMISSION_LETTER", True), ("FEE_SCHEDULE", True)]},
     "home_renovation": {"product_id": "PL_HOME_RENOVATION", "max_amount": 2_500_000, "max_tenure": 84,
                         "docs": [("CONTRACTOR_QUOTE", True)]},
-    "medical_emergency": {"product_id": "PL_MEDICAL_EMERGENCY", "max_amount": 1_000_000, "max_tenure": 60,
+    "medical_emergency": {"product_id": "PL_MEDICAL_EMERGENCY", "max_amount": 2_500_000, "max_tenure": 60,
                           "docs": [("HOSPITAL_ESTIMATE", True)]},
 }
 PURPOSES = list(PRODUCTS)
@@ -67,8 +70,8 @@ def emi(principal: float, months: int, rate: float = ASSESSMENT_RATE) -> int:
     return round(principal * r * (1 + r) ** months / ((1 + r) ** months - 1))
 
 
-def income_floor(city: str) -> int:
-    return INCOME_FLOOR_HIGH if city in HIGH_FLOOR_CITIES else INCOME_FLOOR
+def income_floor(city: str) -> int:  # noqa: ARG001 - the city no longer sets a higher floor (ADR-0011)
+    return INCOME_FLOOR
 
 
 def failures(amount: int, tenure: int, income: int, existing: int, purpose: str) -> list[str]:

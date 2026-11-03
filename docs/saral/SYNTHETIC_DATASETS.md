@@ -105,14 +105,14 @@ There are no secrets.
 
 ## 3. Products and amount bands
 
-Products and caps follow the catalogue product matrix (A-25..A-28, approved for prototype_synthetic in the ADR-0009 batch). Every product is capped at ₹25L in the MVP (ADR-0007 #1) and priced at one flat 20% rate (ADR-0007 #3, A-05). Max tenure per product is the prototype max (60/84/84/60, ≤ 84); Bajaj's 108 is the outer gate.
+Products and caps follow the catalogue product matrix. **ADR-0011 (owner, 2026-11-04 00:29 IST, `prototype_synthetic` only, not Bajaj policy)** sets every product cap at ₹25L (it superseded 15/20/25/10L), max tenure 60/84/84/60, one flat 20% rate that is sizing-only (ADR-0007 #3), a ₹25,001 income floor in every city (the ₹40,000 metro floor is dropped), and 60+ DPD in 12 months → manual review instead of a decline. Bajaj's 108 months is the outer gate.
 
 | Product | Purpose | Max amount | Max tenure | Product documents | Product fields |
 |---|---|---|---|---|---|
-| PL_WEDDING | `wedding` | ₹15L | 60 | Wedding quote (optional) | `wedding_date`, relationship |
-| PL_HIGHER_EDUCATION | `higher_education` | ₹20L | 84 | Admission letter + fee schedule (required) | Institution, course, `course_start_date`, `payee_account_present` |
+| PL_WEDDING | `wedding` | ₹25L | 60 | Wedding quote (optional) | `wedding_date`, relationship |
+| PL_HIGHER_EDUCATION | `higher_education` | ₹25L | 84 | Admission letter + fee schedule (required) | Institution, course, `course_start_date`, `payee_account_present` |
 | PL_HOME_RENOVATION | `home_renovation` | ₹25L | 84 | Contractor quote (required) | `property_ownership` (OWNED/FAMILY_OWNED) |
-| PL_MEDICAL_EMERGENCY | `medical_emergency` | ₹10L | 60 | Hospital estimate or bill (required) | Patient relationship, `treatment_date`, `payee_account_present` |
+| PL_MEDICAL_EMERGENCY | `medical_emergency` | ₹25L | 60 | Hospital estimate or bill (required) | Patient relationship, `treatment_date`, `payee_account_present` |
 
 `purpose_evidence_amount` is the quote, fee or estimate, used by PL-126. `purpose_evidence_status` is PROVIDED, MISSING, INSUFFICIENT or NOT_REQUIRED.
 
@@ -129,9 +129,9 @@ How amounts are spread:
 | Approve | Affordable (FOIR ≤ 0.42 at the request) and within the cap. |
 | Counter-offer, **longer tenure** | The request fails A01 at 12–36 months; the shortest passing tenure up to the cap is the counter. |
 | Counter-offer, **reduced amount** | The request fails even at the cap tenure; A05 gives the largest passing amount, held at FOIR ≤ 0.45 above ₹10L for PL-123. |
-| Small (B1) counter-offers | Use cities on the ₹25,001 income floor. With ₹40,000-floor cities and ₹11,000 existing EMIs, FOIR can't fail at B1. |
+| Small (B1) counter-offers | Use non-metro cities (kept from before ADR-0011 so the cities stay stable; the floor is now ₹25,001 everywhere). |
 | Decline | Credit history whatever the amount: score 630, 90+ DPD, write-off or settlement. |
-| **Cap-limited** | Amount above the product cap (medical/wedding in B3). It can't approve: **COUNTER_OFFER** at the largest passing amount (ADR-0007 #2). |
+| **Cap-limited** | With every cap at ₹25L (ADR-0011) only B4 requests are above a cap. They can't approve: **COUNTER_OFFER** at the largest passing amount (ADR-0007 #2). |
 | **B4** | The only requests above ₹25L, deliberately: labelled `outside_offer_label = "outside what we offer"`, `request_outside_mvp_range = true`, path **COUNTER_OFFER** within the ceiling (or a credit DECLINE in the decline cells). Never REFER. |
 | **Labels** | `relabel_offers()` sets every APPROVE / COUNTER_OFFER label from `product.pl129_offer` on the applicant's own `zen_inputs`, so the amounts equal what catalogue PL-129 computes (largest passing amount, ₹1,000 floor, B3 sized at FOIR 0.45 so PL-123 does not fire). |
 
@@ -224,6 +224,8 @@ Each applicant has one scenario. `expected_outcome_hint.decision_path` is:
 - `APPROVE`, `COUNTER_OFFER` or `MORE_INFORMATION_REQUIRED`; or
 - `<DECLINE|REFER|STOP|RE_PULL>:<reason category>`, where REFER means manual review.
 
+ADR-0011: DPD_60 (60+ DPD in 12 months) is now REFER:DELINQUENCY, not a decline. Both DPD_60 applicants in the 200-run score below 700 after the overlay, so they are labelled DECLINE:CREDIT_SCORE (PL-029, the only score decline).
+
 `signals.py` recomputes the target signals under the DRAFT thresholds as a generation self-check. Tests prove four things:
 - CLEAN_PRIME and every APPROVE applicant raise nothing.
 - Each failure scenario raises its target.
@@ -267,7 +269,7 @@ Each applicant has one scenario. `expected_outcome_hint.decision_path` is:
 | HIGH_UTILISATION | D | REFER:CREDIT_BEHAVIOUR | PL-036, PL-037 | C16 | 2 |
 | NEW_ACCOUNTS_STACKING | DF | REFER:CREDIT_BEHAVIOUR | PL-035, PL-055, PL-056 | C14, C15 | 2 |
 | DPD_30 | E | REFER:DELINQUENCY | PL-040, PL-041, PL-051 | C04 | 2 |
-| DPD_60 | E | DECLINE:DELINQUENCY | PL-042, PL-044, PL-045 | C05 | 2 |
+| DPD_60 | E | DECLINE:CREDIT_SCORE | PL-042, PL-044, PL-045 | C05 | 2 |
 | DPD_90 | E | DECLINE:DELINQUENCY | PL-043 | C06 | 2 |
 | WRITTEN_OFF | E | DECLINE:DELINQUENCY | PL-048 | C09 | 2 |
 | SETTLED | E | DECLINE:DELINQUENCY | PL-047 | C09 | 2 |
@@ -314,9 +316,9 @@ Applicants per amount band and outcome (200-applicant run):
 | Band | APPROVE | COUNTER_OFFER | DECLINE | MORE_INFORMATION_REQUIRED | REFER | RE_PULL | STOP |
 |---|---|---|---|---|---|---|---|
 | B1 | 8 | 4 | 17 | 1 | 35 | 0 | 0 |
-| B2 | 7 | 7 | 15 | 4 | 36 | 2 | 3 |
-| B3 | 4 | 10 | 10 | 3 | 21 | 0 | 1 |
-| B4 | 0 | 8 | 4 | 0 | 0 | 0 | 0 |
+| B2 | 7 | 7 | 14 | 3 | 30 | 1 | 2 |
+| B3 | 7 | 5 | 11 | 4 | 27 | 1 | 2 |
+| B4 | 0 | 10 | 4 | 0 | 0 | 0 | 0 |
 
 Applicants per purpose: crypto_investment 1, higher_education 50, home_renovation 52, medical_emergency 46, speculative_trading 1, wedding 50.
 <!-- END:scenario-table -->

@@ -163,7 +163,9 @@ def test_nothing_above_25_lakh_except_deliberate_outside_what_we_offer_cases():
         lab = a["label"]
         if lab["requested_amount"] > product.MVP_AMOUNT_CEILING:
             assert lab["request_outside_mvp_range"] and lab["outside_offer_label"] == "outside what we offer", a["applicant_id"]
-            assert a["scenario"]["id"].startswith("MATRIX_") and lab["amount_band"] == "B4", a["applicant_id"]
+            # MATRIX B4 cells, and PURPOSE_OVER_CAP (28L wedding: with every cap at 25L, ADR-0011, over the cap is over the ceiling).
+            assert (a["scenario"]["id"].startswith("MATRIX_") or a["scenario"]["id"] == "PURPOSE_OVER_CAP") \
+                and lab["amount_band"] == "B4", a["applicant_id"]
             assert lab["expected_path"] in ("COUNTER_OFFER", "DECLINE:CREDIT_SCORE", "DECLINE:DELINQUENCY"), a["applicant_id"]
             if lab["expected_path"] == "COUNTER_OFFER":
                 co = a["expected_outcome_hint"]["expected_counter_offer"]
