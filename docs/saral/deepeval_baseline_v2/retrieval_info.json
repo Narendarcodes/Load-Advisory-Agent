@@ -1,0 +1,26 @@
+{
+ "embed_model": "google/embeddinggemma-2",
+ "embed_dtype": "float32",
+ "reranker_dtype": "bfloat16 (repo default)",
+ "device": "cuda",
+ "fusion": {
+  "k": 10,
+  "w_dense": 1.0,
+  "w_bm25": 0.5,
+  "depth": 50,
+  "rerank_candidates": 50
+ },
+ "collections": {
+  "saral_nbfc_policy": {
+   "chunks": 329,
+   "points": 329,
+   "embed_seconds": 15.5
+  },
+  "rbi_regulatory": {
+   "chunks": 317,
+   "points": 317,
+   "embed_seconds": 10.8
+  }
+ },
+ "seconds": 1938.6
+}

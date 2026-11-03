@@ -1,0 +1,85 @@
+{
+ "deepeval": {
+  "Faithfulness": {
+   "n": 149,
+   "scored": 149,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.9887,
+   "pass_rate@0.5": 1.0
+  },
+  "ContextualPrecision": {
+   "n": 149,
+   "scored": 149,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.8983,
+   "pass_rate@0.5": 0.953
+  },
+  "AnswerRelevancy": {
+   "n": 149,
+   "scored": 149,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.9536,
+   "pass_rate@0.5": 0.9866
+  },
+  "ContextualRecall": {
+   "n": 149,
+   "scored": 149,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.7963,
+   "pass_rate@0.5": 0.8658
+  },
+  "ExpectedBehaviour": {
+   "n": 40,
+   "scored": 40,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.6625,
+   "pass_rate@0.5": 0.75
+  }
+ },
+ "deterministic": {
+  "gold_chunk_in_top5": {
+   "n": 149,
+   "true": 125,
+   "rate": 0.8389
+  },
+  "gold_doc_in_top5": {
+   "n": 149,
+   "true": 139,
+   "rate": 0.9329
+  },
+  "cited_gold_chunk": {
+   "n": 149,
+   "true": 114,
+   "rate": 0.7651
+  },
+  "cited_gold_doc": {
+   "n": 149,
+   "true": 129,
+   "rate": 0.8658
+  },
+  "leak_any": {
+   "n": 178,
+   "true": 91
+  },
+  "script_ok": {
+   "n": 20,
+   "true": 20,
+   "rate": 1.0
+  }
+ },
+ "taxonomy": {
+  "leaked_term": 91,
+  "retrieval_miss_chunk_only": 14,
+  "over_abstain": 3,
+  "discrepancy_not_noted": 10,
+  "retrieval_miss": 10,
+  "no_clarifying_question": 10
+ },
+ "questions": 178,
+ "questions_with_failure": 116
+}
