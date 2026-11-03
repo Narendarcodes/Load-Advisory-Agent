@@ -37,6 +37,12 @@ LA_COPY = {
 }
 
 
+def queue_updates(get) -> dict:
+	"""Loan Application queue columns from a snapshot getter, skipping values the decision did not produce
+	(a DECLINE has no offer): the Currency columns are NOT NULL, so copying None failed with IntegrityError."""
+	return {la_field: get(field) for field, la_field in LA_COPY.items() if get(field) is not None}
+
+
 def _require_service() -> None:
 	if not frappe.session.user or frappe.session.user == "Guest":
 		raise frappe.PermissionError(_("snapshot recording requires a service account"))
@@ -76,7 +82,7 @@ def record_decision_snapshot(application: str, snapshot) -> dict:
 	doc.submit()
 
 	categories = lms_guards.check_categories(doc.borrower_categories)
-	updates = {la_field: doc.get(field) for field, la_field in LA_COPY.items()}
+	updates = queue_updates(doc.get)
 	updates["custom_decision_snapshot"] = doc.name
 	updates["custom_borrower_categories"] = ", ".join(categories)
 	frappe.db.set_value("Loan Application", application, updates)
