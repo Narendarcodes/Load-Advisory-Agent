@@ -985,7 +985,7 @@ RULES += [
 RULES += [
     R("PL-129", COMPUTE, "MVP offer sizing at one flat rate per product (ADR-0007 #2, #3): eligible_amount = floor_1000(the largest amount that passes "
       "every amount-dependent rule: PL-064 FOIR, PL-065 residual income, PL-108 income multiple, PL-109 product cap and the Rs. 25 lakh ceiling, "
-      "PL-118 new-to-credit cap, PL-120/PL-122 band rules, PL-126 purpose evidence), at the requested tenure capped by PL-110, else at the product "
+      "PL-118 new-to-credit cap, PL-120/PL-122 band rules, PL-123 B3 FOIR review trigger, PL-126 purpose evidence), at the requested tenure capped by PL-110, else at the product "
       "max tenure; APPROVED if the full request passes as asked; COUNTER_OFFER if a smaller amount or a different tenure passes and the amount is "
       ">= the minimum; DECLINE if nothing at or above the minimum passes, or the request is above PL-070",
       [P("mvp_amount_ceiling", PR.MVP_AMOUNT_CEILING, "INR", OWN, origin="OWNER_DECISION", note="ADR-0007 #1."),
@@ -998,6 +998,8 @@ RULES += [
        P("min_residual_income", PR.MIN_RESIDUAL_INCOME, "INR/month", PRO, note="Same value as PL-065."),
        P("max_amount_income_multiple", PR.MAX_AMOUNT_INCOME_MULTIPLE, "x net monthly income", PRO, note="Same value as PL-108."),
        P("ntc_indicative_cap", PR.NTC_INDICATIVE_CAP, "INR", PEN, aid="A-22", note="Same value as PL-118."),
+       P("b3_review_foir", PR.B3_REVIEW_FOIR, "ratio", PRO, origin="OWNER_DIRECTIVE",
+         note="Same value as PL-123: above Rs. 10 lakh the offer is sized at or below it, so a counter-offer never needs manual review on FOIR alone."),
        P("evidence_tolerance", PR.EVIDENCE_TOLERANCE, "x evidence amount", PRO, origin="OWNER_DIRECTIVE", note="Same value as PL-126."),
        P("rounding", 1000, "INR, floor", PRO, origin="HARK_NEW_PROPOSAL"),
        P("minimum_loan_amount", PR.BAJAJ_MIN_AMOUNT, "INR", BAJ, "BFL-PL-OVERVIEW#003", note="Same value as PL-069; below it a counter-offer is impossible.")],
@@ -1030,7 +1032,7 @@ RULES += [
 ]
 
 # Rules whose breach at the requested amount is sized away by PL-129 (ADR-0007 #2): evaluated at the offered amount.
-AMOUNT_DEPENDENT = ["PL-064", "PL-065", "PL-108", "PL-109", "PL-110", "PL-118", "PL-120", "PL-122", "PL-126"]
+AMOUNT_DEPENDENT = ["PL-064", "PL-065", "PL-108", "PL-109", "PL-110", "PL-118", "PL-120", "PL-122", "PL-123", "PL-126"]
 
 # Rules deferred in the salaried-only MVP (user decision 2026-11-03 22:50): kept, not deleted.
 DEFERRED = {

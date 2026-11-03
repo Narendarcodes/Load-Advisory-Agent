@@ -145,6 +145,8 @@ MIN_RESIDUAL_INCOME = 15000       # PL-065, prototype
 MAX_AMOUNT_INCOME_MULTIPLE = 24   # PL-108, prototype
 NTC_INDICATIVE_CAP = 200000       # PL-118, A-22
 EVIDENCE_TOLERANCE = 1.10         # PL-126, prototype
+B3_REVIEW_FOIR = 0.45             # PL-123: a B3 amount above this FOIR goes to manual review, so sizing stays at or below it
+B2_UPPER = 1000000
 EVIDENCE_PRODUCTS = ("PL_HIGHER_EDUCATION", "PL_HOME_RENOVATION", "PL_MEDICAL_EMERGENCY")
 BAJAJ_MAX_AMOUNT = 7500000        # PL-070 gate (Bajaj, indicative); above it the request is declined as outside what we offer
 PURPOSE_TO_PRODUCT = {"wedding": "PL_WEDDING", "higher_education": "PL_HIGHER_EDUCATION",
@@ -266,7 +268,7 @@ def size_offer_flat(requested_amount, tenure_months, product_id, monthly_net_inc
 
     Every amount-dependent rule is evaluated at the candidate amount: PL-064 FOIR, PL-065 residual income,
     PL-108 income multiple, PL-109 product cap and MVP ceiling, PL-110 product max tenure, PL-118 new-to-credit
-    cap, PL-120 / PL-122 band rules, PL-126 purpose evidence. A request above any of them gets COUNTER_OFFER
+    cap, PL-120 / PL-122 band rules, PL-123 B3 FOIR review trigger, PL-126 purpose evidence. A request above any of them gets COUNTER_OFFER
     at the largest amount that passes them all (ADR-0007 #2), never a referral.
     """
     rate = flat_rate(product_id)
@@ -290,14 +292,22 @@ def size_offer_flat(requested_amount, tenure_months, product_id, monthly_net_inc
     if product_id in EVIDENCE_PRODUCTS and purpose_evidence_amount:
         caps["evidence_cap"] = EVIDENCE_TOLERANCE * purpose_evidence_amount
 
-    def best(c):
-        return math.floor(min(c.values()) / 1000) * 1000, min(c, key=c.get)
+    max_emi_b3 = min(B3_REVIEW_FOIR * monthly_net_income - obligations, max_emi)
 
-    amount, binding = best(caps)
+    def best(c, months):
+        amt, bind = math.floor(min(c.values()) / 1000) * 1000, min(c, key=c.get)
+        if amt > B2_UPPER:  # PL-123: above Rs. 10 lakh, size at the B3 review FOIR so the offer needs no manual review
+            c3 = dict(c, foir_principal=principal_for(max_emi_b3, rate, months))
+            amt3 = math.floor(min(c3.values()) / 1000) * 1000
+            if amt3 < amt:
+                amt, bind = max(amt3, B2_UPPER), ("b3_review_foir" if amt3 > B2_UPPER else "b2_upper")
+        return amt, bind
+
+    amount, binding = best(caps, tenure)
     offer_tenure = tenure
     if amount < requested_amount and tenure < max_tenure:
         caps_long = dict(caps, foir_principal=principal_for(max_emi, rate, max_tenure))
-        amount_long, binding_long = best(caps_long)
+        amount_long, binding_long = best(caps_long, max_tenure)
         if amount_long > amount:
             amount, offer_tenure, binding, caps = amount_long, max_tenure, binding_long, caps_long
     outside = requested_amount > MVP_AMOUNT_CEILING
@@ -334,6 +344,8 @@ def passes_all(amount, tenure_months, product_id, monthly_net_income, existing_m
     obligations = existing_monthly_obligations + other_monthly_obligations
     new_emi = emi(amount, flat_rate(product_id), tenure_months)
     if (obligations + new_emi) / monthly_net_income > APPROVED_MAXIMUM_FOIR + 1e-9:
+        return False
+    if amount > B2_UPPER and (obligations + new_emi) / monthly_net_income > B3_REVIEW_FOIR + 1e-9:
         return False
     if monthly_net_income - obligations - new_emi < MIN_RESIDUAL_INCOME - 1e-6:
         return False

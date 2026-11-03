@@ -71,6 +71,17 @@ def test_counter_offer_is_the_largest_passing_amount(pid):
     assert not PR.passes_all(amt + 1000, ten, pid, **kw)
 
 
+def test_b3_counter_offer_never_needs_review_on_foir():
+    kw = dict(monthly_net_income=110_000, existing_monthly_obligations=5_000, bureau_score=770, employment_months=40,
+              employment_category="PRIVATE", purpose_evidence_amount=2_500_000)
+    r = PR.size_offer_flat(2_400_000, 84, "PL_HOME_RENOVATION", **kw)
+    assert r["offer_outcome"] == "COUNTER_OFFER" and r["eligible_amount"] > 1_000_000
+    foir = (5_000 + PR.emi(r["eligible_amount"], PR.flat_rate("PL_HOME_RENOVATION"), r["offer_tenure_months"])) / 110_000
+    assert foir <= PR.B3_REVIEW_FOIR + 1e-9
+    assert PR.passes_all(r["eligible_amount"], r["offer_tenure_months"], "PL_HOME_RENOVATION", **kw)
+    assert not PR.passes_all(r["eligible_amount"] + 1000, r["offer_tenure_months"], "PL_HOME_RENOVATION", **kw)
+
+
 def test_affordability_counter_offer_is_largest_passing():
     kw = dict(monthly_net_income=45_000, existing_monthly_obligations=6_000, bureau_score=735, employment_months=20,
               employment_category="PRIVATE", purpose_evidence_amount=850_000)
@@ -96,6 +107,7 @@ def test_pl129_parameters_equal_their_source_rules():
     assert param("PL-129", "max_amount_income_multiple")["value"] == param("PL-108", "max_amount_income_multiple")["value"]
     assert param("PL-129", "ntc_indicative_cap")["value"] == param("PL-118", "ntc_indicative_cap")["value"]
     assert param("PL-129", "evidence_tolerance")["value"] == param("PL-126", "evidence_tolerance")["value"]
+    assert param("PL-129", "b3_review_foir")["value"] == param("PL-123", "band_review_foir")["value"]["B3"]
     assert param("PL-129", "minimum_loan_amount")["value"] == param("PL-069", "minimum_loan_amount")["value"]
     caps = param("PL-109", "purpose_amount_cap")["value"]
     assert all(caps[PURPOSE[pid]] == PR.PRODUCTS[pid]["amount_range_inr"]["value"][1] for pid in PR.PRODUCTS)

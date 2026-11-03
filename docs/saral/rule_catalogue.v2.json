@@ -103,7 +103,7 @@
       "A DECLINE resting on a low-confidence (OCR-derived) value becomes MANUAL_REVIEW.",
       "A risk-signal rule (risk_signal=true) can only produce MANUAL_REVIEW and the generic borrower category DETAILS_NOT_VERIFIED.",
       "A rule whose mvp_status is DEFERRED is not evaluated in the MVP; it is kept in the catalogue.",
-      "Amount-dependent rules (PL-064, PL-065, PL-108, PL-109, PL-110, PL-118, PL-120, PL-122, PL-126) are evaluated at the PL-129 offered amount. A breach at the requested amount alone gives COUNTER_OFFER at the largest passing amount (ADR-0007 #2), never MANUAL_REVIEW and never a referral.",
+      "Amount-dependent rules (PL-064, PL-065, PL-108, PL-109, PL-110, PL-118, PL-120, PL-122, PL-123, PL-126) are evaluated at the PL-129 offered amount. A breach at the requested amount alone gives COUNTER_OFFER at the largest passing amount (ADR-0007 #2), never MANUAL_REVIEW and never a referral.",
       "Every product is capped at Rs. 25 lakh in the MVP (ADR-0007 #1). A request above the product cap or the ceiling gets COUNTER_OFFER; above the ceiling it also sets request_outside_mvp_range and the borrower is told it is outside what we offer. Above Rs. 75 lakh (PL-070) it is declined as outside what we offer.",
       "C3 resolved: v2 P05 ('over a product cap: refer') is superseded by COUNTER_OFFER (ADR-0007 #2).",
       "The offer step (PL-129, flat rate per product) runs after the request-independent gates. DECLINE from such a gate wins; under MANUAL_REVIEW the offer is indicative for the underwriter. PL-125 (risk-grade sizing) is DEFERRED (ADR-0007 #3).",
@@ -124,6 +124,7 @@
       "PL-118",
       "PL-120",
       "PL-122",
+      "PL-123",
       "PL-126"
     ],
     "counter_offer": {
@@ -16137,7 +16138,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
-      "amount_dependent": false,
+      "amount_dependent": true,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -17068,7 +17069,7 @@
           "declared_in_user_catalogue": true
         }
       ],
-      "condition": "MVP offer sizing at one flat rate per product (ADR-0007 #2, #3): eligible_amount = floor_1000(the largest amount that passes every amount-dependent rule: PL-064 FOIR, PL-065 residual income, PL-108 income multiple, PL-109 product cap and the Rs. 25 lakh ceiling, PL-118 new-to-credit cap, PL-120/PL-122 band rules, PL-126 purpose evidence), at the requested tenure capped by PL-110, else at the product max tenure; APPROVED if the full request passes as asked; COUNTER_OFFER if a smaller amount or a different tenure passes and the amount is >= the minimum; DECLINE if nothing at or above the minimum passes, or the request is above PL-070",
+      "condition": "MVP offer sizing at one flat rate per product (ADR-0007 #2, #3): eligible_amount = floor_1000(the largest amount that passes every amount-dependent rule: PL-064 FOIR, PL-065 residual income, PL-108 income multiple, PL-109 product cap and the Rs. 25 lakh ceiling, PL-118 new-to-credit cap, PL-120/PL-122 band rules, PL-123 B3 FOIR review trigger, PL-126 purpose evidence), at the requested tenure capped by PL-110, else at the product max tenure; APPROVED if the full request passes as asked; COUNTER_OFFER if a smaller amount or a different tenure passes and the amount is >= the minimum; DECLINE if nothing at or above the minimum passes, or the request is above PL-070",
       "applies_when": "ALL",
       "parameters": [
         {
@@ -17165,6 +17166,17 @@
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
           "note": "Same value as PL-118."
+        },
+        {
+          "name": "b3_review_foir",
+          "value": 0.45,
+          "unit": "ratio",
+          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "OWNER_DIRECTIVE",
+          "context_chunks": [],
+          "note": "Same value as PL-123: above Rs. 10 lakh the offer is sized at or below it, so a counter-offer never needs manual review on FOIR alone."
         },
         {
           "name": "evidence_tolerance",

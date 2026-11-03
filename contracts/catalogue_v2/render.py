@@ -127,6 +127,7 @@ def rule_catalogue_md(cat):
           "```",
           "rate           = flat_rate[product]            (one per product, no risk grade: ADR-0007 #3)",
           "max_emi        = min(0.50 x income - obligations, income - obligations - 15,000)      (PL-064, PL-065)",
+          "                 above Rs. 10 lakh: FOIR held at 0.45 so the offer clears PL-123 (B3 review trigger)",
           "caps           = requested, min(product cap, Rs. 25,00,000), 24 x income (PL-108), foir_principal(max_emi, rate, tenure),",
           "                 new-to-credit 2,00,000 (PL-118) or top of the highest band allowed (PL-120/PL-122), 1.10 x purpose evidence (PL-126)",
           "tenure         = min(requested tenure, product max tenure)   (PL-110: 60/84/84/60, ASSUMPTION <= 84)",
