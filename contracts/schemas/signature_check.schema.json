@@ -1,0 +1,44 @@
+{
+  "$comment": "Generated from contracts/*.py by contracts/export_schemas.py. Synthetic development contract; cross-field rules are enforced by the pydantic models only.",
+  "$id": "https://saral.invalid/contracts/signature_check.schema.json",
+  "additionalProperties": false,
+  "description": "Experimental signature similarity (no module exists yet). Screening input only.",
+  "properties": {
+    "candidate_document_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Candidate Document Id",
+      "type": "string"
+    },
+    "experimental": {
+      "const": true,
+      "default": true,
+      "title": "Experimental",
+      "type": "boolean"
+    },
+    "method": {
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Method",
+      "type": "string"
+    },
+    "reference_document_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Reference Document Id",
+      "type": "string"
+    },
+    "similarity": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Similarity",
+      "type": "number"
+    }
+  },
+  "required": [
+    "reference_document_id",
+    "candidate_document_id",
+    "similarity",
+    "method"
+  ],
+  "title": "SignatureCheck",
+  "type": "object"
+}

@@ -1,0 +1,79 @@
+{
+  "schema_version": "saral-bureau-report/1",
+  "report_id": "SYN-BUR-000101",
+  "applicant_id": "SYN-APP-000101",
+  "provider_schema": "bureau-report/1",
+  "provider_report_id": "rpt-synthetic-000101",
+  "report_date": "2026-11-03",
+  "generated_at": "2026-11-03T15:59:09Z",
+  "identity_match": true,
+  "score": {
+    "value": 772,
+    "status": "AVAILABLE",
+    "type": "SYNTHETIC"
+  },
+  "tradelines": [
+    {
+      "tradeline_id": "SYN-TL-0101A",
+      "type": "PERSONAL_LOAN",
+      "status": "ACTIVE",
+      "opened_on": "2024-06-10",
+      "closed_on": null,
+      "sanctioned_amount": 500000,
+      "current_balance": 310000,
+      "emi": 14000,
+      "max_dpd_12m": 0,
+      "max_dpd_24m": 0,
+      "status_changed_on": null
+    },
+    {
+      "tradeline_id": "SYN-TL-0101B",
+      "type": "CREDIT_CARD",
+      "status": "ACTIVE",
+      "opened_on": "2021-01-05",
+      "closed_on": null,
+      "sanctioned_amount": 150000,
+      "current_balance": 0,
+      "emi": 0,
+      "max_dpd_12m": 0,
+      "max_dpd_24m": 0,
+      "status_changed_on": null
+    },
+    {
+      "tradeline_id": "SYN-TL-0101C",
+      "type": "AUTO_LOAN",
+      "status": "CLOSED",
+      "opened_on": "2019-03-01",
+      "closed_on": "2023-03-01",
+      "sanctioned_amount": 400000,
+      "current_balance": 0,
+      "emi": 0,
+      "max_dpd_12m": 0,
+      "max_dpd_24m": 0,
+      "status_changed_on": null
+    }
+  ],
+  "enquiries": [
+    {
+      "enquiry_id": "SYN-ENQ-0101A",
+      "enquired_on": "2026-09-20",
+      "purpose": "PERSONAL_LOAN",
+      "amount": 600000
+    },
+    {
+      "enquiry_id": "SYN-ENQ-0101B",
+      "enquired_on": "2025-12-01",
+      "purpose": "CREDIT_CARD",
+      "amount": 0
+    }
+  ],
+  "aggregates": {
+    "active_emi_total": 14000,
+    "max_dpd_12m": 0,
+    "max_dpd_24m": 0,
+    "enquiries_6m": 1,
+    "writeoff_or_settlement_24m": false,
+    "writeoff_or_settlement_ever": false
+  },
+  "data_quality_valid": true
+}
