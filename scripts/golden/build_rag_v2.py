@@ -993,12 +993,15 @@ G += [
    [A("RBI-CIC-CS-2023#003", "CIs shall inform the customers the reasons for the rejection of their request for data correction")],
    inc=["yes, reasons given"], diff="medium"),
  Q("R2-REJ-07", "rejection_reasons", "rejection_job_change", "multi_hop", "I switched jobs last month. Could that hurt my loan application?", "answer",
-   "It can. Being on probation at a new job is one of the common reasons Bajaj lists for rejection, and its article suggests waiting "
-   "3 to 6 months in a new role before applying. This is general guidance, not a promise.",
+   "It can. Being on probation at a new job is one of the common reasons Bajaj lists for rejection, and a Bajaj article gives the "
+   "general advice to wait at least 3 to 6 months in a new role before applying. That is Bajaj's published guidance for everyone, "
+   "not a personal assessment of your application and not a promise.",
    [A("BFL-PL-OVERVIEW#018", "Being on probation at a new job"),
     A("BFL-INSIGHT-REJECTION#004", "Avoid applying for a loan when you have just switched jobs (wait at least 3-6 months in the new role)")],
-   inc=["probation is a common reason", "article suggests 3-6 months"], exc=["Saral's internal employment cut-off"], diff="hard",
-   note="Public lender guidance, not a Saral rule; reviewer to confirm this is acceptable under the no-coaching policy."),
+   inc=["probation is a common reason", "3-6 months attributed to Bajaj's article, with its citation", "framed as general guidance, not personal advice"],
+   exc=["Saral's internal employment cut-off", "personal coaching that waiting a set time will get this applicant approved"], diff="hard",
+   note="Owner decision 2026-11-03: quoting Bajaj's 'wait 3-6 months after switching jobs' is allowed as general, cited guidance, "
+        "not as personal coaching for the applicant. Public lender guidance, not a Saral rule."),
  Q("R2-REJ-08", "rejection_reasons", "credit_policy_factors", "paraphrase", "What does Bajaj's credit policy look at when deciding?", "answer",
    "Several things, such as your CIBIL score, income, proof of residence, and how you have repaid other lenders.",
    [A("BFL-FAQ-REJECTION#000", "The credit policy considers multiple factors, such as your CIBIL score, income and proof of residence, overall credit performance across other lenders and more.")],

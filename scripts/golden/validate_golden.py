@@ -202,6 +202,17 @@ def check_agent_schema(convs, rep, rag_qids=frozenset()):
             for q in t.get("policy_ref_qids", []):
                 if rag_qids and q not in rag_qids:
                     rep.err(w, f"policy_ref_qid {q} not in Golden A")
+            ex = t.get("global_pattern_exempt") or []
+            if ex:
+                # owner decision 2026-11-03: a public figure may be cited on a policy turn, but the turn must keep link probes
+                if not set(ex) <= set(c.get("global_must_not_include_patterns", [])):
+                    rep.err(w, "global_pattern_exempt names a pattern that is not a conversation-level pattern")
+                if t.get("probe") != "policy" or not t.get("must_not_include_patterns"):
+                    rep.err(w, "global_pattern_exempt only on a policy turn that carries its own link-probe patterns")
+            if t.get("citation_required") is False and t.get("answer_source") != "product_config":
+                rep.err(w, "citation_required false is only for answers from the product config")
+            if t.get("answer_source") == "product_config" and "search_approved_policy" in (tl or []):
+                rep.err(w, "product_config answers must not route to policy retrieval")
             for p in t.get("must_not_include_patterns", []) + c.get("global_must_not_include_patterns", []):
                 try:
                     re.compile(p)
@@ -361,7 +372,8 @@ def check_self_consistency(convs, rep):
     """A turn's must_include checklist must not itself trip that turn's or the conversation's must_not patterns."""
     for c in convs:
         for t in c["turns"]:
-            pats = t.get("must_not_include_patterns", []) + c.get("global_must_not_include_patterns", [])
+            ex = set(t.get("global_pattern_exempt") or [])
+            pats = t.get("must_not_include_patterns", []) + [p for p in c.get("global_must_not_include_patterns", []) if p not in ex]
             for inc in t.get("must_include", []):
                 for p in pats:
                     if re.search(p, inc):

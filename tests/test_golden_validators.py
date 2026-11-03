@@ -145,3 +145,40 @@ def test_manifest_matches_frozen_files():
     V.check_freeze(rag(), convs(), rep)
     assert rep.errors == [], rep.errors
     assert len(man["calibration_ids"]) == 30
+
+
+def _conv(cid):
+    return copy.deepcopy(next(c for c in convs() if c["conv_id"] == cid))
+
+
+def test_owner_decisions_2026_11_03_are_encoded():
+    """Owner decisions 2026-11-03: what-if wording + cap, public figures, field mismatch, product scope, job switch."""
+    ac5 = _conv("AC-005")
+    wi = [t for t in ac5["turns"] if t["probe"] == "what_if"]
+    assert any("would likely meet" in x for t in wi for x in t["must_include"])
+    assert any(t.get("what_if_capped_turn") for t in wi)
+    for cid, exempt in (("AC-009", r"40,?000"), ("AC-014", r"\b650\b")):
+        t = next(t for t in _conv(cid)["turns"] if t["probe"] == "policy")
+        assert t["global_pattern_exempt"] == [exempt] and t["must_not_include_patterns"]
+    t2 = _conv("AC-018")["turns"][1]
+    assert any("name and date of birth" in x for x in t2["must_include"])
+    t = next(t for t in _conv("AC-022")["turns"] if "purposes" in t["user"])
+    assert t["answer_source"] == "product_config" and t["citation_required"] is False
+    assert "search_approved_policy" not in t["expected_tool_calls"]
+    rej7 = next(g for g in rag() if g["qid"] == "R2-REJ-07")
+    assert "Owner decision 2026-11-03" in rej7["note"]
+
+
+def test_public_figure_exemption_needs_link_probes():
+    c = _conv("AC-009")
+    t = next(t for t in c["turns"] if t.get("global_pattern_exempt"))
+    t["must_not_include_patterns"] = []
+    rep = V.Report()
+    V.check_agent_schema([c], rep)
+    assert any("link-probe" in e for e in rep.errors)
+    c2 = _conv("AC-022")
+    t = next(t for t in c2["turns"] if t.get("answer_source") == "product_config")
+    t["expected_tool_calls"] = ["authorize", "search_approved_policy"]
+    rep = V.Report()
+    V.check_agent_schema([c2], rep)
+    assert any("product_config" in e for e in rep.errors)

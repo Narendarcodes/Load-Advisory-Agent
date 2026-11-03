@@ -89,7 +89,8 @@ Do not use either set as a hard CI gate until the 30-item calibration review is 
 - **Conversation level**: global must-not lists, DeepEval metric specs (ConversationalGEval criteria, RoleAdherence,
   ConversationCompleteness, TurnRelevancy, ToolCorrectness, plus KnowledgeRetention where it applies), and DeepEval
   `ConversationalGolden` fields (`scenario_text`, `expected_outcome`, `user_description`, `chatbot_role`).
-- **Review flags**: 5 conversations carry a `review_flag` for a policy decision only the user can make (see `REVIEW_GUIDE.md`).
+- **Owner decisions**: the five former `review_flag` policy questions were decided on 2026-11-03; affected conversations
+  record the decision in `notes` (see `REVIEW_LOG.md`).
 
 ## How it was built
 
@@ -148,7 +149,8 @@ check on purpose.
   state each failed rule with the applicant's value and the required value. The user's disclosure policy forbids this; the
   `wt-prompt` branch implements it but is not merged.
 - **Product scope is not in the corpus.** Saral's four purposes and salaried-only scope are product decisions, so the
-  agent can't cite them from the corpus (AC-022 is flagged).
+  agent can't cite them from the corpus. AC-022 expects the four purposes from the app's product config, with no
+  citation (owner decision 2026-11-03).
 - **Some answers rely on documents with caveats**: `BFL-PL-DETAILED-TNC` has a blank date (F1), and the insight article
   is lender education (C2).
 - **`source_url` is recorded only where phrasing followed a specific public page in the corpus.** External

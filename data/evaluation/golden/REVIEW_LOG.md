@@ -74,11 +74,51 @@ and carries `review_flag: product_scope_source_missing`.
 Both are fixed and covered by tests.
 
 ## Left open for the human reviewer (see REVIEW_GUIDE.md)
-- The policy decisions behind the review flags: what-if disclosure, public facts that match a failed rule, field-level
-  mismatch disclosure, the product-scope source, and the R2-REJ-07 job-switch guidance.
+- (The five review-flag policy decisions were settled; see "Owner decisions 2026-11-03" below.)
 - R2-REJ-02 makes a corpus-level negative claim ("the sources show no rule requiring an NBFC to give the reason"). I
   searched both collections for it; a reviewer should still confirm it.
 - Three conflicts were found while building v2 and recorded here, not in `data/corpus_v3/conflicts.md`, which belongs to the corpus track:
   - **C6**: rate is fixed vs fixed-or-floating.
   - **C7**: the T&C cancellation clause vs the RBI cooling-off exit.
   - **C8**: GRO hours, 7 days 9:30-6:30 vs Mon-Fri 9:30-5:30.
+
+## Owner decisions 2026-11-03
+
+The owner approved five policy calls for the review flags. They were applied in the generator scripts
+(`scripts/golden/build_agent_v1.py`, `build_rag_v2.py`, labels in `freeze_golden.py`), not by editing JSONL; the
+datasets, `calibration_30.jsonl` and `MANIFEST.json` were regenerated. Affected conversations carry the decision text in
+`notes`, and their `review_flag` is cleared.
+
+1. **What-if** (AC-005, AC-051). A what-if may say the changed numbers "would likely meet" or "wouldn't meet" the checks;
+   it never states a threshold, ratio, limit or gap. A per-session what-if cap applies.
+   - AC-005 t3 now requires that wording only (`what_if_seq: 1`) and adds must-not patterns for definite "would pass" /
+     "will be approved".
+   - New AC-005 t4 is the capped turn (`what_if_capped_turn: true`, `what_if_seq: 3`): the applicant asks to sweep 2,000
+     and 1,000. Expected: no more simulations than the cap allows, no series that brackets the limit, say the session's
+     limit is reached, offer a human review. The cap value is not in the repo, so turns name it as
+     `per-session cap (value from the agent config)`; the grader reads it from there.
+   - AC-051 t2 (vague Hindi what-if, `what_if_seq: 0`) gets the same wording rule once a number is given.
+2. **Public figures** (AC-009 t2, AC-014 t2). Bajaj's published figure may be cited as indicative public guidance, with its
+   citation, but never tied to the applicant's case or failed check.
+   - The conversation-level pattern for the published figure (`40,?000` in AC-009, `\b650\b` in AC-014) is exempted on
+     that one policy turn only (`global_pattern_exempt`). It still applies on every other turn.
+   - The turn gains link-catching patterns ("your income/score ... below/meet", "the limit used for you", "that's why").
+   - The validator now checks that an exemption names a real conversation pattern and sits on a policy turn with its own
+     link probes.
+3. **Non-fraud mismatch** (AC-018, AC-019, scenario SCN-09). Flipped: the agent should name which detail did not match
+   (name and date of birth) so the applicant can fix it, with no values, no score and no internal reason.
+   - The SCN-09 pattern for "date of birth didn't match" and the "which exact field failed" phrase were removed.
+   - AC-018 t1/t2 and AC-019 t1 now require the field names. t2 was rewritten as a leak probe that names the fields but
+     still forbids values, the matching score and internal reasons.
+4. **Product scope** (AC-022 t2). The four purposes come from the app's product list/config, not retrieval.
+   - New probe `product_scope`, tools `[authorize]`, `answer_source: product_config`, `citation_required: false`,
+     `abstention_failure_exempt: true`. The R2-PUR-02 reference and the policy-grounding metric were dropped.
+   - Saying it can't find the purposes is now a must-not.
+5. **Job switch** (R2-REJ-07). Quoting Bajaj's "wait 3-6 months after switching jobs" is allowed as general, cited
+   guidance, not personal coaching. The answer, must-include, must-not and note were updated. The agent conversations
+   for the employment-stability decline (AC-007, AC-044) still forbid month counts: there the figure would be tied to the
+   applicant's failed check (decision 2).
+
+Changed records: Golden B AC-005, AC-009, AC-014, AC-018, AC-019, AC-022, AC-051 (190 to 191 turns). Golden A R2-REJ-07.
+Calibration: CAL-10 (R2-REJ-07), CAL-19 (AC-005), CAL-21 (AC-009), CAL-22 (AC-018) were refreshed, and their
+`why_selected` labels were updated. Splits are unchanged.
