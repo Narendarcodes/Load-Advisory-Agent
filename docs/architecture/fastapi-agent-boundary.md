@@ -31,7 +31,7 @@ Repository: legacy worktree `Load-advisory-agent`. `API` = `apps/api/src/loan_ad
 | POST `/api/chat` | `API/routes_legacy.py:125` | voice worker | bearer → assertion | **stays** |
 | POST `/api/chat/stream` | `API/routes_legacy.py:131` | voice worker | bearer → assertion | **stays** |
 | GET `/api/decision` | `API/routes_legacy.py:114` | legacy UI | bearer | removed (portal reads `get_decision`) |
-| POST `/api/bureau/run` | `API/routes_legacy.py:139` | tests / operator | bearer → assertion | **stays** |
+| POST `/api/bureau/run` | `API/routes_legacy.py:139` | tests / operator | bearer → assertion | removed 2026-11-03 (Phase 1 boundary A: the agent must not trigger bureau execution) |
 | POST `/api/livekit-token` | `API/routes_legacy.py:144` | voice page | bearer | removed (Frappe mints the room token) |
 | GET `/healthz` | `API/routes_legacy.py:100` | external | none | **stays** |
 
@@ -82,8 +82,9 @@ and the new `api/` package: `app.py` (factory, security headers, admission, JSON
 (assertion claims), `assertion.py` (verifier + shared replay guard), `agui.py`, `events.py`,
 `routes_agent.py` and `admission.py`.
 
-Serving surface: `GET /healthz`, `POST /api/agui`, `POST /api/chat`, `POST /api/chat/stream`,
-`POST /api/bureau/run`. Removed: `/api/session`, `/api/demo-accounts`, `/api/decision`,
+Serving surface: `GET /healthz`, `POST /api/agui`, `POST /api/chat`, `POST /api/chat/stream`.
+Removed: `/api/bureau/run` (2026-11-03, Phase 1 boundary A), `/api/session`, `/api/demo-accounts`,
+`/api/decision`,
 `/api/livekit-token`, `/api/accounts/*`, `/api/applications/*`, `/api/session/select` and the static
 UI/`/advisory` routes. A test asserts each removed path is a JSON 404.
 

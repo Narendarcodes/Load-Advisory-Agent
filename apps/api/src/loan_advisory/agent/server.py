@@ -18,11 +18,6 @@ import uuid
 from typing import get_args
 
 from loan_advisory.agent.contracts import LOCALES, AgentRequest, Literacy, Session
-from loan_advisory.agent.tools import NotAuthorized
-from loan_advisory.application.bureau_intake import BureauInputError, run_bureau_evaluation
-from loan_advisory.infrastructure.bureau_client import BureauClient
-from loan_advisory.infrastructure.evidence_store import EvidenceRejected
-from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
 
 LITERACIES = get_args(Literacy)   # canonical set from the request contract, never a second copy
 MIN_SECRET_LENGTH = 32
@@ -39,9 +34,8 @@ def _require_strings(body, keys):
 
 
 class App:
-    def __init__(self, agent, resolve, bureau_client=None):
+    def __init__(self, agent, resolve):
         self.agent, self.resolve = agent, resolve
-        self.bureau_client = bureau_client
 
     def _request(self, claims, body):
         _require_strings(body, ("request_id", "conversation_id", "message"))
@@ -63,56 +57,16 @@ class App:
                               **({"on_sentence": on_sentence} if on_sentence is not None else {}))
         return 200, resp.model_dump()
 
-    def bureau_run(self, claims, body):
-        """Evaluate the asserted application through the synthetic bureau gate.
 
-        The application ref comes only from the assertion; the body may carry a
-        synthetic-provider scenario for tests/demos. Authorization is the same check
-        the evidence tools use, so an applicant can never run someone else's file.
-        """
-        ref = claims["application_ref"]
-        try:
-            self.agent.tools.authorize(ref, Session(applicant_ref=claims["applicant_ref"]))
-        except NotAuthorized:
-            return 403, {"error": "application does not belong to this applicant"}
-        except UnknownApplication:
-            return 404, {"error": "application not found"}
-        except FrappeUnavailable:
-            return 503, {"error": "system of record unavailable"}
-        scenario = body.get("scenario")
-        try:
-            res = run_bureau_evaluation(
-                ref, store=self.agent.tools.store, sink=self.agent.tools.evidence.sink,
-                bureau_client=self.bureau_client, scenario=str(scenario) if scenario else None)
-        except BureauInputError as e:
-            return 400, {"error": str(e)}
-        except EvidenceRejected:
-            return 409, {"error": "evidence does not match the authorized application"}
-        except UnknownApplication:
-            return 404, {"error": "application not found"}
-        except FrappeUnavailable:
-            return 503, {"error": "system of record unavailable"}
-        return res.status, {"result": res.to_dict()}
-
-
-def parse_args(argv=None, env=None):
-    env = os.environ if env is None else env
+def parse_args(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8095)
     ap.add_argument("--offline", action="store_true", help="MockStore + in-memory evidence instead of live Frappe")
     ap.add_argument("--no-rag", action="store_true", help="do not load the GPU retriever (policy questions abstain)")
-    ap.add_argument("--bureau-url", default=env.get("BUREAU_BASE_URL") or None,
-                    help="loopback origin of the synthetic bureau (default http://127.0.0.1:8001; env BUREAU_BASE_URL). "
-                         "Set it when the self-hosted LLM already uses :8001.")
     ap.add_argument("--max-inflight", type=_positive_int, default=8,
                     help="concurrent requests the server admits; extra requests get 503 + Retry-After (default 8)")
     return ap.parse_args(argv)
-
-
-def bureau_client_from(args) -> BureauClient | None:
-    """None keeps App's default BureauClient(); a configured origin goes through the client's loopback guard."""
-    return BureauClient(base_url=args.bureau_url) if args.bureau_url else None
 
 
 class Admission:
@@ -177,7 +131,6 @@ def _require_secret() -> None:
 def main(argv=None):
     a = parse_args(argv)
     _require_secret()
-    bureau_client = bureau_client_from(a)  # fail fast on a non-loopback origin, before loading anything
     policy, profile = (None, None)
     if not a.no_rag:
         from loan_advisory.agent.runtime import load_policy_tools
@@ -186,11 +139,11 @@ def main(argv=None):
         from loan_advisory.agent.runtime import build_offline_agent
         agent, store, _ = build_offline_agent(policy_tools=policy, profile=profile)
         resolve = lambda ref: {"name": ref, "applicant": store.get(ref)["applicant"]} if ref in store._apps else None
-        service = App(agent, resolve, bureau_client=bureau_client)
+        service = App(agent, resolve)
     else:
         from loan_advisory.agent.runtime import build_live_agent, frappe_resolve
         agent, client = build_live_agent(policy_tools=policy, profile=profile)
-        service = App(agent, lambda ref: frappe_resolve(client, ref), bureau_client=bureau_client)
+        service = App(agent, lambda ref: frappe_resolve(client, ref))
 
     import uvicorn
     from loan_advisory.api.app import create_app

@@ -1,9 +1,10 @@
 """Application entry point for a bureau-backed evaluation.
 
-This is the only normal caller of ``process_bureau_application``. It is used by
-the authenticated chat server (``POST /api/bureau/run``) and never exposes a
-second decision path: credit rules still run through the unchanged ZEN
-orchestrator inside the conventional lifecycle.
+This is the only normal caller of ``process_bureau_application``. It is called by the
+separate bureau pipeline process, never by the advisory agent: the agent reads and
+explains stored evidence, it does not start an evaluation. It never exposes a second
+decision path: credit rules still run through the unchanged ZEN orchestrator inside the
+conventional lifecycle.
 
 Input validation happens before any network call. Provider failures are
 reported distinctly from data-quality holds and credit decisions:

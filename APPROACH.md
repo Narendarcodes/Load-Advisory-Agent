@@ -54,8 +54,9 @@ reasons.
 - What-if is `lifecycle.simulate`: overrides merged in memory, run through ZEN, returned as `is_simulation` and never
   persisted. Live tests confirm Frappe's `modified` timestamp is unchanged.
 
-**Bureau-backed runs (PR #17).** `POST /api/bureau/run` takes the application ref from the session token, calls a local
-synthetic bureau through `bureau_client.py` (FastAPI, loopback only, **not CIBIL/FICO**), checks the response in
+**Bureau-backed runs (PR #17).** *Updated 2026-11-03 (Phase 1 boundary A): the agent no longer exposes this route;*
+*the description below is the PR #17 behaviour, kept as history.* `POST /api/bureau/run` takes the application ref from
+the session token, calls a local synthetic bureau through `bureau_client.py` (FastAPI, loopback only, **not CIBIL/FICO**), checks the response in
 `decision_engine/bureau/gates.py`, resolves the credit score and sends the resolved inputs through the unchanged ZEN
 decision. Evidence gains `outcome`, `review` and `bureau` fields additively; the Frappe `decision` value stays
 `APPROVED`/`REJECTED`/`ERROR`. The distinction that matters:
@@ -137,8 +138,9 @@ compose → validate → (one rewrite) → finalize
   and timings, but no message text and no financial values.
 - **Deadlines (PR #8).** Per-turn deadline (voice 25 s, text 75 s). The LLM read timeout is the time left; when time
   runs out explain/improve/what-if fall back to the template and policy turns to a localized "busy, ask again" template.
-- **Bureau is not a graph node.** `/api/bureau/run` is a separate authenticated server entry point; the agent reads the
-  stored bureau-backed evidence like any other decision.
+- **Bureau is not a graph node, and since 2026-11-03 not an agent route either.** The agent has no entry point that
+  starts an evaluation; the bureau pipeline is a separate upstream process (`application/bureau_intake.py`), and the
+  agent reads the stored bureau-backed evidence like any other decision.
 - **Observability (PR #18).** One `TracerProvider` emits manual OTel spans for advisory turns and bureau evaluations.
   Phoenix is the opt-in OTLP backend (`AGENT_TRACING=1`); self-hosted Langfuse is a second optional processor
   (`LANGFUSE_ENABLED=1`, loopback only, Langfuse Cloud refused). Both are off by default, and message/answer text is

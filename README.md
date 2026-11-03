@@ -52,7 +52,7 @@ test inventory and known gaps.
 |---|---|---|
 | Decision core | Canonical pydantic schema → ZEN Engine 2.1.2 → rule-level PASS/FAIL evidence; sha256-pinned policy registry that fails closed | `decision_engine/`, `apps/api/src/loan_advisory/application/` |
 | Conventional workflow | Frappe Lending 16 lifecycle (SUBMITTED → UNDER_REVIEW → APPROVED / REJECTED / INFO_REQUESTED / MANUAL_REVIEW, plus dispute/resubmit/withdraw); stores a `Loan Decision Evidence` record | `lifecycle.py`, `infra/frappe/` |
-| Synthetic bureau (development only) | Local-only FastAPI stand-in for a credit bureau, a deterministic 120-case fixture, a loopback-only client and data-quality gates; the resolved score still goes through unchanged ZEN | `apps/bureau/`, `decision_engine/bureau/`, `application/bureau_intake.py` |
+| Synthetic bureau (development only) | Local-only FastAPI stand-in for a credit bureau, a deterministic 120-case fixture, a loopback-only client and data-quality gates; the resolved score still goes through unchanged ZEN. The advisory agent cannot start it: it is called by the separate bureau pipeline process | `apps/bureau/`, `decision_engine/bureau/`, `application/bureau_intake.py` |
 | Advisory agent | One LangGraph `StateGraph`: explain, improve (ZEN-verified plan), what-if (in-memory ZEN, never persisted), policy Q&A with citations, boundary refusals, human handoff | `apps/api/src/loan_advisory/agent/` |
 | Guards | Deterministic request guards before the LLM (guarantee, override, record edit, other applicant, injection, auto-submit, dispute, misrepresentation, not-available); answer guards after it (guarantee/decision language, NBFC written-reason claims, ungrounded numbers, citation labels); one rewrite, then a template | `guards.py`, `graph.py` |
 | Policy RAG | 38-source register with approval status and supersedes links; BM25 + EmbeddingGemma 2 in Qdrant, weighted RRF, `bge-reranker-v2-m3`; lender-profile filter applied before ranking | `data/sources/`, `rag/`, `config/rag.yaml` |
@@ -64,7 +64,8 @@ test inventory and known gaps.
 The advisory server is FastAPI served with uvicorn (`apps/api/src/loan_advisory/api/app.py`); its AG-UI endpoint,
 assertion verification and request admission live there. It is reached only through the CopilotKit runtime, never
 from the browser. The synthetic bureau (PR #17) is a separate, local-only **FastAPI** service under `apps/bureau/`;
-it is not part of the advisory server and never decides credit.
+it is not part of the advisory server and never decides credit. Since Phase 1 boundary A the advisory server exposes no
+route that runs a bureau evaluation, so being reachable from the agent is not enough to trigger one.
 
 ## Quick start
 
@@ -110,19 +111,17 @@ AGENT_ASSERTION_SECRET=<same value as the site> \
 #   --no-rag    do not load the GPU retriever (policy questions abstain)
 ```
 
-Endpoints: `GET /healthz`, `POST /api/agui` (SSE for the CopilotKit runtime), `POST /api/chat`,
-`POST /api/chat/stream` (NDJSON sentences, then the final response) and `POST /api/bureau/run`. There is no
-browser surface: Frappe renders every page and its Node runtime calls these on the borrower's behalf.
+Endpoints: `GET /healthz`, `POST /api/agui` (SSE for the CopilotKit runtime), `POST /api/chat` and
+`POST /api/chat/stream` (NDJSON sentences, then the final response). There is no browser surface:
+Frappe renders every page and its Node runtime calls these on the borrower's behalf.
 
-`POST /api/bureau/run` takes the application from the assertion (optional body `{scenario}` is a synthetic-provider
-test switch) and evaluates it through the local synthetic bureau and data-quality gates. The server needs a loopback
-bureau origin via `--bureau-url` or `BUREAU_BASE_URL` (default `http://127.0.0.1:8001`); the self-hosted LLM uses the
-same default port, so run the bureau elsewhere and point the server at it:
+The agent never starts a bureau enquiry or a decision run. `POST /api/bureau/run` was removed on
+2026-11-03 (Phase 1 security boundary A): the bureau pipeline is a separate upstream process with its
+own credential, and the agent only reads the evidence that process leaves behind. To run the synthetic
+bureau for tests, start the service and call `run_bureau_evaluation()` directly:
 
 ```bash
 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m synthetic_bureau.app --port 8011
-AGENT_ASSERTION_SECRET=<same value as the site> \
-  PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --offline --bureau-url http://127.0.0.1:8011
 ```
 
 The bureau is **not CIBIL/FICO and not a real bureau**; every field is synthetic. Flow, `REVIEW` vs `ERROR` and score
@@ -183,7 +182,6 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 | `LANGFUSE_BASE_URL`, `LANGFUSE_ENVIRONMENT` | `http://127.0.0.1:3000`, `local` | Self-hosted endpoint (Cloud refused) and environment label |
 | `LANGFUSE_CAPTURE_CONTENT`, `LANGFUSE_ALLOW_REMOTE` | off, off | Include prompt/answer text; allow a non-loopback self-hosted endpoint |
 | `LANGFUSE_SAMPLE_RATE`, `LANGFUSE_TIMEOUT`, `LANGFUSE_RELEASE` | `1.0`, `5`, – | Sampling, HTTP timeout (s), optional release label |
-| `BUREAU_BASE_URL` | `http://127.0.0.1:8001` | Loopback origin of the synthetic bureau for `/api/bureau/run`; non-loopback origins are refused |
 | `AGENT_AUDIT_LOG`, `AGENT_HANDOFF_LOG` | – | Audit rows (ids, intent, flags, timings; no message text or money values) and the handoff JSONL queue |
 | `AGENT_STATE_DIR` | – | Root for `turns.jsonl`, `handoffs.jsonl` and `traces/`; a per-artifact env var or an explicit argument wins. New directories are 0700 and new files 0600 on POSIX; existing files are never moved or chmodded |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | – | Voice; Frappe mints the room token (`api/livekit.py`) and returns 503 without them |

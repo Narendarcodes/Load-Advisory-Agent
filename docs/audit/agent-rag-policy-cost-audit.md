@@ -88,6 +88,22 @@ single-file docs change. Nothing in this erratum rests on an unverifiable claim:
 607-character FAQ output and the five stale-anchor failures were each re-measured and are reproducible with the
 commands in §0.4 and in `reports/bajaj-alignment-status-and-blockers.md`.
 
+### 0.6 Phase 1 boundary A (implemented 2026-11-03): the agent-triggered bureau run is gone
+
+§1 finding 9 and §11.3 ("the one write path reachable inside the agent object graph", P0.1) described
+`POST /api/bureau/run` writing evidence through `sink=self.agent.tools.evidence.sink`. That route, `App.bureau_run`,
+the `bureau_client` wiring, `--bureau-url` and `BUREAU_BASE_URL` are **removed** on
+`feat/agent-boundary-corpus-reset`: the agent surface is now `/healthz`, `/api/chat`, `/api/chat/stream` and
+`/api/agui`, and `loan_advisory/agent/server.py` contains no bureau reference at all. The pipeline itself is
+unchanged and still reachable as `application/bureau_intake.py:run_bureau_evaluation()` for the separate upstream
+process, and the agent still *reads* and explains stored bureau evidence.
+
+**P0.1 is therefore half-closed, not closed.** Removing the route deletes the agent's only caller, but
+`DecisionTools` is still constructed with an evidence object that exposes a write-capable sink
+(`InMemoryEvidenceSource(sink)` offline, `FrappeEvidenceSource(sink)` live). The remaining half — inject a
+separately-constructed sink, or none, into the agent object graph — is Phase 1 boundary B/C work, tracked in
+`reports/phase1-write-path-inventory.md`.
+
 ---
 
 ## 1. Executive summary

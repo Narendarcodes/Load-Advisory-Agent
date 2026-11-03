@@ -177,7 +177,7 @@ plainly that no person has been contacted and no external ticket exists.
 | Claims | `assertion.py:230` | `customer → applicant_ref` (Frappe Customer name), optional `application`, `thread`, `literacy`, `locale` |
 | Auth | `auth.py:19` | missing/bad assertion → 401 `sign in first`; unconfigured secret → 503; `require_application` → 409 before any stream; `require_conversation` (`routes_agent.py:41`) → 403 when the body names a conversation other than the asserted one |
 | Thread binding | `agui.py:44` | AG-UI refuses a run whose `threadId` is absent from or differs from the assertion's `thread` claim (403), so the token cannot be reused to stream into another conversation |
-| Routes | `routes_agent.py:39`, `agui.py:31` | `/healthz`, `/api/chat`, `/api/chat/stream`, `/api/bureau/run`, `/api/agui` only |
+| Routes | `routes_agent.py:52`, `agui.py:31` | `/healthz`, `/api/chat`, `/api/chat/stream`, `/api/agui` only |
 | App | `app.py:64` | security headers, admission cap, JSON error shapes; no static UI, demo, account or application routes |
 
 The agent's `literacy`/`locale` now come from the assertion (the borrower profile, translated in
