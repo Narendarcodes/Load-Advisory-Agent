@@ -1,4 +1,5 @@
 """ops/decision_runner.py drives the unchanged pipeline over SUBMITTED applications."""
+import json
 from types import SimpleNamespace
 
 from ops import decision_runner
@@ -56,7 +57,7 @@ def test_snapshot_from_record_maps_outcome_offer_and_categories():
     assert s["profile"] == "prototype_synthetic" and s["not_for_live_use"] == 1
     assert s["catalogue_version"] == "synthetic-v2" and s["catalogue_sha256"] == "a" * 64
     assert s["zen_input_json"]["requested_amount"] == 3540000 and s["assessment_date"] == "2026-10-24"
-    assert s["internal_reasons"] == ["PL-110 Purpose cap: FAIL"]
+    assert json.loads(s["internal_reasons"]) == ["PL-110 Purpose cap: FAIL"]  # Long Text: JSON string, not a list
 
 
 def test_snapshot_offer_outcome_for_approve_and_decline():

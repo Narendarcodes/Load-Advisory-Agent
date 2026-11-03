@@ -72,8 +72,9 @@ def snapshot_from_record(rec: dict, evidence: str | None) -> dict:
         "zen_input_json": values,
         "offer_outcome": ("COUNTER_OFFER" if offer.get("counter_offer") else "APPROVED") if offer.get("amount") else "NO_OFFER",
         "borrower_categories": list(rec.get("reason_categories") or []),
-        "internal_reasons": [f"{r.get('rule_id')} {r.get('rule_name')}: {r.get('result')}" for r in rec.get("rule_evaluations") or []
-                             if r.get("result") not in ("PASS", "APPROVED", "NOT_APPLICABLE")],
+        # Long Text on the doctype: Frappe refuses a list, so store the JSON text (officer-only field).
+        "internal_reasons": json.dumps([f"{r.get('rule_id')} {r.get('rule_name')}: {r.get('result')}" for r in rec.get("rule_evaluations") or []
+                                        if r.get("result") not in ("PASS", "APPROVED", "NOT_APPLICABLE")], ensure_ascii=False),
     }
     if offer.get("amount"):
         snap.update(offer_amount=offer.get("amount"), offer_emi=offer.get("emi"), offer_tenure_months=offer.get("tenure_months"))
