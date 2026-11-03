@@ -16,6 +16,17 @@ def _fixture(tmp_path):
     return p
 
 
+def test_known_applicant_new_application_gets_its_report_stamped_with_the_new_id(tmp_path):
+    case = {"case_id": "C", "scenario": "CLEAN_PRIME",
+            "application": {"application_id": "ACC-LOAP-2026-00001", "applicant_id": "SYN-APP-0001"},
+            "report": {"application_id": "ACC-LOAP-2026-00001", "applicant_id": "SYN-APP-0001", "synthetic": True}}
+    p = tmp_path / "g.json"
+    p.write_text(json.dumps({"cases": [case]}))
+    r = TestClient(build_app(str(p))).post("/v1/bureau/reports",
+                                           json={"application_id": "ACC-LOAP-2026-00191", "applicant_id": "SYN-APP-0001"})
+    assert r.json()["application_id"] == "ACC-LOAP-2026-00191" and r.json()["applicant_id"] == "SYN-APP-0001"
+
+
 def test_known_applicant_new_application_reuses_the_applicants_case(tmp_path, monkeypatch):
     from ops import bureau_fixture_server as m
 
