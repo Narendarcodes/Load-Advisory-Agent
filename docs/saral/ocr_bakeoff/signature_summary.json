@@ -1,0 +1,130 @@
+{
+ "label": "SCREENING SIGNAL ONLY - not identity verification, never proof of forgery; synthetic data",
+ "target_frr_on_calibration": 0.1,
+ "pairs": 90,
+ "timings": {
+  "embedding_load_s": 3.39,
+  "ssim_ms_per_pair": 5.79,
+  "orb_ms_per_pair": 2.26,
+  "embedding_ms_per_pair": 12.57,
+  "presence_crop_ms_per_box": 6.27
+ },
+ "summary": {
+  "ssim": {
+   "frr": 3,
+   "n_gen": 30,
+   "far_skilled": 9,
+   "n_skilled": 30,
+   "far_random": 1,
+   "n_random": 30,
+   "thresholds_per_fold": [
+    0.6044,
+    0.6178
+   ],
+   "eer_skilled": 0.2,
+   "eer_random": 0.033,
+   "auc_skilled": 0.904,
+   "auc_random": 0.991
+  },
+  "orb": {
+   "frr": 3,
+   "n_gen": 30,
+   "far_skilled": 17,
+   "n_skilled": 30,
+   "far_random": 9,
+   "n_random": 30,
+   "thresholds_per_fold": [
+    0.128,
+    0.1247
+   ],
+   "eer_skilled": 0.35,
+   "eer_random": 0.133,
+   "auc_skilled": 0.78,
+   "auc_random": 0.927
+  },
+  "classical": {
+   "frr": 3,
+   "n_gen": 30,
+   "far_skilled": 5,
+   "n_skilled": 30,
+   "far_random": 0,
+   "n_random": 30,
+   "thresholds_per_fold": [
+    0.3929,
+    0.39
+   ],
+   "eer_skilled": 0.133,
+   "eer_random": 0.033,
+   "auc_skilled": 0.944,
+   "auc_random": 0.999
+  },
+  "embedding": {
+   "frr": 3,
+   "n_gen": 30,
+   "far_skilled": 12,
+   "n_skilled": 30,
+   "far_random": 1,
+   "n_random": 30,
+   "thresholds_per_fold": [
+    0.9603,
+    0.9478
+   ],
+   "eer_skilled": 0.233,
+   "eer_random": 0.067,
+   "auc_skilled": 0.864,
+   "auc_random": 0.968
+  }
+ },
+ "anomaly_median": {
+  "ssim": {
+   "genuine": 0.284,
+   "skilled_forgery": 0.455,
+   "random_forgery": 0.541,
+   "refer_above": [
+    0.3956,
+    0.3822
+   ]
+  },
+  "orb": {
+   "genuine": 0.809,
+   "skilled_forgery": 0.869,
+   "random_forgery": 0.888,
+   "refer_above": [
+    0.872,
+    0.8753
+   ]
+  },
+  "classical": {
+   "genuine": 0.562,
+   "skilled_forgery": 0.654,
+   "random_forgery": 0.706,
+   "refer_above": [
+    0.6071,
+    0.61
+   ]
+  },
+  "embedding": {
+   "genuine": 0.029,
+   "skilled_forgery": 0.058,
+   "random_forgery": 0.127,
+   "refer_above": [
+    0.0397,
+    0.0522
+   ]
+  }
+ },
+ "presence_and_crop": {
+  "positives": 60,
+  "negatives": 30,
+  "true_positive": 60,
+  "false_negative": 0,
+  "true_negative": 30,
+  "false_positive": 0,
+  "false_positive_by_kind": {},
+  "crop_iou_mean": 0.986,
+  "crop_iou_median": 0.997,
+  "crop_iou_ge_0_8": 60,
+  "crop_iou_ge_0_9": 58,
+  "crops_scored": 60
+ }
+}
