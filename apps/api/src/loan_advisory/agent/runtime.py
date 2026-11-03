@@ -1,6 +1,6 @@
 """Wiring: build the agent against (a) the live Frappe Lending stack or (b) offline synthetic stores.
 
-Live:    ReadOnlyFrappeApplication + FrappeEvidenceReader (two GETs and one allowlisted read method)
+Live:    ReadOnlyFrappeApplication + FrappeEvidenceReader (two projected reads on one read-only identity)
          + hybrid/rerank policy retriever loaded from LOAN_POLICY_DIR (GPU container) + gpt-oss-120b.
 Offline: MockStore / PersonaStore read through their read-only views, decided ONCE by the conventional
          workflow (process_application -> ZEN -> InMemoryEvidenceSink) before the agent sees them.

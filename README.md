@@ -158,7 +158,7 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | – | Frappe Lending REST access (token auth) |
+| `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | – | Frappe Lending REST access (token auth). For the agent this is a **read-only** identity (`Agent Integration` + `Loan Reporter`): projected application reads and stored-evidence reads, nothing else |
 | `LLM_BASE`, `LLM_MODEL` | `http://127.0.0.1:8001/v1`, `llm` | OpenAI-compatible LLM endpoint (gpt-oss-120b on vLLM) |
 | `LLM_API_KEY`, `GROQ_API_KEY` | – | Bearer token for a remote OpenAI-compatible endpoint; `LLM_API_KEY` wins |
 | `LLM_TIMEOUT_S`, `LLM_RETRIES` | `120`, `3` | Per-call limits; the per-turn deadline below still applies |

@@ -98,6 +98,17 @@ the `bureau_client` wiring, `--bureau-url` and `BUREAU_BASE_URL` are **removed**
 unchanged and still reachable as `application/bureau_intake.py:run_bureau_evaluation()` for the separate upstream
 process, and the agent still *reads* and explains stored bureau evidence.
 
+> **Verified, then corrected, by live integration on 2026-11-03 (Phase 1.5, commit `b663df2`).** Run against
+> a real Frappe 16.51 site, two parts of boundary B did not do what the offline tests said: the
+> single-document endpoint ignores a `fields` parameter, so the "projected" application read actually
+> returned all 41 columns including `applicant_name`, `applicant_email_address`, `applicant_phone_number`
+> and `zip_code`; and `evidence.get_record` requires the `Evidence Service` role, so reading through it
+> left an ingest-capable credential inside the conversational process. Both reads were moved to the
+> list endpoint filtered on `name` (which does project — 12 fields, verified), and the evidence read now
+> runs on the agent's own read-only identity via the stored document, with `EVIDENCE_FRAPPE_*` never
+> consulted in this process. The claim above is true only after that correction; see
+> `reports/phase1-live-integration-results.md`.
+
 **P0.1 is closed for the agent, with the same date.** Boundary B (implemented 2026-11-03, same branch) removed
 the sink from the agent object graph rather than leaving it injected-but-unused: `DecisionTools` now refuses any
 store or evidence object that exposes `create`, `set_status`, `persist` or `call_method` (`application/ports.py`),

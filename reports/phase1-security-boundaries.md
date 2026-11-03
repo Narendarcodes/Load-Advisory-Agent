@@ -55,8 +55,17 @@ walks the state an object actually holds and refuses anything exposing `create`,
 
 New read-only adapters, each holding configuration strings rather than a client object:
 
-- `ReadOnlyFrappeApplication` — one projected GET per application.
-- `FrappeEvidenceReader` — one allowlisted read method (`evidence.get_record`), no ingest path.
+- `ReadOnlyFrappeApplication` — one projected read per application.
+- `FrappeEvidenceReader` — one projected read of a stored `Loan Decision Evidence` record, on the **same
+  read-only identity** the agent already has.
+
+> **Corrected 2026-11-03 by Phase 1.5 live verification.** Both bullets above were first written against
+> offline fakes, and both were wrong in a way only a live service could show: Frappe's single-document
+> endpoint ignores a `fields` parameter (so the "projected" GET returned all 41 columns, applicant name,
+> e-mail, phone and zip included), and `evidence.get_record` requires the `Evidence Service` role (so
+> reading through it left the ingest credential inside the agent). `b663df2` moved both reads to the list
+> endpoint filtered on `name`, which does project, and moved the evidence read onto the read-only
+> identity via the document. Evidence for each is in `reports/phase1-live-integration-results.md`.
 - `ReadOnlyDocumentStore` / `ReadOnlyFetchStore` + `read_only_view()` — the offline equivalent.
 
 `runtime.build_live_agent()` therefore builds the live agent from readers only: no `FrappeClient` and

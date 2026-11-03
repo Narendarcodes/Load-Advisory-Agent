@@ -43,7 +43,7 @@ route tests in `tests/test_agent_guards.py`, the four `App.bureau_run` route tes
 | Module | Tests | Status | What it pins |
 |---|---:|---|---|
 | `tests/test_phase1_boundaries.py` | 11 | passed | the eight proofs above, through the HTTP surface and the tool objects |
-| `tests/test_agent_read_boundary.py` | 16 | passed | guard refuses writers; offline and live graphs hold readers only; `READ_FIELDS` projection on both read paths; projection covers every consumed field and names only fields the portal installer creates; evidence reader calls exactly one allowlisted method; `vars(App) == {"agent"}` |
+| `tests/test_agent_read_boundary.py` | 16 → 18 after Phase 1.5 | passed | guard refuses writers; offline and live graphs hold readers only; `READ_FIELDS` asserted on the returned document, against a fake that reproduces what the real endpoints do; projection covers every consumed field and names only fields the portal installer creates; evidence read works with the ingest credential absent; missing application and unreadable record both fail closed; `vars(App) == {"agent"}` |
 | `tests/test_agent_write_paths.py` | 12 | passed | `simulate()` has no sink; zero writes across five intents; the writers are not imported by graph/tools; handoff and audit write failures; rotation keeps every row; `AGENT_LOG_MAX_BYTES` semantics; production refuses an endless checkpoint TTL and honours a given one |
 | `tests/test_agent_dispatch_isolation.py` | 34 | passed | no tool-binding mechanism anywhere under `apps/api/src/loan_advisory`; `_after_classify`/`_after_evidence` totality; invented what-if fields refused; guards precede the model; sentinel borrower text appears in no system turn across five intents; hostile passage → abstain with the right flags; injection coverage per locale; zero false positives over the synthetic persona corpus; `unfiltered` unreachable and `pending_review` refused by both filters |
 | `tests/test_bureau_entry.py` | 19 | passed | pipeline entry behaviour unchanged (validation, provider-failure mapping, persistence) **plus** route/method/flag/source absence |
@@ -83,7 +83,9 @@ No new skip was added, and no previously-skipped test was re-enabled or counted 
 
 ## What is NOT claimed
 
-- **No live integration test was executed.** The read-only boundary, the projected Frappe GET, the
+- **No live integration test was executed** *(superseded 2026-11-03: Phase 1.5 ran the live suite; two
+  defects this caveat implied were found and fixed — see `reports/phase1-live-integration-results.md`)*.
+  The read-only boundary, the projected Frappe GET, the
   `FrappeEvidenceReader` HTTP call, the Redis checkpoint TTL refusal and the handoff rotation are all
   proven against fakes, monkeypatched transports and in-memory stores. They have not been exercised
   against a running Frappe site or Redis.
