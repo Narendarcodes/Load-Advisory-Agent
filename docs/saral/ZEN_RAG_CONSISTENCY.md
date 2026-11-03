@@ -12,16 +12,16 @@
 
 | Topic | RAG chunk (indicative public guidance) | Quote | ZEN value (authoritative, prototype_synthetic, pending approval) | Live today (synthetic_v1 / code) | Flag |
 |---|---|---|---|---|---|
-| Credit score minimum | BFL-PL-ELIG-DOCS#007 | CIBIL Score: 650 or higher. | 650 (PL-029) | 700 (personal_loan_synthetic_v1 MIN_CREDIT_SCORE) | MISMATCH: live 700 vs guidance 650 |
-| Credit score (education article) | BFL-INSIGHT-REJECTION#001 | A CIBIL score of 685 or higher is generally considered the minimum acceptable score for most lenders, but a score of 750 and above is the ideal range | 650 floor; 750 = grade A / PRIME edge (PL-124, A-20); band minimums 680/700/725 internal (PL-120) | - | CONFLICT C2 (article vs product pages) |
-| Credit score bands | BFL-PL-RATES-FEES#007 | Average 650 to 749 Meets the minimum score for a Bajaj Finance Personal Loan | 650 floor | - | consistent |
+| Credit score minimum | BFL-PL-ELIG-DOCS#007 | CIBIL Score: 650 or higher. | 700 (PL-029, ADR-0009 #2) | 700 (personal_loan_synthetic_v1 MIN_CREDIT_SCORE) | CONSISTENT with live; differs from indicative 650 by owner decision |
+| Credit score (education article) | BFL-INSIGHT-REJECTION#001 | A CIBIL score of 685 or higher is generally considered the minimum acceptable score for most lenders, but a score of 750 and above is the ideal range | 700 floor (ADR-0009); band minimum 725 for B4 only (outside the MVP); grade sizing deferred | - | CONFLICT C2 (article vs product pages) |
+| Credit score bands | BFL-PL-RATES-FEES#007 | Average 650 to 749 Meets the minimum score for a Bajaj Finance Personal Loan | 700 floor | - | differs by owner decision (ADR-0009 #2) |
 | Minimum monthly income (non-metro) | BFL-PL-SALARIED#004 | Monthly salary: Starting Rs. 25,001, based on the city you live in. | 25,001 (PL-008) | 25,000 (MIN_MONTHLY_INCOME) | MISMATCH: live 25,000 vs guidance 25,001 |
 | Minimum monthly income (metro) | BFL-PL-SALARIED#012 | your minimum monthly salary should be Rs. 40,000 if you reside in Pune, Bangalore, Mumbai, or Delhi. | 40,000 for the four named cities (PL-008, A-03) | not modelled | MISMATCH: live has no metro floor |
 | Age | BFL-PL-ELIG-DOCS#007 | Age: 21 years to 80 years*. | 21 min (PL-001) | not modelled | live has no age rule |
 | Age at maturity | BFL-PL-ELIG-DOCS#001 | *You must be 80 years * or younger, at the end of the loan tenure. | 80 (PL-002, PL-073) | not modelled | live has no age rule |
-| Loan amount | BFL-PL-OVERVIEW#003 | Borrow from Rs. 40,000 to Rs. 75 lakh to meet small or large expenses. | 40,000 to 75,00,000 (PL-069, PL-070); purpose caps 10-25 lakh internal (PL-109) | Loan Product.maximum_loan_amount (UNVERIFIED value) | CONFLICT C1 (55 lakh tables) |
+| Loan amount | BFL-PL-OVERVIEW#003 | Borrow from Rs. 40,000 to Rs. 75 lakh to meet small or large expenses. | 40,000 to 75,00,000 gate (PL-069, PL-070); MVP ceiling 25 lakh, purpose caps 10-25 lakh, above-cap = COUNTER_OFFER (PL-109, PL-129) | Loan Product.maximum_loan_amount (UNVERIFIED value) | CONFLICT C1 (55 lakh tables) |
 | Loan amount (rate tables) | BFL-PL-RATES-FEES#011 | Rs. 55 lakh Rs. 2,27,150 | 75 lakh chosen | bajaj_v1 anchors say 55 lakh | CONFLICT C1 |
-| Tenure | BFL-PL-OVERVIEW#017 | Flexible tenures ranging from 12 months to 108 months | 12 to 108 (PL-071, PL-072); purpose caps 60/84 internal (PL-110) | UnderwritingInput allows 360 | MISMATCH: validator 360 vs 108 |
+| Tenure | BFL-PL-OVERVIEW#017 | Flexible tenures ranging from 12 months to 108 months | 12 to 108 gate (PL-071, PL-072); prototype max 60/84/84/60 (PL-110) | UnderwritingInput, bureau gates and the portal allow 360 | MISMATCH: validators 360 vs 108 (Qoder handoff) |
 | Employer | BFL-PL-ELIG-DOCS#007 | Employed with: Public, private, or MNC. | PUBLIC/PRIVATE/MNC (PL-005); B4 internal PUBLIC/MNC (PL-122) | not modelled | - |
 | Employment length | BFL-PL-OVERVIEW#018 | Being on probation at a new job | 6 months (PL-014, A-07); band 12/24 internal (PL-122) | 12 months (MIN_EMPLOYMENT_TENURE) | Bajaj gives no number; live 12 vs proposed 6 |
 | FOIR | BFL-PL-OVERVIEW#018 | High FOIR (as per lender criteria) | 0.50 (PL-064, A-04); grade caps 0.40-0.55 internal (PL-125) | 0.45 (FOIR_MAX_45, excludes the new EMI) | Bajaj gives no number; definitions differ |

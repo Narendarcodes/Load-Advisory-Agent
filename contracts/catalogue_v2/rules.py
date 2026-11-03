@@ -13,6 +13,7 @@ Approval status of a parameter:
 - PROTOTYPE_SYNTHETIC: every other value (v2 proposal or a new Hark proposal). Test profile only.
 A rule's status is the least-approved status among its parameters.
 """
+from contracts.catalogue_v2 import products as PR
 
 BAJ = "APPROVED_BAJAJ_SOURCE"
 REG = "APPROVED_REGULATORY"
@@ -21,6 +22,9 @@ PRO = "PROTOTYPE_SYNTHETIC"
 # Extension (user, 2026-11-03 23:03 IST): "the 4 products are final ... treat the product list as approved".
 # The user's vocabulary has no owner-approval value, so this one is added and flagged for him to accept.
 OWN = "APPROVED_OWNER_DECISION"
+# Accepted (ADR-0007 #10 / round-1 "yes for all", 2026-11-03 23:18 IST): APPROVED_OWNER_DECISION is kept as the status for any
+# value the owner decided himself (product list, the Rs. 25 lakh MVP ceiling, counter-offer above a cap, flat pricing, the 700 floor).
+ADR7, ADR9 = "ADR-0007 (owner, 2026-11-03 23:18 IST)", "ADR-0009 (owner, 2026-11-03 23:34 IST)"
 
 # Verbatim excerpts (checked against work/g1/out by build.py when the corpus is present).
 EXCERPTS = {
@@ -281,13 +285,14 @@ RULES = [
 
     # ---------------- D. Credit score and history ----------------
     R("PL-029", GATE, "bureau_score >= approved_minimum_score (only when score.status == AVAILABLE)",
-      [P("approved_minimum_score", 650, "score", BAJ, "BFL-PL-ELIG-DOCS#007")],
+      [P("approved_minimum_score", 700, "score", OWN, origin="OWNER_DECISION", context=["BFL-PL-ELIG-DOCS#007", "BFL-PL-RATES-FEES#023"],
+         note="ADR-0009 #2: the ZEN floor stays 700. Bajaj's published 650 (BFL-PL-ELIG-DOCS#007) is indicative public guidance only.")],
       fail="FAIL", effect=DEC, essential=False, msg="CREDIT_HISTORY.decline",
       internal="Score {bureau_score} below {approved_minimum_score} (synthetic score, not CIBIL).",
       v2=["C01"], draft=["B09_CREDIT_SCORE_MIN"], ctx=["BFL-PL-RATES-FEES#023"],
-      conflict="C2: 650 on product pages vs 685 minimum / 750 ideal in BFL-INSIGHT-REJECTION#001 (lender education article).",
-      note="A null score is not a fail: NO_HIT/INSUFFICIENT_HISTORY goes to PL-027 (review).",
-      tests=[T({"bureau_score": 650}, "PASS"), T({"bureau_score": 649}, "FAIL")]),
+      conflict="C2 (resolved by ADR-0009 #2): ZEN uses 700. Bajaj indicative: 650 on product pages, 685 minimum / 750 ideal in BFL-INSIGHT-REJECTION#001.",
+      note="A null score is not a fail: NO_HIT/INSUFFICIENT_HISTORY goes to PL-027 (review). Matches the live synthetic policy (MIN_CREDIT_SCORE 700).",
+      tests=[T({"bureau_score": 700}, "PASS"), T({"bureau_score": 699}, "FAIL"), T({"bureau_score": 650}, "FAIL", "Bajaj's indicative 650 is not the ZEN floor")]),
     R("PL-030", SIGNAL, "score_trend = current_score - min(historical_scores over 6 months) >= -max_score_drop",
       [P("max_score_drop", 50, "points", PRO, origin="HARK_NEW_PROPOSAL")],
       essential=False, msg="CREDIT_HISTORY.review",
@@ -485,7 +490,8 @@ RULES = [
       fail="FAIL", effect=DEC, lowconf=True, msg="REPAYMENTS_TOO_HIGH.foir", missing_msg="REPAYMENTS_TOO_HIGH.missing",
       internal="FOIR {foir} above {approved_maximum_foir}; counter-offer amount {eligible_amount}.",
       v2=["A01"], draft=["B11_FOIR_MAX"],
-      note="If only this rule (or PL-108 / a product cap) fails, the outcome can carry a counter-offer at PL-068's eligible amount.",
+      note="Amount-dependent (ADR-0007 #2): evaluated at the PL-129 offered amount. A breach at the requested amount alone gives COUNTER_OFFER; "
+           "DECLINE only when no amount at or above the minimum passes.",
       tests=[T({"foir": 0.50}, "PASS"), T({"foir": 0.62}, "FAIL"), T({"foir": 0.62, "low_confidence": True}, "REVIEW", "income from low-confidence OCR")]),
     R("PL-065", SIGNAL, "residual_income = monthly_net_income - total_monthly_obligations >= min_residual_income",
       [P("min_residual_income", 15000, "INR/month", PRO)],
@@ -521,7 +527,9 @@ RULES = [
       [P("maximum_loan_amount", 7500000, "INR", BAJ, "BFL-PL-OVERVIEW#003")],
       fail="FAIL", effect=DEC, msg="REQUEST_OUTSIDE_OFFER.decline",
       internal="Requested {requested_amount} above {maximum_loan_amount}.", v2=["E05"], draft=["B05_AMOUNT_MAX"],
-      conflict="C1: Rs. 75 lakh on product pages vs Rs. 55 lakh at the top of the BFL-PL-RATES-FEES#011 tables (and bajaj_v1 anchors).",
+      conflict="C1: Rs. 75 lakh on product pages vs Rs. 55 lakh at the top of the BFL-PL-RATES-FEES#011 tables (and bajaj_v1 anchors). "
+               "Moot in the MVP: every product is capped at Rs. 25 lakh (ADR-0007 #1); 25-75 lakh gets a COUNTER_OFFER via PL-109/PL-129.",
+      note="Above this the request is declined as outside what we offer (ADR-0007 #1, 'say it's outside what we offer').",
       tests=[T({"requested_amount": 7500000}, "PASS"), T({"requested_amount": 7500001}, "FAIL")]),
     R("PL-071", GATE, "tenure_months >= minimum_tenure_months",
       [P("minimum_tenure_months", 12, "months", BAJ, "BFL-PL-OVERVIEW#017")],
@@ -532,7 +540,9 @@ RULES = [
       [P("maximum_tenure_months", 108, "months", BAJ, "BFL-PL-ELIG-DOCS#008")],
       fail="FAIL", effect=DEC, msg="REQUEST_OUTSIDE_OFFER.decline",
       internal="Tenure {tenure_months} above {maximum_tenure_months}.", v2=["E06"], draft=["B07_TENURE_MAX"],
-      note="The existing UnderwritingInput validator allows 360 months; this rule is the design fix.",
+      note="Bajaj's 108 is the outer gate. The prototype max tenure per product is PL-110 (60/84/84/60, ASSUMPTION <= 84). "
+           "Qoder-owned validators still allow 360 months (decision_engine/schemas/underwriting.py:61-62, decision_engine/bureau/gates.py:171, "
+           "loan_advisory_portal api/applications.py:47); see project-management/QODER_HANDOFF.md.",
       tests=[T({"tenure_months": 108}, "PASS"), T({"tenure_months": 120}, "FAIL")]),
     R("PL-073", GATE, "age_at_maturity <= maximum_age_at_maturity",
       [P("maximum_age_at_maturity", 80, "years", BAJ, "BFL-PL-ELIG-DOCS#001")],
@@ -760,30 +770,40 @@ RULES = [
                inputs=["assessment_rate"], check="Use the approved assessment rate to compute the proposed EMI"),
       derives=["interest_rate"],
       tests=[T({}, "PASS", "default parameter", expect=0.20), T({"assessment_rate": 0.18}, "PASS", "override in a test", expect=0.18)]),
-    R("PL-108", SIGNAL, "requested_amount <= max_amount_income_multiple x monthly_net_income, else counter-offer review",
+    R("PL-108", SIGNAL, "requested_amount <= max_amount_income_multiple x monthly_net_income; breach -> COUNTER_OFFER at the PL-129 amount",
       [P("max_amount_income_multiple", 24, "x net monthly income", PRO)],
-      msg="REPAYMENTS_TOO_HIGH.review", missing_msg="INCOME_NOT_VERIFIED_OR_INSUFFICIENT.missing",
+      fail="FAIL", effect="COUNTER_OFFER", msg="REPAYMENTS_TOO_HIGH.counter_offer", missing_msg="INCOME_NOT_VERIFIED_OR_INSUFFICIENT.missing",
+      note="Amount-dependent: sized down by PL-129 (ADR-0007 #2, largest passing amount).",
       internal="Amount {requested_amount} is {amount_income_multiple}x income.", v2=["A04"],
       new=dict(name="Loan amount to income multiple", group="G_REPAYMENT_CAPACITY_AND_FOIR", impl="ZEN_DIRECT",
                inputs=["requested_amount", "monthly_net_income"], check="Requested amount is proportionate to income"),
       tests=[T({"requested_amount": 1000000, "monthly_net_income": 60000}, "PASS"),
-             T({"requested_amount": 2000000, "monthly_net_income": 60000}, "REVIEW")]),
-    R("PL-109", SIGNAL, "requested_amount <= purpose_amount_cap[loan_purpose]; breach -> REVIEW, never DECLINE",
+             T({"requested_amount": 2000000, "monthly_net_income": 60000}, "FAIL", "counter-offer at 24x income or less")]),
+    R("PL-109", SIGNAL, "requested_amount <= min(purpose_amount_cap[loan_purpose], mvp_amount_ceiling); breach -> COUNTER_OFFER at the largest passing amount (PL-129), never REVIEW, never DECLINE",
       [P("purpose_amount_cap", {"wedding": 1500000, "higher_education": 2000000, "home_renovation": 2500000, "medical_emergency": 1000000},
-         "INR", PEN, aid="A-25..A-28")],
-      msg="REQUEST_OUTSIDE_OFFER.review", internal="Amount {requested_amount} above the {loan_purpose} cap.", v2=["P01", "P02", "P03", "P04", "P05"],
-      draft=["P02_PRODUCT_AMOUNT_MAX"],
+         "INR", PEN, aid="A-25..A-28"),
+       P("mvp_amount_ceiling", 2500000, "INR", OWN, origin="OWNER_DECISION",
+         note="ADR-0007 #1: every product is capped at Rs. 25 lakh in the MVP; above that, offer the cap or say it's outside what we offer.")],
+      fail="FAIL", effect="COUNTER_OFFER", msg="REQUEST_OUTSIDE_OFFER.counter_offer",
+      internal="Amount {requested_amount} above the {loan_purpose} cap; counter-offer {eligible_amount}{outside_range_note}.",
+      v2=["P01", "P02", "P03", "P04", "P05"], draft=["P02_PRODUCT_AMOUNT_MAX"],
+      conflict="C3 (resolved by ADR-0007 #2): v2 P05 said 'refer, never decline' while the aggregation said counter-offer. "
+               "Resolved in favour of COUNTER_OFFER at the largest passing amount; P05's referral is superseded.",
+      note="Requests above the Rs. 25 lakh ceiling also set request_outside_mvp_range, and the borrower sees REQUEST_OUTSIDE_OFFER.outside_range.",
       new=dict(name="Purpose amount cap", group="H_LOAN_REQUEST_AND_PRODUCT_PARAMETERS", impl="ZEN_DIRECT",
                inputs=["requested_amount", "loan_purpose"], check="Amount is within the purpose product cap"),
       tests=[T({"requested_amount": 1500000, "loan_purpose": "wedding"}, "PASS"),
-             T({"requested_amount": 1200000, "loan_purpose": "medical_emergency"}, "REVIEW")]),
-    R("PL-110", SIGNAL, "tenure_months <= purpose_tenure_cap[loan_purpose]; breach -> REVIEW",
-      [P("purpose_tenure_cap", {"wedding": 60, "higher_education": 84, "home_renovation": 84, "medical_emergency": 60}, "months", PEN, aid="A-25..A-28")],
-      msg="REQUEST_OUTSIDE_OFFER.review", internal="Tenure {tenure_months} above the {loan_purpose} cap.", v2=["P01", "P02", "P03", "P04"],
+             T({"requested_amount": 1200000, "loan_purpose": "medical_emergency"}, "FAIL", "counter-offer at the medical cap"),
+             T({"requested_amount": 4000000, "loan_purpose": "home_renovation"}, "FAIL", "above the Rs. 25 lakh MVP ceiling: outside what we offer, counter-offer")]),
+    R("PL-110", SIGNAL, "tenure_months <= purpose_tenure_cap[loan_purpose] (prototype max tenure); breach -> COUNTER_OFFER at the product max tenure (PL-129)",
+      [P("purpose_tenure_cap", {"wedding": 60, "higher_education": 84, "home_renovation": 84, "medical_emergency": 60}, "months", PEN, aid="A-25..A-28",
+         note="Prototype max tenure per product, ASSUMPTION <= 84 months (product matrix values). Bajaj's 108 (PL-072) is the outer gate.")],
+      fail="FAIL", effect="COUNTER_OFFER", msg="REQUEST_OUTSIDE_OFFER.counter_offer", internal="Tenure {tenure_months} above the {loan_purpose} cap.", v2=["P01", "P02", "P03", "P04"],
       draft=["P03_PRODUCT_TENURE_MAX"],
       new=dict(name="Purpose tenure cap", group="H_LOAN_REQUEST_AND_PRODUCT_PARAMETERS", impl="ZEN_DIRECT",
                inputs=["tenure_months", "loan_purpose"], check="Tenure is within the purpose product cap"),
-      tests=[T({"tenure_months": 60, "loan_purpose": "wedding"}, "PASS"), T({"tenure_months": 84, "loan_purpose": "wedding"}, "REVIEW")]),
+      tests=[T({"tenure_months": 60, "loan_purpose": "wedding"}, "PASS"), T({"tenure_months": 84, "loan_purpose": "wedding"}, "FAIL", "counter at 60"),
+             T({"tenure_months": 96, "loan_purpose": "home_renovation"}, "FAIL", "above the 84-month prototype max")]),
     R("PL-111", INFO, "required purpose documents for loan_purpose present (see PRODUCT_MATRIX): higher_education -> admission letter OR fee schedule; home_renovation -> contractor quote OR property proof; medical_emergency -> hospital estimate OR bill; wedding -> optional (no effect)",
       [P("purpose_documents", {"wedding": [], "higher_education": ["ADMISSION_LETTER|FEE_SCHEDULE"],
                                "home_renovation": ["CONTRACTOR_QUOTE|PROPERTY_PROOF"], "medical_emergency": ["HOSPITAL_ESTIMATE|HOSPITAL_BILL"]},
@@ -837,34 +857,35 @@ RULES = [
       new=dict(name="Self-employed manual income review", group="B_INCOME_AND_EMPLOYMENT", impl="ZEN_DIRECT",
                inputs=["employment_type"], check="Self-employed income is reviewed by a person"),
       tests=[T({"employment_type": "SALARIED"}, "PASS"), T({"employment_type": "SELF_EMPLOYED"}, "REVIEW")]),
-    R("PL-118", SIGNAL, "if new-to-credit: requested_amount <= ntc_indicative_cap, else REVIEW",
+    R("PL-118", SIGNAL, "if new-to-credit: requested_amount <= ntc_indicative_cap; breach -> COUNTER_OFFER at the cap (PL-129)",
       [P("ntc_indicative_cap", 200000, "INR", PEN, aid="A-22")],
-      essential=False, msg="REQUEST_OUTSIDE_OFFER.review", internal="New-to-credit request {requested_amount} above the indicative cap.",
+      fail="FAIL", effect="COUNTER_OFFER", essential=False, msg="CREDIT_HISTORY.counter_offer", internal="New-to-credit request {requested_amount} above the indicative cap.",
       draft=["NTC01_INDICATIVE_AMOUNT_CAP"],
       new=dict(name="New-to-credit indicative amount cap", group="D_CREDIT_SCORE_AND_HISTORY", impl="ZEN_DIRECT",
                inputs=["bureau_match_status", "requested_amount"], check="New-to-credit requests stay within the indicative cap"),
       tests=[T({"bureau_match_status": "NO_HIT", "requested_amount": 150000}, "PASS"),
-             T({"bureau_match_status": "NO_HIT", "requested_amount": 500000}, "REVIEW")]),
+             T({"bureau_match_status": "NO_HIT", "requested_amount": 500000}, "FAIL", "counter-offer at the NTC cap")]),
 ]
 
 RULES += [
     # ---------------- Amount bands, risk grade, offer sizing, product specifics (user directive 22:53) ----------------
     R("PL-119", COMPUTE, "amount_band = B1 if requested_amount <= 200000; B2 if <= 1000000; B3 if <= 2500000; else B4",
       [P("amount_bands", {"B1": [40000, 200000], "B2": [200001, 1000000], "B3": [1000001, 2500000], "B4": [2500001, 7500000]}, "INR", PRO,
-         origin="OWNER_DIRECTIVE", note="Band edges from the user's example (22:53). ASSUMPTION pending approval. B4 is unreachable while every purpose cap is <= 25 lakh.")],
+         origin="OWNER_DIRECTIVE", note="Band edges from the user's example (22:53). B4 (> Rs. 25 lakh) is outside the MVP (ADR-0007 #1): a B4 request is sized into B1..B3 by PL-129 and flagged outside what we offer.")],
       fail=None, effect=NONE, msg="OTHER.none", missing_msg="REQUEST_OUTSIDE_OFFER.review",
       internal="Amount band {amount_band}.", derives=["amount_band"],
       new=dict(name="Requested-amount band", group="H_LOAN_REQUEST_AND_PRODUCT_PARAMETERS", impl="ZEN_DIRECT",
                inputs=["requested_amount"], check="Assign the amount band that selects band-conditional thresholds"),
       tests=[T({"requested_amount": 150000}, "PASS", expect="B1"), T({"requested_amount": 1500000}, "PASS", expect="B3")]),
-    R("PL-120", SIGNAL, "bureau_score >= band_minimum_score[amount_band]; below band minimum but >= Bajaj 650 -> REVIEW / counter-offer at the highest band the score allows",
-      [P("band_minimum_score", {"B1": 650, "B2": 680, "B3": 700, "B4": 725}, "score", PRO, origin="OWNER_DIRECTIVE")],
-      essential=False, msg="CREDIT_HISTORY.review",
+    R("PL-120", SIGNAL, "bureau_score >= band_minimum_score[amount_band]; breach -> COUNTER_OFFER at the top of the highest band the score allows (PL-129)",
+      [P("band_minimum_score", {"B1": 700, "B2": 700, "B3": 700, "B4": 725}, "score", PRO, origin="OWNER_DIRECTIVE",
+         note="Lifted to the 700 ZEN floor (ADR-0009 #2) where the earlier 650/680 sat below it. B4 is outside the MVP.")],
+      fail="FAIL", effect="COUNTER_OFFER", essential=False, msg="CREDIT_HISTORY.counter_offer",
       internal="Score {bureau_score} below the {amount_band} minimum; highest band allowed {allowed_band}.",
-      note="B1 equals the Bajaj floor (PL-029). Higher bands are ASSUMPTION and never decline: PL-029 is the only score decline.",
+      note="B1..B3 equal the ZEN floor (PL-029, 700), so in the MVP this rule cannot bite below B4. PL-029 is the only score decline.",
       new=dict(name="Band minimum score", group="D_CREDIT_SCORE_AND_HISTORY", impl="ZEN_DIRECT",
                inputs=["amount_band", "bureau_score"], check="Score meets the stricter minimum for larger amounts"),
-      tests=[T({"amount_band": "B3", "bureau_score": 720}, "PASS"), T({"amount_band": "B3", "bureau_score": 690}, "REVIEW")]),
+      tests=[T({"amount_band": "B3", "bureau_score": 720}, "PASS"), T({"amount_band": "B4", "bureau_score": 710}, "FAIL", "counter-offer into B3")]),
     R("PL-121", INFO, "income-proof depth by band: salary slips >= band_payslips[amount_band] AND statement_months >= band_statement_months[amount_band]",
       [P("band_payslips", {"B1": 3, "B2": 3, "B3": 3, "B4": 3}, "count", BAJ, "BFL-PL-ELIG-DOCS#009", note="3 slips is the Bajaj list for every amount."),
        P("band_statement_months", {"B1": 3, "B2": 3, "B3": 6, "B4": 6}, "months", PRO, origin="OWNER_DIRECTIVE",
@@ -880,17 +901,19 @@ RULES += [
        P("band_employer_categories", {"B1": ["PUBLIC", "PRIVATE", "MNC"], "B2": ["PUBLIC", "PRIVATE", "MNC"],
                                       "B3": ["PUBLIC", "PRIVATE", "MNC"], "B4": ["PUBLIC", "MNC"]}, None, PRO, origin="OWNER_DIRECTIVE",
          note="B4 restricting to PUBLIC/MNC is ASSUMPTION; Bajaj lists public, private or MNC for every amount (BFL-PL-ELIG-DOCS#007).")],
-      applies=SALARIED, essential=False, msg="EMPLOYMENT_STABILITY.history",
-      internal="{amount_band}: {employment_months} months, category {employment_category}.",
+      applies=SALARIED, fail="FAIL", effect="COUNTER_OFFER", essential=False, msg="EMPLOYMENT_STABILITY.counter_offer",
+      internal="{amount_band}: {employment_months} months, category {employment_category}; counter-offer at the highest band allowed.",
+      note="Amount-dependent: a breach gives COUNTER_OFFER at the top of the highest band the employment depth allows (PL-129).",
       new=dict(name="Band employment depth", group="B_INCOME_AND_EMPLOYMENT", impl="ZEN_DIRECT",
                inputs=["employment_type", "amount_band", "employment_months", "employment_category"],
                check="Larger amounts need longer tenure with the employer"),
       tests=[T({"employment_type": "SALARIED", "amount_band": "B3", "employment_months": 18, "employment_category": "PRIVATE"}, "PASS"),
-             T({"employment_type": "SALARIED", "amount_band": "B3", "employment_months": 8, "employment_category": "PRIVATE"}, "REVIEW")]),
+             T({"employment_type": "SALARIED", "amount_band": "B3", "employment_months": 8, "employment_category": "PRIVATE"}, "FAIL", "counter-offer into B2")]),
     R("PL-123", SIGNAL, "manual-review trigger by band: B4 always; B3 when foir > band_review_foir OR any SIGNAL rule returned REVIEW",
       [P("band_review_foir", {"B3": 0.45}, "ratio", PRO, origin="OWNER_DIRECTIVE"), P("always_review_bands", ["B4"], None, PRO, origin="OWNER_DIRECTIVE")],
       essential=False, msg="OTHER.review",
       internal="{amount_band} manual-review trigger: {trigger}.",
+      note="Evaluated on the offered amount's band. B4 is never offered in the MVP (ADR-0007 #1), so the always-review branch cannot fire.",
       new=dict(name="Band manual-review trigger", group="J_DOCUMENT_AND_FRAUD_CONTROLS", impl="ZEN_DIRECT",
                inputs=["amount_band", "foir", "review_flags"], check="Large amounts get a human look"),
       tests=[T({"amount_band": "B2", "foir": 0.48, "review_flags": []}, "PASS"),
@@ -916,8 +939,8 @@ RULES += [
        P("rounding", 1000, "INR, floor", PRO, origin="HARK_NEW_PROPOSAL")],
       fail=None, effect=NONE, essential=False, msg="REPAYMENTS_TOO_HIGH.foir", missing_msg="INCOME_NOT_VERIFIED_OR_INSUFFICIENT.missing",
       internal="Offer {offer_outcome}: amount {eligible_amount}, EMI {offer_emi}, tenure {offer_tenure_months}; binding cap {binding_cap}.",
-      note="Runs after the gates. A DECLINE from a gate wins; under MANUAL_REVIEW the offer is indicative for the underwriter only. "
-           "COUNTER_OFFER below the Bajaj minimum amount is not possible, so it becomes DECLINE (REPAYMENTS_TOO_HIGH).",
+      note="DEFERRED in the MVP (ADR-0007 #3): risk-grade sizing and pricing are out; PL-129 sizes the offer at one flat rate per product. "
+           "Kept for a later release.",
       new=dict(name="Individual offer sizing", group="G_REPAYMENT_CAPACITY_AND_FOIR", impl="ZEN_DIRECT",
                inputs=["requested_amount", "tenure_months", "loan_purpose", "risk_grade", "monthly_net_income",
                        "existing_monthly_obligations", "other_monthly_obligations"],
@@ -927,14 +950,15 @@ RULES += [
                 "existing_monthly_obligations": 10000, "other_monthly_obligations": 0}, "PASS", "approved in full", expect="APPROVED"),
              T({"requested_amount": 1000000, "tenure_months": 36, "loan_purpose": "higher_education", "risk_grade": "C", "monthly_net_income": 45000,
                 "existing_monthly_obligations": 6000, "other_monthly_obligations": 0}, "PASS", "reduced amount", expect="COUNTER_OFFER")]),
-    R("PL-126", SIGNAL, "requested_amount <= evidence_amount x evidence_tolerance (fee schedule / contractor quote / hospital estimate); else counter-offer at evidence amount",
+    R("PL-126", SIGNAL, "requested_amount <= evidence_amount x evidence_tolerance (fee schedule / contractor quote / hospital estimate); breach -> COUNTER_OFFER (PL-129)",
       [P("evidence_tolerance", 1.10, "x evidence amount", PRO, origin="OWNER_DIRECTIVE")],
-      essential=False, msg="REQUEST_OUTSIDE_OFFER.review",
+      fail="FAIL", effect="COUNTER_OFFER", essential=False, msg="REQUEST_OUTSIDE_OFFER.counter_offer",
+      note="Resolves the HOME_QUOTE_BELOW_AMOUNT labelling: counter-offer at the evidenced amount (x tolerance), not a referral.",
       internal="Requested {requested_amount} vs purpose evidence {purpose_evidence_amount}.",
       new=dict(name="Amount supported by purpose evidence", group="H_LOAN_REQUEST_AND_PRODUCT_PARAMETERS", impl="PREPROCESS_THEN_ZEN",
                inputs=["loan_purpose", "requested_amount", "purpose_evidence_amount"], check="The amount asked for matches the cost evidenced"),
       tests=[T({"loan_purpose": "home_renovation", "requested_amount": 500000, "purpose_evidence_amount": 480000}, "PASS"),
-             T({"loan_purpose": "home_renovation", "requested_amount": 800000, "purpose_evidence_amount": 480000}, "REVIEW")]),
+             T({"loan_purpose": "home_renovation", "requested_amount": 800000, "purpose_evidence_amount": 480000}, "FAIL", "counter-offer at 528,000")]),
     R("PL-127", SIGNAL, "purpose-specific consistency: wedding_date within [-90, +365] days; course_start_date within [-180, +365] days; property_ownership in [OWNED, FAMILY_OWNED]; treatment_date within [-90, +90] days",
       [P("purpose_windows", {"wedding_date_days": [-90, 365], "course_start_days": [-180, 365], "treatment_date_days": [-90, 90],
                              "renovation_property_ownership": ["OWNED", "FAMILY_OWNED"]}, None, PRO, origin="OWNER_DIRECTIVE")],
@@ -958,6 +982,56 @@ RULES += [
              T({"loan_purpose": "medical_emergency", "payee_account_present": True}, "PASS", expect="HOSPITAL")]),
 ]
 
+RULES += [
+    R("PL-129", COMPUTE, "MVP offer sizing at one flat rate per product (ADR-0007 #2, #3): eligible_amount = floor_1000(the largest amount that passes "
+      "every amount-dependent rule: PL-064 FOIR, PL-065 residual income, PL-108 income multiple, PL-109 product cap and the Rs. 25 lakh ceiling, "
+      "PL-118 new-to-credit cap, PL-120/PL-122 band rules, PL-126 purpose evidence), at the requested tenure capped by PL-110, else at the product "
+      "max tenure; APPROVED if the full request passes as asked; COUNTER_OFFER if a smaller amount or a different tenure passes and the amount is "
+      ">= the minimum; DECLINE if nothing at or above the minimum passes, or the request is above PL-070",
+      [P("mvp_amount_ceiling", PR.MVP_AMOUNT_CEILING, "INR", OWN, origin="OWNER_DECISION", note="ADR-0007 #1."),
+       P("counter_offer_above_cap", "COUNTER_OFFER at the largest passing amount; never a referral", None, OWN, origin="OWNER_DECISION",
+         note="ADR-0007 #2. Supersedes v2 P05 (refer)."),
+       P("pricing", "one flat prototype rate per product; no risk-grade pricing", None, OWN, origin="OWNER_DECISION", note="ADR-0007 #3."),
+       P("flat_rate_by_product", {pid_purpose: PR.PRODUCTS[pid]["rate_for_assessment"]["value"] for pid_purpose, pid in PR.PURPOSE_TO_PRODUCT.items()},
+         "per annum", PEN, aid="A-05", context=["BFL-PL-RATES-FEES#003"], note="Inside Bajaj's indicative 10%-30.5% range (PL-075)."),
+       P("approved_maximum_foir", PR.APPROVED_MAXIMUM_FOIR, "ratio", PEN, aid="A-04", note="Same value as PL-064."),
+       P("min_residual_income", PR.MIN_RESIDUAL_INCOME, "INR/month", PRO, note="Same value as PL-065."),
+       P("max_amount_income_multiple", PR.MAX_AMOUNT_INCOME_MULTIPLE, "x net monthly income", PRO, note="Same value as PL-108."),
+       P("ntc_indicative_cap", PR.NTC_INDICATIVE_CAP, "INR", PEN, aid="A-22", note="Same value as PL-118."),
+       P("evidence_tolerance", PR.EVIDENCE_TOLERANCE, "x evidence amount", PRO, origin="OWNER_DIRECTIVE", note="Same value as PL-126."),
+       P("rounding", 1000, "INR, floor", PRO, origin="HARK_NEW_PROPOSAL"),
+       P("minimum_loan_amount", PR.BAJAJ_MIN_AMOUNT, "INR", BAJ, "BFL-PL-OVERVIEW#003", note="Same value as PL-069; below it a counter-offer is impossible.")],
+      fail=None, effect=NONE, essential=False, msg="OTHER.none", missing_msg="INCOME_NOT_VERIFIED_OR_INSUFFICIENT.missing",
+      internal="Offer {offer_outcome}: amount {eligible_amount}, EMI {offer_emi}, tenure {offer_tenure_months}, flat rate {offer_rate}; "
+               "binding {binding_cap}; outside MVP range {request_outside_mvp_range}.",
+      note="Runs after the request-independent gates. A DECLINE from such a gate wins; under MANUAL_REVIEW the offer is indicative for the "
+           "underwriter. The borrower sees the offered amount, EMI and tenure only, never the binding cap (REASON_DISCLOSURE_POLICY).",
+      new=dict(name="MVP offer sizing (flat rate)", group="G_REPAYMENT_CAPACITY_AND_FOIR", impl="ZEN_DIRECT",
+               inputs=["requested_amount", "tenure_months", "loan_purpose", "monthly_net_income", "existing_monthly_obligations",
+                       "other_monthly_obligations", "bureau_score", "bureau_match_status", "employment_months", "employment_category",
+                       "purpose_evidence_amount"],
+               check="Offer the requested loan, or the largest amount that passes every amount-dependent check"),
+      derives=["eligible_amount", "offer_outcome", "offer_emi", "offer_tenure_months"],
+      tests=[T({"requested_amount": 500000, "tenure_months": 60, "loan_purpose": "wedding", "monthly_net_income": 80000,
+                "existing_monthly_obligations": 10000, "other_monthly_obligations": 0, "bureau_score": 760, "bureau_match_status": "HIT",
+                "employment_months": 30, "employment_category": "PRIVATE", "purpose_evidence_amount": None}, "PASS", "approved in full", expect="APPROVED"),
+             T({"requested_amount": 2300000, "tenure_months": 84, "loan_purpose": "higher_education", "monthly_net_income": 150000,
+                "existing_monthly_obligations": 5000, "other_monthly_obligations": 0, "bureau_score": 780, "bureau_match_status": "HIT",
+                "employment_months": 60, "employment_category": "MNC", "purpose_evidence_amount": 2400000}, "PASS",
+               "above the product cap: counter-offer at the cap, not a referral", expect="COUNTER_OFFER"),
+             T({"requested_amount": 4000000, "tenure_months": 84, "loan_purpose": "home_renovation", "monthly_net_income": 200000,
+                "existing_monthly_obligations": 0, "other_monthly_obligations": 0, "bureau_score": 790, "bureau_match_status": "HIT",
+                "employment_months": 72, "employment_category": "PUBLIC", "purpose_evidence_amount": 4200000}, "PASS",
+               "above the Rs. 25 lakh ceiling: outside what we offer, counter-offer", expect="COUNTER_OFFER"),
+             T({"requested_amount": 300000, "tenure_months": 36, "loan_purpose": "wedding", "monthly_net_income": 30000,
+                "existing_monthly_obligations": 14500, "other_monthly_obligations": 0, "bureau_score": 720, "bureau_match_status": "HIT",
+                "employment_months": 24, "employment_category": "PRIVATE", "purpose_evidence_amount": None}, "PASS",
+               "nothing at or above the minimum passes", expect="DECLINE")]),
+]
+
+# Rules whose breach at the requested amount is sized away by PL-129 (ADR-0007 #2): evaluated at the offered amount.
+AMOUNT_DEPENDENT = ["PL-064", "PL-065", "PL-108", "PL-109", "PL-110", "PL-118", "PL-120", "PL-122", "PL-126"]
+
 # Rules deferred in the salaried-only MVP (user decision 2026-11-03 22:50): kept, not deleted.
 DEFERRED = {
     "PL-013": "Employer history is not collected in the lean MVP form (only current employer + total experience).",
@@ -978,6 +1052,8 @@ DEFERRED = {
     "PL-113": "The internal negative list is not built.",
     "PL-116": "The employer caution list is not built.",
     "PL-117": "Self-employed applicants are out of the MVP (salaried only).",
+    "PL-125": "Risk-grade offer sizing and pricing are deferred: ADR-0007 #3 (owner, 2026-11-03 23:18 IST) sets one flat prototype rate per "
+              "product and no risk-grade pricing in the MVP. PL-129 sizes the MVP offer.",
 }
 
 # v2 ids from ZEN_RULES_PROPOSAL_v2.md (68). Every one must map to at least one PL rule.

@@ -4,7 +4,7 @@
 
 Every input of every rule, mapped to where the MVP gets it: a frontend field ([spec](FRONTEND_MVP_FIELD_SPEC.md)), a synthetic API path ([`contracts/synthetic_sources.json`](../../contracts/synthetic_sources.json)), OCR, a derivation, a policy parameter or the system. `contracts/tests/test_rule_catalogue_v2.py` asserts that every input of every ACTIVE rule resolves to a real frontend field or synthetic-schema path, and that every DEFERRED rule has a stated reason.
 
-**For feat/saral-synthetic-kyc-bank:** the SYNTHETIC_PAN, SYNTHETIC_AADHAAR and SYNTHETIC_BANK shapes in `synthetic_sources.json` are PROPOSED; implementing exactly those paths guarantees coverage. SYNTHETIC_BANK must label transactions with the categories SALARY, SALARY_REVERSAL, EMI, NACH_RETURN, CHEQUE_RETURN, CASH_DEPOSIT, UPI, TRANSFER, RENT, UTILITY, OTHER.
+**For feat/saral-synthetic-kyc-bank:** the SYNTHETIC_PAN, SYNTHETIC_AADHAAR and SYNTHETIC_BANK shapes in `synthetic_sources.json` are PROPOSED; implementing exactly those paths guarantees coverage. SYNTHETIC_BANK must label transactions with the categories SALARY, SALARY_REVERSAL, EMI, NACH_RETURN, CHEQUE_RETURN, BOUNCE_CHARGE, CASH_DEPOSIT, UPI, CARD, ATM, TRANSFER, RENT, UTILITY, OTHER.
 
 ## Synthetic sources
 
@@ -12,9 +12,9 @@ Every input of every rule, mapped to where the MVP gets it: a frontend field ([s
 |---|---|---|---|---|
 | SYNTHETIC_BUREAU | bureau-report/1 | BUILT | Qoder | 55 |
 | SYNTHETIC_BUREAU_V2 | bureau-report/2 | PROPOSED (design only) | Qoder | 20 |
-| SYNTHETIC_PAN | saral-kyc-pan/1 | PROPOSED for feat/saral-synthetic-kyc-bank | synthetic-kyc-bank | 8 |
-| SYNTHETIC_AADHAAR | saral-kyc-aadhaar/1 | PROPOSED for feat/saral-synthetic-kyc-bank | synthetic-kyc-bank | 14 |
-| SYNTHETIC_BANK | saral-bank-statement-aa/1 | PROPOSED for feat/saral-synthetic-kyc-bank (AA-style) | synthetic-kyc-bank | 20 |
+| SYNTHETIC_PAN | saral-kyc-pan/1 | RECONCILED with feat/saral-synthetic-kyc-bank | synthetic-kyc-bank | 15 |
+| SYNTHETIC_AADHAAR | saral-kyc-aadhaar/1 | RECONCILED with feat/saral-synthetic-kyc-bank | synthetic-kyc-bank | 22 |
+| SYNTHETIC_BANK | saral-bank-statement-aa/1 | RECONCILED with feat/saral-synthetic-kyc-bank (AA-style) | synthetic-kyc-bank | 47 |
 | OCR | saral-document-extraction/1 + Paddle chain | PR #41 open; Paddle chain prototype @ 0b5dede | OCR stream | 42 |
 
 ## By rule
@@ -145,10 +145,11 @@ Every input of every rule, mapped to where the MVP gets it: a frontend field ([s
 | PL-122 | Band employment depth | ACTIVE | employment_type <- FRONTEND:employment_type; amount_band <- DERIVED; employment_months <- DERIVED; employment_category <- FRONTEND:employer_category |  |
 | PL-123 | Band manual-review trigger | ACTIVE | amount_band <- DERIVED; foir <- DERIVED; review_flags <- SYSTEM |  |
 | PL-124 | Risk grade | ACTIVE | bureau_score <- SYNTHETIC_BUREAU:score.value; bureau_match_status <- SYNTHETIC_BUREAU:score.status; max_dpd_12m <- DERIVED; max_dpd_24m <- DERIVED |  |
-| PL-125 | Individual offer sizing | ACTIVE | requested_amount <- FRONTEND:requested_amount; tenure_months <- FRONTEND:tenure_months; loan_purpose <- FRONTEND:loan_purpose; risk_grade <- DERIVED; monthly_net_income <- DERIVED; existing_monthly_obligations <- DERIVED; other_monthly_obligations <- SYSTEM |  |
+| PL-125 | Individual offer sizing | DEFERRED | requested_amount <- FRONTEND:requested_amount; tenure_months <- FRONTEND:tenure_months; loan_purpose <- FRONTEND:loan_purpose; risk_grade <- DERIVED; monthly_net_income <- DERIVED; existing_monthly_obligations <- DERIVED; other_monthly_obligations <- SYSTEM | Risk-grade offer sizing and pricing are deferred: ADR-0007 #3 (owner, 2026-11-03 23:18 IST) sets one flat prototype rate per product and no risk-grade pricing in the MVP. PL-129 sizes the MVP offer. |
 | PL-126 | Amount supported by purpose evidence | ACTIVE | loan_purpose <- FRONTEND:loan_purpose; requested_amount <- FRONTEND:requested_amount; purpose_evidence_amount <- FRONTEND:fee_amount |  |
 | PL-127 | Purpose-specific consistency | ACTIVE | loan_purpose <- FRONTEND:loan_purpose; wedding_date <- FRONTEND:wedding_date; course_start_date <- FRONTEND:course_start_date; property_ownership <- FRONTEND:property_ownership; treatment_date <- FRONTEND:treatment_date; assessment_date <- SYSTEM |  |
 | PL-128 | Disbursal mode | ACTIVE | loan_purpose <- FRONTEND:loan_purpose; payee_account_present <- SYSTEM |  |
+| PL-129 | MVP offer sizing (flat rate) | ACTIVE | requested_amount <- FRONTEND:requested_amount; tenure_months <- FRONTEND:tenure_months; loan_purpose <- FRONTEND:loan_purpose; monthly_net_income <- DERIVED; existing_monthly_obligations <- DERIVED; other_monthly_obligations <- SYSTEM; bureau_score <- SYNTHETIC_BUREAU:score.value; bureau_match_status <- SYNTHETIC_BUREAU:score.status; employment_months <- DERIVED; employment_category <- FRONTEND:employer_category; purpose_evidence_amount <- FRONTEND:fee_amount |  |
 
 ## Product and band variants
 

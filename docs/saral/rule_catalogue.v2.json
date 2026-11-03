@@ -1,6 +1,6 @@
 {
   "status": "DRAFT - design only; not wired into ZEN; not for live use",
-  "catalogue_version": "saral-pl-catalogue-2.0.0-draft",
+  "catalogue_version": "saral-pl-catalogue-2.1.0-draft",
   "single_source_of_truth": "This JSON is the only source of ZEN rules and thresholds. RAG must never index it; the agent reads decision reasons from the stored decision, and underwriter lookups are exact by rule_id.",
   "canonical_source": "docs/saral/source/USER_RULE_CATALOGUE_PL.yaml (user's PL-001..PL-099)",
   "lender": "Bajaj Finance Ltd",
@@ -12,7 +12,17 @@
     "PL_HOME_RENOVATION",
     "PL_MEDICAL_EMERGENCY"
   ],
-  "products_status": "APPROVED_OWNER_DECISION (2026-11-03 23:03 IST); per-product thresholds are ASSUMPTION",
+  "products_status": "APPROVED_OWNER_DECISION (2026-11-03 23:03 IST); per-product thresholds are ASSUMPTION, approved for prototype_synthetic (ADR-0009 batch)",
+  "owner_decisions": {
+    "ADR-0001": "ZEN is authoritative; Bajaj numbers are indicative guidance only",
+    "ADR-0003": "four purpose products confirmed",
+    "ADR-0007 #1": "every product capped at Rs. 2,500,000 in the MVP",
+    "ADR-0007 #2": "above a product's cap: COUNTER_OFFER at the largest passing amount, not a referral",
+    "ADR-0007 #3": "one flat prototype rate per product; no risk-grade pricing (PL-125 deferred)",
+    "ADR-0007 #4": "what-if edits only amount, tenure, existing EMIs, income; result vocabulary would likely meet / wouldn't meet",
+    "ADR-0009 #1": "prototype thresholds approved as one batch under prototype_synthetic",
+    "ADR-0009 #2": "ZEN score floor stays 700; Bajaj 650 is indicative"
+  },
   "mvp_scope": "Salaried applicants only (user decision 2026-11-03 22:50 IST)",
   "outcomes": [
     "PASS",
@@ -33,7 +43,15 @@
     "DEPRECATED",
     "APPROVED_OWNER_DECISION"
   ],
-  "approval_status_extension": "APPROVED_OWNER_DECISION added for the owner-approved product list; the user should accept or rename it.",
+  "approval_status_extension": "APPROVED_OWNER_DECISION added for owner decisions; accepted and kept (ADR-0007 round 1, 2026-11-03 23:18 IST).",
+  "approval_status_meanings": {
+    "APPROVED_BAJAJ_SOURCE": "The value matches Bajaj's published guidance (chunk cited). Indicative public guidance only (ADR-0001); ZEN is authoritative.",
+    "APPROVED_REGULATORY": "An RBI chunk states the requirement (chunk cited).",
+    "APPROVED_OWNER_DECISION": "The owner decided the value himself (ADR-0003, ADR-0007, ADR-0009). Accepted and kept as a status (ADR-0007 round 1).",
+    "PENDING_BUSINESS_APPROVAL": "An A-NN assumption in THRESHOLD_APPROVALS.md. Approved for prototype_synthetic in the ADR-0009 batch; not for live use.",
+    "PROTOTYPE_SYNTHETIC": "A prototype value. Approved for prototype_synthetic in the ADR-0009 batch; not for live use.",
+    "DEPRECATED": "Kept for history; not evaluated (user vocabulary)."
+  },
   "required_rule_metadata": [
     "rule_id",
     "rule_name",
@@ -85,14 +103,38 @@
       "A DECLINE resting on a low-confidence (OCR-derived) value becomes MANUAL_REVIEW.",
       "A risk-signal rule (risk_signal=true) can only produce MANUAL_REVIEW and the generic borrower category DETAILS_NOT_VERIFIED.",
       "A rule whose mvp_status is DEFERRED is not evaluated in the MVP; it is kept in the catalogue.",
-      "The offer step (PL-125) runs after the gates. DECLINE from a gate wins; under MANUAL_REVIEW the offer is indicative for the underwriter.",
-      "ELIGIBILITY_CONDITIONS_MET with eligible_amount < requested_amount is reported as COUNTER_OFFER; it is not a sanction."
+      "Amount-dependent rules (PL-064, PL-065, PL-108, PL-109, PL-110, PL-118, PL-120, PL-122, PL-126) are evaluated at the PL-129 offered amount. A breach at the requested amount alone gives COUNTER_OFFER at the largest passing amount (ADR-0007 #2), never MANUAL_REVIEW and never a referral.",
+      "Every product is capped at Rs. 25 lakh in the MVP (ADR-0007 #1). A request above the product cap or the ceiling gets COUNTER_OFFER; above the ceiling it also sets request_outside_mvp_range and the borrower is told it is outside what we offer. Above Rs. 75 lakh (PL-070) it is declined as outside what we offer.",
+      "C3 resolved: v2 P05 ('over a product cap: refer') is superseded by COUNTER_OFFER (ADR-0007 #2).",
+      "The offer step (PL-129, flat rate per product) runs after the request-independent gates. DECLINE from such a gate wins; under MANUAL_REVIEW the offer is indicative for the underwriter. PL-125 (risk-grade sizing) is DEFERRED (ADR-0007 #3).",
+      "DECLINE from an amount-dependent rule happens only when no amount at or above the Rs. 40,000 minimum passes.",
+      "ELIGIBILITY_CONDITIONS_MET with eligible_amount < requested_amount, or a changed tenure, is reported as COUNTER_OFFER; it is not a sanction."
     ],
     "offer_outcomes": [
       "APPROVED",
       "COUNTER_OFFER",
       "DECLINE"
-    ]
+    ],
+    "amount_dependent_rules": [
+      "PL-064",
+      "PL-065",
+      "PL-108",
+      "PL-109",
+      "PL-110",
+      "PL-118",
+      "PL-120",
+      "PL-122",
+      "PL-126"
+    ],
+    "counter_offer": {
+      "rule": "PL-129",
+      "decision": "ADR-0007 #2",
+      "basis": "largest amount passing every amount-dependent rule",
+      "never": [
+        "MANUAL_REVIEW for a cap breach",
+        "referral (v2 P05)"
+      ]
+    }
   },
   "profiles": {
     "bajaj_published": {
@@ -251,9 +293,39 @@
         "PL-125",
         "PL-126",
         "PL-127",
-        "PL-128"
+        "PL-128",
+        "PL-129"
       ],
-      "not_for_live_use": true
+      "not_for_live_use": true,
+      "batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "top_thresholds_for_one_by_one_review": "project-management/TOP10_THRESHOLDS.md",
+      "mvp_limits": {
+        "amount_ceiling_inr": 2500000,
+        "per_product": {
+          "PL_WEDDING": {
+            "max_amount_inr": 1500000,
+            "max_tenure_months": 60,
+            "flat_rate": 0.2
+          },
+          "PL_HIGHER_EDUCATION": {
+            "max_amount_inr": 2000000,
+            "max_tenure_months": 84,
+            "flat_rate": 0.2
+          },
+          "PL_HOME_RENOVATION": {
+            "max_amount_inr": 2500000,
+            "max_tenure_months": 84,
+            "flat_rate": 0.2
+          },
+          "PL_MEDICAL_EMERGENCY": {
+            "max_amount_inr": 1000000,
+            "max_tenure_months": 60,
+            "flat_rate": 0.2
+          }
+        },
+        "tenure_basis": "prototype max tenure per product, ASSUMPTION <= 84 months; Bajaj 108 is the outer gate (PL-072)",
+        "score_floor": 700
+      }
     }
   },
   "profile_dependencies": [
@@ -288,7 +360,225 @@
       7500000
     ]
   },
+  "amount_bands_mvp": {
+    "in_mvp": [
+      "B1",
+      "B2",
+      "B3"
+    ],
+    "notes": {
+      "B4": "outside the MVP: above the Rs. 25 lakh ceiling (ADR-0007 #1); never offered, so PL-123's always-review never fires"
+    }
+  },
+  "band_rules": {
+    "min_score": {
+      "B1": 700,
+      "B2": 700,
+      "B3": 700,
+      "B4": 725
+    },
+    "min_employment_months": {
+      "B1": 6,
+      "B2": 6,
+      "B3": 12,
+      "B4": 24
+    },
+    "employer_categories": {
+      "B1": [
+        "PUBLIC",
+        "PRIVATE",
+        "MNC"
+      ],
+      "B2": [
+        "PUBLIC",
+        "PRIVATE",
+        "MNC"
+      ],
+      "B3": [
+        "PUBLIC",
+        "PRIVATE",
+        "MNC"
+      ],
+      "B4": [
+        "PUBLIC",
+        "MNC"
+      ]
+    }
+  },
   "offer_sizing": {
+    "rule": "PL-129",
+    "pricing": "one flat prototype rate per product (ADR-0007 #3)",
+    "flat_rate_by_product": {
+      "PL_WEDDING": 0.2,
+      "PL_HIGHER_EDUCATION": 0.2,
+      "PL_HOME_RENOVATION": 0.2,
+      "PL_MEDICAL_EMERGENCY": 0.2
+    },
+    "mvp_amount_ceiling": 2500000,
+    "minimum_amount": 40000,
+    "basis": "prototype_synthetic (ADR-0009 batch) except the minimum amount (BFL-PL-OVERVIEW#003) and the owner decisions",
+    "worked_examples": [
+      {
+        "name": "Wedding, full approval",
+        "input": {
+          "requested_amount": 500000,
+          "tenure_months": 60,
+          "product_id": "PL_WEDDING",
+          "monthly_net_income": 80000,
+          "existing_monthly_obligations": 10000,
+          "bureau_score": 760,
+          "employment_months": 30,
+          "employment_category": "PRIVATE"
+        },
+        "result": {
+          "offer_outcome": "APPROVED",
+          "eligible_amount": 500000,
+          "offer_tenure_months": 60,
+          "offer_emi": 13247,
+          "offer_rate": 0.2,
+          "binding_cap": "requested",
+          "request_outside_mvp_range": false,
+          "caps_at_offer_tenure": {
+            "requested": 500000,
+            "product_cap": 1500000,
+            "income_cap": 1920000,
+            "foir_principal": 1132337,
+            "band_cap": 2500000
+          },
+          "internal_reason": "flat rate 20%; binding cap requested; max EMI 30000 over 60 months"
+        }
+      },
+      {
+        "name": "Higher education, above the product cap: counter-offer at the cap",
+        "input": {
+          "requested_amount": 2300000,
+          "tenure_months": 84,
+          "product_id": "PL_HIGHER_EDUCATION",
+          "monthly_net_income": 150000,
+          "existing_monthly_obligations": 5000,
+          "bureau_score": 780,
+          "employment_months": 60,
+          "employment_category": "MNC",
+          "purpose_evidence_amount": 2400000
+        },
+        "result": {
+          "offer_outcome": "COUNTER_OFFER",
+          "eligible_amount": 2000000,
+          "offer_tenure_months": 84,
+          "offer_emi": 44412,
+          "offer_rate": 0.2,
+          "binding_cap": "product_cap",
+          "request_outside_mvp_range": false,
+          "caps_at_offer_tenure": {
+            "requested": 2300000,
+            "product_cap": 2000000,
+            "income_cap": 3600000,
+            "foir_principal": 3152273,
+            "band_cap": 2500000,
+            "evidence_cap": 2640000
+          },
+          "internal_reason": "flat rate 20%; binding cap product_cap; max EMI 70000 over 84 months"
+        }
+      },
+      {
+        "name": "Home renovation, Rs. 40 lakh: outside what we offer, counter-offer within the Rs. 25 lakh ceiling",
+        "input": {
+          "requested_amount": 4000000,
+          "tenure_months": 84,
+          "product_id": "PL_HOME_RENOVATION",
+          "monthly_net_income": 200000,
+          "existing_monthly_obligations": 0,
+          "bureau_score": 790,
+          "employment_months": 72,
+          "employment_category": "PUBLIC",
+          "purpose_evidence_amount": 4200000
+        },
+        "result": {
+          "offer_outcome": "COUNTER_OFFER",
+          "eligible_amount": 2500000,
+          "offer_tenure_months": 84,
+          "offer_emi": 55515,
+          "offer_rate": 0.2,
+          "binding_cap": "product_cap",
+          "request_outside_mvp_range": true,
+          "caps_at_offer_tenure": {
+            "requested": 4000000,
+            "product_cap": 2500000,
+            "income_cap": 4800000,
+            "foir_principal": 4503247,
+            "band_cap": 2500000,
+            "evidence_cap": 4620000
+          },
+          "internal_reason": "flat rate 20%; binding cap product_cap; max EMI 100000 over 84 months; request above the Rs. 25 lakh MVP ceiling"
+        }
+      },
+      {
+        "name": "Medical emergency, affordability: smaller amount",
+        "input": {
+          "requested_amount": 800000,
+          "tenure_months": 36,
+          "product_id": "PL_MEDICAL_EMERGENCY",
+          "monthly_net_income": 45000,
+          "existing_monthly_obligations": 6000,
+          "bureau_score": 735,
+          "employment_months": 20,
+          "employment_category": "PRIVATE",
+          "purpose_evidence_amount": 850000
+        },
+        "result": {
+          "offer_outcome": "COUNTER_OFFER",
+          "eligible_amount": 622000,
+          "offer_tenure_months": 60,
+          "offer_emi": 16479,
+          "offer_rate": 0.2,
+          "binding_cap": "foir_principal",
+          "request_outside_mvp_range": false,
+          "caps_at_offer_tenure": {
+            "requested": 800000,
+            "product_cap": 1000000,
+            "income_cap": 1080000,
+            "foir_principal": 622785,
+            "band_cap": 2500000,
+            "evidence_cap": 935000
+          },
+          "internal_reason": "flat rate 20%; binding cap foir_principal; max EMI 16500 over 60 months"
+        }
+      },
+      {
+        "name": "Wedding, obligations too high: decline",
+        "input": {
+          "requested_amount": 300000,
+          "tenure_months": 36,
+          "product_id": "PL_WEDDING",
+          "monthly_net_income": 30000,
+          "existing_monthly_obligations": 14500,
+          "bureau_score": 720,
+          "employment_months": 24,
+          "employment_category": "PRIVATE"
+        },
+        "result": {
+          "offer_outcome": "DECLINE",
+          "eligible_amount": 0,
+          "offer_tenure_months": null,
+          "offer_emi": null,
+          "offer_rate": 0.2,
+          "binding_cap": "foir_principal",
+          "request_outside_mvp_range": false,
+          "caps_at_offer_tenure": {
+            "requested": 300000,
+            "product_cap": 1500000,
+            "income_cap": 720000,
+            "foir_principal": 18872,
+            "band_cap": 2500000
+          },
+          "internal_reason": "flat rate 20%; binding cap foir_principal; max EMI 500 over 60 months"
+        }
+      }
+    ]
+  },
+  "deferred_grade_sizing": {
+    "rule": "PL-125",
+    "status": "DEFERRED (ADR-0007 #3)",
     "grade_income_multiplier": {
       "A": 24,
       "B": 20,
@@ -307,8 +597,6 @@
       "C": 1000000,
       "NTC": 200000
     },
-    "minimum_amount": 40000,
-    "basis": "ASSUMPTION (prototype_synthetic) except the minimum amount (BFL-PL-OVERVIEW#003)",
     "worked_examples": [
       {
         "name": "Wedding, grade A, full approval",
@@ -441,9 +729,118 @@
       }
     ]
   },
+  "what_if": {
+    "status": "DRAFT - design only; the agent owner implements it",
+    "decisions": [
+      "ADR-0005 (2026-11-03 22:58 IST)",
+      "ADR-0007 #4 (2026-11-03 23:18 IST)"
+    ],
+    "editable_fields": {
+      "loan_amount": {
+        "dictionary_field": "requested_amount",
+        "zen_data_point": "loan_amount",
+        "label": "loan amount",
+        "range": [
+          40000,
+          2500000
+        ]
+      },
+      "tenure_months": {
+        "dictionary_field": "tenure_months",
+        "zen_data_point": "tenure_months",
+        "label": "repayment period",
+        "range": [
+          12,
+          84
+        ]
+      },
+      "existing_emis": {
+        "dictionary_field": "existing_monthly_obligations",
+        "zen_data_point": "existing_emi_total",
+        "label": "existing monthly repayments",
+        "range": [
+          0,
+          10000000
+        ]
+      },
+      "monthly_income": {
+        "dictionary_field": "monthly_net_income",
+        "zen_data_point": "net_monthly_income",
+        "label": "monthly income",
+        "range": [
+          1,
+          10000000
+        ]
+      }
+    },
+    "forbidden_fields": [
+      "credit_score",
+      "bureau_score",
+      "employment_months",
+      "employment_start_date",
+      "risk_grade",
+      "employment_category",
+      "loan_purpose"
+    ],
+    "result_vocabulary": {
+      "WOULD_LIKELY_MEET": "would likely meet",
+      "WOULD_NOT_MEET": "wouldn't meet"
+    },
+    "result_shape": {
+      "result": "WOULD_LIKELY_MEET | WOULD_NOT_MEET",
+      "text": "would likely meet | wouldn't meet",
+      "hypothetical_amount": "the loan amount the borrower typed (echo only)",
+      "label": "Estimate only, your application is unchanged",
+      "remaining_this_session": "int"
+    },
+    "never_returned": [
+      "rule_id",
+      "threshold",
+      "gap",
+      "target",
+      "binding cap",
+      "offered amount",
+      "decision",
+      "rule results"
+    ],
+    "per_session_cap": {
+      "value": 5,
+      "approval_status": "PROTOTYPE_SYNTHETIC",
+      "note": "ADR-0005 asks for a cap; 5 is a prototype value (approved in the ADR-0009 batch)."
+    },
+    "side_effects": {
+      "in_memory_only": true,
+      "writes": "none",
+      "record_hash_unchanged": true,
+      "ingest_refuses_is_simulation": true
+    },
+    "evaluation": "WOULD_LIKELY_MEET when PL-129 sizing of the hypothetical request returns APPROVED in full at the asked tenure; otherwise WOULD_NOT_MEET. Request-independent gates keep their recorded result.",
+    "forbidden_words_in_answer": [
+      "approved",
+      "approve",
+      "sanction",
+      "offer",
+      "guarantee",
+      "eligible amount",
+      "threshold",
+      "cut-off",
+      "cutoff",
+      "minimum",
+      "maximum",
+      "limit",
+      "foir",
+      "score",
+      "rule",
+      "gap",
+      "target",
+      "pl-"
+    ]
+  },
   "conflicts": {
     "C1": "Maximum amount: Rs. 75 lakh (BFL-PL-OVERVIEW#003, #017) vs Rs. 55 lakh (BFL-PL-RATES-FEES#011 tables; bajaj_v1 anchors). Catalogue uses 75 lakh (PL-070); no effect on the four products (caps <= 25 lakh).",
-    "C2": "Credit score: 650 (BFL-PL-ELIG-DOCS#007, BFL-PL-RATES-FEES#023) vs 685 minimum / 750 ideal (BFL-INSIGHT-REJECTION#001, an education article). Catalogue uses 650 (PL-029); 750 only as the grade-A / PRIME edge."
+    "C2": "Credit score: Bajaj publishes 650 (BFL-PL-ELIG-DOCS#007, BFL-PL-RATES-FEES#023) vs 685 minimum / 750 ideal (BFL-INSIGHT-REJECTION#001, an education article). Resolved by ADR-0009 #2: the ZEN floor stays 700 (PL-029); all Bajaj figures are indicative.",
+    "C3": "Over a product cap: v2 P05 'refer, never decline' vs the aggregation's counter-offer. Resolved by ADR-0007 #2: COUNTER_OFFER at the largest passing amount (PL-109, PL-129).",
+    "C4": "Tenure: Bajaj 108 months (BFL-PL-ELIG-DOCS#008) vs 360 months allowed by Qoder-owned validators. Catalogue: PL-072 gate 108, prototype max 60/84/84/60 (PL-110). Validator fix handed to Qoder (QODER_HANDOFF.md)."
   },
   "v2_to_pl": {
     "G01": [
@@ -857,6 +1254,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -875,9 +1273,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -995,6 +1394,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -1013,9 +1413,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -1116,6 +1517,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -1134,9 +1536,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -1234,6 +1637,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -1254,9 +1658,10 @@
         ],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -1358,6 +1763,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -1378,9 +1784,10 @@
         ],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -1489,6 +1896,7 @@
         "when_condition_false": "INSUFFICIENT_DATA",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MORE_INFORMATION_REQUIRED",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -1507,9 +1915,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -1609,6 +2018,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -1625,9 +2035,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -1753,6 +2164,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -1775,9 +2187,10 @@
         ],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -1917,6 +2330,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -1936,9 +2350,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -2041,6 +2456,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -2061,9 +2477,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -2159,6 +2576,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -2175,9 +2593,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -2281,6 +2700,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -2299,9 +2719,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -2404,6 +2825,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -2420,9 +2842,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -2521,6 +2944,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -2541,9 +2965,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -2637,6 +3062,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -2653,9 +3079,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -2749,6 +3176,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -2767,9 +3195,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -2868,6 +3297,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -2884,9 +3314,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -2985,6 +3416,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -3001,9 +3433,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -3088,6 +3521,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -3104,9 +3538,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -3205,6 +3640,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -3221,9 +3657,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -3331,6 +3768,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -3351,9 +3789,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -3450,6 +3889,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -3468,9 +3908,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -3576,6 +4017,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -3592,9 +4034,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -3691,6 +4134,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -3707,9 +4151,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -3803,6 +4248,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -3819,9 +4265,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -3911,6 +4358,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -3929,9 +4377,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -4026,6 +4475,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -4044,9 +4494,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -4133,6 +4584,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -4149,9 +4601,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -4233,14 +4686,17 @@
       "parameters": [
         {
           "name": "approved_minimum_score",
-          "value": 650,
+          "value": 700,
           "unit": "score",
-          "approval_status": "APPROVED_BAJAJ_SOURCE",
-          "source_chunk": "BFL-PL-ELIG-DOCS#007",
+          "approval_status": "APPROVED_OWNER_DECISION",
+          "source_chunk": null,
           "assumption_id": null,
-          "value_origin": "BAJAJ_PUBLISHED",
-          "context_chunks": [],
-          "note": ""
+          "value_origin": "OWNER_DECISION",
+          "context_chunks": [
+            "BFL-PL-ELIG-DOCS#007",
+            "BFL-PL-RATES-FEES#023"
+          ],
+          "note": "ADR-0009 #2: the ZEN floor stays 700. Bajaj's published 650 (BFL-PL-ELIG-DOCS#007) is indicative public guidance only."
         }
       ],
       "outcome": {
@@ -4248,6 +4704,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "NO_EFFECT",
@@ -4257,21 +4714,21 @@
       "severity": "HARD_DECLINE",
       "risk_signal": false,
       "policy_source": {
-        "source_chunks": [
-          "BFL-PL-ELIG-DOCS#007"
-        ],
+        "source_chunks": [],
         "context_chunks": [
+          "BFL-PL-ELIG-DOCS#007",
           "BFL-PL-RATES-FEES#023"
         ],
         "assumption_ids": [],
-        "conflict": "C2: 650 on product pages vs 685 minimum / 750 ideal in BFL-INSIGHT-REJECTION#001 (lender education article).",
+        "conflict": "C2 (resolved by ADR-0009 #2): ZEN uses 700. Bajaj indicative: 650 on product pages, 685 minimum / 750 ideal in BFL-INSIGHT-REJECTION#001.",
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
-      "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
-      "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
+      "approval_status": "APPROVED_OWNER_DECISION",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
+      "public_guidance": null,
       "effective_from": "2026-11-03",
       "effective_to": null,
       "profiles": [
@@ -4295,7 +4752,7 @@
         {
           "case_id": "PL-029-T1",
           "inputs": {
-            "bureau_score": 650
+            "bureau_score": 700
           },
           "expected_outcome": "PASS",
           "description": "",
@@ -4304,7 +4761,7 @@
         {
           "case_id": "PL-029-T2",
           "inputs": {
-            "bureau_score": 649
+            "bureau_score": 699
           },
           "expected_outcome": "FAIL",
           "description": "",
@@ -4312,13 +4769,22 @@
         },
         {
           "case_id": "PL-029-T3",
+          "inputs": {
+            "bureau_score": 650
+          },
+          "expected_outcome": "FAIL",
+          "description": "Bajaj's indicative 650 is not the ZEN floor",
+          "expected_value": null
+        },
+        {
+          "case_id": "PL-029-T4",
           "inputs": {},
           "expected_outcome": "INSUFFICIENT_DATA",
           "description": "all inputs missing: never a FAIL",
           "expected_value": null
         }
       ],
-      "note": "A null score is not a fail: NO_HIT/INSUFFICIENT_HISTORY goes to PL-027 (review)."
+      "note": "A null score is not a fail: NO_HIT/INSUFFICIENT_HISTORY goes to PL-027 (review). Matches the live synthetic policy (MIN_CREDIT_SCORE 700)."
     },
     {
       "rule_id": "PL-030",
@@ -4372,6 +4838,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -4388,9 +4855,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -4495,6 +4963,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -4511,9 +4980,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -4615,6 +5085,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -4631,9 +5102,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -4743,6 +5215,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -4759,9 +5232,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -4841,6 +5315,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -4857,9 +5332,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -4956,6 +5432,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -4972,9 +5449,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -5061,6 +5539,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -5077,9 +5556,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -5175,6 +5655,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -5191,9 +5672,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -5273,6 +5755,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -5289,9 +5772,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -5387,6 +5871,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -5403,9 +5888,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -5502,6 +5988,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "NO_EFFECT",
@@ -5518,9 +6005,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -5619,6 +6107,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -5637,9 +6126,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -5751,6 +6241,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "NO_EFFECT",
@@ -5769,9 +6260,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -5883,6 +6375,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "NO_EFFECT",
@@ -5901,9 +6394,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -5997,6 +6491,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -6013,9 +6508,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -6112,6 +6608,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -6128,9 +6625,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -6220,6 +6718,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -6236,9 +6735,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -6339,6 +6839,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "NO_EFFECT",
@@ -6359,9 +6860,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -6477,6 +6979,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "NO_EFFECT",
@@ -6497,9 +7000,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -6606,6 +7110,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -6622,9 +7127,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -6714,6 +7220,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -6730,9 +7237,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -6822,6 +7330,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -6838,9 +7347,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -6930,6 +7440,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -6946,9 +7457,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -7067,6 +7579,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -7087,9 +7600,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -7183,6 +7697,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -7199,9 +7714,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -7293,6 +7809,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -7309,9 +7826,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -7408,6 +7926,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -7424,9 +7943,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -7506,6 +8026,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -7522,9 +8043,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -7616,6 +8138,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -7634,9 +8157,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -7740,6 +8264,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -7758,9 +8283,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -7833,6 +8359,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -7849,9 +8376,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -7966,6 +8494,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -7986,9 +8515,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -8084,6 +8614,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -8100,9 +8631,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -8203,6 +8735,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -8221,9 +8754,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -8339,6 +8873,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": true,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -8361,9 +8896,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -8420,7 +8956,7 @@
           "expected_value": null
         }
       ],
-      "note": "If only this rule (or PL-108 / a product cap) fails, the outcome can carry a counter-offer at PL-068's eligible amount."
+      "note": "Amount-dependent (ADR-0007 #2): evaluated at the PL-129 offered amount. A breach at the requested amount alone gives COUNTER_OFFER; DECLINE only when no amount at or above the minimum passes."
     },
     {
       "rule_id": "PL-065",
@@ -8474,6 +9010,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": true,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -8490,9 +9027,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -8581,6 +9119,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -8597,9 +9136,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -8700,6 +9240,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -8718,9 +9259,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -8826,6 +9368,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -8844,9 +9387,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -8942,6 +9486,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -8960,9 +9505,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -9057,6 +9603,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -9071,13 +9618,14 @@
         ],
         "context_chunks": [],
         "assumption_ids": [],
-        "conflict": "C1: Rs. 75 lakh on product pages vs Rs. 55 lakh at the top of the BFL-PL-RATES-FEES#011 tables (and bajaj_v1 anchors).",
+        "conflict": "C1: Rs. 75 lakh on product pages vs Rs. 55 lakh at the top of the BFL-PL-RATES-FEES#011 tables (and bajaj_v1 anchors). Moot in the MVP: every product is capped at Rs. 25 lakh (ADR-0007 #1); 25-75 lakh gets a COUNTER_OFFER via PL-109/PL-129.",
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -9125,7 +9673,7 @@
           "expected_value": null
         }
       ],
-      "note": ""
+      "note": "Above this the request is declined as outside what we offer (ADR-0007 #1, 'say it's outside what we offer')."
     },
     {
       "rule_id": "PL-071",
@@ -9172,6 +9720,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -9190,9 +9739,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -9287,6 +9837,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -9305,9 +9856,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -9355,7 +9907,7 @@
           "expected_value": null
         }
       ],
-      "note": "The existing UnderwritingInput validator allows 360 months; this rule is the design fix."
+      "note": "Bajaj's 108 is the outer gate. The prototype max tenure per product is PL-110 (60/84/84/60, ASSUMPTION <= 84). Qoder-owned validators still allow 360 months (decision_engine/schemas/underwriting.py:61-62, decision_engine/bureau/gates.py:171, loan_advisory_portal api/applications.py:47); see project-management/QODER_HANDOFF.md."
     },
     {
       "rule_id": "PL-073",
@@ -9402,6 +9954,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -9420,9 +9973,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -9549,6 +10103,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -9567,9 +10122,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -9671,6 +10227,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -9689,9 +10246,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -9790,6 +10348,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -9809,9 +10368,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_OWNER_DECISION",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": null,
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -9911,6 +10471,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -9927,9 +10488,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -10039,6 +10601,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -10059,9 +10622,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -10164,6 +10728,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -10180,9 +10745,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -10276,6 +10842,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -10292,9 +10859,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -10395,6 +10963,7 @@
         "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "DECLINE",
         "on_missing": "NO_EFFECT",
@@ -10411,9 +10980,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -10521,6 +11091,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -10537,9 +11108,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -10631,6 +11203,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -10647,9 +11220,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -10741,6 +11315,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -10757,9 +11332,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -10849,6 +11425,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -10865,9 +11442,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -10966,6 +11544,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -10982,9 +11561,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -11076,6 +11656,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -11092,9 +11673,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -11192,6 +11774,7 @@
         "when_condition_false": "INSUFFICIENT_DATA",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MORE_INFORMATION_REQUIRED",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -11212,9 +11795,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -11317,6 +11901,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -11335,9 +11920,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -11431,6 +12017,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -11447,9 +12034,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -11545,6 +12133,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -11561,9 +12150,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -11662,6 +12252,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -11680,9 +12271,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -11774,6 +12366,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -11790,9 +12383,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -11928,6 +12522,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -11950,9 +12545,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -12062,6 +12658,7 @@
         "when_condition_false": "INSUFFICIENT_DATA",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MORE_INFORMATION_REQUIRED",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -12082,9 +12679,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_REGULATORY",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": null,
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -12186,6 +12784,7 @@
         "when_condition_false": "INSUFFICIENT_DATA",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MORE_INFORMATION_REQUIRED",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -12204,9 +12803,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -12311,6 +12911,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -12327,9 +12928,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -12428,6 +13030,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -12444,9 +13047,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -12549,6 +13153,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -12565,9 +13170,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -12660,6 +13266,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -12676,9 +13283,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -12763,6 +13371,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -12779,9 +13388,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -12866,6 +13476,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -12882,9 +13493,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -13003,6 +13615,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -13021,9 +13634,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -13131,6 +13745,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -13149,9 +13764,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -13261,6 +13877,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -13277,9 +13894,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -13380,6 +13998,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -13398,9 +14017,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -13489,6 +14109,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -13509,9 +14130,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -13581,7 +14203,7 @@
           "declared_in_user_catalogue": true
         }
       ],
-      "condition": "requested_amount <= max_amount_income_multiple x monthly_net_income, else counter-offer review",
+      "condition": "requested_amount <= max_amount_income_multiple x monthly_net_income; breach -> COUNTER_OFFER at the PL-129 amount",
       "applies_when": "ALL",
       "parameters": [
         {
@@ -13598,16 +14220,17 @@
       ],
       "outcome": {
         "when_condition_true": "PASS",
-        "when_condition_false": "REVIEW",
+        "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": true,
       "decision_effect": {
-        "on_fail": "MANUAL_REVIEW",
+        "on_fail": "COUNTER_OFFER",
         "on_missing": "MORE_INFORMATION_REQUIRED",
         "low_confidence_downgrades_decline_to_review": false,
         "decline_active_only_in": null
       },
-      "severity": "REVIEW",
+      "severity": "OFFER_ADJUSTMENT",
       "risk_signal": false,
       "policy_source": {
         "source_chunks": [],
@@ -13617,9 +14240,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -13629,7 +14253,7 @@
       "mvp_status": "ACTIVE",
       "mvp_deferred_reason": null,
       "borrower_reason_category": "REPAYMENTS_TOO_HIGH",
-      "borrower_message": "We need to review whether this amount is affordable alongside your existing repayments.",
+      "borrower_message": "A smaller amount fits better alongside your income and existing repayments. We have shown the amount we can offer.",
       "borrower_message_when_missing": "We need more information about your income to complete the assessment.",
       "borrower_message_when_missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
       "internal_reason": "Amount {requested_amount} is {amount_income_multiple}x income.",
@@ -13654,8 +14278,8 @@
             "requested_amount": 2000000,
             "monthly_net_income": 60000
           },
-          "expected_outcome": "REVIEW",
-          "description": "",
+          "expected_outcome": "FAIL",
+          "description": "counter-offer at 24x income or less",
           "expected_value": null
         },
         {
@@ -13666,7 +14290,7 @@
           "expected_value": null
         }
       ],
-      "note": ""
+      "note": "Amount-dependent: sized down by PL-129 (ADR-0007 #2, largest passing amount)."
     },
     {
       "rule_id": "PL-109",
@@ -13693,7 +14317,7 @@
           "declared_in_user_catalogue": true
         }
       ],
-      "condition": "requested_amount <= purpose_amount_cap[loan_purpose]; breach -> REVIEW, never DECLINE",
+      "condition": "requested_amount <= min(purpose_amount_cap[loan_purpose], mvp_amount_ceiling); breach -> COUNTER_OFFER at the largest passing amount (PL-129), never REVIEW, never DECLINE",
       "applies_when": "ALL",
       "parameters": [
         {
@@ -13711,20 +14335,32 @@
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
           "note": ""
+        },
+        {
+          "name": "mvp_amount_ceiling",
+          "value": 2500000,
+          "unit": "INR",
+          "approval_status": "APPROVED_OWNER_DECISION",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "OWNER_DECISION",
+          "context_chunks": [],
+          "note": "ADR-0007 #1: every product is capped at Rs. 25 lakh in the MVP; above that, offer the cap or say it's outside what we offer."
         }
       ],
       "outcome": {
         "when_condition_true": "PASS",
-        "when_condition_false": "REVIEW",
+        "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": true,
       "decision_effect": {
-        "on_fail": "MANUAL_REVIEW",
+        "on_fail": "COUNTER_OFFER",
         "on_missing": "MORE_INFORMATION_REQUIRED",
         "low_confidence_downgrades_decline_to_review": false,
         "decline_active_only_in": null
       },
-      "severity": "REVIEW",
+      "severity": "OFFER_ADJUSTMENT",
       "risk_signal": false,
       "policy_source": {
         "source_chunks": [],
@@ -13732,13 +14368,14 @@
         "assumption_ids": [
           "A-25..A-28"
         ],
-        "conflict": null,
+        "conflict": "C3 (resolved by ADR-0007 #2): v2 P05 said 'refer, never decline' while the aggregation said counter-offer. Resolved in favour of COUNTER_OFFER at the largest passing amount; P05's referral is superseded.",
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -13748,10 +14385,10 @@
       "mvp_status": "ACTIVE",
       "mvp_deferred_reason": null,
       "borrower_reason_category": "REQUEST_OUTSIDE_OFFER",
-      "borrower_message": "We need to review the loan amount, tenure or purpose you requested. We may suggest a different option.",
-      "borrower_message_when_missing": "We need to review the loan amount, tenure or purpose you requested. We may suggest a different option.",
+      "borrower_message": "The amount or repayment period you asked for is more than we can offer for this loan. We have shown the most we can offer instead.",
+      "borrower_message_when_missing": "The amount or repayment period you asked for is more than we can offer for this loan. We have shown the most we can offer instead.",
       "borrower_message_when_missing_category": "REQUEST_OUTSIDE_OFFER",
-      "internal_reason": "Amount {requested_amount} above the {loan_purpose} cap.",
+      "internal_reason": "Amount {requested_amount} above the {loan_purpose} cap; counter-offer {eligible_amount}{outside_range_note}.",
       "v2_ids": [
         "P01",
         "P02",
@@ -13779,19 +14416,29 @@
             "requested_amount": 1200000,
             "loan_purpose": "medical_emergency"
           },
-          "expected_outcome": "REVIEW",
-          "description": "",
+          "expected_outcome": "FAIL",
+          "description": "counter-offer at the medical cap",
           "expected_value": null
         },
         {
           "case_id": "PL-109-T3",
+          "inputs": {
+            "requested_amount": 4000000,
+            "loan_purpose": "home_renovation"
+          },
+          "expected_outcome": "FAIL",
+          "description": "above the Rs. 25 lakh MVP ceiling: outside what we offer, counter-offer",
+          "expected_value": null
+        },
+        {
+          "case_id": "PL-109-T4",
           "inputs": {},
           "expected_outcome": "INSUFFICIENT_DATA",
           "description": "all inputs missing: never a FAIL",
           "expected_value": null
         }
       ],
-      "note": ""
+      "note": "Requests above the Rs. 25 lakh ceiling also set request_outside_mvp_range, and the borrower sees REQUEST_OUTSIDE_OFFER.outside_range."
     },
     {
       "rule_id": "PL-110",
@@ -13818,7 +14465,7 @@
           "declared_in_user_catalogue": true
         }
       ],
-      "condition": "tenure_months <= purpose_tenure_cap[loan_purpose]; breach -> REVIEW",
+      "condition": "tenure_months <= purpose_tenure_cap[loan_purpose] (prototype max tenure); breach -> COUNTER_OFFER at the product max tenure (PL-129)",
       "applies_when": "ALL",
       "parameters": [
         {
@@ -13835,21 +14482,22 @@
           "assumption_id": "A-25..A-28",
           "value_origin": "DRAFT_ASSUMPTION",
           "context_chunks": [],
-          "note": ""
+          "note": "Prototype max tenure per product, ASSUMPTION <= 84 months (product matrix values). Bajaj's 108 (PL-072) is the outer gate."
         }
       ],
       "outcome": {
         "when_condition_true": "PASS",
-        "when_condition_false": "REVIEW",
+        "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": true,
       "decision_effect": {
-        "on_fail": "MANUAL_REVIEW",
+        "on_fail": "COUNTER_OFFER",
         "on_missing": "MORE_INFORMATION_REQUIRED",
         "low_confidence_downgrades_decline_to_review": false,
         "decline_active_only_in": null
       },
-      "severity": "REVIEW",
+      "severity": "OFFER_ADJUSTMENT",
       "risk_signal": false,
       "policy_source": {
         "source_chunks": [],
@@ -13861,9 +14509,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -13873,8 +14522,8 @@
       "mvp_status": "ACTIVE",
       "mvp_deferred_reason": null,
       "borrower_reason_category": "REQUEST_OUTSIDE_OFFER",
-      "borrower_message": "We need to review the loan amount, tenure or purpose you requested. We may suggest a different option.",
-      "borrower_message_when_missing": "We need to review the loan amount, tenure or purpose you requested. We may suggest a different option.",
+      "borrower_message": "The amount or repayment period you asked for is more than we can offer for this loan. We have shown the most we can offer instead.",
+      "borrower_message_when_missing": "The amount or repayment period you asked for is more than we can offer for this loan. We have shown the most we can offer instead.",
       "borrower_message_when_missing_category": "REQUEST_OUTSIDE_OFFER",
       "internal_reason": "Tenure {tenure_months} above the {loan_purpose} cap.",
       "v2_ids": [
@@ -13903,12 +14552,22 @@
             "tenure_months": 84,
             "loan_purpose": "wedding"
           },
-          "expected_outcome": "REVIEW",
-          "description": "",
+          "expected_outcome": "FAIL",
+          "description": "counter at 60",
           "expected_value": null
         },
         {
           "case_id": "PL-110-T3",
+          "inputs": {
+            "tenure_months": 96,
+            "loan_purpose": "home_renovation"
+          },
+          "expected_outcome": "FAIL",
+          "description": "above the 84-month prototype max",
+          "expected_value": null
+        },
+        {
+          "case_id": "PL-110-T4",
           "inputs": {},
           "expected_outcome": "INSUFFICIENT_DATA",
           "description": "all inputs missing: never a FAIL",
@@ -13973,6 +14632,7 @@
         "when_condition_false": "INSUFFICIENT_DATA",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MORE_INFORMATION_REQUIRED",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -13989,9 +14649,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -14098,6 +14759,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -14116,9 +14778,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "APPROVED_BAJAJ_SOURCE",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": null,
       "public_guidance": "Bajaj value is indicative public guidance; ZEN decides",
       "effective_from": "2026-11-03",
       "effective_to": null,
@@ -14213,6 +14876,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -14229,9 +14893,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -14337,6 +15002,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -14353,9 +15019,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -14454,6 +15121,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -14470,9 +15138,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -14564,6 +15233,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -14580,9 +15250,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -14667,6 +15338,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -14685,9 +15357,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -14759,7 +15432,7 @@
           "declared_in_user_catalogue": true
         }
       ],
-      "condition": "if new-to-credit: requested_amount <= ntc_indicative_cap, else REVIEW",
+      "condition": "if new-to-credit: requested_amount <= ntc_indicative_cap; breach -> COUNTER_OFFER at the cap (PL-129)",
       "applies_when": "ALL",
       "parameters": [
         {
@@ -14776,16 +15449,17 @@
       ],
       "outcome": {
         "when_condition_true": "PASS",
-        "when_condition_false": "REVIEW",
+        "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": true,
       "decision_effect": {
-        "on_fail": "MANUAL_REVIEW",
+        "on_fail": "COUNTER_OFFER",
         "on_missing": "NO_EFFECT",
         "low_confidence_downgrades_decline_to_review": false,
         "decline_active_only_in": null
       },
-      "severity": "REVIEW",
+      "severity": "OFFER_ADJUSTMENT",
       "risk_signal": false,
       "policy_source": {
         "source_chunks": [],
@@ -14797,9 +15471,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PENDING_BUSINESS_APPROVAL",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -14808,10 +15483,10 @@
       ],
       "mvp_status": "ACTIVE",
       "mvp_deferred_reason": null,
-      "borrower_reason_category": "REQUEST_OUTSIDE_OFFER",
-      "borrower_message": "We need to review the loan amount, tenure or purpose you requested. We may suggest a different option.",
-      "borrower_message_when_missing": "We need to review the loan amount, tenure or purpose you requested. We may suggest a different option.",
-      "borrower_message_when_missing_category": "REQUEST_OUTSIDE_OFFER",
+      "borrower_reason_category": "CREDIT_HISTORY",
+      "borrower_message": "Based on your credit history, we can offer a smaller amount than you asked for.",
+      "borrower_message_when_missing": "Based on your credit history, we can offer a smaller amount than you asked for.",
+      "borrower_message_when_missing_category": "CREDIT_HISTORY",
       "internal_reason": "New-to-credit request {requested_amount} above the indicative cap.",
       "v2_ids": [],
       "draft_ids": [
@@ -14834,8 +15509,8 @@
             "bureau_match_status": "NO_HIT",
             "requested_amount": 500000
           },
-          "expected_outcome": "REVIEW",
-          "description": "",
+          "expected_outcome": "FAIL",
+          "description": "counter-offer at the NTC cap",
           "expected_value": null
         },
         {
@@ -14895,7 +15570,7 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": "Band edges from the user's example (22:53). ASSUMPTION pending approval. B4 is unreachable while every purpose cap is <= 25 lakh."
+          "note": "Band edges from the user's example (22:53). B4 (> Rs. 25 lakh) is outside the MVP (ADR-0007 #1): a B4 request is sized into B1..B3 by PL-129 and flagged outside what we offer."
         }
       ],
       "outcome": {
@@ -14903,6 +15578,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -14919,9 +15595,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -14991,14 +15668,14 @@
           "declared_in_user_catalogue": true
         }
       ],
-      "condition": "bureau_score >= band_minimum_score[amount_band]; below band minimum but >= Bajaj 650 -> REVIEW / counter-offer at the highest band the score allows",
+      "condition": "bureau_score >= band_minimum_score[amount_band]; breach -> COUNTER_OFFER at the top of the highest band the score allows (PL-129)",
       "applies_when": "ALL",
       "parameters": [
         {
           "name": "band_minimum_score",
           "value": {
-            "B1": 650,
-            "B2": 680,
+            "B1": 700,
+            "B2": 700,
             "B3": 700,
             "B4": 725
           },
@@ -15008,21 +15685,22 @@
           "assumption_id": null,
           "value_origin": "OWNER_DIRECTIVE",
           "context_chunks": [],
-          "note": ""
+          "note": "Lifted to the 700 ZEN floor (ADR-0009 #2) where the earlier 650/680 sat below it. B4 is outside the MVP."
         }
       ],
       "outcome": {
         "when_condition_true": "PASS",
-        "when_condition_false": "REVIEW",
+        "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": true,
       "decision_effect": {
-        "on_fail": "MANUAL_REVIEW",
+        "on_fail": "COUNTER_OFFER",
         "on_missing": "NO_EFFECT",
         "low_confidence_downgrades_decline_to_review": false,
         "decline_active_only_in": null
       },
-      "severity": "REVIEW",
+      "severity": "OFFER_ADJUSTMENT",
       "risk_signal": false,
       "policy_source": {
         "source_chunks": [],
@@ -15032,9 +15710,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -15044,8 +15723,8 @@
       "mvp_status": "ACTIVE",
       "mvp_deferred_reason": null,
       "borrower_reason_category": "CREDIT_HISTORY",
-      "borrower_message": "Our team needs to review your credit history before we can continue.",
-      "borrower_message_when_missing": "Our team needs to review your credit history before we can continue.",
+      "borrower_message": "Based on your credit history, we can offer a smaller amount than you asked for.",
+      "borrower_message_when_missing": "Based on your credit history, we can offer a smaller amount than you asked for.",
       "borrower_message_when_missing_category": "CREDIT_HISTORY",
       "internal_reason": "Score {bureau_score} below the {amount_band} minimum; highest band allowed {allowed_band}.",
       "v2_ids": [],
@@ -15064,11 +15743,11 @@
         {
           "case_id": "PL-120-T2",
           "inputs": {
-            "amount_band": "B3",
-            "bureau_score": 690
+            "amount_band": "B4",
+            "bureau_score": 710
           },
-          "expected_outcome": "REVIEW",
-          "description": "",
+          "expected_outcome": "FAIL",
+          "description": "counter-offer into B3",
           "expected_value": null
         },
         {
@@ -15079,7 +15758,7 @@
           "expected_value": null
         }
       ],
-      "note": "B1 equals the Bajaj floor (PL-029). Higher bands are ASSUMPTION and never decline: PL-029 is the only score decline."
+      "note": "B1..B3 equal the ZEN floor (PL-029, 700), so in the MVP this rule cannot bite below B4. PL-029 is the only score decline."
     },
     {
       "rule_id": "PL-121",
@@ -15154,6 +15833,7 @@
         "when_condition_false": "INSUFFICIENT_DATA",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MORE_INFORMATION_REQUIRED",
         "on_missing": "MORE_INFORMATION_REQUIRED",
@@ -15172,9 +15852,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -15315,16 +15996,17 @@
       ],
       "outcome": {
         "when_condition_true": "PASS",
-        "when_condition_false": "REVIEW",
+        "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": true,
       "decision_effect": {
-        "on_fail": "MANUAL_REVIEW",
+        "on_fail": "COUNTER_OFFER",
         "on_missing": "NO_EFFECT",
         "low_confidence_downgrades_decline_to_review": false,
         "decline_active_only_in": null
       },
-      "severity": "REVIEW",
+      "severity": "OFFER_ADJUSTMENT",
       "risk_signal": false,
       "policy_source": {
         "source_chunks": [],
@@ -15334,9 +16016,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -15346,10 +16029,10 @@
       "mvp_status": "ACTIVE",
       "mvp_deferred_reason": null,
       "borrower_reason_category": "EMPLOYMENT_STABILITY",
-      "borrower_message": "Your employment history did not meet our stability requirement for this loan.",
-      "borrower_message_when_missing": "Your employment history did not meet our stability requirement for this loan.",
+      "borrower_message": "Based on your time with your current employer, we can offer a smaller amount than you asked for.",
+      "borrower_message_when_missing": "Based on your time with your current employer, we can offer a smaller amount than you asked for.",
       "borrower_message_when_missing_category": "EMPLOYMENT_STABILITY",
-      "internal_reason": "{amount_band}: {employment_months} months, category {employment_category}.",
+      "internal_reason": "{amount_band}: {employment_months} months, category {employment_category}; counter-offer at the highest band allowed.",
       "v2_ids": [],
       "draft_ids": [],
       "test_cases": [
@@ -15373,8 +16056,8 @@
             "employment_months": 8,
             "employment_category": "PRIVATE"
           },
-          "expected_outcome": "REVIEW",
-          "description": "",
+          "expected_outcome": "FAIL",
+          "description": "counter-offer into B2",
           "expected_value": null
         },
         {
@@ -15385,7 +16068,7 @@
           "expected_value": null
         }
       ],
-      "note": ""
+      "note": "Amount-dependent: a breach gives COUNTER_OFFER at the top of the highest band the employment depth allows (PL-129)."
     },
     {
       "rule_id": "PL-123",
@@ -15454,6 +16137,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -15470,9 +16154,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -15519,7 +16204,7 @@
           "expected_value": null
         }
       ],
-      "note": ""
+      "note": "Evaluated on the offered amount's band. B4 is never offered in the MVP (ADR-0007 #1), so the always-review branch cannot fire."
     },
     {
       "rule_id": "PL-124",
@@ -15596,6 +16281,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -15612,9 +16298,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -15804,6 +16491,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -15822,17 +16510,18 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
       "profiles": [
         "prototype_synthetic"
       ],
-      "mvp_status": "ACTIVE",
-      "mvp_deferred_reason": null,
+      "mvp_status": "DEFERRED",
+      "mvp_deferred_reason": "Risk-grade offer sizing and pricing are deferred: ADR-0007 #3 (owner, 2026-11-03 23:18 IST) sets one flat prototype rate per product and no risk-grade pricing in the MVP. PL-129 sizes the MVP offer.",
       "borrower_reason_category": "REPAYMENTS_TOO_HIGH",
       "borrower_message": "Your existing repayments are too high for the amount requested. A smaller amount may be possible.",
       "borrower_message_when_missing": "We need more information about your income to complete the assessment.",
@@ -15879,7 +16568,7 @@
           "expected_value": null
         }
       ],
-      "note": "Runs after the gates. A DECLINE from a gate wins; under MANUAL_REVIEW the offer is indicative for the underwriter only. COUNTER_OFFER below the Bajaj minimum amount is not possible, so it becomes DECLINE (REPAYMENTS_TOO_HIGH)."
+      "note": "DEFERRED in the MVP (ADR-0007 #3): risk-grade sizing and pricing are out; PL-129 sizes the offer at one flat rate per product. Kept for a later release."
     },
     {
       "rule_id": "PL-126",
@@ -15913,7 +16602,7 @@
           "declared_in_user_catalogue": true
         }
       ],
-      "condition": "requested_amount <= evidence_amount x evidence_tolerance (fee schedule / contractor quote / hospital estimate); else counter-offer at evidence amount",
+      "condition": "requested_amount <= evidence_amount x evidence_tolerance (fee schedule / contractor quote / hospital estimate); breach -> COUNTER_OFFER (PL-129)",
       "applies_when": "ALL",
       "parameters": [
         {
@@ -15930,16 +16619,17 @@
       ],
       "outcome": {
         "when_condition_true": "PASS",
-        "when_condition_false": "REVIEW",
+        "when_condition_false": "FAIL",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": true,
       "decision_effect": {
-        "on_fail": "MANUAL_REVIEW",
+        "on_fail": "COUNTER_OFFER",
         "on_missing": "NO_EFFECT",
         "low_confidence_downgrades_decline_to_review": false,
         "decline_active_only_in": null
       },
-      "severity": "REVIEW",
+      "severity": "OFFER_ADJUSTMENT",
       "risk_signal": false,
       "policy_source": {
         "source_chunks": [],
@@ -15949,9 +16639,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -15961,8 +16652,8 @@
       "mvp_status": "ACTIVE",
       "mvp_deferred_reason": null,
       "borrower_reason_category": "REQUEST_OUTSIDE_OFFER",
-      "borrower_message": "We need to review the loan amount, tenure or purpose you requested. We may suggest a different option.",
-      "borrower_message_when_missing": "We need to review the loan amount, tenure or purpose you requested. We may suggest a different option.",
+      "borrower_message": "The amount or repayment period you asked for is more than we can offer for this loan. We have shown the most we can offer instead.",
+      "borrower_message_when_missing": "The amount or repayment period you asked for is more than we can offer for this loan. We have shown the most we can offer instead.",
       "borrower_message_when_missing_category": "REQUEST_OUTSIDE_OFFER",
       "internal_reason": "Requested {requested_amount} vs purpose evidence {purpose_evidence_amount}.",
       "v2_ids": [],
@@ -15986,8 +16677,8 @@
             "requested_amount": 800000,
             "purpose_evidence_amount": 480000
           },
-          "expected_outcome": "REVIEW",
-          "description": "",
+          "expected_outcome": "FAIL",
+          "description": "counter-offer at 528,000",
           "expected_value": null
         },
         {
@@ -15998,7 +16689,7 @@
           "expected_value": null
         }
       ],
-      "note": ""
+      "note": "Resolves the HOME_QUOTE_BELOW_AMOUNT labelling: counter-offer at the evidenced amount (x tolerance), not a referral."
     },
     {
       "rule_id": "PL-127",
@@ -16090,6 +16781,7 @@
         "when_condition_false": "REVIEW",
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "MANUAL_REVIEW",
         "on_missing": "NO_EFFECT",
@@ -16106,9 +16798,10 @@
         "open_interpretations": [],
         "corpus": null
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -16216,6 +16909,7 @@
         "when_condition_false": null,
         "when_input_missing": "INSUFFICIENT_DATA"
       },
+      "amount_dependent": false,
       "decision_effect": {
         "on_fail": "NONE",
         "on_missing": "NO_EFFECT",
@@ -16236,9 +16930,10 @@
         "open_interpretations": [],
         "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
       },
-      "policy_version": "saral-pl-catalogue-2.0.0-draft",
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
       "approval_status": "PROTOTYPE_SYNTHETIC",
-      "zen_authority": "authoritative (prototype_synthetic, pending approval)",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
       "public_guidance": null,
       "effective_from": null,
       "effective_to": null,
@@ -16284,6 +16979,362 @@
         }
       ],
       "note": ""
+    },
+    {
+      "rule_id": "PL-129",
+      "rule_name": "MVP offer sizing (flat rate)",
+      "rule_group": "G_REPAYMENT_CAPACITY_AND_FOIR",
+      "implementation_type": "ZEN_DIRECT",
+      "check": "Offer the requested loan, or the largest amount that passes every amount-dependent check",
+      "rule_origin": "OWNER_DIRECTIVE",
+      "kind": "COMPUTE",
+      "enabled": true,
+      "input_schema": [
+        {
+          "name": "requested_amount",
+          "type": "int",
+          "unit": "INR",
+          "source": "APPLICATION",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "tenure_months",
+          "type": "int",
+          "unit": "months",
+          "source": "APPLICATION",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "loan_purpose",
+          "type": "enum",
+          "unit": "4 purposes",
+          "source": "APPLICATION",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "monthly_net_income",
+          "type": "float",
+          "unit": "INR/month",
+          "source": "DERIVED",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "existing_monthly_obligations",
+          "type": "float",
+          "unit": "INR/month",
+          "source": "DERIVED",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "other_monthly_obligations",
+          "type": "float",
+          "unit": "INR/month",
+          "source": "SYSTEM",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "bureau_score",
+          "type": "int",
+          "unit": "300-900",
+          "source": "SYNTHETIC_BUREAU",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "bureau_match_status",
+          "type": "enum",
+          "unit": "HIT/NO_HIT/INSUFFICIENT_HISTORY",
+          "source": "SYNTHETIC_BUREAU",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "employment_months",
+          "type": "int",
+          "unit": "months",
+          "source": "DERIVED",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "employment_category",
+          "type": "enum",
+          "unit": "PUBLIC/PRIVATE/MNC/OTHER",
+          "source": "APPLICATION",
+          "declared_in_user_catalogue": true
+        },
+        {
+          "name": "purpose_evidence_amount",
+          "type": "float",
+          "unit": "INR",
+          "source": "APPLICATION",
+          "declared_in_user_catalogue": true
+        }
+      ],
+      "condition": "MVP offer sizing at one flat rate per product (ADR-0007 #2, #3): eligible_amount = floor_1000(the largest amount that passes every amount-dependent rule: PL-064 FOIR, PL-065 residual income, PL-108 income multiple, PL-109 product cap and the Rs. 25 lakh ceiling, PL-118 new-to-credit cap, PL-120/PL-122 band rules, PL-126 purpose evidence), at the requested tenure capped by PL-110, else at the product max tenure; APPROVED if the full request passes as asked; COUNTER_OFFER if a smaller amount or a different tenure passes and the amount is >= the minimum; DECLINE if nothing at or above the minimum passes, or the request is above PL-070",
+      "applies_when": "ALL",
+      "parameters": [
+        {
+          "name": "mvp_amount_ceiling",
+          "value": 2500000,
+          "unit": "INR",
+          "approval_status": "APPROVED_OWNER_DECISION",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "OWNER_DECISION",
+          "context_chunks": [],
+          "note": "ADR-0007 #1."
+        },
+        {
+          "name": "counter_offer_above_cap",
+          "value": "COUNTER_OFFER at the largest passing amount; never a referral",
+          "unit": null,
+          "approval_status": "APPROVED_OWNER_DECISION",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "OWNER_DECISION",
+          "context_chunks": [],
+          "note": "ADR-0007 #2. Supersedes v2 P05 (refer)."
+        },
+        {
+          "name": "pricing",
+          "value": "one flat prototype rate per product; no risk-grade pricing",
+          "unit": null,
+          "approval_status": "APPROVED_OWNER_DECISION",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "OWNER_DECISION",
+          "context_chunks": [],
+          "note": "ADR-0007 #3."
+        },
+        {
+          "name": "flat_rate_by_product",
+          "value": {
+            "wedding": 0.2,
+            "higher_education": 0.2,
+            "home_renovation": 0.2,
+            "medical_emergency": 0.2
+          },
+          "unit": "per annum",
+          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "source_chunk": null,
+          "assumption_id": "A-05",
+          "value_origin": "DRAFT_ASSUMPTION",
+          "context_chunks": [
+            "BFL-PL-RATES-FEES#003"
+          ],
+          "note": "Inside Bajaj's indicative 10%-30.5% range (PL-075)."
+        },
+        {
+          "name": "approved_maximum_foir",
+          "value": 0.5,
+          "unit": "ratio",
+          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "source_chunk": null,
+          "assumption_id": "A-04",
+          "value_origin": "DRAFT_ASSUMPTION",
+          "context_chunks": [],
+          "note": "Same value as PL-064."
+        },
+        {
+          "name": "min_residual_income",
+          "value": 15000,
+          "unit": "INR/month",
+          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "V2_PROPOSAL",
+          "context_chunks": [],
+          "note": "Same value as PL-065."
+        },
+        {
+          "name": "max_amount_income_multiple",
+          "value": 24,
+          "unit": "x net monthly income",
+          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "V2_PROPOSAL",
+          "context_chunks": [],
+          "note": "Same value as PL-108."
+        },
+        {
+          "name": "ntc_indicative_cap",
+          "value": 200000,
+          "unit": "INR",
+          "approval_status": "PENDING_BUSINESS_APPROVAL",
+          "source_chunk": null,
+          "assumption_id": "A-22",
+          "value_origin": "DRAFT_ASSUMPTION",
+          "context_chunks": [],
+          "note": "Same value as PL-118."
+        },
+        {
+          "name": "evidence_tolerance",
+          "value": 1.1,
+          "unit": "x evidence amount",
+          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "OWNER_DIRECTIVE",
+          "context_chunks": [],
+          "note": "Same value as PL-126."
+        },
+        {
+          "name": "rounding",
+          "value": 1000,
+          "unit": "INR, floor",
+          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "HARK_NEW_PROPOSAL",
+          "context_chunks": [],
+          "note": ""
+        },
+        {
+          "name": "minimum_loan_amount",
+          "value": 40000,
+          "unit": "INR",
+          "approval_status": "APPROVED_BAJAJ_SOURCE",
+          "source_chunk": "BFL-PL-OVERVIEW#003",
+          "assumption_id": null,
+          "value_origin": "BAJAJ_PUBLISHED",
+          "context_chunks": [],
+          "note": "Same value as PL-069; below it a counter-offer is impossible."
+        }
+      ],
+      "outcome": {
+        "when_condition_true": "PASS (value computed)",
+        "when_condition_false": null,
+        "when_input_missing": "INSUFFICIENT_DATA"
+      },
+      "amount_dependent": false,
+      "decision_effect": {
+        "on_fail": "NONE",
+        "on_missing": "NO_EFFECT",
+        "low_confidence_downgrades_decline_to_review": false,
+        "decline_active_only_in": null
+      },
+      "severity": "COMPUTATION",
+      "risk_signal": false,
+      "policy_source": {
+        "source_chunks": [
+          "BFL-PL-OVERVIEW#003"
+        ],
+        "context_chunks": [
+          "BFL-PL-RATES-FEES#003"
+        ],
+        "assumption_ids": [
+          "A-04",
+          "A-05",
+          "A-22"
+        ],
+        "conflict": null,
+        "open_interpretations": [],
+        "corpus": "G1 corpus work/g1/out (= feat/saral-corpus-collections @ 3de95b0): saral_nbfc_policy, rbi_regulatory"
+      },
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
+      "approval_status": "PROTOTYPE_SYNTHETIC",
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "public_guidance": null,
+      "effective_from": null,
+      "effective_to": null,
+      "profiles": [
+        "prototype_synthetic"
+      ],
+      "mvp_status": "ACTIVE",
+      "mvp_deferred_reason": null,
+      "borrower_reason_category": "OTHER",
+      "borrower_message": "Not shown to the borrower: this step only computes a value used elsewhere.",
+      "borrower_message_when_missing": "We need more information about your income to complete the assessment.",
+      "borrower_message_when_missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+      "internal_reason": "Offer {offer_outcome}: amount {eligible_amount}, EMI {offer_emi}, tenure {offer_tenure_months}, flat rate {offer_rate}; binding {binding_cap}; outside MVP range {request_outside_mvp_range}.",
+      "v2_ids": [],
+      "draft_ids": [],
+      "test_cases": [
+        {
+          "case_id": "PL-129-T1",
+          "inputs": {
+            "requested_amount": 500000,
+            "tenure_months": 60,
+            "loan_purpose": "wedding",
+            "monthly_net_income": 80000,
+            "existing_monthly_obligations": 10000,
+            "other_monthly_obligations": 0,
+            "bureau_score": 760,
+            "bureau_match_status": "HIT",
+            "employment_months": 30,
+            "employment_category": "PRIVATE",
+            "purpose_evidence_amount": null
+          },
+          "expected_outcome": "PASS",
+          "description": "approved in full",
+          "expected_value": "APPROVED"
+        },
+        {
+          "case_id": "PL-129-T2",
+          "inputs": {
+            "requested_amount": 2300000,
+            "tenure_months": 84,
+            "loan_purpose": "higher_education",
+            "monthly_net_income": 150000,
+            "existing_monthly_obligations": 5000,
+            "other_monthly_obligations": 0,
+            "bureau_score": 780,
+            "bureau_match_status": "HIT",
+            "employment_months": 60,
+            "employment_category": "MNC",
+            "purpose_evidence_amount": 2400000
+          },
+          "expected_outcome": "PASS",
+          "description": "above the product cap: counter-offer at the cap, not a referral",
+          "expected_value": "COUNTER_OFFER"
+        },
+        {
+          "case_id": "PL-129-T3",
+          "inputs": {
+            "requested_amount": 4000000,
+            "tenure_months": 84,
+            "loan_purpose": "home_renovation",
+            "monthly_net_income": 200000,
+            "existing_monthly_obligations": 0,
+            "other_monthly_obligations": 0,
+            "bureau_score": 790,
+            "bureau_match_status": "HIT",
+            "employment_months": 72,
+            "employment_category": "PUBLIC",
+            "purpose_evidence_amount": 4200000
+          },
+          "expected_outcome": "PASS",
+          "description": "above the Rs. 25 lakh ceiling: outside what we offer, counter-offer",
+          "expected_value": "COUNTER_OFFER"
+        },
+        {
+          "case_id": "PL-129-T4",
+          "inputs": {
+            "requested_amount": 300000,
+            "tenure_months": 36,
+            "loan_purpose": "wedding",
+            "monthly_net_income": 30000,
+            "existing_monthly_obligations": 14500,
+            "other_monthly_obligations": 0,
+            "bureau_score": 720,
+            "bureau_match_status": "HIT",
+            "employment_months": 24,
+            "employment_category": "PRIVATE",
+            "purpose_evidence_amount": null
+          },
+          "expected_outcome": "PASS",
+          "description": "nothing at or above the minimum passes",
+          "expected_value": "DECLINE"
+        },
+        {
+          "case_id": "PL-129-T5",
+          "inputs": {},
+          "expected_outcome": "INSUFFICIENT_DATA",
+          "description": "all inputs missing: never a FAIL",
+          "expected_value": null
+        }
+      ],
+      "note": "Runs after the request-independent gates. A DECLINE from such a gate wins; under MANUAL_REVIEW the offer is indicative for the underwriter. The borrower sees the offered amount, EMI and tenure only, never the binding cap (REASON_DISCLOSURE_POLICY)."
     }
   ]
 }

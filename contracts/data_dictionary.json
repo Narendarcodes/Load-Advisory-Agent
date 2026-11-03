@@ -1,6 +1,6 @@
 {
   "status": "DRAFT - design only",
-  "catalogue_version": "saral-pl-catalogue-2.0.0-draft",
+  "catalogue_version": "saral-pl-catalogue-2.1.0-draft",
   "rag_boundary": "ZEN rules, thresholds and this dictionary are never indexed by RAG. The versioned catalogue JSON (docs/saral/rule_catalogue.v2.json) is the single source of truth; RAG indexes only the Bajaj and RBI corpus.",
   "storage_tiers": {
     "LMS_SNAPSHOT": "Kept immutable with the decision record for the life of the application plus the owner's retention period (PROPOSED 8 years after closure or decline; UNVERIFIED: the G1 corpus states no period, and Bajaj's privacy policy says 'Storage of data as per company's policy in addition to regulatory and legal requirements', BFL-PRIVACY#003).",
@@ -16,6 +16,51 @@
     "CREDIT": "Bureau data (synthetic). Underwriter role; the borrower is told categories, never bureau line items by the agent.",
     "INTERNAL_RISK": "Risk signal. Underwriter role only; never shown to the borrower or used in borrower-facing text.",
     "BIOMETRIC_LIKE": "Signature-derived. LMS keeps presence, crop hash and scores only; the image stays at the source with a short TTL."
+  },
+  "zen_input_classes": {
+    "APPLICANT": "per-applicant value; the synthetic dataset carries every one in zen_inputs",
+    "POLICY_PARAMETER": "rule threshold or allowed set; lives in the catalogue only",
+    "ZEN_PRODUCED": "written by ZEN into the decision trace"
+  },
+  "zen_data_point_aliases": {
+    "age_at_application": "age_at_assessment",
+    "age_at_maturity": "age_at_maturity",
+    "bank_salary_credit_avg": "bank_salary_credit_avg",
+    "credit_score": "bureau_score",
+    "debit_credit_ratio": "debit_credit_ratio",
+    "employer_category": "employment_category",
+    "employment_months": "employment_months",
+    "enquiries_6m": "enquiries_last_6_months",
+    "existing_emi_total": "existing_monthly_obligations",
+    "foir": "foir",
+    "income_variance_ratio": "income_variance_ratio",
+    "kyc_dob_match": "kyc_dob_match",
+    "kyc_id_last4_match": "kyc_id_last4_match",
+    "kyc_name_match_score": "kyc_name_match_score",
+    "loan_amount": "requested_amount",
+    "max_dpd_12m": "max_dpd_12m",
+    "max_dpd_24m": "max_dpd_24m",
+    "min_ocr_confidence": "ocr_field_confidence",
+    "nationality": "nationality",
+    "net_monthly_income": "monthly_net_income",
+    "payslip_net_avg": "payslip_net_avg",
+    "proposed_emi": "proposed_emi",
+    "purpose": "loan_purpose",
+    "required_docs_present": [
+      "required_documents",
+      "submitted_documents"
+    ],
+    "salary_credit_months": "salary_credit_months",
+    "signature_similarity": "signature_similarity",
+    "tenure_months": "tenure_months",
+    "writeoff_settlement_24m": [
+      "written_off_within_lookback",
+      "settled_within_lookback"
+    ],
+    "writeoff_settlement_older": [
+      "written_off_account_count",
+      "settled_account_count"
+    ]
   },
   "fields": [
     {
@@ -38,6 +83,7 @@
         "PL-033"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -58,6 +104,7 @@
         "PL-058"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -81,6 +128,7 @@
         "PL-033"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -103,6 +151,7 @@
         "PL-082"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -125,6 +174,7 @@
         "PL-023"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (subject.addresses[].city)"
     },
@@ -148,6 +198,7 @@
         "PL-023"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (subject.addresses[].city)"
     },
@@ -171,6 +222,7 @@
         "PL-001"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -195,6 +247,7 @@
         "PL-073"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -220,6 +273,7 @@
         "PL-123"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -240,6 +294,7 @@
         "PL-085"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "anomaly_indicators: no MVP source (No screening service exists (PL-085 deferred))"
     },
@@ -262,6 +317,7 @@
       "frontend_fields": [
         "current_address"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -285,6 +341,7 @@
         "current_pincode",
         "current_city"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -305,6 +362,7 @@
         "PL-022"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -327,6 +385,7 @@
         "PL-007"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -351,6 +410,7 @@
         "PL-020"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -373,6 +433,7 @@
       "frontend_fields": [
         "full_name"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -393,6 +454,7 @@
         "PL-075"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -413,6 +475,7 @@
         "PL-059"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -433,6 +496,7 @@
         "PL-053"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -453,6 +517,7 @@
         "PL-077"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -473,6 +538,7 @@
         "PL-075"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -494,6 +560,7 @@
         "PL-067"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -514,6 +581,7 @@
         "PL-029"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -534,6 +602,7 @@
         "PL-037"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -561,6 +630,7 @@
         "PL-127"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -581,6 +651,7 @@
         "PL-010"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -601,6 +672,7 @@
         "PL-107"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -623,6 +695,7 @@
         "PL-043"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -646,6 +719,7 @@
         "PL-079"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -668,6 +742,7 @@
         "PL-010"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -691,6 +766,7 @@
         "PL-009"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -722,6 +798,7 @@
         "bank_statement_fetch",
         "bank_statement_upload"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -754,6 +831,7 @@
         "PL-055"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -774,6 +852,7 @@
         "PL-023"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (subject.addresses[].city)"
     },
@@ -797,6 +876,7 @@
         "PL-028"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -817,6 +897,7 @@
         "PL-022"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (subject.dob)"
     },
@@ -839,6 +920,7 @@
         "PL-054"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -859,6 +941,7 @@
         "PL-020"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -878,9 +961,11 @@
       "used_by_rules": [
         "PL-027",
         "PL-118",
-        "PL-124"
+        "PL-124",
+        "PL-129"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -901,6 +986,7 @@
         "PL-021"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (subject.name)"
     },
@@ -921,6 +1007,7 @@
         "PL-024"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -945,6 +1032,7 @@
         "PL-027"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -964,9 +1052,11 @@
       "used_by_rules": [
         "PL-029",
         "PL-120",
-        "PL-124"
+        "PL-124",
+        "PL-129"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -991,6 +1081,7 @@
         "PL-074"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1014,6 +1105,7 @@
         "PL-083"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1036,6 +1128,7 @@
         "PL-034"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1058,6 +1151,7 @@
         "PL-097"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1080,6 +1174,7 @@
       "frontend_fields": [
         "course_start_date"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1103,6 +1198,7 @@
         "PL-059"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1126,6 +1222,7 @@
         "PL-036"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1146,6 +1243,7 @@
         "PL-051"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1170,6 +1268,7 @@
         "PL-031"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1192,6 +1291,7 @@
         "PL-040"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1214,6 +1314,7 @@
         "PL-056"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1234,6 +1335,7 @@
         "PL-030"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1257,6 +1359,7 @@
       "frontend_fields": [
         "date_of_birth"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1280,6 +1383,7 @@
         "PL-114"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1303,6 +1407,7 @@
         "PL-045"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (accounts[].payment_history_months)"
     },
@@ -1326,6 +1431,7 @@
         "PL-106"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1350,6 +1456,7 @@
         "PL-086"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1374,6 +1481,7 @@
         "declared_net_monthly_income",
         "net_monthly_salary"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1396,6 +1504,7 @@
       "frontend_fields": [
         "declared_monthly_emis"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1418,6 +1527,7 @@
       "frontend_fields": [
         "declaration_end_use"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1440,6 +1550,7 @@
         "PL-012"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1460,6 +1571,7 @@
         "PL-009"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1483,6 +1595,7 @@
         "PL-022"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (subject.dob)"
     },
@@ -1506,6 +1619,7 @@
         "PL-103"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1526,6 +1640,7 @@
         "PL-103"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1546,6 +1661,7 @@
         "PL-091"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1566,6 +1682,7 @@
         "PL-090"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "document_integrity_result: no MVP source (No tamper detector exists (PL-090 deferred))"
     },
@@ -1586,6 +1703,7 @@
         "PL-103"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1614,6 +1732,7 @@
         "PL-045"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1636,6 +1755,7 @@
         "PL-044"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1658,6 +1778,7 @@
         "PL-091"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1680,6 +1801,7 @@
         "PL-007"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1702,6 +1824,7 @@
         "PL-025"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1726,6 +1849,7 @@
         "PL-068"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1746,6 +1870,7 @@
         "PL-005"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1766,6 +1891,7 @@
         "PL-076"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1786,6 +1912,7 @@
         "PL-003"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1810,6 +1937,7 @@
       "frontend_fields": [
         "email"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1830,6 +1958,7 @@
         "PL-116"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "employer_caution_list_hit: no MVP source (List not built (PL-116 deferred))"
     },
@@ -1852,6 +1981,7 @@
         "PL-013"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "employer_history: no MVP source (Not collected in the lean MVP form)"
     },
@@ -1872,6 +2002,7 @@
         "PL-013"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "employer_history: no MVP source (Not collected in the lean MVP form)"
     },
@@ -1895,6 +2026,7 @@
       "frontend_fields": [
         "employer_name"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1918,6 +2050,7 @@
         "PL-105"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1940,6 +2073,7 @@
         "PL-013"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "employer_history: no MVP source (Not collected in the lean MVP form)"
     },
@@ -1958,11 +2092,13 @@
       "retention": "Kept immutable with the decision record for the life of the application plus the owner's retention period (PROPOSED 8 years after closure or decline; UNVERIFIED: the G1 corpus states no period, and Bajaj's privacy policy says 'Storage of data as per company's policy in addition to regulatory and legal requirements', BFL-PRIVACY#003).",
       "used_by_rules": [
         "PL-005",
-        "PL-122"
+        "PL-122",
+        "PL-129"
       ],
       "frontend_fields": [
         "employer_category"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -1985,6 +2121,7 @@
         "PL-015"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "employment_history: no MVP source (Not collected in the lean MVP form)"
     },
@@ -2005,6 +2142,7 @@
         "PL-015"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "employment_history: no MVP source (Not collected in the lean MVP form)"
     },
@@ -2026,9 +2164,11 @@
       "retention": "Kept immutable with the decision record for the life of the application plus the owner's retention period (PROPOSED 8 years after closure or decline; UNVERIFIED: the G1 corpus states no period, and Bajaj's privacy policy says 'Storage of data as per company's policy in addition to regulatory and legal requirements', BFL-PRIVACY#003).",
       "used_by_rules": [
         "PL-014",
-        "PL-122"
+        "PL-122",
+        "PL-129"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2051,6 +2191,7 @@
       "frontend_fields": [
         "joining_date"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2071,6 +2212,7 @@
         "PL-016"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "employment_status: no MVP source (Not in the MVP step-4 list (PL-016 deferred))"
     },
@@ -2099,6 +2241,7 @@
       "frontend_fields": [
         "employment_type"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2122,6 +2265,7 @@
         "PL-052"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2145,6 +2289,7 @@
         "PL-053"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2168,6 +2313,7 @@
         "PL-053"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2190,6 +2336,7 @@
         "PL-057"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2216,6 +2363,7 @@
         "PL-097"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2236,6 +2384,7 @@
         "PL-099"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2258,9 +2407,11 @@
       "used_by_rules": [
         "PL-058",
         "PL-062",
-        "PL-125"
+        "PL-125",
+        "PL-129"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2284,6 +2435,7 @@
         "PL-067"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2306,6 +2458,7 @@
         "PL-082"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2329,6 +2482,7 @@
         "PL-056"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (accounts[].balance_history[].balance)"
     },
@@ -2360,6 +2514,7 @@
         "pan_card_upload",
         "aadhaar_verification"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2385,6 +2540,7 @@
         "PL-123"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2410,6 +2566,7 @@
         "PL-098"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2432,6 +2589,7 @@
       "frontend_fields": [
         "gross_monthly_salary"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2452,6 +2610,7 @@
         "PL-056"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (accounts[].balance_history[].balance)"
     },
@@ -2474,6 +2633,7 @@
         "PL-018"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2494,6 +2654,7 @@
         "PL-030"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (score_history[].value)"
     },
@@ -2518,6 +2679,7 @@
         "PL-094"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2542,6 +2704,7 @@
         "PL-094"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2565,6 +2728,7 @@
         "PL-006"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2588,6 +2752,7 @@
         "PL-017"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2611,6 +2776,7 @@
         "PL-018"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2634,6 +2800,7 @@
         "PL-012"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2656,6 +2823,7 @@
         "PL-011"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2680,6 +2848,7 @@
         "PL-074"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2705,6 +2874,7 @@
         "PL-075"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2729,6 +2899,7 @@
         "PL-094"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2753,6 +2924,7 @@
         "PL-094"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2779,6 +2951,7 @@
         "PL-094"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2801,6 +2974,7 @@
         "PL-114"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2821,6 +2995,7 @@
         "PL-045"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (accounts[].payment_history_months)"
     },
@@ -2845,11 +3020,13 @@
         "PL-125",
         "PL-126",
         "PL-127",
-        "PL-128"
+        "PL-128",
+        "PL-129"
       ],
       "frontend_fields": [
         "loan_purpose"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2870,6 +3047,7 @@
         "PL-002"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2890,6 +3068,7 @@
       "retention": "Kept immutable with the decision record for the life of the application plus the owner's retention period (PROPOSED 8 years after closure or decline; UNVERIFIED: the G1 corpus states no period, and Bajaj's privacy policy says 'Storage of data as per company's policy in addition to regulatory and legal requirements', BFL-PRIVACY#003).",
       "used_by_rules": [],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2914,6 +3093,7 @@
         "PL-124"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2937,6 +3117,7 @@
         "PL-124"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2961,6 +3142,7 @@
         "PL-068"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -2982,6 +3164,7 @@
         "PL-073"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3002,6 +3185,7 @@
         "PL-070"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3022,6 +3206,7 @@
         "PL-024"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3042,6 +3227,7 @@
         "PL-072"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3062,6 +3248,7 @@
         "PL-001"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3082,6 +3269,7 @@
         "PL-089"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3102,6 +3290,7 @@
         "PL-008"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3122,6 +3311,7 @@
         "PL-069"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3142,6 +3332,7 @@
         "PL-071"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3164,6 +3355,7 @@
         "PL-051"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3189,6 +3381,7 @@
         "PL-011"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3212,6 +3405,7 @@
         "PL-084"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3240,9 +3434,11 @@
         "PL-067",
         "PL-077",
         "PL-108",
-        "PL-125"
+        "PL-125",
+        "PL-129"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3265,6 +3461,7 @@
       "frontend_fields": [
         "years_at_current_address"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3287,6 +3484,7 @@
         "PL-021"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (subject.name)"
     },
@@ -3310,6 +3508,7 @@
         "PL-021"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (subject.name)"
     },
@@ -3332,6 +3531,7 @@
       "frontend_fields": [
         "nationality"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3354,6 +3554,7 @@
         "PL-080"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3374,6 +3575,7 @@
         "PL-113"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "negative_list_hit: no MVP source (List not built (PL-113 deferred))"
     },
@@ -3397,6 +3599,7 @@
         "PL-086"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3419,6 +3622,7 @@
         "PL-012"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3439,6 +3643,7 @@
         "PL-092"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3459,6 +3664,7 @@
         "PL-089"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3481,6 +3687,7 @@
         "PL-031"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3500,9 +3707,11 @@
       "used_by_rules": [
         "PL-060",
         "PL-062",
-        "PL-125"
+        "PL-125",
+        "PL-129"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3528,6 +3737,7 @@
       "frontend_fields": [
         "pan"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3551,6 +3761,7 @@
         "PL-114"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3571,6 +3782,7 @@
         "PL-128"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3593,6 +3805,7 @@
         "PL-046"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3613,6 +3826,7 @@
         "PL-121"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3637,6 +3851,7 @@
       "frontend_fields": [
         "salary_slips_upload"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3661,6 +3876,7 @@
       "frontend_fields": [
         "mobile_number"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3681,6 +3897,7 @@
         "PL-099"
       ],
       "frontend_fields": [],
+      "zen_input_class": "ZEN_PRODUCED",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3701,6 +3918,7 @@
         "PL-074"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3723,6 +3941,7 @@
         "PL-112"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3745,6 +3964,7 @@
       "frontend_fields": [
         "property_ownership"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3772,6 +3992,7 @@
         "PL-079"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3789,13 +4010,15 @@
       "storage": "LMS_SNAPSHOT",
       "retention": "Kept immutable with the decision record for the life of the application plus the owner's retention period (PROPOSED 8 years after closure or decline; UNVERIFIED: the G1 corpus states no period, and Bajaj's privacy policy says 'Storage of data as per company's policy in addition to regulatory and legal requirements', BFL-PRIVACY#003).",
       "used_by_rules": [
-        "PL-126"
+        "PL-126",
+        "PL-129"
       ],
       "frontend_fields": [
         "fee_amount",
         "quote_amount",
         "estimate_amount"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3818,6 +4041,7 @@
       "frontend_fields": [
         "purpose_document_upload"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3840,6 +4064,7 @@
         "PL-018"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3863,6 +4088,7 @@
         "PL-054"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (enquiries[].enquiry_type)"
     },
@@ -3885,6 +4111,7 @@
         "PL-035"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3908,6 +4135,7 @@
         "PL-055"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3930,6 +4158,7 @@
         "PL-057"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3964,6 +4193,7 @@
         "consent_terms",
         "consent_privacy"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -3984,6 +4214,7 @@
         "PL-046"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4004,6 +4235,7 @@
         "PL-059"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4029,11 +4261,13 @@
         "PL-118",
         "PL-119",
         "PL-125",
-        "PL-126"
+        "PL-126",
+        "PL-129"
       ],
       "frontend_fields": [
         "requested_amount"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4054,6 +4288,7 @@
         "PL-095"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4074,6 +4309,7 @@
         "PL-088"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4094,6 +4330,7 @@
         "PL-096"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4114,6 +4351,7 @@
         "PL-006"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4137,6 +4375,7 @@
         "PL-065"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4157,6 +4396,7 @@
         "PL-050"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (accounts[].restructured)"
     },
@@ -4179,6 +4419,7 @@
         "PL-081"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4200,6 +4441,7 @@
         "PL-123"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4225,6 +4467,7 @@
         "PL-125"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4245,6 +4488,7 @@
         "PL-099"
       ],
       "frontend_fields": [],
+      "zen_input_class": "ZEN_PRODUCED",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4267,6 +4511,7 @@
         "PL-078"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4290,6 +4535,7 @@
         "PL-105"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4313,6 +4559,7 @@
         "PL-078"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4335,6 +4582,7 @@
         "PL-012"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4357,6 +4605,7 @@
         "PL-087"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4380,6 +4629,7 @@
         "PL-030"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (score_history[].value)"
     },
@@ -4402,6 +4652,7 @@
         "PL-032"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4424,6 +4675,7 @@
         "PL-047"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4448,6 +4700,7 @@
         "PL-047"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4471,6 +4724,7 @@
         "PL-115"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4491,6 +4745,7 @@
         "PL-104"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4511,6 +4766,7 @@
         "PL-104"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4531,6 +4787,7 @@
         "PL-104"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4553,6 +4810,7 @@
       "frontend_fields": [
         "esign"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4577,6 +4835,7 @@
         "PL-093"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4600,6 +4859,7 @@
         "PL-121"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4624,6 +4884,7 @@
         "PL-093"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4646,6 +4907,7 @@
       "frontend_fields": [
         "employee_id_upload"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4666,6 +4928,7 @@
         "PL-049"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (accounts[].suit_filed)"
     },
@@ -4686,6 +4949,7 @@
         "PL-096"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4706,6 +4970,7 @@
         "PL-006"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4726,6 +4991,7 @@
         "PL-004"
       ],
       "frontend_fields": [],
+      "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4746,6 +5012,7 @@
         "PL-090"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "tampering_flags: no MVP source (No tamper detector exists)"
     },
@@ -4769,11 +5036,13 @@
         "PL-072",
         "PL-074",
         "PL-110",
-        "PL-125"
+        "PL-125",
+        "PL-129"
       ],
       "frontend_fields": [
         "tenure_months"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4796,6 +5065,7 @@
         "PL-036"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4819,6 +5089,7 @@
         "PL-106"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4842,6 +5113,7 @@
         "PL-106"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4864,6 +5136,7 @@
         "PL-077"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4886,6 +5159,7 @@
       "frontend_fields": [
         "total_experience_months"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4912,6 +5186,7 @@
         "PL-065"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4932,6 +5207,7 @@
         "PL-039"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": false,
       "mvp_gap": "needs bureau-report/2 (accounts[].amount_overdue)"
     },
@@ -4955,6 +5231,7 @@
         "PL-038"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4977,6 +5254,7 @@
       "frontend_fields": [
         "treatment_date"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -4999,6 +5277,7 @@
         "PL-098"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -5021,6 +5300,7 @@
         "PL-032"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -5045,6 +5325,7 @@
         "PL-037"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -5068,6 +5349,7 @@
         "PL-092"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -5090,6 +5372,7 @@
       "frontend_fields": [
         "wedding_date"
       ],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -5112,6 +5395,7 @@
         "PL-048"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     },
@@ -5136,6 +5420,7 @@
         "PL-048"
       ],
       "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
       "mvp_available": true,
       "mvp_gap": null
     }
