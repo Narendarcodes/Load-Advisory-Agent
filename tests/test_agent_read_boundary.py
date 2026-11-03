@@ -249,9 +249,14 @@ def test_every_projected_field_is_a_field_frappe_actually_has():
 
     The custom half is checked against the portal's own installer; the standard half against the fields
     `FrappeClient.create` already posts. Anything else in READ_FIELDS is a bug waiting for a live site.
+    The installer's field list lives in `install.py`, or in `custom_fields.py` (pure data that
+    `install.py` imports) once the Saral LMS doctypes (PR #48) are in; both are read.
     """
-    install = (Path(__file__).resolve().parents[1] / "apps/loan_advisory_portal/loan_advisory_portal/install.py")
-    created = set(re.findall(r'"fieldname":\s*"([^"]+)"', install.read_text(encoding="utf-8")))
+    app = Path(__file__).resolve().parents[1] / "apps/loan_advisory_portal/loan_advisory_portal"
+    created = set()
+    for name in ("install.py", "custom_fields.py"):
+        if (app / name).exists():
+            created |= set(re.findall(r'"fieldname":\s*"([^"]+)"', (app / name).read_text(encoding="utf-8")))
     custom = {f for f in READ_FIELDS if f.startswith("custom_")}
     assert custom <= created, sorted(custom - created)
     assert set(READ_FIELDS) - custom == frappe_adapter.STANDARD_LOAN_FIELDS
