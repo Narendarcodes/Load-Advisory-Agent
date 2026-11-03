@@ -20,7 +20,7 @@ from contracts.catalogue_v2 import products as PR
 from contracts.catalogue_v2 import sources as S
 from contracts.catalogue_v2 import what_if as WI
 from contracts.catalogue_v2.messages import CATEGORIES, MESSAGES
-from contracts.catalogue_v2.rules import AMOUNT_DEPENDENT, BAJ, DEFERRED, EXCERPTS, OWN, PEN, PRO, REG, RULES, V2_IDS
+from contracts.catalogue_v2.rules import ADR11, AMOUNT_DEPENDENT, BAJ, DEFERRED, EXCERPTS, OWN, PEN, PRO, PROTO_ONLY, REG, RULES, V2_IDS
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs" / "saral"
@@ -33,10 +33,19 @@ RANK = {BAJ: 0, REG: 0, OWN: 0, PEN: 1, PRO: 2}
 EFFECT_SEVERITY = {"DECLINE": "HARD_DECLINE", "MANUAL_REVIEW": "REVIEW", "MORE_INFORMATION_REQUIRED": "INFO_REQUEST",
                    "COUNTER_OFFER": "OFFER_ADJUSTMENT", "NONE": "COMPUTATION"}
 ADR9_BATCH = "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only"
+ADR11_DATE = "2026-11-04"
+ADR11_SUMMARY = (f"{ADR11}: the top-10 thresholds and the runners-up are OWNER_APPROVED for prototype_synthetic only, never Bajaj policy. "
+                 "FOIR flat 0.50 (PRIME 0.55 / new-to-credit 0.40 dropped); product caps Rs. 25 lakh for all four; minimum net income "
+                 "Rs. 25,001 (metro Rs. 40,000 floor dropped); 90+ DPD in 24 months and settlement/write-off in 24 months decline; 60+ DPD "
+                 "in 12 months goes to MANUAL_REVIEW; residual income Rs. 15,000; tenure max 60/84/84/60; 24x income kept as a backstop; "
+                 "B3 review trigger FOIR > 0.45 kept; employer tenure 6 months; <= 4 enquiries in 180 days; decline at 3 bounces; "
+                 "new-to-credit cap Rs. 2 lakh; OCR confidence 60; bureau report <= 30 days old; the 20% rate is sizing-only.")
 APPROVAL_MEANINGS = {
     BAJ: "The value matches Bajaj's published guidance (chunk cited). Indicative public guidance only (ADR-0001); ZEN is authoritative.",
     REG: "An RBI chunk states the requirement (chunk cited).",
-    OWN: "The owner decided the value himself (ADR-0003, ADR-0007, ADR-0009, ADR-0010). Renamed from APPROVED_OWNER_DECISION (ADR-0010 #2).",
+    OWN: "The owner decided the value himself (ADR-0003, ADR-0007, ADR-0009, ADR-0010, ADR-0011). Renamed from APPROVED_OWNER_DECISION "
+         "(ADR-0010 #2). A value with profile_scope prototype_synthetic (ADR-0011) is approved for that profile only and keeps its rule out of "
+         "bajaj_published.",
     PEN: "An A-NN assumption in THRESHOLD_APPROVALS.md. Approved for prototype_synthetic in the ADR-0009 batch; not for live use.",
     PRO: "A prototype value. Approved for prototype_synthetic in the ADR-0009 batch; not for live use.",
     "DEPRECATED": "Kept for history; not evaluated (user vocabulary).",
@@ -132,7 +141,9 @@ def build_catalogue():
             tests.append({"case_id": f"{rid}-T{i}", **t})
         tests.append({"case_id": f"{rid}-T{len(tests) + 1}", "inputs": {}, "expected_outcome": "INSUFFICIENT_DATA",
                       "description": "all inputs missing: never a FAIL", "expected_value": None})
-        hard_pending = effect == "DECLINE" and status not in APPROVED
+        adr11 = any(p.get("profile_scope") == PROTO_ONLY for p in spec["params"])
+        proto_only = status not in APPROVED or adr11
+        hard_pending = effect == "DECLINE" and proto_only
         rules.append({
             "rule_id": rid, "rule_name": name, "rule_group": group, "implementation_type": impl, "check": check,
             "rule_origin": origin, "kind": spec["kind"], "enabled": spec["enabled"],
@@ -154,12 +165,13 @@ def build_catalogue():
                               "corpus": CORPUS_REF if chunks or context else None},
             "policy_version": CATALOGUE_VERSION,
             "approval_status": status,
+            "owner_approval": ADR11 + ", prototype_synthetic only" if adr11 and status == OWN else None,
             "zen_authority": "authoritative (prototype_synthetic)",
             "prototype_batch_approval": ADR9_BATCH if status in (PEN, PRO) else None,
             "public_guidance": "Bajaj value is indicative public guidance; ZEN decides" if status == BAJ else None,
-            "effective_from": CATALOGUE_DATE if status in APPROVED else None,
+            "effective_from": (ADR11_DATE if adr11 else CATALOGUE_DATE) if status in APPROVED else None,
             "effective_to": None,
-            "profiles": (["bajaj_published", "prototype_synthetic"] if status in APPROVED else ["prototype_synthetic"]) if spec["enabled"] else [],
+            "profiles": (["prototype_synthetic"] if proto_only else ["bajaj_published", "prototype_synthetic"]) if spec["enabled"] else [],
             "mvp_status": "DEFERRED" if deferred_reason else "ACTIVE",
             "mvp_deferred_reason": deferred_reason,
             "borrower_reason_category": cat,
@@ -208,7 +220,8 @@ def aggregation(y):
 def profiles(rules):
     return {
         "bajaj_published": {
-            "description": "Only rules whose every parameter is APPROVED_BAJAJ_SOURCE, APPROVED_REGULATORY or OWNER_APPROVED.",
+            "description": "Only rules whose every parameter is APPROVED_BAJAJ_SOURCE, APPROVED_REGULATORY or OWNER_APPROVED, and none of "
+                           "them is scoped to prototype_synthetic (ADR-0011 values never enter this profile).",
             "rule_ids": [r["rule_id"] for r in rules if "bajaj_published" in r["profiles"]],
             "not_for_live_use": True,
             "self_sufficient": False,
@@ -220,6 +233,7 @@ def profiles(rules):
             "rule_ids": [r["rule_id"] for r in rules if "prototype_synthetic" in r["profiles"]],
             "not_for_live_use": True,
             "batch_approval": ADR9_BATCH,
+            "owner_approvals": {"ADR-0011": ADR11_SUMMARY},
             "top_thresholds_for_one_by_one_review": "project-management/TOP10_THRESHOLDS.md",
             "mvp_limits": {"amount_ceiling_inr": PR.MVP_AMOUNT_CEILING,
                            "per_product": {pid: {"max_amount_inr": PR.product_cap(pid), "max_tenure_months": PR.product_max_tenure(pid),
@@ -264,7 +278,8 @@ def catalogue_json():
         "lender": "Bajaj Finance Ltd", "lender_relationship": "public reference lender, not a partner",
         "corpus": CORPUS_REF,
         "products": ["PL_WEDDING", "PL_HIGHER_EDUCATION", "PL_HOME_RENOVATION", "PL_MEDICAL_EMERGENCY"],
-        "products_status": "OWNER_APPROVED (2026-11-03 23:03 IST); per-product thresholds are ASSUMPTION, approved for prototype_synthetic (ADR-0009 batch)",
+        "products_status": "OWNER_APPROVED (2026-11-03 23:03 IST); per-product caps (Rs. 25 lakh each), tenure caps and the flat 20% sizing rate "
+                           "are OWNER_APPROVED by ADR-0011 for prototype_synthetic only",
         "owner_decisions": {"ADR-0001": "ZEN is authoritative; Bajaj numbers are indicative guidance only",
                             "ADR-0003": "four purpose products confirmed",
                             "ADR-0007 #1": f"every product capped at Rs. {PR.MVP_AMOUNT_CEILING:,} in the MVP",
@@ -277,7 +292,8 @@ def catalogue_json():
                             "ADR-0010 #2": "status APPROVED_OWNER_DECISION renamed OWNER_APPROVED",
                             "ADR-0010 #3": "retention: decision record >= 5 years after loan closure (NBFC KYC Directions 2025 para 47(2)); "
                                            "declined or withdrawn: 5 years from the decision date (Saral's choice)",
-                            "ADR-0010 #4": "written rejection reasons stay: Saral policy, not an RBI requirement for NBFCs"},
+                            "ADR-0010 #4": "written rejection reasons stay: Saral policy, not an RBI requirement for NBFCs",
+                            "ADR-0011": ADR11_SUMMARY},
         "mvp_scope": "Salaried applicants only (user decision 2026-11-03 22:50 IST)",
         "outcomes": y["outcomes"],
         "implementation_types": y["implementation_types"],
@@ -296,7 +312,8 @@ def catalogue_json():
         "offer_sizing": {"rule": "PL-129", "pricing": "one flat prototype rate per product (ADR-0007 #3)",
                          "flat_rate_by_product": {pid: PR.flat_rate(pid) for pid in PR.PRODUCTS},
                          "mvp_amount_ceiling": PR.MVP_AMOUNT_CEILING, "minimum_amount": PR.BAJAJ_MIN_AMOUNT,
-                         "basis": "prototype_synthetic (ADR-0009 batch) except the minimum amount (BFL-PL-OVERVIEW#003) and the owner decisions",
+                         "basis": "prototype_synthetic: owner decisions ADR-0007 and ADR-0011, the ADR-0009 batch for the rest, and the minimum amount (BFL-PL-OVERVIEW#003)",
+                         "rate_use": PR.RATE_USE,
                          "worked_examples": worked_examples()},
         "deferred_grade_sizing": {"rule": "PL-125", "status": "DEFERRED (ADR-0007 #3)",
                                   "grade_income_multiplier": PR.GRADE_MULTIPLIER, "grade_foir_cap": PR.GRADE_FOIR,
