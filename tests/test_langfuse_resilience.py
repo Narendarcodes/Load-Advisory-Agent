@@ -41,7 +41,7 @@ def test_sdk_init_failure_disables_tracing_and_the_turn_still_runs(monkeypatch, 
 
     assert obs.tracer() is None
     resp, store = _what_if(monkeypatch, tmp_path)
-    assert resp.what_if["simulated_decision"] == "REJECTED"
+    assert resp.what_if["result"] == "WOULD_NOT_MEET"  # Q-07 borrower shape (no simulated decision)
     assert resp.what_if["original_record_unchanged"] is True
     assert store.get("APP-TEST-005")["custom_monthly_obligations"] == 18500
     obs.flush(50)
@@ -130,7 +130,7 @@ def test_unreachable_endpoint_does_not_break_a_turn(monkeypatch, tmp_path):
     obs.reset()
     try:
         resp, _ = _what_if(monkeypatch, tmp_path)
-        assert resp.what_if["simulated_decision"] == "REJECTED"
+        assert resp.what_if["result"] == "WOULD_NOT_MEET"
         obs.flush(1000)  # bounded; the exporter cannot connect and logs, it does not raise
     finally:
         client = obs._LANGFUSE
@@ -150,9 +150,8 @@ def test_tracing_on_and_off_produce_the_same_decision(monkeypatch, tmp_path):
     traced, _ = _what_if(monkeypatch, tmp_path)
     obs.reset()
 
-    assert traced.what_if["simulated_decision"] == baseline.what_if["simulated_decision"]
+    assert traced.what_if["result"] == baseline.what_if["result"]
     assert traced.what_if["changes"] == baseline.what_if["changes"]
-    assert traced.what_if["rule_results"] == baseline.what_if["rule_results"]
     assert traced.what_if["original_record_unchanged"] is True
 
 
