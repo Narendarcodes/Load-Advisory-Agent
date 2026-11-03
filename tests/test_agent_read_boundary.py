@@ -256,7 +256,9 @@ def test_every_projected_field_is_a_field_frappe_actually_has():
     created = set()
     for name in ("install.py", "custom_fields.py"):
         if (app / name).exists():
-            created |= set(re.findall(r'"fieldname":\s*"([^"]+)"', (app / name).read_text(encoding="utf-8")))
+            # install.py spells fields as dicts ("fieldname": "x"); custom_fields.py as _f("x", ...).
+            source = (app / name).read_text(encoding="utf-8")
+            created |= set(re.findall(r'(?:"fieldname":\s*|\b_f\(\s*)"([^"]+)"', source))
     custom = {f for f in READ_FIELDS if f.startswith("custom_")}
     assert custom <= created, sorted(custom - created)
     assert set(READ_FIELDS) - custom == frappe_adapter.STANDARD_LOAN_FIELDS
