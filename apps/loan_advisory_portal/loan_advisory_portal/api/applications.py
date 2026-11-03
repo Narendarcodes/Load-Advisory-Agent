@@ -280,7 +280,16 @@ def _borrower_detail(record, application_state: str) -> dict:
 		"information_needed": bool(review or missing) and application_state == "INFO_REQUESTED",
 		"provider_error": bool(review.get("provider_error")),
 		"flags": detail.get("flags") or [],
+		# D-06: the borrower's own offer (amount, EMI, tenure, whether it is a counter-offer) and nothing else.
+		"offer": _borrower_offer(detail.get("offer")),
 	}
+
+
+def _borrower_offer(offer) -> dict | None:
+	if not isinstance(offer, dict) or not offer.get("amount"):
+		return None
+	keys = ("amount", "emi", "tenure_months", "counter_offer", "request_outside_mvp_range")
+	return {k: offer.get(k) for k in keys if offer.get(k) is not None}
 
 
 @frappe.whitelist(methods=["POST"])

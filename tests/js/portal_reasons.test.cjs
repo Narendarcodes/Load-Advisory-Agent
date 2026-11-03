@@ -139,3 +139,22 @@ test("a bureau or service failure is a plain 'couldn't finish' summary with no r
 	assert.equal(view.summary, R.SUMMARIES.en.ERROR);
 	assert.deepEqual(view.themes, []);
 });
+
+// E2E defect D-06 (2026-11-04 live run): a counter-offer read "Your application was approved" with the amount,
+// tenure and an EMI worked out from the REQUEST, because the card never saw the offer.
+test("a counter-offer shows the offered amount, EMI and tenure and says it is not the full request", () => {
+	const app = { lifecycle: "APPROVED", loan_amount: 3540000, tenure_months: 84, product: { rate_of_interest: 20 } };
+	const dec = { available: true, outcome: "COUNTER_OFFER", offer: { amount: 2500000, emi: 55515, tenure_months: 84, counter_offer: true, request_outside_mvp_range: true } };
+	const v = R.decisionView(app, dec, "en");
+	assert.equal(v.counter, true);
+	assert.deepEqual(v.offer, { amount: 2500000, tenure_months: 84, emi: 55515 });
+	assert.match(v.summary, /outside what we offer/);
+	const afford = R.decisionView(app, { available: true, outcome: "COUNTER_OFFER", offer: { amount: 1308000, emi: 29046, tenure_months: 84, counter_offer: true } }, "en");
+	assert.match(afford.summary, /full amount/);
+	assert.doesNotMatch(afford.summary, /approved/i);
+	for (const loc of ["hi", "te"]) {
+		const s = R.decisionView(app, dec, loc).summary;
+		assert.ok(s && !/\d/.test(s) && !BANNED.test(s), loc);
+	}
+	assert.equal(R.decisionView(app, { available: true, offer: { amount: 1, emi: 1, tenure_months: 12 } }, "en").counter, false);
+});
