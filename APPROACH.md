@@ -123,7 +123,9 @@ compose → validate → (one rewrite) → finalize
 - **Facts first.** `facts.py` derives the failed rules, values and ZEN-verified targets deterministically. The LLM only
   phrases them, in the requested language (en/hi/te) and literacy level, and voice answers are capped at about 70 words.
 - **Request guards** run before any LLM call and route to fixed EN/HI/TE templates on the boundary path:
-  `injection`, `misrepresentation` (fake, inflate, hide or forge application information; PR #10), `other_applicant`,
+  `injection` (since 2026-11-03 the detector matches the framing in Devanagari, Telugu and code-mixed Roman
+  Hindi as well, not only English — calibrated against the whole synthetic persona corpus, see
+  `tests/test_agent_dispatch_isolation.py`), `misrepresentation` (fake, inflate, hide or forge application information; PR #10), `other_applicant`,
   `dispute` (also files a human handoff), `override`, `edit_record` (including imperative record tampering such as
   "remove the enquiry from my CIBIL report"; PR #9), `auto_submit`, `not_available` and `guarantee`.
 - **Abstention.** `not_available` (PR #10) answers questions about information the agent never holds, such as who
