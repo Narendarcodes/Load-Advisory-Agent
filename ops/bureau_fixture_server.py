@@ -9,8 +9,11 @@ application id before the unchanged bureau app sees it. Anything else passes thr
         --fixture /data/workspace/saral/bureau_saral_frappe.json --port 8011
 """
 import argparse
+import copy
 import json
 from pathlib import Path
+
+from starlette.responses import JSONResponse
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 
@@ -18,7 +21,7 @@ from synthetic_bureau.app import create_app
 
 
 class ApplicantFallback:
-    def __init__(self, inner: ASGIApp, by_applicant: dict[str, str], known_apps: set[str]):
+    def __init__(self, inner: ASGIApp, by_applicant: dict[str, dict], known_apps: set[str]):
         self.inner, self.by_applicant, self.known = inner, by_applicant, known_apps
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
@@ -34,7 +37,13 @@ class ApplicantFallback:
             body = json.loads(raw or b"{}")
             if (not body.get("scenario") and body.get("application_id") not in self.known
                     and body.get("applicant_id") in self.by_applicant):
-                body["application_id"] = self.by_applicant[body["applicant_id"]]
+                case = self.by_applicant[body["applicant_id"]]
+                if case.get("report") is not None:
+                    # The applicant's own report, stamped with the application that asked for it.
+                    report = copy.deepcopy(case["report"])
+                    report["application_id"] = body["application_id"]
+                    return await JSONResponse(report)(scope, receive, send)
+                body["application_id"] = case["application"]["application_id"]  # provider-failure case
                 raw = json.dumps(body).encode()
         except (ValueError, AttributeError):
             pass
@@ -54,8 +63,9 @@ class ApplicantFallback:
 
 def build_app(fixture: str):
     cases = json.loads(Path(fixture).read_text(encoding="utf-8")).get("cases", [])
-    by_applicant = {c["application"]["applicant_id"]: c["application"]["application_id"] for c in cases}
-    return ApplicantFallback(create_app(fixture_path=fixture), by_applicant, set(by_applicant.values()))
+    by_applicant = {c["application"]["applicant_id"]: c for c in cases}
+    known = {c["application"]["application_id"] for c in cases}
+    return ApplicantFallback(create_app(fixture_path=fixture), by_applicant, known)
 
 
 if __name__ == "__main__":  # pragma: no cover
