@@ -78,12 +78,15 @@ Phase 1 (security boundaries) is **not started** and stays unstarted until **PR 
 merged** through the normal process. Phase 2 corpus work is likewise gated: `HDFC-PL-ELIG`/`ICICI-PL-ELIG` are still
 indexed, and the register needs terminal non-ingestible statuses before an exclusion can stick (§12 P1.1 still stands).
 
-**Note for the reviewer:** the commits cited in §0.2–§0.4 (`2408d7e`, `9afb5fc`, `8044d42`) live on the **local**
-branch `feat/agent-boundary-corpus-reset`, which has **not been pushed**, so they will not resolve on GitHub from this
-PR. The benchmark marking, the builder/test change and the register marker fix are therefore verifiable in the working
-copy only until that branch is pushed or opened as its own PR. Nothing in this erratum depends on trusting an
-unverifiable claim: the reachability numbers, the 607-character FAQ output and the five stale-anchor failures were each
-re-measured and are reproducible with the commands in §0.4 and `reports/bajaj-alignment-status-and-blockers.md`.
+**Note for the reviewer:** the commits cited in §0.2–§0.4 (`2408d7e`, `9afb5fc`, `8044d42`) are on
+[`feat/agent-boundary-corpus-reset`](https://github.com/Narendarcodes/Load-Advisory-Agent/tree/feat/agent-boundary-corpus-reset),
+pushed at `8a93f92` — 4 commits ahead of `main`, no pull request opened for them yet, so they are browsable on GitHub
+but not yet reviewable as a PR. That branch also carries the four point-in-time status reports
+(`reports/pr38-backend-delta-review.md`, `stage-abc-gate-report.md`, `phase0-state-verification.md`,
+`bajaj-alignment-status-and-blockers.md`), deliberately **not** in this PR so the correction here stays a
+single-file docs change. Nothing in this erratum rests on an unverifiable claim: the reachability numbers, the
+607-character FAQ output and the five stale-anchor failures were each re-measured and are reproducible with the
+commands in §0.4 and in `reports/bajaj-alignment-status-and-blockers.md`.
 
 ---
 
