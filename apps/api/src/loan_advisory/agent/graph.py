@@ -28,7 +28,7 @@ from loan_advisory.agent import facts as F
 from loan_advisory.agent import observability as obs
 from loan_advisory.agent import guards as G
 from loan_advisory.agent import prompts as P
-from loan_advisory.agent.segmentation import get_customer_segmentation
+from loan_advisory.agent.segmentation import bureau_report_from_record, get_customer_segmentation, with_tone
 from loan_advisory.agent.settings import AgentSettings
 from loan_advisory.agent.streaming import JSONFieldStreamer, SentenceGate, remainder, split_sentences
 from loan_advisory.agent.citations import labels_of as _labels_of, verify_citations
@@ -260,13 +260,8 @@ class AdvisoryAgent:
                 allowed |= set(G.numbers_in(p["text"] + " " + p["citation"]["title"] + " " + str(p["citation"].get("section"))))
         return allowed
 
-    def _style(self, req: AgentRequest, segment: str | None = None):
-        base_style = P.LITERACY_STYLE.get(req.literacy, P.LITERACY_STYLE["medium"])
-        if segment and segment in getattr(P, "SEGMENT_STYLE", {}):
-            style = f"{P.SEGMENT_STYLE[segment]} {base_style}"
-        else:
-            style = base_style
-        return (style, P.LANG.get(req.locale, "English"),
+    def _style(self, req: AgentRequest, segmentation: dict | None = None):
+        return (with_tone(P.LITERACY_STYLE.get(req.literacy, P.LITERACY_STYLE["medium"]), segmentation), P.LANG.get(req.locale, "English"),
                 P.VOICE if req.channel == "voice" else "")
 
     # ------------------------------------------------------------------ nodes
@@ -370,7 +365,7 @@ class AdvisoryAgent:
         else:
             st = "ok"
         self._ev(s, "get_decision_evidence", status=st, record_id=(rec or {}).get("record_id"))
-        seg = get_customer_segmentation(applicant_data=rec, application_ref=req.application_ref, applicant_id=sess.applicant_ref if sess else None)
+        seg = get_customer_segmentation(bureau_report_from_record(rec))  # tone only: HOW to explain, never WHAT
         return {"record": rec, "status": st, "trace": s["trace"], "customer_segmentation": seg}
 
     def plan(self, s):
@@ -410,8 +405,7 @@ class AdvisoryAgent:
 
     def compose(self, s):
         req, intent = self._req(s), s["intent"]
-        seg_name = (s.get("customer_segmentation") or {}).get("segment")
-        style, lang, voice = self._style(req, seg_name)
+        style, lang, voice = self._style(req, s.get("customer_segmentation"))
         retry = P.RETRY.format(flags=", ".join(s["guard_flags"])) if s.get("attempts") else ""
         attempts = s.get("attempts", 0) + 1
         if intent == "policy" and not s["passages"]:
@@ -657,7 +651,7 @@ class AdvisoryAgent:
             improvement_plan=[{k: v for k, v in st.items() if k in ("rule_id", "task", "target_display", "gap_display", "general_guidance",
                                                                       "guidance_source", "rule_passes_after_change")} for st in plan_steps],
             what_if=({k: v for k, v in wi.items() if k != "record"} if wi else None),
-            guard_flags=gflags + (["fallback_template"] if fallback else []), timings=timings, customer_segmentation=s.get("customer_segmentation"))
+            guard_flags=gflags + (["fallback_template"] if fallback else []), timings=timings)
         self._audit(s, resp)
         hist = [{"role": "user", "text": req.message}, {"role": "assistant", "text": resp.answer[:600]}]
         if hasattr(self.llm, "calls"):

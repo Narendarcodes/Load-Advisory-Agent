@@ -11,24 +11,6 @@ LITERACY_STYLE = {
              "employment tenure, threshold) are fine without explanation. Give exact values and limits."),
 }
 LANG = {"en": "English", "hi": "Hindi (Devanagari script)", "te": "Telugu (Telugu script)"}
-SEGMENT_STYLE = {
-    "Guided Explanation Required": (
-        "Customer Persona: Guided Explanation Required. Explain the loan process in numbered steps. "
-        "Use simple everyday language and explain unfamiliar terms and documents. Give clear, actionable next steps."
-    ),
-    "Simple Explanation Required": (
-        "Customer Persona: Simple Explanation Required. Use everyday language and avoid unnecessary technical terms. "
-        "Explain one point at a time with simple examples. Explain clearly without assuming banking knowledge."
-    ),
-    "Standard Explanation Required": (
-        "Customer Persona: Standard Explanation Required. Use normal professional language and briefly explain "
-        "financial and banking terms with practical examples. Explain the recorded reasons and relevant next steps."
-    ),
-    "Technical Explanation Required": (
-        "Customer Persona: Technical Explanation Required. Use relevant terms such as FOIR, DTI, credit utilization "
-        "and repayment history. Provide a detailed explanation of relevant metrics and measurable improvement suggestions."
-    ),
-}
 VOICE = ("The answer will be SPOKEN by a voice assistant: no markdown, no bullet symbols, no tables, no emojis, "
          "at most 70 words, natural spoken sentences.")
 

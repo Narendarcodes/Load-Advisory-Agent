@@ -58,4 +58,3 @@ class AgentResponse(BaseModel):
     guard_flags: list[str] = []
     timings: dict = {}
     error: str | None = None
-    customer_segmentation: dict | None = None

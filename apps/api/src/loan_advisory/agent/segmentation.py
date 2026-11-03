@@ -1,115 +1,52 @@
-"""Customer Segmentation integration for the Loan Advisory Agent.
+"""Explanation tone for the advisory agent (builds on PR #43's customer segmentation).
 
-Segments applicants based on borrowing experience and credit indicators to establish
-a persona-based communication style for explaining loan decisions.
+The tone is picked from the synthetic bureau record passed in (``bureau-report/1``) and
+only changes HOW the reply is written. It never changes the decision, the decision card,
+the improvement plan, the what-if result or which facts reach the model.
 
-CRITICAL PRIVACY GUARANTEE:
-The segmentation response contains ONLY:
-  - segment (e.g. "Guided Explanation Required")
-  - how_to_explain (list of persona communication guidelines)
-No sensitive personal information, demographics, or PII are exposed.
+Privacy: the segmentation is ``{"segment", "how_to_explain"}`` only. It lives in the
+agent's state, is never put on the API response, and its label never reaches the prompt:
+the prompt gets the plain-language tone lines, nothing else.
 """
+from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import Any
 
-from decision_engine.segmentation.classifier import classify_applicant
-from decision_engine.segmentation.guidance import GUIDANCE
+from decision_engine.segmentation import BUREAU_SCHEMA, GUIDANCE, classify_bureau_report
 
-_CANDIDATE_PATHS = [
-    Path(__file__).resolve().parents[5] / "data" / "synthetic" / "demo_applicants.json",
-    Path("data/synthetic/demo_applicants.json").resolve(),
-    Path("demo_applicants.json").resolve(),
-]
+_TONE_FOOTER = ("This changes only how you write, never the decision or which facts you use. "
+                "Do not mention this style, and never describe the applicant as a kind of borrower.")
 
 
-def _find_demo_path() -> Path | None:
-    for p in _CANDIDATE_PATHS:
-        if p.exists():
-            return p
+def bureau_report_from_record(record: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The bureau-report/1 record attached to a decision-evidence record, if any."""
+    if not isinstance(record, dict):
+        return None
+    report = record.get("bureau_report")
+    if isinstance(report, dict) and report.get("schema_version") == BUREAU_SCHEMA:
+        return report
     return None
 
 
-_DEMO_CACHE: dict[str, dict[str, Any]] | None = None
+def get_customer_segmentation(bureau_report: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Tone for this bureau record, or None when no bureau-report/1 record was passed in.
 
-
-def _get_demo_applicants() -> dict[str, dict[str, Any]]:
-    """Lazy load demo applicants indexed by applicant_id and application_id."""
-    global _DEMO_CACHE
-    if _DEMO_CACHE is not None:
-        return _DEMO_CACHE
-
-    _DEMO_CACHE = {}
-    demo_path = _find_demo_path()
-    if demo_path and demo_path.exists():
-        try:
-            with open(demo_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            applicants = data.get("applicants") or data.get("cases") or []
-            for app in applicants:
-                aid = app.get("applicant_id")
-                app_ref = app.get("application_id")
-                if aid:
-                    _DEMO_CACHE[str(aid)] = app
-                if app_ref:
-                    _DEMO_CACHE[str(app_ref)] = app
-        except Exception:
-            pass
-    return _DEMO_CACHE
-
-
-def get_customer_segmentation(
-    applicant_data: dict[str, Any] | None = None,
-    applicant_id: str | None = None,
-    application_ref: str | None = None
-) -> dict[str, Any]:
-    """Determine customer communication segmentation for an applicant.
-
-    Accepts an applicant dictionary, a Decision Evidence record, or an applicant/application ID.
-    Always returns a sanitized dictionary containing only 'segment' and 'how_to_explain'.
+    There is no lookup by applicant or application id: the caller passes the record.
     """
-    candidate: dict[str, Any] | None = None
-
-    if isinstance(applicant_data, dict):
-        # Case 1: Direct applicant object or object containing cibil_report/bureau
-        if (
-            "cibil_report" in applicant_data
-            or "bureau_report" in applicant_data
-            or "bureau" in applicant_data
-            or "accounts" in applicant_data
-        ):
-            candidate = applicant_data
-        # Case 2: Decision Evidence record with applicant_ref / application_ref
-        applicant_id = applicant_id or applicant_data.get("applicant_ref") or applicant_data.get("applicant_id")
-        application_ref = application_ref or applicant_data.get("application_ref") or applicant_data.get("application_id")
-
-    # Case 3: Check demo repository if candidate report not directly found
-    if candidate is None:
-        demos = _get_demo_applicants()
-        if applicant_id and str(applicant_id) in demos:
-            candidate = demos[str(applicant_id)]
-        elif application_ref and str(application_ref) in demos:
-            candidate = demos[str(application_ref)]
-
-    # Fallback to standard/guided if no report details available
-    if not candidate:
-        segment = "Standard Explanation Required"
-        return {
-            "segment": segment,
-            "how_to_explain": list(GUIDANCE[segment])
-        }
-
-    return classify_applicant(candidate)
+    if not isinstance(bureau_report, dict) or bureau_report.get("schema_version") != BUREAU_SCHEMA:
+        return None
+    return classify_bureau_report(bureau_report)
 
 
-def format_persona_guidance(segmentation: dict[str, Any] | None) -> str:
-    """Format segmentation guidelines into system prompt style instructions."""
-    if not segmentation or not segmentation.get("segment"):
+def tone_instruction(segmentation: dict[str, Any] | None) -> str:
+    """Plain-language tone lines for the prompt (the label itself is left out)."""
+    seg = (segmentation or {}).get("segment")
+    if seg not in GUIDANCE:
         return ""
+    return "How to explain: " + " ".join(GUIDANCE[seg]) + " " + _TONE_FOOTER
 
-    segment = segmentation.get("segment", "Standard Explanation Required")
-    guidelines = segmentation.get("how_to_explain") or GUIDANCE.get(segment, [])
 
-    points = " ".join(guidelines)
-    return f"Communication Persona ({segment}): {points}"
+def with_tone(base_style: str, segmentation: dict[str, Any] | None) -> str:
+    """Prefix the plain-language prompt style with the tone; unchanged when there is none."""
+    tone = tone_instruction(segmentation)
+    return f"{tone} {base_style}" if tone else base_style
