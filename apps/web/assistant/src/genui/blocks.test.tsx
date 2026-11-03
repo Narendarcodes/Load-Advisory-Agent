@@ -120,6 +120,12 @@ describe("human assistance", () => {
     expect(markup).toContain("no external ticket has been created");
     expect(markup).toContain('href="/borrower/help"');
   });
+
+  it("shows the handoff scene as decoration only (empty alt; the heading says what happened)", () => {
+    const markup = html({ type: "human_assistance", handoffRef: "HO-1" });
+    expect(markup).toMatch(/<img[^>]*src="\/assets\/loan_advisory_portal\/illustrations\/handoff\.svg"[^>]*>/);
+    expect(markup).toMatch(/<img[^>]*alt=""/);
+  });
 });
 
 describe("missing information", () => {
@@ -169,8 +175,11 @@ describe("what-if result", () => {
       },
     });
     const markup = renderToStaticMarkup(<>{buildBlocks(state, context).map((block, index) => <div key={index}>{renderBlock(block, context)}</div>)}</>);
-    expect(markup).toContain("Hypothetical simulation, not a decision");
-    expect(markup).toContain("credit score = 720");
+    expect(markup).toContain("Simulation, not your decision");
+    // v2: a before/after row per changed field (no engine number on this card, so no "before").
+    expect(markup).toContain("Credit score");
+    expect(markup).toMatch(/set to <\/span><b>720<\/b>/);
+    expect(markup).toContain("<b>720</b>");
     expect(markup).toContain("Recorded");
     expect(markup).toContain("Not met");
     expect(markup).toContain("Met");

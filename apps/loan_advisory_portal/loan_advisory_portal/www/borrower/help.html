@@ -1,11 +1,11 @@
 {% extends "templates/portal/base.html" %}
 {% block page_content %}
-<div class="page-head">
+<div class="page-head page-head--art">
 	<div>
-		<p class="eyebrow">Support</p>
 		<h1>Help</h1>
 		<p>How applications, documents, decisions and the assistant work. Your loan advisor remains the person to ask about your own case.</p>
 	</div>
+	<img class="page-head__art" src="/assets/loan_advisory_portal/illustrations/help-header.svg" alt="" width="160" height="120">
 </div>
 
 <div class="grid-2">
@@ -27,18 +27,19 @@
 		<div class="card__head">
 			<h2 id="status-heading">What the status means</h2>
 		</div>
-		<dl class="detail">
+		<dl class="detail detail--stacked">
 			{% for entry in states %}
 			<dt>{{ entry.title | e }}</dt><dd>{{ entry.summary | e }}</dd>
 			{% endfor %}
 		</dl>
 	</section>
 
-	<section class="card mt" aria-labelledby="assistant-heading">
+	<section class="card mt" id="assistant" aria-labelledby="assistant-heading">
 		<div class="card__head">
 			<h2 id="assistant-heading">The assistant</h2>
 		</div>
 		<p class="small">The assistant explains the decision recorded for one application, answers questions about the lending policy with sources, and can re-check “what if” figures as a simulation. It cannot approve, reject, change or promise anything. Every simulated result is labelled as a what-if and is not a decision on your application.</p>
+		<p class="small">Answers use the decision record for your application and the lender’s policy documents. Raw identity numbers and the contents of your documents are not shared with it.</p>
 		<p class="small">Conversations are stored against your account and the application you are viewing. Each application has its own conversation; opening another application does not carry the first one’s history across.</p>
 	</section>
 
@@ -61,6 +62,13 @@
 			<li><strong>Feedback:</strong> <a href="/borrower/feedback">send feedback</a> about the portal itself.</li>
 			<li><strong>Questions about a decision:</strong> ask your loan advisor, or <a href="/borrower/assistant">ask the assistant</a> to explain what is recorded.</li>
 		</ul>
+	</section>
+
+	<section class="card mt" id="illustrations" aria-labelledby="illustrations-heading">
+		<div class="card__head">
+			<h2 id="illustrations-heading">About the illustrations</h2>
+		</div>
+		<p class="small">Illustrations: <a href="https://www.openpeeps.com/" rel="noopener">Open Peeps</a> by Pablo Stanley, <a href="https://creativecommons.org/publicdomain/zero/1.0/" rel="noopener">CC0</a>. The figures are used as drawn; the coral props and backgrounds were added for Saral.</p>
 	</section>
 </div>
 

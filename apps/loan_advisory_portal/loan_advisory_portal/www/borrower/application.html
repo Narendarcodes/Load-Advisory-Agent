@@ -1,4 +1,5 @@
 {% extends "templates/portal/base.html" %}
+
 {% block page_content %}
 {% if not_found %}
 {% include "templates/portal/_not_found.html" %}
@@ -6,9 +7,8 @@
 <div class="page-head">
 	<div>
 		<p class="tiny"><a href="/borrower">← All applications</a></p>
-		<p class="eyebrow">Application</p>
 		<h1 id="app-title">Your application</h1>
-		<p id="app-purpose">Loading…</p>
+		<p id="app-purpose"><span class="skeleton skeleton--line skeleton--w40" aria-hidden="true"></span></p>
 		<p class="app-meta" id="app-meta"></p>
 	</div>
 	<div class="page-head__actions" id="app-actions"></div>
@@ -22,42 +22,25 @@
 	</div>
 </div>
 
-<section class="card tracker-card mt" aria-label="Application progress">
-	<ol class="tracker" id="tracker">
-		<li class="tracker__stage"><strong>Started</strong><span>Draft created</span></li>
-		<li class="tracker__stage"><strong>Submitted</strong><span>Sent for checks</span></li>
-		<li class="tracker__stage"><strong>Checks</strong><span>Policy and information</span></li>
-		<li class="tracker__stage"><strong>Outcome</strong><span>Decision recorded</span></li>
-	</ol>
-</section>
 
-<div class="application-grid mt">
+<div class="application-grid">
 	<div class="stack">
-		<section class="card" aria-labelledby="status-heading">
-			<div class="card__head">
-				<h2 id="status-heading">Status</h2>
-				<span id="app-badge"></span>
-			</div>
-			<div class="status-block" id="status-block" aria-live="polite">
-				<span class="status-block__mark" id="status-mark" aria-hidden="true">·</span>
-				<div class="status-block__body">
-					<strong id="status-title">Loading…</strong>
-					<span class="small muted" id="status-summary"></span>
-					<ul class="small" id="status-steps"></ul>
-					<time id="status-time"></time>
+		<section class="result" aria-labelledby="decision-heading">
+			<div id="decision" aria-live="polite" aria-busy="true">
+				<div class="result-head result-head--lg" aria-hidden="true">
+					<span class="skeleton skeleton--art"></span>
+					<div class="result-head__text">
+						<span class="skeleton skeleton--badge"></span>
+						<span class="skeleton skeleton--title"></span>
+						<span class="skeleton skeleton--line skeleton--w80"></span>
+					</div>
 				</div>
-			</div>
-		</section>
-
-		<section class="card" aria-labelledby="decision-heading">
-			<div class="card__head">
-				<div>
-					<h2 id="decision-heading">Decision and reasoning</h2>
-					<p class="tiny muted">Only checks recorded on this application appear here.</p>
+				<div class="result-section" aria-hidden="true">
+					<span class="skeleton skeleton--line skeleton--w30"></span>
+					<span class="skeleton skeleton--row"></span>
+					<span class="skeleton skeleton--row"></span>
 				</div>
-			</div>
-			<div id="decision" aria-live="polite">
-				<p class="muted small">Loading…</p>
+				<h2 class="sr-only" id="decision-heading">Loading your application</h2>
 			</div>
 		</section>
 
@@ -101,7 +84,7 @@
 				<span class="badge badge--neutral" id="doc-count">—</span>
 			</div>
 			<div id="documents-summary" aria-live="polite">
-				<p class="muted small">Loading…</p>
+				<span class="skeleton skeleton--row" aria-hidden="true"></span>
 			</div>
 			<div class="card__foot">
 				<span class="small muted" id="documents-note">Documents can be changed while the application is a draft.</span>
@@ -111,11 +94,12 @@
 
 		<section class="card" aria-labelledby="timeline-heading">
 			<div class="card__head">
-				<h2 id="timeline-heading">History</h2>
-				<span class="tiny muted">Every recorded change, oldest first</span>
+				<h2 id="timeline-heading">Status and history</h2>
+				<span id="app-badge" class="hidden"></span>
 			</div>
-			<ol class="timeline" id="timeline">
-				<li class="muted small">Loading…</li>
+			<ol class="history-list" id="timeline" aria-label="Every recorded change, oldest first">
+				<li aria-hidden="true"><span class="skeleton skeleton--row"></span></li>
+				<li aria-hidden="true"><span class="skeleton skeleton--row"></span></li>
 			</ol>
 		</section>
 	</div>
@@ -126,23 +110,23 @@
 				<h2>Application facts</h2>
 			</div>
 			<dl class="detail detail--rows" id="summary">
-				<div><dt>Status</dt><dd>Loading…</dd></div>
+				<div aria-hidden="true"><dt><span class="skeleton skeleton--line skeleton--w60"></span></dt><dd><span class="skeleton skeleton--line skeleton--w40"></span></dd></div>
+				<div aria-hidden="true"><dt><span class="skeleton skeleton--line skeleton--w50"></span></dt><dd><span class="skeleton skeleton--line skeleton--w50"></span></dd></div>
+				<div aria-hidden="true"><dt><span class="skeleton skeleton--line skeleton--w60"></span></dt><dd><span class="skeleton skeleton--line skeleton--w40"></span></dd></div>
 			</dl>
 		</section>
 
 		{% set decided = application.custom_lifecycle_state in ("APPROVED", "REJECTED", "MANUAL_REVIEW") %}
-		<section class="card card--accent">
-			<p class="eyebrow">Assistant</p>
+		<section class="card">
 			<h2>{{ "Understand this decision" if decided else "Ask about this application" }}</h2>
-			<p class="small mt">{{ "The assistant explains policy and the recorded reasons in plain language. It never approves or rejects an application." if decided else "The assistant explains policy and what happens next in plain language. It never approves or rejects an application." }}</p>
-			<a class="btn btn--sm mt" href="/borrower/assistant?application={{ application.name | urlencode }}">Ask the assistant</a>
+			<p class="small muted mt">{{ "Ask why this was decided, what to fix, or try a what-if." if decided else "Ask what happens next and what the lender will check." }}</p>
+			<a class="btn btn--ghost btn--sm mt" href="/borrower/assistant?application={{ application.name | urlencode }}">Ask the assistant</a>
 		</section>
 
 		<section class="card">
 			<h2>Need a person?</h2>
 			<p class="small muted mt">Ask for a human review or tell us what was unclear. The help page explains how decisions are made.</p>
-			<a class="btn btn--quiet btn--sm mt" href="/borrower/feedback?application={{ application.name | urlencode }}">Send feedback</a>
-			<a class="btn btn--quiet btn--sm" href="/borrower/help">How decisions work</a>
+			<p class="mt"><a class="btn btn--quiet btn--sm" href="/borrower/feedback?application={{ application.name | urlencode }}">Send feedback</a><a class="btn btn--quiet btn--sm" href="/borrower/help">How decisions work</a></p>
 		</section>
 	</aside>
 </div>
@@ -159,6 +143,7 @@
 </dialog>
 
 <script id="application-ref" type="application/json">{{ application.name | tojson }}</script>
+<script src="/assets/loan_advisory_portal/js/status.js" defer></script>
 <script src="/assets/loan_advisory_portal/js/pages/application.js" defer></script>
 {% endif %}
 {% endblock %}

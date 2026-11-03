@@ -16,17 +16,6 @@
 
 	var CLOSED = ["APPROVED", "REJECTED", "WITHDRAWN"];
 
-	var STATUS_STYLE = {
-		DRAFT: { variant: "", mark: "DR" },
-		SUBMITTED: { variant: "status-block--info", mark: "i" },
-		INFO_REQUESTED: { variant: "status-block--warn", mark: "!" },
-		UNDER_REVIEW: { variant: "status-block--info", mark: "i" },
-		MANUAL_REVIEW: { variant: "status-block--warn", mark: "!" },
-		APPROVED: { variant: "status-block--ok", mark: "OK" },
-		REJECTED: { variant: "status-block--bad", mark: "×" },
-		WITHDRAWN: { variant: "status-block--info", mark: "i" },
-	};
-
 	var FIELD_LABELS = {
 		monthly_income: "monthly income",
 		monthly_obligations: "monthly obligations",
@@ -39,11 +28,13 @@
 	}
 
 	function renderHeader(application) {
-		document.getElementById("app-title").textContent = "Application " + application.name;
+		// The reference stays on one line ("ACC-" / "LOAP-..." broke at the hyphen on phones).
+		document.getElementById("app-title").innerHTML =
+			'Application <span class="nowrap">' + Portal.esc(application.name) + "</span>";
 		document.getElementById("app-purpose").textContent = application.purpose || "No purpose recorded.";
 
 		var product = application.product || {};
-		var bits = ['<span class="mono">' + Portal.esc(application.name) + "</span>"];
+		var bits = []; // the reference is already in the title
 		if (product.product_name) bits.push(Portal.esc(product.product_name));
 		bits.push("Started " + Portal.esc(Portal.date(application.posting_date)));
 		if (application.submitted_at) {
@@ -61,93 +52,29 @@
 		);
 	}
 
-	function trackerStates(application) {
-		var state = application.lifecycle || "DRAFT";
-		if (state === "DRAFT") return ["current", "", "", ""];
-		if (state === "SUBMITTED") return ["done", "current", "", ""];
-		if (state === "UNDER_REVIEW" || state === "INFO_REQUESTED" || state === "MANUAL_REVIEW") {
-			return ["done", "done", "current", ""];
-		}
-		if (state === "APPROVED" || state === "REJECTED") return ["done", "done", "done", "done"];
-		// Withdrawn: the process stopped where it was and no outcome was reached.
-		return application.docstatus === 0 ? ["done", "", "", ""] : ["done", "done", "", ""];
+	/* One sentence says where the application stands; the dated history below shows how it got there. */
+	function renderStatusLine(application) {
+		var line = document.getElementById("status-line");
+		if (!line || !window.PortalStatus) return;
+		var status = window.PortalStatus.statusSentence(application, Portal.date);
+		var tone = { ok: "badge--ok", bad: "badge--bad", warn: "badge--warn", info: "badge--info" }[status.tone] || "badge--neutral";
+		line.innerHTML =
+			"<span>" + Portal.esc(status.text) + "</span> " +
+			// No "·" separator: the flex gap separates them, so a wrapped line never starts or ends on a lone dot.
+			'<span class="badge ' + tone + '">' + Portal.esc(status.outcome) + "</span>";
 	}
 
-	function renderTracker(application) {
-		var states = trackerStates(application);
-		document.querySelectorAll("#tracker .tracker__stage").forEach(function (stage, index) {
-			if (states[index]) stage.dataset.state = states[index];
-			else delete stage.dataset.state;
-		});
-	}
-
+	/* The page head keeps only the quiet Withdraw; the single primary action lives in the result section. */
 	function renderActions(application) {
 		var host = document.getElementById("app-actions");
 		var lifecycle = application.lifecycle || "DRAFT";
 		var open = CLOSED.indexOf(lifecycle) === -1;
-		var draft = application.docstatus === 0 && lifecycle !== "WITHDRAWN";
-		var hasDocuments = (application.documents || []).length > 0;
-		var documentsUrl = "/borrower/documents?name=" + encodeURIComponent(application.name);
-		var html = "";
-
-		if (draft) {
-			html += hasDocuments
-				? '<button class="btn" type="button" id="submit-app">Submit application</button>'
-				: '<a class="btn" href="' + documentsUrl + '">Add documents to continue</a>';
-		}
-		if (lifecycle === "INFO_REQUESTED") {
-			html += '<a class="btn" href="#info-request">Update details</a>';
-		}
-		if (lifecycle === "WITHDRAWN" || lifecycle === "REJECTED") {
-			html += '<a class="btn" href="/borrower/apply">Start a new application</a>';
-		}
-		if (open) {
-			html += '<button class="btn btn--quiet" type="button" id="withdraw">Withdraw</button>';
-		}
-		host.innerHTML = html;
-
-		var submit = document.getElementById("submit-app");
-		if (submit) submit.addEventListener("click", submitApplication);
+		host.innerHTML = open ? '<button class="btn btn--quiet" type="button" id="withdraw">Withdraw</button>' : "";
 		var withdraw = document.getElementById("withdraw");
 		if (withdraw) {
 			withdraw.addEventListener("click", function () {
 				Portal.openDialog(document.getElementById("withdraw-dialog"));
 			});
-		}
-	}
-
-	function renderStatus(application) {
-		var lifecycle = application.lifecycle || "DRAFT";
-		var style = STATUS_STYLE[lifecycle] || STATUS_STYLE.DRAFT;
-		document.getElementById("status-block").className = "status-block" + (style.variant ? " " + style.variant : "");
-		document.getElementById("status-mark").textContent = style.mark;
-
-		var guidance = application.guidance || {};
-		document.getElementById("status-title").textContent =
-			guidance.title || Portal.lifecycleLabel(lifecycle);
-		document.getElementById("status-summary").textContent = guidance.summary || "";
-
-		var steps = guidance.next_steps || [];
-		var list = document.getElementById("status-steps");
-		list.innerHTML = steps
-			.map(function (step) {
-				return "<li>" + Portal.esc(step) + "</li>";
-			})
-			.join("");
-		list.classList.toggle("hidden", !steps.length);
-
-		var timeline = application.timeline || [];
-		var at = timeline.length
-			? timeline[timeline.length - 1].at
-			: application.submitted_at || application.posting_date;
-		var time = document.getElementById("status-time");
-		if (at) {
-			time.textContent = "Last update " + Portal.date(at);
-			time.setAttribute("datetime", at);
-			time.classList.remove("hidden");
-		} else {
-			time.textContent = "";
-			time.classList.add("hidden");
 		}
 	}
 
@@ -215,138 +142,252 @@
 	}
 
 	function renderTimeline(application) {
-		var events = application.timeline || [];
 		var host = document.getElementById("timeline");
-		if (!events.length) {
+		var items = window.PortalStatus ? window.PortalStatus.historyItems(application.timeline || []) : [];
+		if (!items.length) {
 			host.innerHTML = '<li class="muted small">No history recorded yet.</li>';
 			return;
 		}
-		host.innerHTML = events
-			.map(function (event, index) {
-				var current = index === events.length - 1 ? ' data-current="true"' : "";
-				var extra = event.policy_version ? " · policy " + Portal.esc(event.policy_version) : "";
+		host.innerHTML = items
+			.map(function (item) {
 				return (
-					"<li" +
-					current +
-					"><strong>" +
-					Portal.esc(event.event) +
-					'</strong><span class="when">' +
-					Portal.esc(Portal.date(event.at)) +
-					extra +
+					"<li" + (item.current ? ' aria-current="step"' : "") + ">" +
+					'<time datetime="' + Portal.esc(item.at) + '">' + Portal.esc(Portal.date(item.at)) + "</time>" +
+					"<span>" + Portal.esc(item.label) +
+					(item.current ? '<span class="history-list__now">Now</span>' : "") +
 					"</span></li>"
 				);
 			})
 			.join("");
 	}
 
-	function unavailableCopy(lifecycle) {
-		var copy = {
-			DRAFT: "No assessment yet. Submit the application to start the checks.",
-			SUBMITTED: "The checks have been queued. The outcome and its reasons appear here when they finish.",
-			UNDER_REVIEW: "The checks are running. Nothing is needed from you right now.",
-			INFO_REQUESTED: "The checks need corrected information before an outcome can be recorded.",
-			MANUAL_REVIEW: "A person is reviewing this application. The outcome appears here when it is recorded.",
-			APPROVED:
-				"The application was approved, but no decision record is attached. Contact your loan advisor for the details.",
-			REJECTED:
-				"The application was not approved, but no decision record is attached. Contact your loan advisor for the details.",
-			WITHDRAWN: "No decision was made because this application was withdrawn.",
-		};
-		return '<p class="muted small">' + Portal.esc(copy[lifecycle] || "No assessment has been recorded for this application.") + "</p>";
+	var ART = "/assets/loan_advisory_portal/illustrations/";
+	var IN_FLIGHT = ["SUBMITTED", "UNDER_REVIEW", "MANUAL_REVIEW"];
+
+	/* What the result section says for each state. Copy only; the facts come from the record. */
+	var RESULT = {
+		DRAFT: { art: "wizard-documents", title: "Your application is not submitted yet", badge: ["badge--neutral", "Draft"] },
+		SUBMITTED: { art: "submitted", title: "We have received your application", badge: ["badge--info", "Submitted"] },
+		UNDER_REVIEW: { art: "checking", title: "We are checking your application", badge: ["badge--info", "Checks running"] },
+		MANUAL_REVIEW: { art: "processing", title: "A person is reviewing your application", badge: ["badge--warn", "With a reviewer"] },
+		INFO_REQUESTED: { art: "missing-info", title: "We need a few details corrected", badge: ["badge--warn", "Information needed"] },
+		APPROVED: { art: "approved", title: "Your application was approved", badge: ["badge--ok", "Approved"] },
+		REJECTED: { art: "not-approved", title: "Your application was not approved", badge: ["badge--bad", "Not approved"] },
+		WITHDRAWN: { art: "withdrawn", title: "You withdrew this application", badge: ["badge--neutral", "Withdrawn"] },
+	};
+
+	/* The decision is the key card (white, hairline); the badge and heading carry the meaning and the
+	   illustration sits beside it on the plain page. While checks are running a thin CSS status bar inside
+	   the card is the processing cue (still under reduced motion). */
+	function resultHead(view, lead, when, lifecycle) {
+		var processing = IN_FLIGHT.indexOf(lifecycle) !== -1;
+		return (
+			'<div class="result-head result-head--lg result-v6">' +
+			'<img class="result-head__art" src="' + ART + view.art + '.svg" alt="" width="160" height="120">' +
+			'<div class="result-head__text decision-card key-card">' +
+			'<p class="result-head__status"><span class="badge ' + view.badge[0] + '">' + Portal.esc(view.badge[1]) + "</span>" +
+			(when ? '<span class="tiny muted">' + Portal.esc(when) + "</span>" : "") +
+			"</p>" +
+			'<h2 id="decision-heading">' + Portal.esc(view.title) + "</h2>" +
+			(lead ? '<p class="result-head__lead">' + Portal.esc(lead) + "</p>" : "") +
+			(processing ? '<div class="status-bar process-bar" aria-hidden="true"></div>' : "") +
+			"</div></div>"
+		);
 	}
 
-	function decisionBadge(decision) {
-		if (decision.decision === "APPROVED") return '<span class="badge badge--ok">Approved</span>';
-		if (decision.decision === "REJECTED") return '<span class="badge badge--bad">Not approved</span>';
-		return '<span class="badge badge--warn">No outcome recorded</span>';
+	function resultSection(title, inner) {
+		return '<section class="result-section"><h3>' + Portal.esc(title) + "</h3>" + inner + "</section>";
+	}
+
+	function plainList(items, cls) {
+		return (
+			'<ul class="' + (cls || "result-factors") + '">' +
+			items
+				.map(function (item) {
+					return "<li>" + Portal.esc(item) + "</li>";
+				})
+				.join("") +
+			"</ul>"
+		);
+	}
+
+	/* In-flight progress from the record: what has happened (dated) and what is still to come. No time is promised. */
+	function progressFor(application) {
+		var lifecycle = application.lifecycle;
+		var sent = application.submitted_at ? "Sent " + Portal.date(application.submitted_at) : "Sent";
+		var steps = [{ label: "Application sent", note: sent, state: "done" }];
+		if (lifecycle === "MANUAL_REVIEW") {
+			steps.push({ label: "Automatic checks", note: "Finished without a settled outcome", state: "done" });
+			steps.push({ label: "A person reviews it", note: "In progress", state: "current" });
+		} else {
+			steps.push({
+				label: "Checks against the lending policy",
+				note: lifecycle === "SUBMITTED" ? "Queued" : "In progress",
+				state: "current",
+			});
+		}
+		steps.push({ label: "Outcome and reasons", note: "Shown here when ready", state: "todo" });
+		return (
+			'<ol class="run-progress" aria-label="Where your application is">' +
+			steps
+				.map(function (step) {
+					return (
+						'<li data-state="' + step.state + '"' + (step.state === "current" ? ' aria-current="step"' : "") + ">" +
+						'<span class="run-progress__mark" aria-hidden="true"></span>' +
+						"<span><strong>" + Portal.esc(step.label) + "</strong>" +
+						'<span class="tiny muted">' + Portal.esc(step.note) + "</span></span></li>"
+					);
+				})
+				.join("") +
+			"</ol>"
+		);
 	}
 
 	function missingFields(fields) {
 		return (fields || []).map(function (field) {
-			return FIELD_LABELS[field] || String(field).replace(/_/g, " ");
+			var label = FIELD_LABELS[field] || String(field).replace(/_/g, " ");
+			return label.charAt(0).toUpperCase() + label.slice(1);
 		});
+	}
+
+	function primaryAction(application, lifecycle) {
+		var assistant = "/borrower/assistant?application=" + encodeURIComponent(application.name);
+		var feedback = "/borrower/feedback?application=" + encodeURIComponent(application.name);
+		var documentsUrl = "/borrower/documents?name=" + encodeURIComponent(application.name);
+		var hasDocuments = (application.documents || []).length > 0;
+		var quiet = function (href, text) {
+			return '<a class="link-quiet" href="' + href + '">' + text + "</a>";
+		};
+		switch (lifecycle) {
+			case "DRAFT":
+				return hasDocuments
+					? '<button class="btn" type="button" id="submit-app">Submit application</button>' + quiet(documentsUrl, "Check documents")
+					: '<a class="btn" href="' + documentsUrl + '">Add documents to continue</a>';
+			case "INFO_REQUESTED":
+				// The coral action on this page is "Resubmit application" inside the form below; the
+				// jump link to that form is a ghost so the page keeps one primary.
+				return '<a class="btn btn--ghost" href="#info-request">Update details</a>' + quiet(assistant, "Ask what is needed");
+			case "APPROVED":
+				return '<a class="btn" href="' + assistant + '">Ask what happens next</a>' + quiet(feedback, "Talk to a person");
+			case "REJECTED":
+				return '<a class="btn" href="' + assistant + '">Understand this decision</a>' + quiet("/borrower/apply", "Start a new application");
+			case "WITHDRAWN":
+				return '<a class="btn" href="/borrower/apply">Start a new application</a>';
+			default:
+				// In flight: nothing for the borrower to do; the side column offers the assistant.
+				return "";
+		}
 	}
 
 	function renderDecision(decision, application) {
 		var host = document.getElementById("decision");
-		if (!decision || !decision.available) {
-			host.innerHTML = unavailableCopy(application.lifecycle || "DRAFT");
-			return;
+		var lifecycle = application.lifecycle || "DRAFT";
+		var view = RESULT[lifecycle] || {
+			art: "assessment-pending",
+			title: Portal.lifecycleLabel(lifecycle),
+			badge: ["badge--neutral", Portal.lifecycleLabel(lifecycle)],
+		};
+		var guidance = application.guidance || {};
+		var has = decision && decision.available;
+		var when = has && decision.evaluated_at ? "Assessed " + Portal.date(decision.evaluated_at) : "";
+		var lead = guidance.summary || "";
+		if (lifecycle === "UNDER_REVIEW") lead = "Your details are being checked against the lending policy. Nothing is needed from you right now.";
+		if (lifecycle === "SUBMITTED") lead = "The checks are queued and run without any action from you.";
+		if (lifecycle === "DRAFT") {
+			var ready = (application.documents || []).length > 0;
+			view = {
+				art: view.art,
+				badge: view.badge,
+				title: ready ? "Your application is ready to submit" : "Add a document before you submit",
+			};
+			lead = ready
+				? "It has not been assessed yet. Submitting sends it for the checks and fixes the loan request."
+				: "It has not been assessed yet. At least one document is needed before you can submit.";
+		}
+		var parts = [resultHead(view, lead, when, lifecycle)];
+
+		if (IN_FLIGHT.indexOf(lifecycle) !== -1) {
+			parts.push(progressFor(application));
 		}
 
-		var parts = [];
-		parts.push('<div class="decision-intro">' + decisionBadge(decision) + "</div>");
-
-		if (decision.provider_error) {
+		if (has && decision.provider_error) {
 			parts.push(
-				'<div class="status-block status-block--info mt"><span class="status-block__mark" aria-hidden="true">i</span>' +
-					'<div class="status-block__body"><strong>No decision has been made</strong>' +
-					'<span class="small">We could not complete the credit check for this application. It stays open; contact your loan advisor if you need an update.</span></div></div>'
-			);
-		}
-
-		if (decision.information_needed) {
-			var missing = missingFields(decision.missing_fields);
-			parts.push(
-				'<div class="status-block status-block--warn mt"><span class="status-block__mark" aria-hidden="true">!</span>' +
-					'<div class="status-block__body"><strong>More information is needed</strong>' +
-					'<span class="small">' +
-					(missing.length
-						? "Correct: " + Portal.esc(missing.join(", ")) + "."
-						: "Correct the details listed for this application.") +
-					'</span><a class="small" href="#info-request">Update the application</a></div></div>'
-			);
-		}
-
-		var reasons = decision.reasons || [];
-		if (reasons.length) {
-			parts.push(
-				'<div class="mt"><h3>What affected this outcome</h3><ul class="decision-reasons mt">' +
-					reasons
-						.map(function (reason) {
-							return "<li>" + Portal.esc(reason.text || reason.code) + "</li>";
-						})
-						.join("") +
-					"</ul></div>"
-			);
-		} else if (decision.decision === "REJECTED") {
-			parts.push(
-				'<p class="small muted mt">The recorded decision did not include written reasons. Your loan advisor can discuss it with you.</p>'
+				'<p class="result-note">No decision has been made. We could not complete the credit check for this application. It stays open; contact your loan advisor if you need an update.</p>'
 			);
 		}
 
-		if (decision.decision === "APPROVED") {
+		var reasons = (has && decision.reasons) || [];
+		if (lifecycle === "INFO_REQUESTED" || (has && decision.information_needed)) {
+			var missing = missingFields(has ? decision.missing_fields : []);
 			parts.push(
-				'<p class="small mt">The application met the lending policy. Your loan advisor can explain what happens next.</p>'
+				resultSection(
+					"What to correct",
+					missing.length
+						? plainList(missing)
+						: '<p class="small muted">Correct the details listed for this application.</p>'
+				)
 			);
-		} else if (decision.decision === "REJECTED") {
+		} else if (reasons.length) {
 			parts.push(
-				'<p class="small mt">If your circumstances change, you can <a href="/borrower/apply">start a new application</a>. Your loan advisor can talk the decision through with you.</p>'
+				resultSection(
+					lifecycle === "APPROVED" ? "Why" : "What affected the outcome",
+					plainList(reasons.map(function (reason) {
+						return reason.text || reason.code;
+					}), "decision-reasons")
+				)
 			);
+		} else if (lifecycle === "APPROVED" && has) {
+			parts.push(resultSection("Why", '<p class="small">It met the lending policy checks recorded on this application.</p>'));
+		} else if (lifecycle === "REJECTED") {
+			parts.push(resultSection("What affected the outcome", '<p class="small muted">The recorded decision did not include written reasons. Your loan advisor can discuss it with you.</p>'));
 		}
 
-		if (decision.simulation) {
-			parts.push(
-				'<p class="tiny muted mt">This was a what-if estimate, not a decision on your application.</p>'
-			);
+		var steps = (guidance.next_steps || []).filter(function (step) {
+			return !/decision section/i.test(step);
+		});
+		if (steps.length) parts.push(resultSection("What happens next", plainList(steps)));
+
+		if (has && decision.simulation) {
+			parts.push('<p class="result-note">This was a what-if estimate, not a decision on your application.</p>');
 		}
 
-		var meta = [];
-		if (decision.evaluated_at) meta.push("Assessed " + Portal.esc(Portal.date(decision.evaluated_at)));
-		if (decision.policy_version) meta.push("Policy version " + Portal.esc(decision.policy_version));
-		if (meta.length) {
-			parts.push(
-				'<div class="decision-meta">' +
-					meta
-						.map(function (entry) {
-							return "<span>" + entry + "</span>";
-						})
-						.join("") +
-					"</div>"
-			);
-		}
+		var action = primaryAction(application, lifecycle);
+		if (action) parts.push('<div class="result-actions">' + action + "</div>");
 
+		// The policy version is in Application facts; the note says what this section can and cannot show.
+		var meta = ["Only checks recorded on this application appear here."];
+		parts.push(
+			'<p class="decision-meta">' +
+				meta
+					.map(function (entry) {
+						return "<span>" + entry + "</span>";
+					})
+					.join("") +
+				"</p>"
+		);
+
+		host.removeAttribute("aria-busy");
 		host.innerHTML = parts.join("");
+		var submit = document.getElementById("submit-app");
+		if (submit) submit.addEventListener("click", submitApplication);
+		schedulePoll(lifecycle);
+	}
+
+	/* While checks are in flight the page looks again every 15 s (only while visible, at most 40 times). */
+	var pollTimer = null;
+	var polls = 0;
+	function schedulePoll(lifecycle) {
+		if (pollTimer) window.clearTimeout(pollTimer);
+		pollTimer = null;
+		if (IN_FLIGHT.indexOf(lifecycle) === -1 || polls >= 40) return;
+		pollTimer = window.setTimeout(function () {
+			polls += 1;
+			if (document.hidden) return schedulePoll(lifecycle);
+			reload().catch(function () {
+				/* A failed background check leaves the page as it was; the next one tries again. */
+				schedulePoll(lifecycle);
+			});
+		}, Number(window.__portalPollMs) || 15000);
 	}
 
 	function renderInfoRequest(application) {
@@ -461,8 +502,7 @@
 		]);
 		var application = results[0];
 		renderHeader(application);
-		renderTracker(application);
-		renderStatus(application);
+		renderStatusLine(application);
 		renderActions(application);
 		renderSummary(application);
 		renderDocuments(application);
@@ -475,10 +515,13 @@
 	function showLoadError(error) {
 		document.getElementById("page-error-text").textContent = error.message;
 		document.getElementById("page-error").classList.remove("hidden");
-		document.getElementById("status-title").textContent = "This application could not be loaded";
-		document.getElementById("status-summary").textContent = "";
-		document.getElementById("decision").innerHTML =
-			'<p class="small">' + Portal.esc(error.message) + "</p>";
+		var host = document.getElementById("decision");
+		host.removeAttribute("aria-busy");
+		host.innerHTML =
+			'<div class="result-head result-head--lg">' +
+			'<img class="result-head__art" src="' + ART + 'service-unavailable.svg" alt="" width="160" height="120">' +
+			'<div class="result-head__text"><h2 id="decision-heading">This application could not be loaded</h2>' +
+			'<p class="result-head__lead">' + Portal.esc(error.message) + "</p></div></div>";
 	}
 
 	async function start() {

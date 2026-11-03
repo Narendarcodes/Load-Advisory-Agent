@@ -85,12 +85,13 @@
 
 	function renderTable(applications) {
 		if (!applications.length) {
+			host.removeAttribute("aria-busy");
 			host.innerHTML =
 				'<div class="empty">' +
-				'<span class="empty__mark" aria-hidden="true">AP</span>' +
+				'<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-applications.svg" alt="" width="180" height="135">' +
 				"<h2>No applications yet</h2>" +
 				"<p>When you start an application it appears here, with its status, documents and the reasons behind any decision.</p>" +
-				'<a class="btn" href="/borrower/apply">Start an application</a>' +
+				'<a class="btn btn--ghost" href="/borrower/apply">Start an application</a>' + // page head holds the coral one
 				"</div>";
 			return;
 		}
@@ -125,6 +126,7 @@
 			})
 			.join("");
 
+		host.removeAttribute("aria-busy");
 		host.innerHTML =
 			'<div class="table-wrap table-wrap--stack">' +
 			'<table><caption class="sr-only">Your applications, newest first</caption>' +
@@ -132,6 +134,15 @@
 			"<tbody>" +
 			rows +
 			"</tbody></table></div>";
+	}
+
+	// One plain line about the newest application, instead of a row of progress dots.
+	function renderLatestStatus(application) {
+		var node = document.getElementById("latest-status");
+		if (!node || !window.PortalStatus) return;
+		var status = window.PortalStatus.statusSentence(application, Portal.date);
+		node.textContent = application.name + " · " + status.text + " · " + status.outcome;
+		node.classList.remove("hidden");
 	}
 
 	function renderNextStep(applications) {
@@ -144,9 +155,8 @@
 			title.textContent = "Start with a quick check";
 			body.textContent =
 				"See an indicative amount before you fill in a full application. It does not affect your credit score.";
-			action.innerHTML =
-				'<a class="btn btn--sm" href="/borrower/eligibility">Check eligibility</a> ' +
-				'<a class="btn btn--ghost btn--sm" href="/borrower/apply">Start an application</a>';
+			// The hero already carries "Check eligibility" and "Start an application".
+			action.innerHTML = "";
 			return;
 		}
 
@@ -154,8 +164,10 @@
 		var step = NEXT_STEP[latest.lifecycle] || NEXT_STEP.DRAFT;
 		title.textContent = step.title;
 		body.textContent = step.body;
+		renderLatestStatus(latest);
 		var href = latest.lifecycle === "WITHDRAWN" ? "/borrower/apply" : applicationUrl(latest);
-		action.innerHTML = '<a class="btn btn--sm" href="' + href + '">' + Portal.esc(step.label) + "</a>";
+		// Ghost, not coral: the page head already carries the one coral action ("Start an application").
+		action.innerHTML = '<a class="btn btn--ghost btn--sm" href="' + href + '">' + Portal.esc(step.label) + "</a>";
 	}
 
 	function renderActiveLoan() {
@@ -174,6 +186,7 @@
 			renderActiveLoan();
 		} catch (error) {
 			if (error.status === 401 || error.status === 403) return;
+			host.removeAttribute("aria-busy");
 			host.innerHTML =
 				'<div class="empty empty--compact">' +
 				"<h2>We could not load your applications</h2>" +

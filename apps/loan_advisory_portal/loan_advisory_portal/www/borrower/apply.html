@@ -3,9 +3,8 @@
 {% block page_content %}
 <div class="page-head">
 	<div>
-		<p class="eyebrow">New application</p>
-		<h1>Apply in five short steps</h1>
-		<p>Your profile details are saved as you go. This page creates a draft application. Nothing goes for review until you add a document and choose to submit.</p>
+		<h1>Apply in three stages</h1>
+		<p>Tell us about you, choose your loan, then add your documents. Your details are saved as you go, and nothing is sent for review until you choose to submit.</p>
 	</div>
 	{% if product %}
 	<div class="page-head__actions">
@@ -16,7 +15,7 @@
 
 {% if not product %}
 <div class="card empty">
-	<span class="empty__mark" aria-hidden="true">AP</span>
+	<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/service-unavailable.svg" alt="" width="180" height="135">
 	<h2>No lending product is available right now</h2>
 	<p>An application needs a current product. Ask your loan advisor when applications can be started again.</p>
 	<a class="btn btn--ghost" href="/borrower/help">Read the help page</a>
@@ -29,43 +28,43 @@
 		<ol class="wizard-steps" id="wizard-steps">
 			<li data-step="about" data-state="current">
 				<button type="button" data-goto="0" aria-current="step">
-					<span class="wizard-step__num" aria-hidden="true">1</span>
+					<span class="wizard-step__num" aria-hidden="true">1a</span>
 					<span class="wizard-step__label">About you<span class="wizard-step__meta">Contact details</span></span>
 				</button>
 			</li>
 			<li data-step="work">
 				<button type="button" data-goto="1">
-					<span class="wizard-step__num" aria-hidden="true">2</span>
+					<span class="wizard-step__num" aria-hidden="true">1b</span>
 					<span class="wizard-step__label">Employment<span class="wizard-step__meta">How you earn</span></span>
 				</button>
 			</li>
 			<li data-step="money">
 				<button type="button" data-goto="2">
-					<span class="wizard-step__num" aria-hidden="true">3</span>
+					<span class="wizard-step__num" aria-hidden="true">1c</span>
 					<span class="wizard-step__label">Income<span class="wizard-step__meta">Income and commitments</span></span>
 				</button>
 			</li>
 			<li data-step="loan">
 				<button type="button" data-goto="3">
-					<span class="wizard-step__num" aria-hidden="true">4</span>
+					<span class="wizard-step__num" aria-hidden="true">2a</span>
 					<span class="wizard-step__label">Loan request<span class="wizard-step__meta">Amount and tenure</span></span>
 				</button>
 			</li>
 			<li data-step="review">
 				<button type="button" data-goto="4">
-					<span class="wizard-step__num" aria-hidden="true">5</span>
+					<span class="wizard-step__num" aria-hidden="true">2b</span>
 					<span class="wizard-step__label">Review<span class="wizard-step__meta">Create the draft</span></span>
 				</button>
 			</li>
 			<li data-step="documents" data-state="locked">
 				<button type="button" disabled>
-					<span class="wizard-step__num" aria-hidden="true">6</span>
+					<span class="wizard-step__num" aria-hidden="true">3a</span>
 					<span class="wizard-step__label">Documents<span class="wizard-step__meta">After you create</span></span>
 				</button>
 			</li>
 			<li data-step="submit" data-state="locked">
 				<button type="button" disabled>
-					<span class="wizard-step__num" aria-hidden="true">7</span>
+					<span class="wizard-step__num" aria-hidden="true">3b</span>
 					<span class="wizard-step__label">Submit<span class="wizard-step__meta">When you are ready</span></span>
 				</button>
 			</li>
@@ -78,14 +77,19 @@
 
 	<div class="wizard__main">
 		<form class="wizard-panel" id="apply-form" novalidate>
+			<ol class="stage-stepper" id="stage-stepper" aria-label="Application stages">
+				<li data-stage="0" data-state="current" aria-current="step"><span class="stage-stepper__num" aria-hidden="true">1</span><span class="stage-stepper__label">About you</span></li>
+				<li data-stage="1"><span class="stage-stepper__num" aria-hidden="true">2</span><span class="stage-stepper__label">Loan details</span></li>
+				<li data-stage="2"><span class="stage-stepper__num" aria-hidden="true">3</span><span class="stage-stepper__label">Documents</span></li>
+			</ol>
 			<div class="wizard-progress" aria-hidden="true">
-				<span id="wizard-progress-text">Step 1 of 5: About you</span>
+				<span id="wizard-progress-text">Stage 1 of 3: About you</span>
 				<span class="wizard-progress__bar"><span id="wizard-progress-fill"></span></span>
 			</div>
 
 			<section data-panel="about">
 				<div class="wizard-panel__head">
-					<p class="eyebrow">Step 1 of 5</p>
+					<img class="stage-art" src="/assets/loan_advisory_portal/illustrations/wizard-about.svg" alt="" width="120" height="90">
 					<h2 tabindex="-1">About you</h2>
 					<p>These details come from your profile. You can correct your name and phone here. The email is the one you signed in with.</p>
 				</div>
@@ -109,7 +113,6 @@
 
 			<section data-panel="work" class="hidden">
 				<div class="wizard-panel__head">
-					<p class="eyebrow">Step 2 of 5</p>
 					<h2 tabindex="-1">Employment</h2>
 					<p>How you earn helps an advisor read the income figures on the next step.</p>
 				</div>
@@ -143,7 +146,6 @@
 
 			<section data-panel="money" class="hidden">
 				<div class="wizard-panel__head">
-					<p class="eyebrow">Step 3 of 5</p>
 					<h2 tabindex="-1">Income and commitments</h2>
 					<p>These figures are used when your application is assessed. Give your own monthly amounts, not yearly ones.</p>
 				</div>
@@ -175,7 +177,7 @@
 
 			<section data-panel="loan" class="hidden">
 				<div class="wizard-panel__head">
-					<p class="eyebrow">Step 4 of 5</p>
+					<img class="stage-art" src="/assets/loan_advisory_portal/illustrations/wizard-loan.svg" alt="" width="120" height="90">
 					<h2 tabindex="-1">Loan request</h2>
 					<p>The product rate is shown for context. Your actual amount and terms depend on the assessment of this application.</p>
 				</div>
@@ -226,7 +228,6 @@
 
 			<section data-panel="review" class="hidden">
 				<div class="wizard-panel__head">
-					<p class="eyebrow">Step 5 of 5</p>
 					<h2 tabindex="-1">Review and create</h2>
 					<p>Check the details below. Editing a section takes you back to that step. Nothing is submitted yet.</p>
 				</div>
@@ -282,8 +283,9 @@
 			</div>
 		</div>
 		<div class="card card--tight">
-			<h2>After you create</h2>
-			<p class="small muted mt">Add at least one document in the application workspace.</p>
+			<img class="stage-art" src="/assets/loan_advisory_portal/illustrations/wizard-documents.svg" alt="" width="120" height="90">
+			<h2>Stage 3: Documents</h2>
+			<p class="small muted mt">After you create the draft, add at least one document in the application workspace.</p>
 			<p class="small muted mt">Submit when you are ready. Submitting sends the application for checks and fixes the loan request.</p>
 			<p class="small muted mt">You can withdraw a draft at any time before you submit it.</p>
 		</div>
