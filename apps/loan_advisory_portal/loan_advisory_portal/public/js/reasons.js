@@ -51,6 +51,8 @@
 	/* One or two sentences per outcome. */
 	var SUMMARIES = {
 		en: {
+			COUNTER: "We can't offer the full amount you asked for. The most we can offer you is shown below.",
+			OUTSIDE: "The amount you asked for is outside what we offer. We have shown the most we can offer instead.",
 			APPROVED: "Good news: your application was approved. Your loan details are below.",
 			REJECTED: "We can't approve this application right now. These are the main things that held it back.",
 			REVIEW: "Your application needs a closer look from our team. You don't need to do anything unless we contact you.",
@@ -58,6 +60,8 @@
 			ERROR: "We couldn't finish checking your application yet. It stays open, and you don't need to do anything right now.",
 		},
 		hi: {
+			COUNTER: "हम आपकी माँगी गई पूरी राशि नहीं दे सकते। हम जितना अधिकतम दे सकते हैं, वह नीचे दिखाया गया है।",
+			OUTSIDE: "आपने जो राशि माँगी है, वह हमारे लोन विकल्पों से बाहर है। इसके बजाय हम जितना अधिकतम दे सकते हैं, वह नीचे दिखाया गया है।",
 			APPROVED: "अच्छी ख़बर: आपका आवेदन स्वीकृत हो गया है। आपके लोन का विवरण नीचे है।",
 			REJECTED: "हम अभी यह आवेदन स्वीकृत नहीं कर सकते। इसके मुख्य कारण ये हैं।",
 			REVIEW: "हमारी टीम आपके आवेदन को ध्यान से देख रही है। जब तक हम संपर्क न करें, आपको कुछ करने की ज़रूरत नहीं है।",
@@ -65,6 +69,8 @@
 			ERROR: "हम अभी आपके आवेदन की जाँच पूरी नहीं कर सके। आवेदन खुला रहेगा, अभी आपको कुछ करने की ज़रूरत नहीं है।",
 		},
 		te: {
+			COUNTER: "మీరు అడిగిన పూర్తి మొత్తాన్ని మేము ఇవ్వలేము. మేము ఇవ్వగల గరిష్ఠ మొత్తం క్రింద చూపించాము.",
+			OUTSIDE: "మీరు అడిగిన మొత్తం మేము అందించే రుణాల పరిధికి బయట ఉంది. బదులుగా మేము ఇవ్వగల గరిష్ఠ మొత్తం క్రింద చూపించాము.",
 			APPROVED: "శుభవార్త: మీ దరఖాస్తు ఆమోదించబడింది. మీ లోన్ వివరాలు క్రింద ఉన్నాయి.",
 			REJECTED: "ప్రస్తుతం ఈ దరఖాస్తును మేము ఆమోదించలేము. దీనికి ప్రధాన కారణాలు ఇవి.",
 			REVIEW: "మీ దరఖాస్తును మా బృందం జాగ్రత్తగా పరిశీలిస్తోంది. మేము సంప్రదించే వరకు మీరు ఏమీ చేయనవసరం లేదు.",
@@ -203,6 +209,8 @@
 		INFO_REQUESTED: "INFO",
 		INFO: "INFO",
 		ERROR: "ERROR",
+		COUNTER: "COUNTER",
+		OUTSIDE: "OUTSIDE",
 	};
 
 	function summary(outcome, locale) {
@@ -257,7 +265,7 @@
 		decision = decision || {};
 		var lifecycle = String(application.lifecycle || "").toUpperCase();
 		var has = Boolean(decision.available);
-		var view = { summary: null, themes: [], steps: [], offer: null };
+		var view = { summary: null, themes: [], steps: [], offer: null, counter: false };
 		var keys = [];
 		if (has && decision.provider_error) {
 			view.summary = summary("ERROR", locale);
@@ -283,7 +291,10 @@
 				};
 			}
 		}
-		view.summary = summary(lifecycle, locale);
+		// A counter-offer is recorded as APPROVED in the lifecycle; the borrower must hear it is not the full request.
+		var given = decision.offer || {};
+		view.counter = lifecycle === "APPROVED" && (given.counter_offer === true || String(decision.outcome || "").toUpperCase() === "COUNTER_OFFER");
+		view.summary = summary(view.counter ? (given.request_outside_mvp_range ? "OUTSIDE" : "COUNTER") : lifecycle, locale);
 		view.themes = keys.map(function (key) {
 			return { key: key, text: themeText(key, locale) };
 		});

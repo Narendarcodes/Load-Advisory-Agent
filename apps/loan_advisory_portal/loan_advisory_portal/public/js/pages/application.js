@@ -339,6 +339,8 @@
 			lead = plain.summary;
 			leadLang = locale;
 		}
+		// D-06: a counter-offer is not the loan that was asked for, so it is never headed "approved".
+		if (plain.counter) view = { art: view.art, title: "We can offer you a different loan", badge: ["badge--ok", "Offer made"] };
 		var parts = [resultHead(view, lead, when, lifecycle, offerFacts(plain.offer), leadLang)];
 
 		if (IN_FLIGHT.indexOf(lifecycle) !== -1) {
