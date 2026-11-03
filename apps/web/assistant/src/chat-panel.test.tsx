@@ -322,7 +322,7 @@ describe("ChatPanel conversation surface", () => {
     expect(bubbles).toHaveLength(2);
     expect(bubbles[0].querySelector(".decision")?.textContent).toContain("Not approved");
     expect(bubbles[0].querySelector("strong")?.textContent).toBe("credit score");
-    expect(bubbles[1].querySelector(".whatif")?.textContent).toContain("Simulation, not your decision");
+    expect(bubbles[1].querySelector(".whatif")?.textContent).toContain("Estimate only, your application is unchanged");
     expect(bubbles[1].querySelector(".decision")).toBeNull();
     expect(element.querySelector("img[onerror], img[src='x']")).toBeNull();
     expect(element.textContent).not.toContain("About the latest answer");
@@ -350,9 +350,9 @@ describe("ChatPanel conversation surface", () => {
     } as unknown as AbstractAgent;
     const { container: again } = await mount(restored, vi.fn(), {}, { storageKey });
     expect(again.querySelector(".msg.bot .decision")?.textContent).toContain("Not approved");
-    // One real stage plus the one evaluated rule the recorded card carries.
-    expect(again.querySelector(".msg.bot .run-steps summary")?.textContent).toBe("What I checked (2 steps)");
-    expect(again.querySelector(".msg.bot .run-steps")?.textContent).toContain("Compared credit score: 640 against a minimum of 700 (not met)");
+    // Only the real stage: no line per rule, so no recorded value or cut-off is repeated in the trail.
+    expect(again.querySelector(".msg.bot .run-steps summary")?.textContent).toBe("What I checked (1 step)");
+    expect(again.querySelector(".msg.bot .run-steps")?.textContent).not.toMatch(/640|700|score|minimum/i);
   });
 
   it("offers follow-ups after an answer and starters only while empty", async () => {

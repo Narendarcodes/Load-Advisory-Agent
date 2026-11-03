@@ -86,10 +86,9 @@ describe("follow-up suggestions", () => {
       decision_card: {
         policy_synthetic: true,
         recorded_outcome: "REJECTED",
-        rules: [{ rule_id: "r", name: "Credit score", result: "FAIL" }],
-        failed_reason_codes: [],
+        offer: null,
+        themes: ["CREDIT_HISTORY"],
         missing_fields: [],
-        flags: [],
       },
       missing_information: ["monthly_income"],
     });

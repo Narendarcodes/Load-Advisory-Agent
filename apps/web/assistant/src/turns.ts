@@ -140,7 +140,7 @@ export function metaFor(turns: readonly TurnMeta[], ordinal: number, text: strin
 export function followUps(state: PublicState | undefined): string[] {
   const out: string[] = [];
   const card = state?.decision_card;
-  const notMet = card?.rules.some((rule) => rule.result === "FAIL");
+  const notMet = Boolean(card?.themes?.length) && card?.recorded_outcome !== "APPROVED";
   if (state?.what_if) out.push("How is this different from my recorded decision?");
   if (notMet || card?.recorded_outcome === "REJECTED") out.push("What can I do to improve before reapplying?");
   if (state?.missing_information?.length) out.push("How do I provide the missing information?");

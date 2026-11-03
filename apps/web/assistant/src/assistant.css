@@ -1617,144 +1617,60 @@
 	margin: 0;
 }
 
-/* Rule rows with meters */
-.assistant .rule-list {
+/* Plain decision cards: a summary, at most three reason themes, or the borrower's own offer.
+   No rule rows, meters, limits or per-rule results (removed Nov 2026). */
+.assistant .decision__summary {
+	margin: 4px 0 8px;
+	color: var(--ink);
+}
+
+.assistant .reason-themes {
 	display: grid;
-	gap: 0;
-	margin: 10px 0 8px;
-	padding: 0;
-	list-style: none;
+	gap: 6px;
+	margin: 6px 0 8px;
+	padding-left: 1.1rem;
 }
 
-.assistant .rule-row {
-	padding: 10px 0;
-	border-bottom: 1px solid var(--line);
+.assistant .offer-facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+	gap: 8px 16px;
+	margin: 8px 0;
+	padding-top: 8px;
+	border-top: 1px solid var(--line);
 }
 
-.assistant .rule-row:last-child {
-	border-bottom: 0;
-}
-
-.assistant .rule-row__head {
+.assistant .offer-facts div {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 10px;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
 }
 
-.assistant .rule-row__name {
-	font-weight: 600;
-}
-
-.assistant .rule-row__figures {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
-	gap: 4px 16px;
-	margin: 4px 0 0;
-	font-size: 0.86rem;
+.assistant .offer-facts dt {
 	color: var(--muted);
+	font-size: 0.82rem;
+}
+
+.assistant .offer-facts dd {
+	margin: 0;
+	font-weight: 650;
+	white-space: nowrap;
 	font-variant-numeric: tabular-nums;
 }
 
-.assistant .rule-row__figures b {
-	color: var(--ink);
-	font-weight: 650;
-}
-
-.assistant .meter {
-	display: block;
-	padding: 8px 7px 2px;
-}
-
-.assistant .meter__track {
-	position: relative;
-	display: block;
-	height: 8px;
-	border-radius: 4px;
-	background: #ece5de;
-}
-
-.assistant .meter__ok {
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	border-radius: 4px;
-	background: #cfe3d6;
-}
-
-.assistant .meter__limit {
-	position: absolute;
-	top: -5px;
-	bottom: -5px;
-	width: 2px;
-	margin-left: -1px;
-	background: var(--ink);
-}
-
-.assistant .meter__value {
-	position: absolute;
-	top: 50%;
-	width: 14px;
-	height: 14px;
-	border: 2px solid var(--paper);
-	border-radius: 50%;
-	transform: translate(-50%, -50%);
-	background: var(--ink);
-}
-
-.assistant .meter__value--bad {
-	background: var(--deep);
-}
-
-.assistant .meter__value--ok {
-	background: var(--ok);
-}
-
-.assistant .meter__value--before {
-	background: var(--paper);
-	border-color: var(--muted);
-}
-
-.assistant .record-details {
-	margin-top: 8px;
-	font-size: 0.84rem;
-	color: var(--muted);
-}
-
-.assistant .record-details summary {
-	cursor: pointer;
-	width: fit-content;
-}
-
-/* What-if: before and after, labelled as a simulation */
-.assistant .whatif__changes {
-	display: grid;
-	gap: 6px;
-	margin: 8px 0 10px;
-	padding: 0;
-	list-style: none;
-}
-
-.assistant .whatif__figures {
+/* What-if: the estimate's verdict and amount only */
+.assistant .whatif__amount {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: space-between;
 	gap: 4px 16px;
-	margin: 0;
+	margin: 6px 0 4px;
 	font-variant-numeric: tabular-nums;
 }
 
 .assistant .whatif__label {
 	font-weight: 600;
-}
-
-.assistant .whatif__before {
-	color: var(--muted);
-}
-
-.assistant .whatif__table {
-	margin: 4px 0 8px;
 }
 
 .assistant .whatif__outcome {

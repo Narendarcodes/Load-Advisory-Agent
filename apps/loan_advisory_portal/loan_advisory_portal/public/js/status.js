@@ -57,11 +57,19 @@
 		return { text: text, outcome: state.outcome, tone: state.tone };
 	}
 
+	/* Raw engine text never reaches the history: a digit, a rule id, a cut-off or a score makes it a plain label. */
+	var RAW = /\d|cibil|foir|threshold|cut-?off|\bPL-|score/i;
+	function plainEvent(event) {
+		var text = String(event || "").trim();
+		if (!text) return "Update";
+		return RAW.test(text) ? "Update recorded" : text;
+	}
+
 	function historyItems(timeline) {
 		var rows = timeline || [];
 		return rows.map(function (entry, index) {
 			var match = /^Evaluated \(([A-Z_]+)\)$/.exec(entry.event || "");
-			var label = match ? EVALUATED[match[1]] || "Checks finished" : String(entry.event || "Update");
+			var label = match ? EVALUATED[match[1]] || "Checks finished" : plainEvent(entry.event);
 			return { label: label, at: entry.at, current: index === rows.length - 1 };
 		});
 	}

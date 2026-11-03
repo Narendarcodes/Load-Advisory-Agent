@@ -6693,3 +6693,48 @@ textarea:focus-visible {
 		animation: none;
 	}
 }
+
+/* Plain decision cards (Nov 2026): the approved card shows the borrower's own offer only, as three calm
+   figures on a hairline; no meters, rule rows or limits anywhere on the decision. */
+.offer-facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+	gap: 0.75rem 1.25rem;
+	margin: 1rem 0 0;
+	padding-top: 0.9rem;
+	border-top: 1px solid var(--line);
+}
+
+.offer-facts div {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	min-width: 0;
+}
+
+.offer-facts dt {
+	color: var(--muted);
+	font-size: 0.82rem;
+}
+
+.offer-facts dd {
+	margin: 0;
+	color: var(--ink);
+	font-weight: 600;
+	font-size: 1.05rem;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+	.offer-facts {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.5rem;
+	}
+
+	.offer-facts div {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: baseline;
+	}
+}

@@ -19,7 +19,7 @@
 	var FIELD_LABELS = {
 		monthly_income: "monthly income",
 		monthly_obligations: "monthly obligations",
-		credit_score: "credit score",
+		credit_score: "credit history details",
 		employment_months: "months in current employment",
 	};
 
@@ -179,7 +179,7 @@
 	/* The decision is the key card (white, hairline); the badge and heading carry the meaning and the
 	   illustration sits beside it on the plain page. While checks are running a thin CSS status bar inside
 	   the card is the processing cue (still under reduced motion). */
-	function resultHead(view, lead, when, lifecycle) {
+	function resultHead(view, lead, when, lifecycle, extra, leadLang) {
 		var processing = IN_FLIGHT.indexOf(lifecycle) !== -1;
 		return (
 			'<div class="result-head result-head--lg result-v6">' +
@@ -189,7 +189,8 @@
 			(when ? '<span class="tiny muted">' + Portal.esc(when) + "</span>" : "") +
 			"</p>" +
 			'<h2 id="decision-heading">' + Portal.esc(view.title) + "</h2>" +
-			(lead ? '<p class="result-head__lead">' + Portal.esc(lead) + "</p>" : "") +
+			(lead ? '<p class="result-head__lead"' + langAttr(leadLang) + ">" + Portal.esc(lead) + "</p>" : "") +
+			(extra || "") +
 			(processing ? '<div class="status-bar process-bar" aria-hidden="true"></div>' : "") +
 			"</div></div>"
 		);
@@ -199,9 +200,33 @@
 		return '<section class="result-section"><h3>' + Portal.esc(title) + "</h3>" + inner + "</section>";
 	}
 
-	function plainList(items, cls) {
+	/* Copy in Hindi or Telugu carries its own lang so screen readers switch voice. */
+	function langAttr(locale) {
+		return locale && locale !== "en" ? ' lang="' + Portal.esc(locale) + '"' : "";
+	}
+
+	/* The borrower's own offer, and nothing else: amount, EMI and tenure. */
+	function offerFacts(offer) {
+		if (!offer) return "";
+		var rows = [];
+		if (offer.amount) rows.push(["Amount", Portal.money(offer.amount)]);
+		if (offer.emi) rows.push(["Monthly EMI", Portal.money(offer.emi)]);
+		if (offer.tenure_months) rows.push(["Tenure", Portal.months(offer.tenure_months)]);
+		if (!rows.length) return "";
 		return (
-			'<ul class="' + (cls || "result-factors") + '">' +
+			'<dl class="offer-facts">' +
+			rows
+				.map(function (row) {
+					return "<div><dt>" + Portal.esc(row[0]) + "</dt><dd>" + Portal.esc(row[1]) + "</dd></div>";
+				})
+				.join("") +
+			"</dl>"
+		);
+	}
+
+	function plainList(items, cls, locale) {
+		return (
+			'<ul class="' + (cls || "result-factors") + '"' + langAttr(locale) + ">" +
 			items
 				.map(function (item) {
 					return "<li>" + Portal.esc(item) + "</li>";
@@ -304,7 +329,17 @@
 				? "It has not been assessed yet. Submitting sends it for the checks and fixes the loan request."
 				: "It has not been assessed yet. At least one document is needed before you can submit.";
 		}
-		var parts = [resultHead(view, lead, when, lifecycle)];
+		// Plain words only: the record picks the summary and themes, never a number, cut-off or rule id.
+		var locale = (Portal.boot && Portal.boot.locale) || "en";
+		var plain = window.PortalReasons
+			? window.PortalReasons.decisionView(application, decision, locale)
+			: { summary: null, themes: [], steps: [], offer: null };
+		var leadLang = "en";
+		if (plain.summary) {
+			lead = plain.summary;
+			leadLang = locale;
+		}
+		var parts = [resultHead(view, lead, when, lifecycle, offerFacts(plain.offer), leadLang)];
 
 		if (IN_FLIGHT.indexOf(lifecycle) !== -1) {
 			parts.push(progressFor(application));
@@ -312,11 +347,10 @@
 
 		if (has && decision.provider_error) {
 			parts.push(
-				'<p class="result-note">No decision has been made. We could not complete the credit check for this application. It stays open; contact your loan advisor if you need an update.</p>'
+				'<p class="result-note">No decision has been made yet. Your loan advisor can give you an update.</p>'
 			);
 		}
 
-		var reasons = (has && decision.reasons) || [];
 		if (lifecycle === "INFO_REQUESTED" || (has && decision.information_needed)) {
 			var missing = missingFields(has ? decision.missing_fields : []);
 			parts.push(
@@ -327,25 +361,26 @@
 						: '<p class="small muted">Correct the details listed for this application.</p>'
 				)
 			);
-		} else if (reasons.length) {
+		} else if (plain.themes.length) {
 			parts.push(
 				resultSection(
-					lifecycle === "APPROVED" ? "Why" : "What affected the outcome",
-					plainList(reasons.map(function (reason) {
-						return reason.text || reason.code;
-					}), "decision-reasons")
+					lifecycle === "REJECTED" ? "What held it back" : "What we are looking at",
+					plainList(plain.themes.map(function (theme) {
+						return theme.text;
+					}), "decision-reasons", locale)
 				)
 			);
-		} else if (lifecycle === "APPROVED" && has) {
-			parts.push(resultSection("Why", '<p class="small">It met the lending policy checks recorded on this application.</p>'));
-		} else if (lifecycle === "REJECTED") {
-			parts.push(resultSection("What affected the outcome", '<p class="small muted">The recorded decision did not include written reasons. Your loan advisor can discuss it with you.</p>'));
 		}
 
-		var steps = (guidance.next_steps || []).filter(function (step) {
-			return !/decision section/i.test(step);
-		});
-		if (steps.length) parts.push(resultSection("What happens next", plainList(steps)));
+		if (plain.steps.length) {
+			// A decline gets two or three general steps instead of the generic next steps.
+			parts.push(resultSection("What could help", plainList(plain.steps, "result-factors", locale)));
+		} else {
+			var steps = (guidance.next_steps || []).filter(function (step) {
+				return !/decision section|what affected/i.test(step);
+			});
+			if (steps.length) parts.push(resultSection("What happens next", plainList(steps)));
+		}
 
 		if (has && decision.simulation) {
 			parts.push('<p class="result-note">This was a what-if estimate, not a decision on your application.</p>');
