@@ -69,10 +69,18 @@ class Outcome:
     flags: list[str] = field(default_factory=list)
 
 
+def _score_origin(doc: dict):
+    return doc.get("custom_credit_score_origin", doc.get("credit_score_origin"))
+
+
 def _scored_inputs(doc: dict) -> dict:
     out = {}
     for k, (custom, plain) in FIELD_ALIASES.items():
         out[k] = doc.get(custom, doc.get(plain))
+    # Q-17: Frappe stores an Int it never fetched as 0. That is a missing score (fetch it from the
+    # bureau), not an invalid local score.
+    if _score_origin(doc) == "NOT_FETCHED" and not out.get("credit_score"):
+        out["credit_score"] = None
     return out
 
 
@@ -90,7 +98,7 @@ def _bureau_application(doc: dict, inputs: dict, applicant: str | None) -> dict:
         "applicant_id": applicant,
         "loan_amount": doc.get("loan_amount"),
         "loan_tenure_months": doc.get("repayment_periods", doc.get("loan_tenure_months")),
-        "credit_score_origin": doc.get("credit_score_origin"),
+        "credit_score_origin": _score_origin(doc),
     }
 
 
@@ -157,7 +165,8 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
     check_transition(current_state, "UNDER_REVIEW")
     inputs = _scored_inputs(doc)
     applicant = doc.get("applicant") or doc.get("applicant_id")
-    missing = [k for k, v in inputs.items() if v is None or v == ""]
+    # The bureau supplies the score on this path, so a not-yet-fetched score is not missing information.
+    missing = [k for k, v in inputs.items() if (v is None or v == "") and k != "credit_score"]
     flags = []
     fetch_error = None
     report = None

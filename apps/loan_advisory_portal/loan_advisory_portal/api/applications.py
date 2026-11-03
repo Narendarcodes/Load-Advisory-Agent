@@ -44,7 +44,8 @@ LIST_FIELDS = (
 	"custom_loan_purpose",
 )
 
-MIN_TENURE, MAX_TENURE = 1, 360
+# Copy of decision_engine.schemas.underwriting MIN/MAX_TENURE_MONTHS (Q-01); pinned by a repo test.
+MIN_TENURE, MAX_TENURE = 12, 108
 MIN_CREDIT_SCORE, MAX_CREDIT_SCORE = 300, 900
 MAX_EMPLOYMENT_MONTHS = 720
 MAX_PURPOSE = 200

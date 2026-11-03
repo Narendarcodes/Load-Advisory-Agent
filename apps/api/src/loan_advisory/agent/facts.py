@@ -189,6 +189,91 @@ def decision_card(record: dict) -> dict:
     return card
 
 
+# ------------------------------------------------------------------ borrower projection (Q-07 / Q-14)
+BORROWER_LABEL = "Synthetic prototype policy, not any real lender's policy. Not a loan sanction."
+REASON_LABELS = {  # catalogue v2 borrower_reason_categories (keys only reach the client, never values)
+    "EMPLOYMENT_STABILITY": "Employment stability",
+    "INCOME_NOT_VERIFIED_OR_INSUFFICIENT": "Income could not be verified / not sufficient",
+    "REPAYMENTS_TOO_HIGH": "Existing repayments too high for this amount",
+    "CREDIT_HISTORY": "Credit history / repayment track",
+    "RECENT_CREDIT_APPLICATIONS": "Recent credit applications",
+    "DETAILS_NOT_VERIFIED": "Details could not be verified",
+    "DOCUMENTS_INCOMPLETE_OR_UNCLEAR": "Documents incomplete or unclear",
+    "REQUEST_OUTSIDE_OFFER": "Loan request outside what we offer",
+    "OTHER": "Other",
+}
+V1_REASON_CATEGORY = {"MIN_MONTHLY_INCOME": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT", "FOIR_MAX_45": "REPAYMENTS_TOO_HIGH",
+                      "MIN_CREDIT_SCORE": "CREDIT_HISTORY", "MIN_EMPLOYMENT_TENURE": "EMPLOYMENT_STABILITY"}
+
+
+def reason_categories(record: dict) -> list[dict]:
+    """Borrower-safe reason themes: catalogue-v2 categories stored on the record, else mapped from failed v1 rules."""
+    keys = list(record.get("reason_categories") or [])
+    if not keys:
+        for e in record.get("rule_evaluations", []):
+            if e.get("result") == "FAIL":
+                keys.append(V1_REASON_CATEGORY.get(e.get("rule_id"), "OTHER"))
+        bf = bureau_facts(record)
+        if bf and (bf.get("review_required") or bf.get("info_requested")):
+            keys.append("DETAILS_NOT_VERIFIED")
+    out, seen = [], set()
+    for k in keys:
+        k = k if k in REASON_LABELS else "OTHER"
+        if k not in seen:
+            seen.add(k)
+            out.append({"key": k, "label": REASON_LABELS[k]})
+    return out
+
+
+def borrower_offer(record: dict) -> dict | None:
+    """{amount, emi, tenure_months} from the stored offer (catalogue v2), else None. Never a cut-off."""
+    o = record.get("offer") or {}
+    if not o.get("amount"):
+        return None
+    return {"amount": _finite(o.get("amount")), "emi": _finite(o.get("emi")), "tenure_months": _finite(o.get("tenure_months")),
+            "counter_offer": bool(o.get("counter_offer"))}
+
+
+def _finite(v):
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return None
+    return v if v == v and v not in (float("inf"), float("-inf")) else None
+
+
+def decision_card_borrower(record: dict) -> dict:
+    """What the borrower API sends (ADR-0004/0006): outcome, offer, reason categories. No rule rows, cut-offs,
+    gaps, reason codes or bureau data-quality codes; the full card stays behind the Loan Officer role."""
+    pol = record.get("policy") or {}
+    card = {"application_ref": record.get("application_ref"), "decision": record.get("decision"),
+            "recorded_outcome": record.get("outcome") or record.get("decision"),
+            "lifecycle_state": record.get("lifecycle_state"), "record_id": record.get("record_id"),
+            "policy_version": pol.get("version"), "policy_synthetic": bool(pol.get("synthetic")),
+            "policy_label": BORROWER_LABEL, "evaluated_at": record.get("evaluated_at"),
+            "reason_categories": reason_categories(record), "offer": borrower_offer(record),
+            "missing_fields": (record.get("inputs") or {}).get("missing_fields", [])}
+    bf = bureau_facts(record)
+    if bf:
+        card["bureau"] = {k: bf[k] for k in ("outcome_kind", "review_required", "info_requested", "retryable",
+                                             "synthetic_report")}
+    return card
+
+
+def borrower_plan_step(step: dict) -> dict:
+    """An improvement step without its target, gap or rule id: general guidance only."""
+    g = step.get("general_guidance") or ""
+    return {"task": g, "general_guidance": g, "guidance_source": step.get("guidance_source"),
+            "reason_category": V1_REASON_CATEGORY.get(step.get("rule_id"), "OTHER")}
+
+
+def borrower_what_if(wi: dict) -> dict:
+    """Q-03 shape: one estimate line, never per-rule results or a simulated decision."""
+    ok = wi.get("simulated_decision") == "APPROVED"
+    return {"result": "WOULD_LIKELY_MEET" if ok else "WOULD_NOT_MEET",
+            "text": "would likely meet" if ok else "wouldn't meet", "changes": wi.get("changes"),
+            "label": "Estimate only, your application is unchanged", "is_simulation": True,
+            "original_record_unchanged": wi.get("original_record_unchanged")}
+
+
 def _display_vs(rule_id, actual, threshold):
     """Display actual and threshold with enough precision that a FAIL never looks equal (45.04% vs 45%)."""
     a, t = _display(rule_id, actual), _display(rule_id, threshold)
