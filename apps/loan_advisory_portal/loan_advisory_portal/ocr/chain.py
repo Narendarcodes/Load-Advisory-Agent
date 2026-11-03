@@ -79,7 +79,8 @@ class ChainOutcome:
         return out
 
 
-def _run(engine: str, document_type: str, content: bytes, filename: str) -> Attempt:
+def _run(engine: str, document_type: str, content: bytes, filename: str,
+         synthetic: bool | None = None) -> Attempt:
     started = time.perf_counter()
     try:
         if engine == "paddle":
@@ -97,8 +98,8 @@ def _run(engine: str, document_type: str, content: bytes, filename: str) -> Atte
         if not lines:
             raise ExtractionFailed("No text could be recognised in this document.")
         text = "\n".join(line.text for line in lines)
-        raw_checks = check_raw_identifiers(text)
-        fields, warnings, kind = parse(document_type, lines, text)
+        raw_checks = check_raw_identifiers(text, synthetic=synthetic)
+        fields, warnings, kind = parse(document_type, lines, text, synthetic=synthetic)
         del text  # raw text never leaves this function
         result = ExtractionResult(document_type=document_type or "Unknown", kind=kind, engine=engine,
                                   engine_version=version, pages=pages, fields=fields, warnings=warnings,
@@ -115,10 +116,11 @@ def _run(engine: str, document_type: str, content: bytes, filename: str) -> Atte
 
 
 def extract_document_chain(document_type: str, content: bytes, filename: str,
-                           engines: tuple[str, ...] = DEFAULT_ORDER) -> ChainOutcome:
+                           engines: tuple[str, ...] = DEFAULT_ORDER, *,
+                           synthetic: bool | None = None) -> ChainOutcome:
     attempts: list[Attempt] = []
     for engine in engines:
-        attempt = _run(engine, document_type, content, filename)
+        attempt = _run(engine, document_type, content, filename, synthetic=synthetic)
         attempts.append(attempt)
         if attempt.passes:
             return ChainOutcome(attempt.result, engine, attempts)

@@ -216,3 +216,24 @@ model (for example SigNet-style weights) would need licensed data and a separate
 * No real scans, no Hindi or Telugu text, no multi-page PDFs. All pages were PNG or JPEG.
 * The overlay-watermark run's `paddle_mobile` pass started while code was being re-synced on the box (its modules had already loaded). Its PAN-regex check counts also predate a false-positive fix for masked account numbers. Treat that set as a stress test only.
 * No human has reviewed these results.
+
+## Synthetic mode (added after the bake-off)
+
+`loan_advisory_portal/ocr/synthetic.py` adds an explicit synthetic mode so the SPECIMEN identifiers in
+`docs/saral/SYNTHETIC_DATASETS.md` (feat/saral-synthetic-kyc-bank) validate without loosening production rules.
+
+| | Normal mode (default) | Synthetic mode |
+|---|---|---|
+| Aadhaar | first digit 2-9 + Verhoeff | first digit 0/1 + Verhoeff **only** |
+| PAN | `AAAAA9999A`, `ZZ` series rejected | `ZZ?P?9999?` **only** |
+| IFSC (raw check) | `AAAA0XXXXXX`, `XSYNS` rejected | `XSYNS` + 6 digits **only** |
+
+It is on only when the caller passes `synthetic=True` (a document or request flagged synthetic, taken from
+server-side state; the portal API reads an application/document `synthetic` field or the site config key
+`saral_synthetic_mode`) or when the `SARAL_SYNTHETIC_MODE` setting is on. A real-format number is never
+accepted in synthetic mode. Aadhaar is kept as the last four digits only (`XXXX XXXX 1234`); a card printed
+masked is read as its last four digits with a note that the checksum cannot be verified.
+
+The bake-off generator now emits `1000…` Aadhaar numbers (same random draws as before, so every other value
+is unchanged for a seed) and the bake-off runs validation in synthetic mode. The numbers in this report were
+produced earlier with the real-format `9999…` prefix and have not been re-run.

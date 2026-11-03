@@ -31,6 +31,7 @@ from loan_advisory_portal.ocr import (
     suggested_application_values,
 )
 from loan_advisory_portal.ocr.masking import mask_aadhaar, mask_pan, mask_sensitive_text
+from loan_advisory_portal.ocr.synthetic import synthetic_mode
 from loan_advisory_portal.ocr.validator import (
     MAX_AMOUNT,
     pan_format_valid,
@@ -87,10 +88,23 @@ def _content(file_doc) -> bytes:
 	return bytes(content)
 
 
-def _read(target, file_doc):
+def _synthetic(doc, target) -> bool:
+	"""Synthetic mode comes from server-side state only, never from the request body.
+
+	On when the application or document row is flagged ``synthetic`` (a field the synthetic
+	dataset loader sets; absent on real records), or when the site config key
+	``saral_synthetic_mode`` / the ``SARAL_SYNTHETIC_MODE`` env setting is on.
+	"""
+	flagged = bool(doc.get("synthetic") or target.get("synthetic") or frappe.conf.get("saral_synthetic_mode"))
+	return synthetic_mode(flagged)
+
+
+def _read(target, file_doc, synthetic: bool = False):
 	"""Run OCR and translate engine failures into messages a borrower can act on."""
 	try:
-		result = extract_document(target.document_type, _content(file_doc), file_doc.file_name)
+		result = extract_document(
+			target.document_type, _content(file_doc), file_doc.file_name, synthetic=synthetic
+		)
 	except UnsupportedDocument as exc:
 		raise Forbidden(str(exc)) from exc
 	except ExtractionFailed as exc:
@@ -119,7 +133,7 @@ def extract(application: str, row: str) -> dict:
 	if doc.docstatus != 0:
 		raise Conflict(_("Documents are locked after submission."))
 
-	result = _read(target, file_doc)
+	result = _read(target, file_doc, _synthetic(doc, target))
 	payload = result.as_dict()
 	payload["row"] = target.name
 	payload["file_name"] = file_doc.file_name
@@ -129,7 +143,7 @@ def extract(application: str, row: str) -> dict:
 	return payload
 
 
-def _clean_values(values, fields: dict) -> dict:
+def _clean_values(values, fields: dict, synthetic: bool = False) -> dict:
 	"""Accept only keys the engine produced, and coerce them to the worksheet's types."""
 	if isinstance(values, str):
 		try:
@@ -176,7 +190,7 @@ def _clean_values(values, fields: dict) -> dict:
 					or MASKED_FIELDS[key](str(item.get("value") or "")) != mask_pan(text)
 				):
 					raise Forbidden(_("The extracted PAN cannot be confirmed in masked form."))
-				if not masked and not pan_format_valid(text):
+				if not masked and not pan_format_valid(text, synthetic=synthetic):
 					raise Forbidden(_("Enter a PAN in the correct format."))
 			elif key == "aadhaar_number":
 				masked = bool(re.fullmatch(r"(?i)X{4}\s?X{4}\s?\d{4}", text))
@@ -186,7 +200,7 @@ def _clean_values(values, fields: dict) -> dict:
 				):
 					raise Forbidden(_("The extracted Aadhaar cannot be confirmed in masked form."))
 				if not masked and (
-					not re.fullmatch(r"[\d\s-]+", text) or not verhoeff_valid(text)
+					not re.fullmatch(r"[\d\s-]+", text) or not verhoeff_valid(text, synthetic=synthetic)
 				):
 					raise Forbidden(_("Enter a valid Aadhaar number."))
 			text = MASKED_FIELDS[key](text)
@@ -209,9 +223,10 @@ def confirm(application: str, row: str, values) -> dict:
 
 	# Re-read instead of trusting the browser: the row must still be the same document,
 	# and the audit record must describe what this engine produced, not a client claim.
-	result = _read(target, file_doc)
+	synthetic = _synthetic(doc, target)
+	result = _read(target, file_doc, synthetic)
 	fields = result.as_dict()["fields"]
-	confirmed = _clean_values(values, fields)
+	confirmed = _clean_values(values, fields, synthetic)
 	if not confirmed:
 		raise Forbidden(_("Confirm at least one value, or close this panel."))
 

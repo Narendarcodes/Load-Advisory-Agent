@@ -43,18 +43,20 @@ def test_low_score_boxes_are_dropped():
 
 
 def test_pan_and_aadhaar_validators_on_synthetic_values():
-    assert pan_ok("ZZBPN8663I")
-    assert not pan_ok("ZZBXN8663I")  # X is not a PAN holder-type letter
-    assert not pan_ok("ZZBPN866I3")
-    # Exactly one check digit makes a synthetic 9999-prefixed body Verhoeff-valid.
+    # ZZ-series PANs are synthetic: accepted only in synthetic mode.
+    assert pan_ok("ZZBPN8663I", synthetic=True)
+    assert not pan_ok("ZZBPN8663I", synthetic=False)
+    assert not pan_ok("ZZBXN8663I", synthetic=True)  # X is not a PAN holder-type letter
+    assert not pan_ok("ZZBPN866I3", synthetic=True)
+    # Exactly one check digit makes a real-format 9999-prefixed body Verhoeff-valid.
     body = "99991234567"
-    valid = [d for d in "0123456789" if aadhaar_ok(body + d)]
+    valid = [d for d in "0123456789" if aadhaar_ok(body + d, synthetic=False)]
     assert len(valid) == 1
-    assert not aadhaar_ok("099912345678")  # Aadhaar never starts with 0 or 1
+    assert not aadhaar_ok("099912345678", synthetic=False)  # Aadhaar never starts with 0 or 1
 
 
 def test_raw_checks_skip_masked_tokens():
-    checks = check_raw_identifiers("Bank A/c: XXXXXX7452\nZZBPN8663I")
+    checks = check_raw_identifiers("Bank A/c: XXXXXX7452\nZZBPN8663I", synthetic=True)
     assert [c.check for c in checks] == ["pan_regex"]
     assert checks[0].passed
 
@@ -72,7 +74,7 @@ def test_chain_falls_back_then_routes_to_manual_review(monkeypatch):
     good = [TextLine("Payslip"), TextLine("Employee Name: Diya Rao"), TextLine("Net Salary: Rs. 43,000.00")]
     bad = [TextLine("Payslip"), TextLine("Employee Name: Diya Rao")]
 
-    def fake_run(engine, document_type, content, filename):
+    def fake_run(engine, document_type, content, filename, synthetic=None):
         lines = bad if engine == "paddle" else good
         fields, warnings, kind = parse(document_type, lines, "\n".join(line.text for line in lines))
         return chain.Attempt(engine, ExtractionResult(document_type, kind, engine, "0", 1, fields, warnings), 0.0)

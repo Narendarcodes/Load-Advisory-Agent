@@ -13,6 +13,7 @@ import re
 
 from .masking import AADHAAR_RE, PAN_RE, mask_aadhaar, mask_pan
 from .schemas import DocumentKind, ExtractedField, FieldStatus, TextLine
+from .synthetic import aadhaar_rejection, pan_rejection, synthetic_mode
 from .validator import (
     confidence_of,
     field,
@@ -20,8 +21,13 @@ from .validator import (
     months_between,
     parse_date,
     review_amounts,
-    verhoeff_valid,
+    verhoeff_checksum_ok,
 )
+
+# A card printed masked (UIDAI "masked Aadhaar", or a SPECIMEN): only the last four digits exist.
+# OCR often reads the printed hyphen as "=", "_" or "." with stray spaces, so allow a short
+# separator run.
+MASKED_AADHAAR_RE = re.compile(r"(?i)(?<![A-Z0-9])X{4}[\s\-=_.]{0,3}X{4}[\s\-=_.]{0,3}(\d{4})(?!\d)")
 
 # --------------------------------------------------------------------------- classification
 
@@ -383,7 +389,8 @@ def _parse_employment_letter(lines: list[TextLine]) -> tuple[dict[str, Extracted
 
 # --------------------------------------------------------------------------- PAN card
 
-def _parse_pan_card(lines: list[TextLine], text: str) -> tuple[dict[str, ExtractedField], list[str]]:
+def _parse_pan_card(lines: list[TextLine], text: str, *,
+                    synthetic: bool = False) -> tuple[dict[str, ExtractedField], list[str]]:
     fields: dict[str, ExtractedField] = {}
     warnings: list[str] = []
 
@@ -401,8 +408,14 @@ def _parse_pan_card(lines: list[TextLine], text: str) -> tuple[dict[str, Extract
                 None,
             )
         )
-        fields["pan_number"] = field("pan_number", _LABELS["pan_number"], mask_pan(raw), confidence=confidence,
-                                     note="masked; the full number is not stored")
+        rejection = pan_rejection(compact_raw, synthetic=synthetic)
+        if rejection is None:
+            fields["pan_number"] = field("pan_number", _LABELS["pan_number"], mask_pan(raw), confidence=confidence,
+                                         note="masked; the full number is not stored")
+        else:
+            fields["pan_number"] = ExtractedField(key="pan_number", label=_LABELS["pan_number"], value=None,
+                                                  status=FieldStatus.INVALID, confidence=confidence,
+                                                  note=rejection)
     else:
         # A ten-character token with letters and digits in the wrong order is a misread
         # PAN, not an absent one -- say so instead of silently reporting "missing".
@@ -437,11 +450,13 @@ def _parse_pan_card(lines: list[TextLine], text: str) -> tuple[dict[str, Extract
 
 # --------------------------------------------------------------------------- Aadhaar card
 
-def _parse_aadhaar_card(lines: list[TextLine], text: str) -> tuple[dict[str, ExtractedField], list[str]]:
+def _parse_aadhaar_card(lines: list[TextLine], text: str, *,
+                        synthetic: bool = False) -> tuple[dict[str, ExtractedField], list[str]]:
     fields: dict[str, ExtractedField] = {}
     warnings: list[str] = []
 
     match = AADHAAR_RE.search(text)
+    masked = None if match else MASKED_AADHAAR_RE.search(text)
     if match:
         raw = "".join(match.groups())
         confidence = None
@@ -450,13 +465,25 @@ def _parse_aadhaar_card(lines: list[TextLine], text: str) -> tuple[dict[str, Ext
             if found and "".join(found.groups()) == raw:
                 confidence = confidence_of(line)
                 break
-        if verhoeff_valid(raw):
+        if not verhoeff_checksum_ok(raw):
+            note = "the number fails the Aadhaar checksum; re-scan the card"
+        else:
+            note = aadhaar_rejection(raw, synthetic=synthetic)
+        if note is None:
+            # Stored as the last four digits only; the full number exists only in `raw`.
             fields["aadhaar_number"] = field("aadhaar_number", _LABELS["aadhaar_number"], mask_aadhaar(raw),
-                                             confidence=confidence, note="masked; the full number is not stored")
+                                             confidence=confidence, note="masked; only the last 4 digits are kept")
         else:
             fields["aadhaar_number"] = ExtractedField(key="aadhaar_number", label=_LABELS["aadhaar_number"],
                                                       value=None, status=FieldStatus.INVALID, confidence=confidence,
-                                                      note="the number fails the Aadhaar checksum; re-scan the card")
+                                                      note=note)
+        del raw
+    elif masked:
+        confidence = confidence_of(next((line for line in _lines(lines) if MASKED_AADHAAR_RE.search(line.text)), None))
+        fields["aadhaar_number"] = field("aadhaar_number", _LABELS["aadhaar_number"],
+                                         f"XXXX XXXX {masked.group(1)}", confidence=confidence,
+                                         note="printed masked; only the last 4 digits exist, so the checksum "
+                                              "cannot be verified")
     else:
         fields["aadhaar_number"] = field("aadhaar_number", _LABELS["aadhaar_number"],
                                          note="no Aadhaar number was recognised")
@@ -478,16 +505,21 @@ def _parse_aadhaar_card(lines: list[TextLine], text: str) -> tuple[dict[str, Ext
     fields["address"] = field("address", _LABELS["address"],
                               re.sub(r"\s{2,}", " ", address).strip(" :,-") if address else None, confidence=confidence)
 
-    if not match:
+    if not match and not masked:
         warnings.append("No Aadhaar number was recognised; check that the document is an Aadhaar card.")
     return fields, warnings
 
 
 # --------------------------------------------------------------------------- entry point
 
-def parse(document_type: str, lines: list[TextLine], text: str) -> tuple[dict[str, ExtractedField], list[str], DocumentKind]:
-    """Parse recognised lines for one document. Returns (fields, warnings, kind)."""
+def parse(document_type: str, lines: list[TextLine], text: str, *,
+          synthetic: bool | None = None) -> tuple[dict[str, ExtractedField], list[str], DocumentKind]:
+    """Parse recognised lines for one document. Returns (fields, warnings, kind).
+
+    ``synthetic`` is the document/request flag; None follows the SARAL_SYNTHETIC_MODE setting.
+    """
     kind = kind_for(document_type, text)
+    mode = synthetic_mode(synthetic)
     if kind is DocumentKind.SALARY_SLIP:
         fields, warnings = _parse_salary_slip(lines)
     elif kind is DocumentKind.BANK_STATEMENT:
@@ -495,9 +527,9 @@ def parse(document_type: str, lines: list[TextLine], text: str) -> tuple[dict[st
     elif kind is DocumentKind.EMPLOYMENT_LETTER:
         fields, warnings = _parse_employment_letter(lines)
     elif kind is DocumentKind.PAN_CARD:
-        fields, warnings = _parse_pan_card(lines, text)
+        fields, warnings = _parse_pan_card(lines, text, synthetic=mode)
     elif kind is DocumentKind.AADHAAR_CARD:
-        fields, warnings = _parse_aadhaar_card(lines, text)
+        fields, warnings = _parse_aadhaar_card(lines, text, synthetic=mode)
     else:
         fields, warnings = {}, ["This document type is not supported for automatic reading yet."]
 

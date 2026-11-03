@@ -8,7 +8,13 @@ was downgraded:
 * ``pan_regex``      - the full PAN read from the page matches ``[A-Z]{5}[0-9]{4}[A-Z]`` and its
                        4th character is a valid holder-type letter. Run on the raw candidate
                        *before* masking, by `check_raw_identifiers`.
-* ``aadhaar_verhoeff`` - 12 digits, first digit not 0/1, Verhoeff checksum passes.
+* ``aadhaar_verhoeff`` - 12 digits, Verhoeff checksum passes, and the first digit fits the
+                       mode: 2-9 normally, 0/1 only in synthetic mode (see `synthetic.py`).
+* ``ifsc_format``    - an IFSC-shaped token is a real IFSC (``AAAA0XXXXXX``) in normal mode and
+                       an ``XSYNS`` synthetic bank code only in synthetic mode.
+
+Every identifier check takes ``synthetic``: True when the document or request is flagged
+synthetic, None to follow the ``SARAL_SYNTHETIC_MODE`` setting.
 * ``date_sanity``    - DOB gives an age of 18..100 and is not in the future; an employment
                        start is not in the future and not before the applicant turned 14
                        (when a DOB is known); a salary date is within the last 400 days.
@@ -23,7 +29,15 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from .schemas import DocumentKind, ExtractionResult, FieldStatus
-from .validator import pan_format_valid, verhoeff_valid
+from .synthetic import (
+    REAL_IFSC_RE,
+    SYNTHETIC_IFSC_RE,
+    aadhaar_rejection,
+    ifsc_valid,
+    pan_rejection,
+    synthetic_mode,
+)
+from .validator import pan_format_valid, verhoeff_checksum_ok, verhoeff_valid
 
 # 4th PAN character: holder type (P person, C company, H HUF, F firm, A AOP, T trust,
 # B BOI, L local authority, J artificial juridical person, G government).
@@ -42,13 +56,25 @@ class Check:
         return {"field": self.field, "check": self.check, "passed": self.passed, "note": self.note}
 
 
-def pan_ok(value: str) -> bool:
+def pan_ok(value: str, *, synthetic: bool | None = None) -> bool:
     cleaned = re.sub(r"[^A-Z0-9]", "", (value or "").upper())
-    return pan_format_valid(cleaned) and bool(PAN_STRICT_RE.match(cleaned))
+    return pan_format_valid(cleaned, synthetic=synthetic) and bool(PAN_STRICT_RE.match(cleaned))
 
 
-def aadhaar_ok(value: str) -> bool:
-    return verhoeff_valid(value)
+def aadhaar_ok(value: str, *, synthetic: bool | None = None) -> bool:
+    return verhoeff_valid(value, synthetic=synthetic)
+
+
+def _pan_note(token: str, synthetic: bool) -> str:
+    if not PAN_STRICT_RE.match(token):
+        return "PAN shape or holder-type letter is wrong"
+    return pan_rejection(token, synthetic=synthetic) or ""
+
+
+def _aadhaar_note(digits: str, synthetic: bool) -> str:
+    if not verhoeff_checksum_ok(digits):
+        return "fails the Verhoeff checksum"
+    return aadhaar_rejection(digits, synthetic=synthetic) or ""
 
 
 def _iso(value) -> date | None:
@@ -62,19 +88,28 @@ def _age(dob: date, today: date) -> int:
     return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
 
-def check_raw_identifiers(text: str) -> list[Check]:
+def check_raw_identifiers(text: str, *, synthetic: bool | None = None) -> list[Check]:
     """Checks on raw candidates in recognised text. Call before the text is discarded."""
+    mode = synthetic_mode(synthetic)
     checks = []
-    for token in re.findall(r"(?<![A-Z0-9])[A-Z0-9]{10}(?![A-Z0-9])", (text or "").upper()):
+    upper = (text or "").upper()
+    for token in re.findall(r"(?<![A-Z0-9])[A-Z0-9]{10}(?![A-Z0-9])", upper):
         if token.startswith("XXXX"):
             continue  # an already-masked account or PAN, not a PAN candidate
         if sum(c.isdigit() for c in token) == 4 and sum(c.isalpha() for c in token) == 6:
-            checks.append(Check("pan_number", "pan_regex", pan_ok(token),
-                                "" if pan_ok(token) else "PAN shape or holder-type letter is wrong"))
+            ok = pan_ok(token, synthetic=mode)
+            checks.append(Check("pan_number", "pan_regex", ok, "" if ok else _pan_note(token, mode)))
     for match in re.finditer(r"(?<!\d)(\d{4})\s?(\d{4})\s?(\d{4})(?!\d)", text or ""):
         digits = "".join(match.groups())
-        checks.append(Check("aadhaar_number", "aadhaar_verhoeff", aadhaar_ok(digits),
-                            "" if aadhaar_ok(digits) else "fails the Verhoeff checksum"))
+        ok = aadhaar_ok(digits, synthetic=mode)
+        checks.append(Check("aadhaar_number", "aadhaar_verhoeff", ok, "" if ok else _aadhaar_note(digits, mode)))
+    for token in re.findall(r"(?<![A-Z0-9])[A-Z0-9]{11}(?![A-Z0-9])", upper):
+        if not (REAL_IFSC_RE.match(token) or SYNTHETIC_IFSC_RE.match(token)):
+            continue  # not IFSC-shaped
+        ok = ifsc_valid(token, synthetic=mode)
+        note = "" if ok else ("a real IFSC is not accepted on a synthetic document" if mode
+                              else "XSYNS bank codes are synthetic test data and are not accepted here")
+        checks.append(Check("ifsc", "ifsc_format", ok, note))
     return checks
 
 

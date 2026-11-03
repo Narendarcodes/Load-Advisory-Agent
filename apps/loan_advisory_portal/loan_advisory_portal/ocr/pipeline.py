@@ -29,8 +29,13 @@ _SALARY_MAP = (
 _BANK_MAP = (("salary_credits", "custom_monthly_income"),)
 
 
-def extract_document(document_type: str, content: bytes, filename: str) -> ExtractionResult:
+def extract_document(document_type: str, content: bytes, filename: str, *,
+                     synthetic: bool | None = None) -> ExtractionResult:
     """Run extraction for one document.
+
+    ``synthetic`` is True only for a document or request flagged synthetic (server-side
+    state, never a browser value); None follows the SARAL_SYNTHETIC_MODE setting. See
+    `ocr.synthetic` for what synthetic mode accepts.
 
     Raises `UnsupportedDocument`, `ExtractionFailed` or `OcrUnavailable`; those are the
     three conditions a borrower can act on (choose another file, re-scan, install the
@@ -44,7 +49,7 @@ def extract_document(document_type: str, content: bytes, filename: str) -> Extra
         )
 
     text = "\n".join(line.text for line in lines)
-    fields, warnings, kind = parse(document_type, lines, text)
+    fields, warnings, kind = parse(document_type, lines, text, synthetic=synthetic)
 
     if kind is DocumentKind.UNKNOWN:
         warnings.insert(

@@ -10,6 +10,7 @@ from datetime import date, datetime
 
 from .masking import mask_sensitive_text
 from .schemas import ExtractedField, FieldStatus, TextLine
+from .synthetic import aadhaar_rejection, pan_rejection, synthetic_mode
 
 # Tesseract word confidence below this is reported as "low confidence" for the whole line.
 LOW_CONFIDENCE = 60.0
@@ -41,10 +42,10 @@ _P = [
 ]
 
 
-def verhoeff_valid(number: str) -> bool:
-    """Aadhaar's check digit. Rejects misread digits instead of accepting a plausible 12-digit number."""
+def verhoeff_checksum_ok(number: str) -> bool:
+    """The Verhoeff check digit alone, for exactly 12 digits; no prefix rule."""
     digits = re.sub(r"\D", "", number or "")
-    if len(digits) != 12 or digits[0] in "01":
+    if len(digits) != 12:
         return False
     checksum = 0
     for index, character in enumerate(reversed(digits)):
@@ -52,9 +53,21 @@ def verhoeff_valid(number: str) -> bool:
     return checksum == 0
 
 
-def pan_format_valid(value: str) -> bool:
-    cleaned = re.sub(r"[^A-Z0-9]", "", (value or "").upper())
-    return bool(re.fullmatch(r"[A-Z]{5}\d{4}[A-Z]", cleaned))
+def verhoeff_valid(number: str, *, synthetic: bool | None = None) -> bool:
+    """Aadhaar's check digit plus the mode's prefix rule.
+
+    Normal mode: first digit 2-9 (UIDAI never issues 0/1). Synthetic mode (document flagged
+    synthetic, or SARAL_SYNTHETIC_MODE on): first digit 0/1 *only*, so a real-format number is
+    never accepted as synthetic. Rejects misread digits instead of accepting a plausible number.
+    """
+    if aadhaar_rejection(number, synthetic=synthetic_mode(synthetic)) is not None:
+        return False
+    return verhoeff_checksum_ok(number)
+
+
+def pan_format_valid(value: str, *, synthetic: bool | None = None) -> bool:
+    """PAN shape, plus the mode's series rule (ZZ is synthetic-only)."""
+    return pan_rejection(value, synthetic=synthetic_mode(synthetic)) is None
 
 
 # --------------------------------------------------------------------------- value parsers

@@ -5,8 +5,11 @@ Every person, number, employer and bank here is invented and every image carries
 
 * PAN numbers use the reserved-looking prefix "ZZ" so they read as obviously fake; the
   format (AAAPA9999A) is real so the PR #41 regex and checks are exercised.
-* Aadhaar numbers start with "9999" and end in a valid Verhoeff check digit. Half the
-  applicants get a card that shows only the last four digits, as masked e-Aadhaar does.
+* Aadhaar numbers start with "1000" (a 0/1 first digit is never issued by UIDAI, the same rule as
+  feat/saral-synthetic-kyc-bank) and end in a valid Verhoeff check digit, so they pass only in
+  OCR synthetic mode (``ocr.synthetic``). Results in docs/saral/OCR_BAKEOFF.md were produced
+  with the earlier real-format "9999" prefix. Half the applicants get a card that shows only
+  the last four digits, as masked e-Aadhaar does.
 * ``--watermark overlay`` (default) also prints a diagonal SPECIMEN overlay across the
   page; ``--watermark banner`` keeps only the banner and a red frame.
 * Each document has a ground-truth JSON next to it; each clean page has one degraded
@@ -95,7 +98,12 @@ def verhoeff_ok(number: str) -> bool:
 
 
 def fake_aadhaar(rng: random.Random) -> str:
-    body = "9999" + "".join(str(rng.randint(0, 9)) for _ in range(7))
+    """0/1-prefixed (never issued, so never a real person's number) + Verhoeff check digit.
+
+    The fixed "1000" prefix replaces the old "9999" and draws the same 7 random digits, so
+    every other generated value (names, PANs, salaries) is unchanged for a given seed.
+    """
+    body = "1000" + "".join(str(rng.randint(0, 9)) for _ in range(7))
     full = body + verhoeff_check_digit(body)
     assert verhoeff_ok(full)
     return full

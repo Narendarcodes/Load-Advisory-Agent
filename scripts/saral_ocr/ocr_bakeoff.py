@@ -286,7 +286,10 @@ def run_ocr(engine: str, data: Path, out: Path, limit: int | None) -> None:
         if warm is None:
             warm = seconds
         text = "\n".join(line.text for line in lines)
-        fields, warnings, kind = parse(DOC_LABEL[truth["doc_type"]], lines, text) if lines else ({}, [], None)
+        # Every bake-off page is a SPECIMEN, so validation runs in synthetic mode.
+        synthetic = bool(truth.get("synthetic", True))
+        fields, warnings, kind = (parse(DOC_LABEL[truth["doc_type"]], lines, text, synthetic=synthetic)
+                                  if lines else ({}, [], None))
         result = ExtractionResult(DOC_LABEL[truth["doc_type"]], kind, engine, version, 1, fields, warnings) if kind else None
         if result is not None:
             from loan_advisory_portal.ocr.field_checks import apply_field_checks  # noqa: PLC0415
@@ -304,7 +307,7 @@ def run_ocr(engine: str, data: Path, out: Path, limit: int | None) -> None:
             "critical_total": len(CRITICAL[truth["doc_type"]]),
             "parsed": {k: {"value": v.value, "status": v.status.value, "confidence": v.confidence}
                        for k, v in fields.items()},
-            "raw_checks": [c.as_dict() for c in check_raw_identifiers(text)],
+            "raw_checks": [c.as_dict() for c in check_raw_identifiers(text, synthetic=synthetic)],
             "date_checks": date_checks,
         }
         if truth.get("reference_lines"):
