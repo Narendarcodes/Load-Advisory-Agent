@@ -34,3 +34,13 @@ def test_bureau_referral_gets_a_plain_reason():
     d = applications._borrower_detail(SimpleNamespace(record_json=json.dumps(rec), decision="MANUAL_REVIEW"), "MANUAL_REVIEW")
     assert d["reasons"] == [{"code": "DETAILS_NOT_VERIFIED", "category": "DETAILS_NOT_VERIFIED", "text": "We couldn't verify some details."}]
     assert "DQ_" not in json.dumps(d)
+
+
+def test_v2_decline_carries_its_plain_reason_category():
+    """D-10: v2 rule rows carry no customer_visible flag, so a decline showed only the generic 'didn't meet our
+    requirements'. The stored borrower-safe category reaches the card; rule ids and values never do."""
+    rec = {"outcome": "DECLINE", "reason_categories": ["CREDIT_HISTORY", "REPAYMENTS_TOO_HIGH"],
+           "rule_evaluations": [{"rule_id": "PL-031", "result": "FAIL", "threshold": 700, "actual_value": 612}]}
+    d = applications._borrower_detail(SimpleNamespace(record_json=json.dumps(rec), decision="DECLINE"), "REJECTED")
+    assert [r["category"] for r in d["reasons"]] == ["CREDIT_HISTORY", "REPAYMENTS_TOO_HIGH"]
+    assert "PL-" not in json.dumps(d) and "700" not in json.dumps(d) and "612" not in json.dumps(d)
