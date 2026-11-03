@@ -51,20 +51,20 @@ def pan_card(a: dict):
     d.rectangle([8, 56, 1003, 130], fill=(40, 70, 130))
     d.text((30, 75), "SYNTHETIC TAX ID SPECIMEN (NOT A PAN CARD)", font=_font(26, bold=True), fill="white")
     p = a["pan"]
-    d.text((330, 150), p["pan"], font=_font(40, bold=True, mono=True), fill=(10, 10, 10))
+    d.text((330, 150), a["specimen_truth"]["pan_number"], font=_font(40, bold=True, mono=True), fill=(10, 10, 10))
     d.rectangle([40, 150, 230, 390], outline=(90, 90, 90), width=2)
     d.text((80, 255), "PHOTO", font=_font(28), fill=(150, 150, 150))
     y = 220
-    for label, value in (("Name", p["name_as_on_pan"]), ("Father's Name", p["father_name_as_on_pan"]),
-                         ("Date of Birth", p["dob_as_on_pan"])):
+    for label, value in (("Name", p["name_on_pan"]), ("Father's Name", p["father_name_on_pan"]),
+                         ("Date of Birth", p["dob_on_pan"])):
         d.text((270, y), label, font=_font(18), fill=(60, 60, 60))
         d.text((270, y + 22), value, font=_font(26, bold=True), fill=(10, 10, 10))
         y += 70
     _paste_sig(img, a["signature"]["reference"], PAN_SIG_BOX)
     d.rectangle(PAN_SIG_BOX, outline=(120, 120, 120), width=1)
     d.text((PAN_SIG_BOX[0], PAN_SIG_BOX[3] + 6), "Signature", font=_font(18), fill=(80, 80, 80))
-    truth = {"doc_type": "PAN", "synthetic": True, "pan_number": p["pan"], "name": p["name_as_on_pan"],
-             "father_name": p["father_name_as_on_pan"], "date_of_birth": p["dob_as_on_pan"],
+    truth = {"doc_type": "PAN", "synthetic": True, "pan_number": a["specimen_truth"]["pan_number"], "name": p["name_on_pan"],
+             "father_name": p["father_name_on_pan"], "date_of_birth": p["dob_on_pan"],
              "signature_box": list(PAN_SIG_BOX), "signature_role": "reference"}
     return img, truth
 
@@ -76,25 +76,26 @@ def aadhaar_card(a: dict):
     d.text((30, 72), "SYNTHETIC ID SPECIMEN (NOT AN AADHAAR)", font=_font(28, bold=True), fill=(30, 30, 30))
     d.rectangle([40, 150, 230, 390], outline=(90, 90, 90), width=2)
     d.text((80, 255), "PHOTO", font=_font(28), fill=(150, 150, 150))
-    d.text((270, 160), e["poi"]["name"], font=_font(32, bold=True), fill=(10, 10, 10))
-    dob = e["poi"]["dob"] or f"Year of Birth: {e['poi']['yob']}"
+    d.text((270, 160), e["name"], font=_font(32, bold=True), fill=(10, 10, 10))
+    dob = e["dob"] or f"Year of Birth: {e['year_of_birth']}"
+    uid_masked = f"XXXX-XXXX-{e['aadhaar_last4']}"
     d.text((270, 215), f"DOB: {dob}", font=_font(26), fill=(10, 10, 10))
-    d.text((270, 260), {"M": "MALE", "F": "FEMALE"}[e["poi"]["gender"]], font=_font(26), fill=(10, 10, 10))
-    d.text((300, 520), e["uid_masked"], font=_font(44, bold=True, mono=True), fill=(10, 10, 10))
-    truth = {"doc_type": "AADHAAR", "synthetic": True, "aadhaar_masked": e["uid_masked"],
-             "aadhaar_last4": e["uid"][-4:], "name": e["poi"]["name"], "date_of_birth": e["poi"]["dob"],
-             "yob": e["poi"]["yob"]}
+    d.text((270, 260), {"M": "MALE", "F": "FEMALE"}[e["gender"]], font=_font(26), fill=(10, 10, 10))
+    d.text((300, 520), uid_masked, font=_font(44, bold=True, mono=True), fill=(10, 10, 10))
+    truth = {"doc_type": "AADHAAR", "synthetic": True, "aadhaar_masked": uid_masked,
+             "aadhaar_last4": e["aadhaar_last4"], "name": e["name"], "date_of_birth": e["dob"],
+             "yob": e["year_of_birth"]}
     return img, truth
 
 
 def bank_statement(stmt: dict, rows: int = 40):
     img, d = _canvas(1240, 1754)
-    acc, s = stmt["account"], stmt["summary"]
+    acc = stmt["account"]
     d.text((60, 70), acc["bank_name"].upper() + " - SYNTHETIC STATEMENT", font=_font(30, bold=True), fill=(20, 40, 90))
     for k, (label, value) in enumerate((("Account holder", acc["holder_name"]),
-                                        ("Account", acc["masked_account_number"]),
+                                        ("Account", acc["masked_number"]),
                                         ("IFSC (synthetic)", acc["ifsc"]),
-                                        ("Period", f"{s['period_start']} to {s['period_end']}"),
+                                        ("Period", f"{stmt['period']['from']} to {stmt['period']['to']}"),
                                         ("Statement id", stmt["statement_id"]))):
         d.text((60, 130 + 32 * k), f"{label}: {value}", font=_font(20), fill=(20, 20, 20))
     y = 320
@@ -105,8 +106,8 @@ def bank_statement(stmt: dict, rows: int = 40):
     for t in stmt["transactions"][:rows]:
         dr = f"{t['amount']:.2f}" if t["type"] == "DEBIT" else ""
         cr = f"{t['amount']:.2f}" if t["type"] == "CREDIT" else ""
-        for val, x in ((t["txn_date"], 60), (t["narration"][:44], 200), (t["mode"], 760), (dr, 860),
-                       (cr, 980), (f"{t['balance']:.2f}", 1100)):
+        for val, x in ((t["date"], 60), (t["narration"][:44], 200), (t["mode"], 760), (dr, 860),
+                       (cr, 980), (f"{t['balance_after']:.2f}", 1100)):
             d.text((x, y), val, font=_font(15, mono=True), fill=(20, 20, 20))
         y += 30
     truth = {"doc_type": "BANK_STATEMENT", "synthetic": True, "statement_id": stmt["statement_id"],
@@ -119,7 +120,7 @@ def nach_mandate(a: dict, stmt: dict):
     d.text((60, 70), "SYNTHETIC NACH MANDATE / LOAN APPLICATION (SPECIMEN)", font=_font(28, bold=True), fill=(20, 40, 90))
     lr = a["loan_request"]
     fields = (("Applicant", a["identity"]["full_name"]), ("Application id", a["application_id"]),
-              ("PAN", a["pan"]["pan_masked"]), ("Debit account", stmt["account"]["masked_account_number"]),
+              ("PAN", a["pan"]["pan_masked"]), ("Debit account", stmt["account"]["masked_number"]),
               ("IFSC (synthetic)", stmt["account"]["ifsc"]), ("Amount (max EMI)", f"{lr['proposed_emi_at_assessment_rate']}"),
               ("Loan amount", f"{lr['amount']}"), ("Purpose", lr["purpose"]))
     for k, (label, value) in enumerate(fields):

@@ -3,10 +3,12 @@
 The four personal-loan products and their caps follow the ZEN design draft
 (feat/saral-contracts-zen-design: docs/saral/rule_catalogue.draft.json product_rules and
 contracts/zen.py ProductId): wedding <= 15L / 60m, higher education <= 20L / 84m,
-home renovation <= 25L / 84m, medical emergency <= 10L / 60m. All are DRAFT assumptions
-(A-25..A-28), not approved policy. A cap breach REFERs per proposal v2 P05 / A-29, while the
-v2 aggregation rule says a cap-only failure becomes a counter-offer at the largest passing
-amount; this dataset labels cap-only cases COUNTER_OFFER and records the conflict.
+home renovation <= 25L / 84m, medical emergency <= 10L / 60m (A-25..A-28, approved for
+prototype_synthetic in the ADR-0009 batch). Owner decisions applied (ADR-0007, 2026-11-03 23:18 IST):
+every product is capped at Rs. 25 lakh in the MVP; a request above a product's cap gets a COUNTER_OFFER at
+the largest passing amount (never a referral; v2 P05 superseded); one flat prototype rate per product and
+no risk-grade pricing. ``pl129_offer`` mirrors catalogue rule PL-129 (contracts/catalogue_v2/products.py
+size_offer_flat @ cc202ae) and labels every offer in the dataset.
 """
 from __future__ import annotations
 
@@ -14,7 +16,11 @@ import math
 import random
 from datetime import date, timedelta
 
-ASSESSMENT_RATE = 0.20  # proposal v2 A02 / draft A-05
+ASSESSMENT_RATE = 0.20  # A-05; the flat prototype rate of every product (ADR-0007 #3)
+FLAT_RATE = {"PL_WEDDING": 0.20, "PL_HIGHER_EDUCATION": 0.20, "PL_HOME_RENOVATION": 0.20, "PL_MEDICAL_EMERGENCY": 0.20}
+MVP_AMOUNT_CEILING = 2_500_000   # ADR-0007 #1
+ZEN_SCORE_FLOOR = 700            # ADR-0009 #2 (Bajaj's 650 is indicative only)
+OUTSIDE_OFFER_LABEL = "outside what we offer"
 MAX_FOIR = 0.50
 MIN_RESIDUAL = 15_000
 MAX_INCOME_MULTIPLE = 24
@@ -229,3 +235,106 @@ def product_details(purpose: str, amount: int, rng: random.Random, as_of: date, 
             "purpose_evidence_status": status,
             "purpose_evidence_amount": max(amounts) if amounts else None,
             "payee_account_present": any(d.get("payee_account_present") for d in docs)}
+
+
+# ---------------------------------------------------------------- PL-129 (mirror of the catalogue reference)
+BAND_EDGES = {"B1": 200_000, "B2": 1_000_000, "B3": 2_500_000}
+BAND_MIN_SCORE = {"B1": 700, "B2": 700, "B3": 700}
+BAND_MIN_EMPLOYMENT_MONTHS = {"B1": 6, "B2": 6, "B3": 12}
+BAND_EMPLOYER_CATEGORIES = {"B1": {"PUBLIC", "PRIVATE", "MNC"}, "B2": {"PUBLIC", "PRIVATE", "MNC"}, "B3": {"PUBLIC", "PRIVATE", "MNC"}}
+NTC_CAP, EVIDENCE_TOLERANCE, B3_REVIEW_FOIR = 200_000, 1.10, 0.45
+EVIDENCE_PURPOSES = {"higher_education", "home_renovation", "medical_emergency"}
+
+
+def _emi_exact(principal: float, rate: float, months: int) -> float:
+    r = rate / 12
+    return principal * r * (1 + r) ** months / ((1 + r) ** months - 1)
+
+
+def _principal_for(max_emi: float, rate: float, months: int) -> float:
+    if max_emi <= 0:
+        return 0.0
+    r = rate / 12
+    return max_emi * ((1 + r) ** months - 1) / (r * (1 + r) ** months)
+
+
+def _band_cap(score, employment_months, category):
+    best = None
+    for b, top in BAND_EDGES.items():
+        if score is not None and score >= BAND_MIN_SCORE[b] and (employment_months is None or employment_months >= BAND_MIN_EMPLOYMENT_MONTHS[b]) \
+                and (category is None or category in BAND_EMPLOYER_CATEGORIES[b]):
+            best = top
+    return best
+
+
+def pl129_offer(requested: int, tenure: int, purpose: str, income: float, existing: float = 0, other: float = 0,
+                score=None, match_status: str = "MATCH", employment_months=None, category=None, evidence=None) -> dict:
+    """Largest passing amount at one flat rate (catalogue PL-129). Outcome APPROVED / COUNTER_OFFER / DECLINE."""
+    pid = PRODUCTS[purpose]["product_id"]
+    rate, cap_t = FLAT_RATE[pid], PRODUCTS[purpose]["max_tenure"]
+    t = min(tenure, cap_t)
+    obligations = existing + other
+    max_emi = min(MAX_FOIR * income - obligations, income - obligations - MIN_RESIDUAL)
+    max_emi_b3 = min(B3_REVIEW_FOIR * income - obligations, max_emi)
+    caps = {"requested": requested, "product_cap": min(PRODUCTS[purpose]["max_amount"], MVP_AMOUNT_CEILING),
+            "income_cap": MAX_INCOME_MULTIPLE * income, "foir_principal": _principal_for(max_emi, rate, t)}
+    if match_status == "NO_HIT":
+        caps["ntc_cap"] = NTC_CAP
+    else:
+        bc = _band_cap(score, employment_months, category)
+        caps["band_cap"] = bc if bc is not None else 0
+    if purpose in EVIDENCE_PURPOSES and evidence:
+        caps["evidence_cap"] = EVIDENCE_TOLERANCE * evidence
+
+    def best(c, months):
+        amt, bind = math.floor(min(c.values()) / 1000) * 1000, min(c, key=c.get)
+        if amt > BAND_EDGES["B2"]:
+            c3 = dict(c, foir_principal=_principal_for(max_emi_b3, rate, months))
+            amt3 = math.floor(min(c3.values()) / 1000) * 1000
+            if amt3 < amt:
+                amt, bind = max(amt3, BAND_EDGES["B2"]), ("b3_review_foir" if amt3 > BAND_EDGES["B2"] else "b2_upper")
+        return amt, bind
+
+    amount, binding = best(caps, t)
+    offer_t = t
+    if amount < requested and t < cap_t:
+        caps_long = dict(caps, foir_principal=_principal_for(max_emi, rate, cap_t))
+        a2, b2 = best(caps_long, cap_t)
+        if a2 > amount:
+            amount, offer_t, binding = a2, cap_t, b2
+    outside = requested > MVP_AMOUNT_CEILING
+    if requested > MAX_AMOUNT:
+        outcome, amount, binding = "DECLINE", 0, "outside_what_we_offer"
+    elif amount >= requested:
+        amount = requested
+        outcome = "APPROVED" if offer_t == tenure else "COUNTER_OFFER"
+    elif amount >= MIN_AMOUNT:
+        outcome = "COUNTER_OFFER"
+    else:
+        outcome, amount = "DECLINE", 0
+    return {"offer_outcome": outcome, "eligible_amount": amount, "offer_tenure_months": offer_t if amount else None,
+            "offer_emi": round(_emi_exact(amount, rate, offer_t)) if amount else None, "offer_rate": rate,
+            "binding_cap": binding, "request_outside_mvp_range": outside}
+
+
+def pl129_passes(amount: int, tenure: int, purpose: str, income: float, existing: float = 0, other: float = 0,
+                 score=None, match_status: str = "MATCH", employment_months=None, category=None, evidence=None) -> bool:
+    """Test oracle: ``amount`` at ``tenure`` passes every amount-dependent rule PL-129 sizes against."""
+    pid = PRODUCTS[purpose]["product_id"]
+    if tenure > PRODUCTS[purpose]["max_tenure"] or amount < MIN_AMOUNT or amount > min(PRODUCTS[purpose]["max_amount"], MVP_AMOUNT_CEILING):
+        return False
+    obligations = existing + other
+    new = _emi_exact(amount, FLAT_RATE[pid], tenure)
+    foir = (obligations + new) / income
+    if foir > MAX_FOIR + 1e-9 or income - obligations - new < MIN_RESIDUAL - 1e-6 or amount > MAX_INCOME_MULTIPLE * income:
+        return False
+    if amount > BAND_EDGES["B2"] and foir > B3_REVIEW_FOIR + 1e-9:
+        return False
+    if match_status == "NO_HIT":
+        if amount > NTC_CAP:
+            return False
+    else:
+        bc = _band_cap(score, employment_months, category)
+        if bc is None or amount > bc:
+            return False
+    return not (purpose in EVIDENCE_PURPOSES and evidence and amount > EVIDENCE_TOLERANCE * evidence)

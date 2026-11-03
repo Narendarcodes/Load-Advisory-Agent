@@ -19,28 +19,21 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import re
 from datetime import date, timedelta
 from difflib import SequenceMatcher
 from statistics import mean, median, pstdev
 
 from . import product
 from .bank import statement_content_hash
-from .zen_input_catalogue import CATALOGUE_INPUTS
+from .zen_input_catalogue import CATALOGUE_INPUTS, INPUT_CLASS, ZEN_DATA_POINTS
 
-# Catalogue parameters (thresholds, allowed sets): they come from the rule catalogue, not from
-# the applicant, so the dataset does not carry them.
-POLICY_PARAMETERS = {
-    "approved_card_obligation_method", "approved_enquiry_threshold", "approved_exposure_limit",
-    "approved_interest_rate_range", "approved_maximum_foir", "approved_minimum_score",
-    "approved_utilisation_threshold", "eligible_employment_categories", "eligible_loan_purposes",
-    "eligible_nationalities", "maximum_age_at_maturity", "maximum_loan_amount", "maximum_report_age_days",
-    "maximum_tenure_months", "minimum_age", "minimum_confidence", "minimum_income", "minimum_loan_amount",
-    "minimum_tenure_months", "required_consents", "required_fields", "required_identity_fields",
-    "supported_employment_types",
-}
-# Produced by ZEN itself (decision trace), never an input the dataset can hold.
-ZEN_PRODUCED = {"rule_results", "policy_version"}
-APPLICANT_INPUTS = sorted(set(CATALOGUE_INPUTS) - POLICY_PARAMETERS - ZEN_PRODUCED)
+# The vendored data dictionary decides the class of every input (contracts_snapshot @ cc202ae):
+# POLICY_PARAMETER lives in the catalogue, ZEN_PRODUCED is written by ZEN, APPLICANT is carried here.
+POLICY_PARAMETERS = {n for n, c in INPUT_CLASS.items() if c == "POLICY_PARAMETER"}
+ZEN_PRODUCED = {n for n, c in INPUT_CLASS.items() if c == "ZEN_PRODUCED"}
+APPLICANT_INPUTS = sorted(n for n, c in INPUT_CLASS.items() if c == "APPLICANT")
+OCR_FLOOR = 60  # PL-089 minimum_confidence (A-16)
 
 # Null means "none happened", which is a valid value, not missing data.
 NULL_MEANS_NONE = {"last_decline_date", "days_since_last_decline", "last_dpd_date", "days_since_last_dpd",
@@ -124,8 +117,19 @@ DPD_DAYS = {"ON_TIME": 0, "DPD_30": 30, "DPD_60": 60, "DPD_90_PLUS": 90}
 def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
     as_of = date.fromisoformat(app["as_of"])
     ident, ek, pan, emp = app["identity"], app["aadhaar_ekyc"], app["pan"], app["employment"]
+    pan_number = app["specimen_truth"]["pan_number"]  # only ever hashed here
     d, lr, prod, sig = app["declared"], app["loan_request"], app["product"], app["signature"]
     tx = stmt["transactions"]
+    # Preprocessing reads the categoriser's ``category`` and amounts, never ``synthetic_truth_tag`` (test ground truth).
+    bureau_emis = {a["monthly_obligation"] for a in (report or {}).get("accounts", [])
+                   if a["status"] == "ACTIVE" and a["monthly_obligation"] and a["account_type"] != "CREDIT_CARD"}
+    returned = {(t["date"], t["amount"]) for t in tx if t["category"] in ("NACH_RETURN", "CHEQUE_RETURN")}
+
+    def is_bureau_emi(t):
+        return t["category"] == "EMI" and t["type"] == "DEBIT" and t["amount"] in bureau_emis and (t["date"], t["amount"]) not in returned
+
+    def is_other_emi(t):
+        return t["category"] == "EMI" and t["type"] == "DEBIT" and t["amount"] not in bureau_emis and (t["date"], t["amount"]) not in returned
     f: dict = {}
     # ---- request / product
     f.update(loan_amount=lr["amount"], requested_amount=lr["amount"], principal=lr["amount"],
@@ -141,7 +145,7 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
     # ---- applicant
     dob = date.fromisoformat(ident["date_of_birth"])
     age = _age(dob, as_of)
-    f.update(date_of_birth=ident["date_of_birth"], applicant_dob=ek["poi"]["dob"], assessment_date=app["as_of"],
+    f.update(date_of_birth=ident["date_of_birth"], applicant_dob=ek["dob"], assessment_date=app["as_of"],
              age_at_assessment=age, age_at_application=age,
              age_at_maturity=round(age + lr["tenure_months"] / 12, 2), nationality=d["nationality"],
              employment_type="SALARIED", employment_status=d["employment_type"],
@@ -153,22 +157,22 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
              employer_changes_24m=emp["employer_changes_24m"],
              employer_stability_indicator="UNSTABLE" if emp["employer_changes_24m"] >= 3 else "STABLE",
              months_at_current_address=ident["months_at_address"], applicant_city=ident["city"],
-             applicant_identifier=app["applicant_id"], applicant_name=ek["poi"]["name"],
+             applicant_identifier=app["applicant_id"], applicant_name=ek["name"],
              applicant_address={"city": ident["city"], "pincode": ident["address"]["pincode"],
                                 "state": ident["state"]})
-    f["applicant_identity"] = {"name": ek["poi"]["name"], "dob": ek["poi"]["dob"], "pan_masked": pan["pan_masked"],
-                               "aadhaar_last4": ek["uid"][-4:]}
-    supplied = [k for k, v in (("full_name", ek["poi"]["name"]), ("date_of_birth", ek["poi"]["dob"]),
+    f["applicant_identity"] = {"name": ek["name"], "dob": ek["dob"], "pan_masked": pan["pan_masked"],
+                               "aadhaar_last4": ek["aadhaar_last4"]}
+    supplied = [k for k, v in (("full_name", ek["name"]), ("date_of_birth", ek["dob"]),
                                ("pan_masked", pan["pan_masked"]), ("kyc_document", ek["record_id"])) if v]
     f["supplied_identity_fields"] = supplied
-    f["identity_verification_status"] = "COMPLETE" if len(supplied) == 4 and ek["poa"]["house"] else "PARTIAL"
+    f["identity_verification_status"] = "COMPLETE" if len(supplied) == 4 and ek["address"]["line_masked"] else "PARTIAL"
     # ---- income
-    salary = [t for t in tx if t["synthetic_truth_tag"] == "SALARY"]
-    reversed_amt = {t["txn_date"][:7]: t["amount"] for t in tx if t["synthetic_truth_tag"] == "SALARY_REVERSAL"}
-    months = sorted({t["txn_date"][:7] for t in tx})
+    salary = [t for t in tx if t["category"] == "SALARY"]
+    reversed_amt = {t["date"][:7]: t["amount"] for t in tx if t["category"] == "SALARY_REVERSAL"}
+    months = sorted({t["date"][:7] for t in tx})
     by_month = {m: 0.0 for m in months}
     for t in salary:
-        by_month[t["txn_date"][:7]] += t["amount"]
+        by_month[t["date"][:7]] += t["amount"]
     for m, a in reversed_amt.items():
         by_month[m] -= a
     series = [round(by_month[m], 2) for m in months]
@@ -176,8 +180,8 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
     slips = emp["payslips"]
     payslip_avg = round(mean(s["net"] for s in slips), 2)
     bank_avg = round(mean(last3), 2) if last3 else 0.0
-    ocr_slips = [e for e in app["ocr_extractions"] if e["document_kind"] == "SALARY_SLIP"]
-    ocr_income = ocr_slips[-1]["fields"]["net_pay"]["value"] if ocr_slips else None
+    ocr_slips = [e for e in app["ocr_extractions"] if e["document_kind"] == "salary_slip"]
+    ocr_income = ocr_slips[-1]["fields"]["net_salary"]["value"] if ocr_slips else None
     verified = round(median(last3), 2) if last3 else 0.0
     net_income = min(d["monthly_net_income"], verified) if verified > 0 else d["monthly_net_income"]
     f.update(declared_income=d["monthly_net_income"], declared_salary=d["monthly_net_income"],
@@ -204,17 +208,18 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
     f["salary_credit_consistency"] = "CONSISTENT" if f["salary_credit_months"] == 3 and var <= 0.25 else "INCONSISTENT"
     f["salary_reversal_indicator"] = bool(reversed_amt)
     # ---- KYC consistency
-    pan_ocr = next(e for e in app["ocr_extractions"] if e["document_kind"] == "PAN")
-    names = [ek["poi"]["name"], pan["name_as_on_pan"], stmt["account"]["holder_name"]]
+    pan_ocr = next(e for e in app["ocr_extractions"] if e["document_kind"] == "pan_card")
+    pan_read = pan_ocr["fields"]["pan_number"]["value"]
+    names = [ek["name"], pan["name_on_pan"], stmt["account"]["holder_name"]]
     score = min(_sim(names[0], n) for n in names[1:])
     f.update(kyc_name_match_score=score, name_similarity=score,
-             kyc_dob_match=(ek["poi"]["dob"] == pan["dob_as_on_pan"]) if ek["poi"]["dob"] else None,
-             kyc_id_last4_match=pan_ocr["fields"]["pan_masked"]["value"] == pan["pan_masked"],
-             pan_format_valid=pan_ocr["fields"]["pan_format_valid"]["value"])
+             kyc_dob_match=(ek["dob"] == pan["dob_on_pan"]) if ek["dob"] else None,
+             kyc_id_last4_match=pan_read == pan["pan_masked"],
+             pan_format_valid=bool(re.fullmatch(r"XXXXX\d{4}X", pan_read or "")))
     f["identity_fields"] = f["applicant_identity"]
     f["extracted_identity_fields"] = {"pan_name": pan_ocr["fields"]["name"]["value"],
                                       "pan_dob": pan_ocr["fields"]["date_of_birth"]["value"],
-                                      "pan_masked": pan_ocr["fields"]["pan_masked"]["value"],
+                                      "pan_masked": pan_read,
                                       "bank_holder_name": stmt["account"]["holder_name"]}
     f["identity_match_status"] = "MATCH" if score >= 0.85 and f["kyc_dob_match"] is not False else "MISMATCH"
     # ---- bureau
@@ -227,7 +232,7 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
     f.update(bureau_name=on_file and on_file["name"], bureau_dob=on_file and on_file["dob"],
              bureau_address=on_file and {"city": on_file["address_city"], "pincode": on_file["address_pincode"]},
              bureau_identity=on_file)
-    f["name_match_status"] = "MATCH" if on_file and on_file["name"].upper() == ek["poi"]["name"].upper() else (
+    f["name_match_status"] = "MATCH" if on_file and on_file["name"].upper() == ek["name"].upper() else (
         "MISMATCH" if on_file else "NOT_AVAILABLE")
     f["dob_match_status"] = "MATCH" if on_file and on_file["dob"] == ident["date_of_birth"] else (
         "MISMATCH" if on_file else "NOT_AVAILABLE")
@@ -335,13 +340,14 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
         f["report_age_days"] = None
         for k in BUREAU_INPUTS:
             f.setdefault(k, None)
-    f["applicant_pricing_band"] = f.get("risk_grade") or "NTC"
-    f["interest_rate"] = {"A": 0.13, "B": 0.16, "C": 0.21, "NTC": 0.24}.get(f["applicant_pricing_band"], 0.24)
+    # One flat prototype rate per product; no risk-grade pricing in the MVP (ADR-0007 #3).
+    f["applicant_pricing_band"] = "FLAT_PER_PRODUCT"
+    f["interest_rate"] = product.FLAT_RATE.get(lr["product_id"], product.ASSESSMENT_RATE)
     # ---- obligations and affordability
     bureau_emi = bl["installment_obligation_total"]
     existing = max(bureau_emi, d["monthly_obligations"])
     proposed = lr["proposed_emi_at_assessment_rate"]
-    undeclared = sum(t["amount"] for t in tx if t["synthetic_truth_tag"] == "EMI_UNDECLARED" and t["txn_date"][:7] == months[-1])
+    undeclared = sum(t["amount"] for t in tx if is_other_emi(t) and t["date"][:7] == months[-1])
     f.update(existing_monthly_obligations=bureau_emi, existing_obligations=existing, existing_emi_total=existing,
              declared_obligations=d["monthly_obligations"], other_monthly_obligations=round(undeclared, 2),
              proposed_emi=proposed, calculated_emi=proposed,
@@ -352,20 +358,19 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
     f["residual_income"] = round(net_income - total, 2)
     f["maximum_affordable_emi"] = round(max(0.0, min(product.MAX_FOIR * net_income, net_income - product.MIN_RESIDUAL)
                                             - existing - undeclared), 2)
-    pp = lr["product_purpose"] or "wedding"
-    f["eligible_amount"] = product.max_affordable_amount(lr["tenure_months"], int(net_income), int(existing + undeclared), pp) \
-        if lr["product_purpose"] else 0
+    f["_offer"] = offer_for(lr, f, prod)
+    f["eligible_amount"] = f["_offer"]["eligible_amount"] if f["_offer"] else 0
     # ---- bank
-    bals = [t["balance"] for t in tx]
+    bals = [t["balance_after"] for t in tx]
     f["bank_transactions"] = {"statement_id": stmt["statement_id"], "txn_count": len(tx),
                               "content_hash": _b32(stmt["integrity"]["content_sha256"].encode())}
     f["average_monthly_balance"] = round(mean(bals), 2) if bals else 0.0
     f["negative_balance_count"] = sum(1 for b in bals if b < 0)
-    f["return_count"] = sum(1 for t in tx if t["synthetic_truth_tag"] in ("EMI_RETURN", "CHEQUE_RETURN")
-                            and t["txn_date"][:7] in months[-3:])
-    credits = [t for t in tx if t["type"] == "CREDIT" and t["synthetic_truth_tag"] not in ("EMI_RETURN", "CHEQUE_RETURN")]
+    f["return_count"] = sum(1 for t in tx if t["category"] in ("NACH_RETURN", "CHEQUE_RETURN")
+                            and t["date"][:7] in months[-3:])
+    credits = [t for t in tx if t["type"] == "CREDIT" and t["category"] not in ("NACH_RETURN", "CHEQUE_RETURN")]
     total_cr = sum(t["amount"] for t in credits)
-    total_dr = sum(t["amount"] for t in tx if t["type"] == "DEBIT" and t["synthetic_truth_tag"] not in ("EMI_PRESENTED", "CHEQUE_PRESENTED"))
+    total_dr = sum(t["amount"] for t in tx if t["type"] == "DEBIT" and (t["date"], t["amount"]) not in returned)
     f.update(total_credits=round(total_cr, 2), total_debits=round(total_dr, 2),
              debit_credit_ratio=round(total_dr / total_cr, 4) if total_cr else None,
              cash_deposit_percentage=round(100 * sum(t["amount"] for t in credits if t["mode"] == "CASH") / total_cr, 2)
@@ -376,13 +381,12 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
             first_due = (date.fromisoformat(a["opened_on"]) + timedelta(days=31)).isoformat()[:7]
             exp[a["account_id"]] = {"amount": a["monthly_obligation"], "months_due": [m for m in months[-3:] if m > first_due]}
     f["expected_emi_debits"] = exp
-    f["actual_emi_debits"] = sorted({(t["txn_date"][:7], t["amount"]) for t in tx if t["synthetic_truth_tag"] == "EMI_BUREAU"
-                                     and t["type"] == "DEBIT"})
+    f["actual_emi_debits"] = sorted({(t["date"][:7], t["amount"]) for t in tx if is_bureau_emi(t)})
     f["actual_emi_debits"] = [{"month": m, "amount": a} for m, a in f["actual_emi_debits"]]
     rec = {}
     for t in tx:
         if t["type"] == "DEBIT" and t["mode"] in ("NACH", "ECS") and "REPRESENT" not in t["narration"]:
-            rec.setdefault(t["narration"], set()).add(t["txn_date"][:7])
+            rec.setdefault(t["narration"], set()).add(t["date"][:7])
     f["observed_recurring_debits"] = sorted(n for n, ms in rec.items() if len(ms) >= 3)
     f["debt_mismatch"] = bool(undeclared) or d["monthly_obligations"] < bureau_emi
     f["anomaly_indicators"] = sorted({"SALARY_REVERSAL"} if f["salary_reversal_indicator"] else set())
@@ -394,6 +398,7 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
     conf = {f"{e['document_kind']}.{k}": v["confidence"] for e in app["ocr_extractions"] for k, v in e["fields"].items()}
     f["ocr_field_confidence"] = conf
     f["min_ocr_confidence"] = min(conf.values())
+    f["low_confidence"] = f["min_ocr_confidence"] < OCR_FLOOR
     latest = slips[-1]
     f.update(document_kind="SALARY_SLIP", document_date=latest["document_date"],
              document_age_days=(as_of - date.fromisoformat(latest["document_date"])).days)
@@ -406,28 +411,26 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
     prev, breaks = round(stmt["summary"]["opening_balance"] * 100), 0
     for t in tx:
         amt = round(t["amount"] * 100)
-        if round(t["balance"] * 100) != prev + (amt if t["type"] == "CREDIT" else -amt):
+        if round(t["balance_after"] * 100) != prev + (amt if t["type"] == "CREDIT" else -amt):
             breaks += 1
-        prev = round(t["balance"] * 100)
+        prev = round(t["balance_after"] * 100)
     flags = (["CONTENT_HASH_MISMATCH"] if not recomputed else []) + (["BALANCE_ARITHMETIC_BREAK"] if breaks else [])
     f.update(statement_integrity_result="FAIL" if flags else "PASS", statement_validation_flags=flags,
              tampering_flags=flags, document_integrity_result="FAIL" if flags else "PASS")
-    dup = next((a for a in others if a["pan"]["pan"] == pan["pan"]), None)
+    dup = next((a for a in others if a["specimen_truth"]["pan_number"] == pan_number), None)
     f["duplicate_match_result"] = f"MATCH:{dup['applicant_id']}" if dup else "NO_MATCH"
-    f["pan_hash"], f["phone_hash"], f["email_hash"] = _h(pan["pan"]), _h(ident["phone"]), _h(ident["email"])
+    f["pan_hash"], f["phone_hash"], f["email_hash"] = _h(pan_number), _h(ident["phone"]), _h(ident["email"])
     # Only earlier applicants: a prefix of the universe must resolve to the same inputs.
-    f["shared_contact_pan_count"] = len({a["pan"]["pan"] for a in others
-                                         if a["identity"]["phone"] == ident["phone"] and a["pan"]["pan"] != pan["pan"]})
+    f["shared_contact_pan_count"] = len({a["specimen_truth"]["pan_number"] for a in others
+                                         if a["identity"]["phone"] == ident["phone"] and a["specimen_truth"]["pan_number"] != pan_number})
     lists = universe["internal_lists"]
-    f["negative_list_hit"] = any(n["pan"] == pan["pan"] for n in lists["negative_list"])
+    f["negative_list_hit"] = any(n["pan"] == pan_number for n in lists["negative_list"])
     f["employer_caution_list_hit"] = any(c["employer_name"] == d["employer_name"] for c in lists["employer_caution_list"])
     f["last_decline_date"] = app["application_history"]["last_decline_date"]
     f["days_since_last_decline"] = (as_of - date.fromisoformat(f["last_decline_date"])).days if f["last_decline_date"] else None
     scr = sig["screening"]
-    f.update(signature_present=scr["signature_present"], signature_similarity=scr["signature_similarity"],
-             signature_anomaly_score=scr["signature_anomaly_score"],
-             signature_crop_sha256=_b32(json.dumps(sig["form_signature"]["strokes"]).encode())
-             if sig["form_signature"] else None)
+    f.update(signature_present=scr["present"], signature_similarity=scr["similarity"],
+             signature_anomaly_score=scr["anomaly_score"], signature_crop_sha256=scr["crop_sha256"])
     comparisons = {"kyc_name": f["identity_match_status"], "kyc_dob": f["kyc_dob_match"],
                    "bureau_name": f["name_match_status"], "bureau_dob": f["dob_match_status"],
                    "bureau_address": f["address_match_status"], "income": f["income_match_status"],
@@ -447,14 +450,24 @@ def derive(app: dict, stmt: dict, report: dict | None, universe: dict) -> dict:
     return f
 
 
+def offer_for(lr: dict, f: dict, prod: dict) -> dict | None:
+    """PL-129 on this applicant's resolved inputs (None when no product applies)."""
+    if not lr["product_purpose"] or not f["monthly_net_income"]:
+        return None
+    return product.pl129_offer(lr["amount"], lr["tenure_months"], lr["product_purpose"], f["monthly_net_income"],
+                               f["existing_monthly_obligations"] or 0, f["other_monthly_obligations"] or 0,
+                               f.get("bureau_score"), f["bureau_match_status"], f["employment_months"],
+                               f["employment_category"], prod["purpose_evidence_amount"])
+
+
 # ------------------------------------------------------------------ contract data points
 
 def data_points(app: dict, f: dict) -> dict:
     """The 30 contracts/zen.py DataPointName values in the DataPoint shape."""
     slip_ids = [s["document_id"] for s in app["employment"]["payslips"]]
-    stmt_doc = next(e["document_id"] for e in app["ocr_extractions"] if e["document_kind"] == "BANK_STATEMENT")
-    kyc_docs = [e["document_id"] for e in app["ocr_extractions"] if e["document_kind"] in ("PAN", "AADHAAR")]
-    low = f["min_ocr_confidence"] < 60
+    stmt_doc = next(e["document_id"] for e in app["ocr_extractions"] if e["document_kind"] == "bank_statement")
+    kyc_docs = [e["document_id"] for e in app["ocr_extractions"] if e["document_kind"] in ("pan_card", "aadhaar_card")]
+    low = f["low_confidence"]
 
     def dp(value, source, docs=(), low_conf=False):
         if value is None:
@@ -503,9 +516,7 @@ def validate(app: dict) -> list[str]:
     allowed_null = designed_nulls(app)
     missing = [n for n in APPLICANT_INPUTS if n not in zi or (zi[n] is None and n not in allowed_null)]
     dps = app.get("zen_data_points") or {}
-    from .zen_input_catalogue import CATALOGUE_INPUTS as C  # noqa: PLC0415
-    contract = [n for n, src in C.items() if "ZenInput.DataPointName" in src]
-    missing += [f"zen_data_points.{n}" for n in contract if n not in dps]
+    missing += [f"zen_data_points.{n}" for n in ZEN_DATA_POINTS if n not in dps]
     return missing
 
 
@@ -513,9 +524,13 @@ def attach_zen_inputs(universe: dict) -> None:
     for app, stmt, case in zip(universe["applicants"], universe["statements"], universe["bureau_cases"]["cases"]):
         f = derive(app, stmt, case["report"], universe)
         f["supplied_fields"] = sorted(k for k in APPLICANT_INPUTS if k != "supplied_fields" and f.get(k) is not None)
-        app["zen_inputs"] = {"synthetic": True, "note": "reference preprocessing of synthetic data; not a ZEN result",
-                             **{k: f.get(k) for k in APPLICANT_INPUTS}, "report_age_days": f.get("report_age_days")}
+        # Exactly the dictionary's APPLICANT fields, one-to-one; nothing else (a test asserts the key set).
+        app["zen_inputs"] = {k: f.get(k) for k in APPLICANT_INPUTS}
+        app["zen_inputs_meta"] = {"synthetic": True, "note": "reference preprocessing of synthetic data; not a ZEN result",
+                                  "dictionary": "contracts_snapshot/data_dictionary.json @ cc202ae",
+                                  "report_age_days": f.get("report_age_days")}
         app["zen_data_points"] = data_points(app, f)
+        app["expected_outcome_hint"]["expected_offer"] = f["_offer"]
 
 
 # ------------------------------------------------------------------ coverage table

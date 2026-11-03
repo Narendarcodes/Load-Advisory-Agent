@@ -18,14 +18,29 @@ from datetime import date, timedelta
 
 from .ids import mask_account
 
-SCHEMA = "saral-synthetic-aa-fi/1"
+SCHEMA = "saral-bank-statement-aa/1"  # contracts/synthetic_sources.json SYNTHETIC_BANK (reconciled one-to-one)
 SPECIMEN = "SPECIMEN - SYNTHETIC - NOT A REAL BANK RECORD"
 MODES = ("UPI", "NEFT", "IMPS", "NACH", "ECS", "CASH", "ATM", "CARD", "CHEQUE", "OTHERS")
 RETURN_CHARGE = 59_000  # paise; Rs 500 + 18% GST, a typical-looking synthetic charge
 CHEQUE_RETURN_CHARGE = 35_400
 MERCHANTS = ["SPECIMEN MART", "DEMO FRESH GROCERS", "SAMPLE PHARMACY", "TEST FUEL STATION",
              "PLACEHOLDER CAFE", "SYNTH ELECTRONICS", "MOCK TEXTILES", "DUMMY BOOKSTORE"]
-HASH_SCOPE = "sha256 of canonical JSON (sort_keys, no whitespace) of {account, summary, transactions}"
+# Simulated categoriser output (what an AA categoriser would infer from the narration). Values are the contract's
+# BANK_CATEGORIES. Rules read ``category``; ``synthetic_truth_tag`` is ground truth for tests only.
+TAG_CATEGORY = {"SALARY": "SALARY", "SALARY_REVERSAL": "SALARY_REVERSAL", "EMI_BUREAU": "EMI", "EMI_UNDECLARED": "EMI",
+                "EMI_PRESENTED": "EMI", "EMI_RETURN": "NACH_RETURN", "CHEQUE_RETURN": "CHEQUE_RETURN",
+                "RETURN_CHARGE": "BOUNCE_CHARGE", "CASH_DEPOSIT": "CASH_DEPOSIT", "RENT": "RENT", "UTILITY": "UTILITY",
+                "CARD_BILL": "TRANSFER", "LARGE_TRANSFER": "TRANSFER", "CHEQUE_PRESENTED": "OTHER"}
+SPEND_CATEGORY = {"UPI": "UPI", "CARD": "CARD", "ATM": "ATM"}
+
+
+def category_of(tag: str, mode: str) -> str:
+    if tag == "SPEND":
+        return SPEND_CATEGORY.get(mode, "OTHER")
+    return TAG_CATEGORY.get(tag, "OTHER")
+
+
+HASH_SCOPE = "sha256 of canonical JSON (sort_keys, no whitespace) of {account, period, summary, transactions}"
 
 
 def month_starts(period_end: date, months: int) -> list[date]:
@@ -46,7 +61,7 @@ def canonical_hash(obj) -> str:
 
 
 def statement_content_hash(statement: dict) -> str:
-    return canonical_hash({k: statement[k] for k in ("account", "summary", "transactions")})
+    return canonical_hash({k: statement[k] for k in ("account", "period", "summary", "transactions")})
 
 
 class _Ledger:
@@ -150,20 +165,21 @@ def build_statement(p: dict, rng: random.Random) -> dict:
         assert mode in MODES, mode
         txns.append({
             "txn_id": f"{sid}-T{n:04d}",
-            "txn_date": d.isoformat(),
+            "date": d.isoformat(),
             "value_date": d.isoformat(),
             "narration": nar,
             "mode": mode,
             "type": kind,
             "amount": _rs(paise),
-            "balance": _rs(bal),
+            "balance_after": _rs(bal),
             "reference": "SYNREF" + hashlib.sha256(f"{sid}:{n}".encode()).hexdigest()[:10].upper(),
+            "category": category_of(tag, mode),
             "synthetic_truth_tag": tag,
         })
     account = {
-        "masked_account_number": mask_account(p["account_number"]),
+        "masked_number": mask_account(p["account_number"]),
         "account_ref": p["account_ref"],
-        "account_type": "SAVINGS",
+        "type": "SAVINGS",
         "od_limit": float(p["od_limit"]),
         "ifsc": p["ifsc"],
         "bank_name": p["bank_name"],
@@ -171,9 +187,8 @@ def build_statement(p: dict, rng: random.Random) -> dict:
         "holder_name": p["holder_name"],
         "currency": "INR",
     }
+    period = {"from": start.isoformat(), "to": end.isoformat()}
     summary = {
-        "period_start": start.isoformat(),
-        "period_end": end.isoformat(),
         "months": p["months"],
         "opening_balance": _rs(opening),
         "closing_balance": _rs(balance),
@@ -185,10 +200,15 @@ def build_statement(p: dict, rng: random.Random) -> dict:
         "schema": SCHEMA,
         "synthetic": True,
         "specimen_marker": SPECIMEN,
+        "provider": {"name": "saral-synthetic-aa", "synthetic": True},
         "statement_id": sid,
         "applicant_id": p["applicant_id"],
+        "consent_id": p["consent_id"],
+        "fip_id": "SYNTHETIC-FIP-" + p["ifsc"][-3:],
         "fi_type": "DEPOSIT",
+        "fetched_at": f"{p['fetched_on']}T09:45:00+05:30",
         "account": account,
+        "period": period,
         "summary": summary,
         "transactions": txns,
     }
@@ -197,11 +217,11 @@ def build_statement(p: dict, rng: random.Random) -> dict:
         # Edit one running balance after issue: the stored hash is the issued one, so a
         # recomputed hash no longer matches and balance arithmetic breaks at that row.
         victim = txns[len(txns) // 2]
-        victim["balance"] = round(victim["balance"] + 25_000.0, 2)
+        victim["balance_after"] = round(victim["balance_after"] + 25_000.0, 2)
     stmt["integrity"] = {"content_sha256": content, "hash_scope": HASH_SCOPE,
                          "issued_by": "saral-synthetic-kyc-bank"}
     stmt["lms_reference"] = {"statement_id": sid, "content_sha256": content,
-                             "period_start": summary["period_start"], "period_end": summary["period_end"],
+                             "period_from": period["from"], "period_to": period["to"],
                              "txn_count": len(txns), "synthetic": True}
     return stmt
 

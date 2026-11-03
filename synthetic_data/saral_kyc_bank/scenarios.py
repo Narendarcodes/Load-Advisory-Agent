@@ -1,8 +1,9 @@
 """Scenario catalogue: one clean prime case plus targeted failures per PL rule group.
 
 ``expected_outcome_hint`` is what the scenario was *designed* to provoke under the DRAFT
-ZEN proposal v2 thresholds. It is a generation label, never a ZEN result: no threshold
-here is approved policy, and secondary rules may also fire (listed in ``also_triggers``).
+prototype_synthetic thresholds (approved as one batch, ADR-0009) and the owner decisions of ADR-0007
+(Rs. 25 lakh cap, COUNTER_OFFER above a cap, flat pricing) and ADR-0009 (score floor 700). It is a
+generation label, never a ZEN result; secondary rules may also fire (listed in ``also_triggers``).
 
 Outcome vocabulary (ZEN proposal v2): APPROVE, REFER, DECLINE, INFO (ask the applicant),
 STOP (halt the process), RE_PULL (fetch a fresh bureau report), COUNTER_OFFER.
@@ -116,8 +117,8 @@ SCENARIOS: tuple[Scenario, ...] = (
       "Three new personal loans opened in the last 4 months (EMIs visible in bank and declared).",
       bureau="overlay:STACKING", also_triggers=("A01",)),
     # ---- E repayment and delinquency
-    S("DPD_30", ("E",), ("PL-040", "PL-041", "PL-051"), ("C04",), "REFER", "One 30-DPD on the card.",
-      bureau="native:SUCCESS@660", also_triggers=("C03",)),
+    S("DPD_30", ("E",), ("PL-040", "PL-041", "PL-051"), ("C04",), "REFER", "One 30-DPD on the card; score stays above the 700 floor.",
+      bureau="overlay:DPD_30"),
     S("DPD_60", ("E",), ("PL-042", "PL-044", "PL-045"), ("C05",), "DECLINE", "60-DPD on the PL within 12 months.",
       bureau="overlay:DPD_60", also_triggers=("C01",)),
     S("DPD_90", ("E",), ("PL-043",), ("C06",), "DECLINE", "90+ DPD on the auto loan within 24 months.",
@@ -138,7 +139,8 @@ SCENARIOS: tuple[Scenario, ...] = (
       "Declared monthly obligations are 6,000 less than the bureau EMIs."),
     # ---- H loan request
     S("PURPOSE_NOT_OFFERED", ("H",), ("PL-076",), ("P06",), "DECLINE", "Purpose is speculative trading."),
-    S("PURPOSE_OVER_CAP", ("H",), ("PL-070",), ("P01", "P05"), "REFER", "Wedding loan of 18L (cap 15L)."),
+    S("PURPOSE_OVER_CAP", ("H",), ("PL-109",), ("P01", "P05"), "COUNTER_OFFER",
+      "Wedding loan of 18L (cap 15L): COUNTER_OFFER at the largest passing amount (ADR-0007 #2; v2 P05 'refer' superseded)."),
     S("AMOUNT_BELOW_MIN", ("H",), ("PL-069",), ("E04",), "DECLINE", "Requested 30,000 (minimum 40,000)."),
     S("TENURE_OUT_OF_RANGE", ("H",), ("PL-071", "PL-072"), ("E06",), "DECLINE",
       "Tenure 120 months (range 12-108).", also_triggers=("P05",)),
@@ -186,8 +188,8 @@ SCENARIOS: tuple[Scenario, ...] = (
     S("SPEND_EXCEEDS_INFLOW", ("I",), ("PL-106",), ("I04",), "REFER", "Debits exceed credits over the statement."),
     S("PURPOSE_PRODUCT_MISMATCH", ("H",), ("PL-112",), (), "REFER",
       "Declared purpose (medical) differs from the product chosen (wedding)."),
-    S("HOME_QUOTE_BELOW_AMOUNT", ("H", "J"), ("PL-111",), ("P03",), "REFER",
-      "Home renovation: contractor quote is 60-80% of the requested amount."),
+    S("HOME_QUOTE_BELOW_AMOUNT", ("H", "J"), ("PL-126", "PL-111"), ("P03",), "COUNTER_OFFER",
+      "Home renovation: contractor quote is 60-80% of the requested amount; COUNTER_OFFER at 1.10x the quote (PL-126)."),
     S("EDU_ADMISSION_MISSING", ("H", "J"), ("PL-111", "PL-088"), ("P02",), "INFO",
       "Higher education: admission letter and fee schedule not uploaded.",
       also_triggers=("K05",)),
@@ -203,10 +205,12 @@ SCENARIOS: tuple[Scenario, ...] = (
 # The per-applicant expected path is computed by the generator (cap-limited cells cannot approve).
 MATRIX_SCENARIOS: tuple[Scenario, ...] = (
     S("MATRIX_APPROVE", ("G", "H"), ("PL-063", "PL-064", "PL-069", "PL-070"), ("A01", "P05"), "APPROVE",
-      "Product x band matrix: affordable, within cap; approve unless the band is above the product cap.",
+      "Product x band matrix: affordable, within cap; approve unless the band is above the product cap (then COUNTER_OFFER). "
+      "B4 cells are the deliberate out-of-range requests (> Rs. 25 lakh), labelled 'outside what we offer'.",
       also_triggers=("A01", "A03", "A04", "P05", "PL-123", "C01", "C04", "C05", "C06", "C09")),
     S("MATRIX_COUNTER_OFFER", ("G", "H"), ("PL-066", "PL-067", "PL-068"), ("A01", "A05", "P05"), "COUNTER_OFFER",
-      "Product x band matrix: request fails affordability or cap only; a longer tenure or reduced amount passes.",
+      "Product x band matrix: request fails affordability or cap only; a longer tenure or reduced amount passes. "
+      "B4 cells: outside what we offer, counter-offer within the Rs. 25 lakh ceiling.",
       also_triggers=("A01", "A03", "A04", "P05", "PL-123", "C01", "C04", "C05", "C06", "C09")),
     S("MATRIX_DECLINE", ("D", "E", "H"), ("PL-029", "PL-043", "PL-048"), ("C01", "C06", "C09"), "DECLINE",
       "Product x band matrix: declines on credit history whatever the amount.",

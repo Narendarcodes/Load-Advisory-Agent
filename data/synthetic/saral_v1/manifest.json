@@ -92,11 +92,11 @@
   "email": "@example.invalid (reserved TLD)"
  },
  "files_sha256": {
-  "applicants.jsonl": "1963e92310dc43171ca5040ce3b6d0ee251f1d795e3057d9f7ab08e42a6f8f63",
-  "bank_statements.jsonl": "1af5817aa1a0ccaa5729846cb4ee166ac6c3a81ec493d56944a79782398351e9",
+  "applicants.jsonl": "89bc7da7a4ae6ec268c8ca8c6a4741d1c456d85782d27eb1ab33bfe4f0700139",
+  "bank_statements.jsonl": "c94dc5da9faceab590d3e581e133579b8125a44e0c79df2667c77645ad8883f2",
   "bureau_cases.json": "5da5bc043deb2158001266a1cd624793a636bbbce550aeedf8aaf08acb47ea22",
   "internal_lists.json": "89b339ff478c7b96017d94dc44936424535018ae81ee740eab058758816af218",
-  "bureau_mapping.csv": "932d1cc8c5a0d7d1f0255402c43424702f066ebd402a38be1b835a513c7e3d3a"
+  "bureau_mapping.csv": "49f45b91840640471a5f2428630745951109dafd935d7b6dff416aab5e857955"
  },
  "regenerate": "python -m synthetic_data.saral_kyc_bank --count 20 --seed 20261103 --out <dir>"
 }

@@ -49,7 +49,7 @@ def mapping_rows(universe: dict) -> list[dict]:
             "bureau_spec": bl["bureau_spec"],
             "statement_id": a["bank_ref"]["statement_id"],
             "statement_content_sha256": a["bank_ref"]["content_sha256"],
-            "aadhaar_masked": a["aadhaar_ekyc"]["uid_masked"],
+            "aadhaar_masked": f"XXXX-XXXX-{a['aadhaar_ekyc']['aadhaar_last4']}",
             "pan_masked": a["pan"]["pan_masked"],
         })
     return rows

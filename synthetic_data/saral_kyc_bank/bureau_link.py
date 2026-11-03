@@ -106,6 +106,11 @@ def _apply(kind: str, accounts: list, enquiries: list, as_of: date) -> tuple[lis
                 current_balance=amt - emi * (m - 1) // 2, monthly_obligation=emi, months_reviewed=m,
                 payment_history=[PaymentStatus.ON_TIME] * m, last_payment_date=opened + timedelta(days=10)))
         return accounts, enquiries, "STACKING: 3 personal loans opened 1, 2 and 4 months ago"
+    if kind == "DPD_30":
+        accounts = [_with_dpd(a, PaymentStatus.DPD_30, 30, 4) if a.account_type == AccountType.CREDIT_CARD
+                    else a for a in accounts]
+        return accounts, enquiries, ("DPD_30: card payment 4 months ago at DPD_30 on a passing history (the native "
+                                     "30-DPD history scores below the 700 ZEN floor, ADR-0009 #2)")
     if kind == "DPD_60":
         accounts = [_with_dpd(a, PaymentStatus.DPD_60, 60, 5) if a.account_type == AccountType.PERSONAL_LOAN
                     else a for a in accounts]

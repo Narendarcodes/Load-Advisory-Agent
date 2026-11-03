@@ -13,7 +13,19 @@ The datasets give ZEN a complete, linked, **salaried** applicant: the MVP is sal
 - a label: scenario, product, amount band, expected decision path;
 - `zen_inputs`, every ZEN input already resolved, and `zen_data_points`, the 30 contract data points.
 
-The point is that every rule in the PL rule catalogue (PL-001..PL-128) and `ZEN_RULES_PROPOSAL_v2.md` can be exercised end to end.
+The point is that every rule in the PL rule catalogue (PL-001..PL-129) and `ZEN_RULES_PROPOSAL_v2.md` can be exercised end to end.
+
+**Contract match (2026-11-03).** Every record shape matches the Saral contracts one-to-one. The contracts are vendored byte for byte in
+`synthetic_data/saral_kyc_bank/contracts_snapshot/` (`synthetic_sources.json`, `data_dictionary.json`, `what_if_contract.json` from
+feat/saral-contracts-zen-design @ cc202ae, sha256-pinned). `tests/test_saral_synthetic_contract_match.py` asserts:
+- PAN, Aadhaar e-KYC and AA bank records emit exactly the contract paths (bank adds only the test-only `transactions[].synthetic_truth_tag`);
+- bureau reports use exactly the bureau-report/1 paths; OCR extractions use exactly the contract's MVP OCR keys;
+- `zen_inputs` keys equal the dictionary's APPLICANT fields; `zen_data_points` equal the 29 contract data points, whose aliases resolve;
+- every dictionary `SOURCE:path` reference resolves in the dataset; no full PAN or Aadhaar appears in any contract-shaped record.
+
+**Owner decisions applied.** ADR-0007: every product capped at ₹25L; above a cap → COUNTER_OFFER at the largest passing amount (never a
+referral); one flat rate per product, no risk-grade pricing. ADR-0009: ZEN score floor 700; prototype thresholds batch-approved.
+ADR-0010: what-if cap 3 (in the vendored what-if contract). Offers are labelled by `product.pl129_offer`, a mirror of catalogue PL-129.
 
 **Where things live:**
 
@@ -73,9 +85,9 @@ The 20-applicant sample covers the first 20 scenarios. The 200-applicant run cov
 | Item | Rule | Why it can't be real |
 |---|---|---|
 | Aadhaar | 12 digits, **first digit 0 or 1**, valid Verhoeff check digit | UIDAI never issues 0/1-prefixed numbers. |
-| Aadhaar display | `XXXX-XXXX-1234` (`uid_masked`) and contract form `XXXX XXXX 1234` (`uid_masked_contract`) | |
+| Aadhaar display | The e-KYC record carries only `aadhaar_last4`; OCR reads `XXXX XXXX 1234`. The full number lives only in `specimen_truth` (NEVER_STORE). | |
 | PAN | `ZZ` + letter + `P` + surname initial + 4 digits + letter | No official test series exists. `ZZ` is a convention shared with the OCR branch, so the `synthetic` flag is authoritative. |
-| PAN display | Contract form `XXXXX1234X` | |
+| PAN display | Contract form `XXXXX1234X` (`pan_masked`); the full PAN lives only in `specimen_truth` (NEVER_STORE), for rendering and the synthetic internal lists. | |
 | IFSC-like code | `XSYNS` + 6 digits | The 5th character is never `0`, so it fails `^[A-Z]{4}0[A-Z0-9]{6}$`. **"SYNB0" was rejected: `SYNB` was Syndicate Bank's real code.** |
 | Account | `0000` + 10 digits, shown masked | |
 | PIN | Starts with `0` | |
@@ -83,7 +95,7 @@ The 20-applicant sample covers the first 20 scenarios. The 200-applicant run cov
 | Email | `@example.invalid` | Reserved TLD. |
 | Names | Common given name + surname at random | A pairing may match a real person by chance. |
 | Employers, lenders, banks, institutions, hospitals, contractors, vendors | Invented `Specimen`/`Demo`/`Sample` names | |
-| Ids | Every hashed id body starts with a letter. Hashes inside ZEN blocks are base32. | Neither can form a 12-digit run or PAN shape that the contracts' `NoRawIdentifiers` check would reject. |
+| Ids | Every hashed id body starts with a letter. Hashes inside ZEN blocks, OCR `document.sha256` and signature `crop_sha256` are base32. | Neither can form a 12-digit run or PAN shape that the contracts' `NoRawIdentifiers` check would reject. |
 | ZEN blocks | `zen_inputs` and `zen_data_points` contain no full PAN or Aadhaar | A test applies the contracts' own regexes. |
 | Markers | `synthetic: true` on every record and sub-record; `specimen_marker` on applicant, e-KYC, PAN, payslip, statement; rendered images carry a corner **SPECIMEN - SYNTHETIC** banner and a red frame | |
 
@@ -93,7 +105,7 @@ There are no secrets.
 
 ## 3. Products and amount bands
 
-Products and caps follow the ZEN design draft (`rule_catalogue.draft.json` product rules; `contracts/zen.py` `ProductId`). They are DRAFT assumptions A-25..A-28.
+Products and caps follow the catalogue product matrix (A-25..A-28, approved for prototype_synthetic in the ADR-0009 batch). Every product is capped at ₹25L in the MVP (ADR-0007 #1) and priced at one flat 20% rate (ADR-0007 #3, A-05). Max tenure per product is the prototype max (60/84/84/60, ≤ 84); Bajaj's 108 is the outer gate.
 
 | Product | Purpose | Max amount | Max tenure | Product documents | Product fields |
 |---|---|---|---|---|---|
@@ -119,15 +131,16 @@ How amounts are spread:
 | Counter-offer, **reduced amount** | The request fails even at the cap tenure; A05 gives the largest passing amount, held at FOIR ≤ 0.45 above ₹10L for PL-123. |
 | Small (B1) counter-offers | Use cities on the ₹25,001 income floor. With ₹40,000-floor cities and ₹11,000 existing EMIs, FOIR can't fail at B1. |
 | Decline | Credit history whatever the amount: score 630, 90+ DPD, write-off or settlement. |
-| **Cap-limited** | Amount above the product cap (medical/wedding in B3, all of B4). It can't approve. The B1–B3 approve cell becomes **COUNTER_OFFER** at the cap. |
-| **B4** | Labelled **REFER:PRODUCT**, with an *indicative* counter-offer at the cap, because PL-123 always sends B4 to manual review and B4 is above every cap. |
+| **Cap-limited** | Amount above the product cap (medical/wedding in B3). It can't approve: **COUNTER_OFFER** at the largest passing amount (ADR-0007 #2). |
+| **B4** | The only requests above ₹25L, deliberately: labelled `outside_offer_label = "outside what we offer"`, `request_outside_mvp_range = true`, path **COUNTER_OFFER** within the ceiling (or a credit DECLINE in the decline cells). Never REFER. |
+| **Labels** | `relabel_offers()` sets every APPROVE / COUNTER_OFFER label from `product.pl129_offer` on the applicant's own `zen_inputs`, so the amounts equal what catalogue PL-129 computes (largest passing amount, ₹1,000 floor, B3 sized at FOIR 0.45 so PL-123 does not fire). |
 
 `label` on each applicant gives `{scenario_id, product_id, purpose, amount_band, requested_amount, tenure_months, expected_path}`. `expected_outcome_hint.expected_counter_offer` gives `{kind, counter_amount, counter_tenure, cap_limited}`. A test re-checks the arithmetic of every approval and counter-offer with `product.failures()`.
 
-**Conflicts recorded:**
-- Cap-only failures: proposal v2 **P05** says REFER, while the v2 aggregation rule says counter-offer at the largest passing amount. Labelled COUNTER_OFFER, with `policy_conflict` set.
-- HOME_QUOTE_BELOW_AMOUNT is labelled REFER (v2 P03). Catalogue v2 PL-126 would counter-offer at the evidence amount.
-- **Grade-based sizing (PL-125) is not modelled.** Counters use v2 A01 FOIR 0.50, A03 ₹15k residual, A04 24× income and the cap. PL-125 grade caps (A 0.55 / B 0.50 / C 0.45) and multipliers could change counter amounts.
+**Conflicts resolved (ADR-0007, 2026-11-03 23:18 IST):**
+- Cap-only failures: v2 **P05** (refer) is superseded; COUNTER_OFFER at the largest passing amount (`hint.cap_rule`).
+- HOME_QUOTE_BELOW_AMOUNT is COUNTER_OFFER at 1.10× the quote (PL-126), not REFER.
+- PL-125 grade-based sizing and pricing are deferred; offers use PL-129 at one flat rate per product.
 
 ## 4. Schemas
 
@@ -138,29 +151,31 @@ How amounts are spread:
 | ids | `record_id`/`applicant_id` `SYN-APP-0001`, `application_id` `SYN-SARAL-0001`, `display_name` (has spaces) |
 | `label`, `scenario`, `expected_outcome_hint` | Scenario id/groups/description/signature label. The hint holds `outcome`, `decision_path`, `reason_category`, rules, `also_triggers`, `expected_counter_offer`, `policy_conflict`, `decline_driver`. **Not a ZEN result.** |
 | `identity` | Names, gender, `date_of_birth`, address `{house, street, locality, city, district, state, pincode, country}`, `metro_city`, `income_floor`, `months_at_address`, phone, email, nationality, residency |
-| `aadhaar_ekyc` | `uid`, `uid_masked`, `uid_masked_contract`, `poi {name, dob, yob, gender}`, `poa {...}`, `photo {present:false, placeholder:true}`, `issue_date`, `verification_status` |
-| `pan` | `pan`, `pan_masked`, `holder_type`, `name_as_on_pan`, `father_name_as_on_pan`, `dob_as_on_pan`, `name_match_variant {name, kind, used}`, `status`, `verification_status` |
+| `aadhaar_ekyc` | `saral-kyc-aadhaar/1`, exactly the contract paths: envelope, `record_id`, `aadhaar_last4`, `verification_status`, `name`, `dob`, `year_of_birth`, `gender`, `care_of`, `address {line_masked, locality, city, district, state, pincode, country}`, `issue_date`, `verified_at` |
+| `pan` | `saral-kyc-pan/1`, exactly the contract paths: envelope, `record_id`, `pan_masked`, `pan_status`, `holder_type`, `name_on_pan`, `father_name_on_pan`, `dob_on_pan`, `pan_aadhaar_linked`, `issue_date`, `verified_at` |
+| `specimen_truth` | NEVER_STORE: `pan_number`, `aadhaar_uid`, `pan_name_variant`, the id rules. Only for rendering SPECIMEN documents and the internal lists. |
 | `employment` | SALARIED; employer name/category (PUBLIC/PRIVATE/MNC, ineligible PROPRIETORSHIP/UNREGISTERED_FIRM); `employment_type` (PERMANENT/PROBATION/CONTRACT); joining date; months with employer; total experience; gaps; `employer_changes_24m`; `history[]`; 3 `payslips[]` `{document_id, pay_period, document_date, gross, earnings, deductions, total_deductions, net}` |
 | `declared` | Declared income/obligations/employer/city/address-months/nationality/residency |
 | `loan_request` | `amount`, `tenure_months`, `purpose` (declared), `product_id`, `product_purpose`, `amount_band`, assessment rate 0.20, `proposed_emi_at_assessment_rate` |
 | `product` | `fields`, `documents[]` (SYN-DOC ids), `required_kinds`, `purpose_evidence_status`, `purpose_evidence_amount`, `payee_account_present` |
-| `ocr_extractions[]` | SIMULATED reads with per-field confidence for PAN, Aadhaar, 3 payslips and the statement. `SYN-EXT`/`SYN-DOC` ids. |
-| `bank_ref` | LMS reference: `statement_id`, `content_sha256`, period, `txn_count`, masked account, IFSC |
+| `ocr_extractions[]` | SIMULATED reads keyed exactly like the contract OCR keys: `document_kind` (`pan_card`, `aadhaar_card`, `salary_slip`, `bank_statement`), `fields` (FIELD_KEYS, identifiers masked), `chain {ocr_route, ocr_needs_manual_review, field_confidence}`, `document {sha256, date, pages}`. |
+| `bank_ref` | LMS reference: `statement_id`, `content_sha256`, `period_from`/`period_to`, `txn_count`, `masked_number`, IFSC |
 | `bureau_link` | Request (a valid `BureauReportRequest`), `report_id`, `report_ref_contract` (`SYN-BUR-…`), origin, overlay changes, `installment_obligation_total`, `identity_on_file`, `history_sidecar` (scores and exposure 6/12 months ago) |
 | `documents`, `consents`, `application_history` | Required/submitted; consents; `last_decline_date` |
-| `signature` | Label (GENUINE_MATCH/SKILLED_FORGERY/RANDOM_FORGERY/MISSING), reference (on the PAN) and form signature (NACH mandate) strokes, document ids, simulated `screening {signature_present, signature_similarity, signature_anomaly_score}` |
-| `zen_inputs` / `zen_data_points` | §6 |
+| `signature` | Label (GENUINE_MATCH/SKILLED_FORGERY/RANDOM_FORGERY/MISSING), reference (on the PAN) and form signature (NACH mandate) strokes, document ids, simulated `screening {present, similarity, anomaly_score, crop_sha256, method}` (contract OCR `signature.*`) |
+| `zen_inputs` / `zen_inputs_meta` / `zen_data_points` | §6. `zen_inputs` holds exactly the dictionary's APPLICANT fields; notes and `report_age_days` are in `zen_inputs_meta`. |
 
 `bureau_link.identity_on_file` and `history_sidecar` are **sidecars**. bureau-report/1 has no name, DOB, address, score history or balance history. They aren't part of Qoder's schema; catalogue v2 defers PL-021/022/023/030/056 until bureau-report/2.
 
-### 4.2 Bank statement (`saral-synthetic-aa-fi/1`)
+### 4.2 Bank statement (`saral-bank-statement-aa/1`, contract SYNTHETIC_BANK)
 
-- **Statement fields:** `statement_id` (stable), `account {masked_account_number, account_ref, account_type, od_limit, ifsc, bank_name, branch, holder_name, currency}`.
-- **Summary:** `{period_start, period_end, months, opening/closing_balance, txn_count, total_credits, total_debits}`.
-- **Transactions:** each has a stable `txn_id` (`<statement_id>-T0001`), `txn_date`, `value_date`, `narration`, `mode` (UPI/NEFT/IMPS/NACH/ECS/CASH/ATM/CARD/CHEQUE/OTHERS), `type`, `amount`, running `balance`, `reference`, `synthetic_truth_tag`.
-- **Integrity:** `integrity.content_sha256` is SHA-256 of canonical JSON of {account, summary, transactions}. `lms_reference` holds `{statement_id, content_sha256, period, txn_count}`, so the LMS stores a reference plus a hash, not transactions.
+- **Envelope:** `schema`, `synthetic`, `specimen_marker`, `provider {name, synthetic}`, `statement_id` (stable), `applicant_id`, `consent_id`, `fip_id`, `fi_type`, `fetched_at`.
+- **Account:** `account {masked_number, account_ref, type, od_limit, ifsc, bank_name, branch, holder_name, currency}`; `period {from, to}`.
+- **Summary:** `{months, opening/closing_balance, txn_count, total_credits, total_debits}`.
+- **Transactions:** each has a stable `txn_id` (`<statement_id>-T0001`), `date`, `value_date`, `narration`, `mode` (UPI/NEFT/IMPS/NACH/ECS/CASH/ATM/CARD/CHEQUE/OTHERS), `type`, `amount`, running `balance_after`, `reference`, `category` (simulated categoriser, contract enum) and the test-only `synthetic_truth_tag`.
+- **Integrity:** `integrity.content_sha256` is SHA-256 of canonical JSON of {account, period, summary, transactions}. `lms_reference` holds `{statement_id, content_sha256, period, txn_count}`, so the LMS stores a reference plus a hash, not transactions.
 - **Arithmetic:** amounts are computed in integer paise, so balances are exact.
-- **`synthetic_truth_tag`** is test ground truth; real AA data has none, and **rules must not read it**.
+- **`synthetic_truth_tag`** is test ground truth; real AA data has none, and **rules and preprocessing must not read it**. `zen_inputs.py` reads `category` and amount matches only (a test checks).
 - **Periods:** 6 months (meets PL-121's 6 months for B3/B4). INCOME_DROP and SALARY_IRREGULAR use 12 months; MISSING_DOCUMENTS uses 2.
 
 **Behaviour generated:**
@@ -261,7 +276,7 @@ Each applicant has one scenario. `expected_outcome_hint.decision_path` is:
 | RESIDUAL_INCOME_LOW | G | REFER:AFFORDABILITY | PL-065 | A03 | 2 |
 | OBLIGATION_UNDERDECLARED | GB | REFER:AFFORDABILITY | PL-058, PL-060, PL-017 | I08 | 2 |
 | PURPOSE_NOT_OFFERED | H | DECLINE:PRODUCT | PL-076 | P06 | 2 |
-| PURPOSE_OVER_CAP | H | REFER:PRODUCT | PL-070 | P01, P05 | 2 |
+| PURPOSE_OVER_CAP | H | COUNTER_OFFER | PL-109 | P01, P05 | 2 |
 | AMOUNT_BELOW_MIN | H | DECLINE:PRODUCT | PL-069 | E04 | 2 |
 | TENURE_OUT_OF_RANGE | H | DECLINE:PRODUCT | PL-071, PL-072 | E06 | 2 |
 | BOUNCE_HEAVY | I | DECLINE:BANK_CONDUCT | PL-081, PL-046 | I05 | 2 |
@@ -285,13 +300,13 @@ Each applicant has one scenario. `expected_outcome_hint.decision_path` is:
 | CURRENT_DEFAULT | E | DECLINE:DELINQUENCY | PL-039, PL-040 | C08 | 2 |
 | SPEND_EXCEEDS_INFLOW | I | REFER:BANK_CONDUCT | PL-106 | I04 | 2 |
 | PURPOSE_PRODUCT_MISMATCH | H | REFER:PRODUCT | PL-112 | - | 2 |
-| HOME_QUOTE_BELOW_AMOUNT | HJ | REFER:PRODUCT | PL-111 | P03 | 2 |
+| HOME_QUOTE_BELOW_AMOUNT | HJ | COUNTER_OFFER | PL-126, PL-111 | P03 | 2 |
 | EDU_ADMISSION_MISSING | HJ | MORE_INFORMATION_REQUIRED | PL-111, PL-088 | P02 | 2 |
 | SIG_SKILLED_FORGERY | J | REFER:SIGNATURE | PL-090, PL-098 | K08 | 2 |
 | SIG_RANDOM_FORGERY | J | REFER:SIGNATURE | PL-090, PL-098 | K08 | 2 |
 | SIG_MISSING | J | MORE_INFORMATION_REQUIRED | PL-088, PL-096 | K05, K08 | 2 |
-| MATRIX_APPROVE | GH | APPROVE, COUNTER_OFFER, REFER:PRODUCT | PL-063, PL-064, PL-069, PL-070 | A01, P05 | 16 |
-| MATRIX_COUNTER_OFFER | GH | COUNTER_OFFER, REFER:PRODUCT | PL-066, PL-067, PL-068 | A01, A05, P05 | 16 |
+| MATRIX_APPROVE | GH | APPROVE, COUNTER_OFFER | PL-063, PL-064, PL-069, PL-070 | A01, P05 | 16 |
+| MATRIX_COUNTER_OFFER | GH | COUNTER_OFFER | PL-066, PL-067, PL-068 | A01, A05, P05 | 16 |
 | MATRIX_DECLINE | DEH | DECLINE:CREDIT_SCORE, DECLINE:DELINQUENCY | PL-029, PL-043, PL-048 | C01, C06, C09 | 16 |
 
 Applicants per amount band and outcome (200-applicant run):
@@ -299,30 +314,28 @@ Applicants per amount band and outcome (200-applicant run):
 | Band | APPROVE | COUNTER_OFFER | DECLINE | MORE_INFORMATION_REQUIRED | REFER | RE_PULL | STOP |
 |---|---|---|---|---|---|---|---|
 | B1 | 8 | 4 | 17 | 1 | 35 | 0 | 0 |
-| B2 | 7 | 6 | 15 | 4 | 37 | 2 | 3 |
-| B3 | 4 | 7 | 10 | 3 | 24 | 0 | 1 |
-| B4 | 0 | 0 | 4 | 0 | 8 | 0 | 0 |
+| B2 | 7 | 7 | 15 | 4 | 36 | 2 | 3 |
+| B3 | 4 | 10 | 10 | 3 | 21 | 0 | 1 |
+| B4 | 0 | 8 | 4 | 0 | 0 | 0 | 0 |
 
 Applicants per purpose: crypto_investment 1, higher_education 50, home_renovation 52, medical_emergency 46, speculative_trading 1, wedding 50.
 <!-- END:scenario-table -->
 
 ## 6. ZEN input coverage
 
-**Coverage target:** every input name referenced by:
-- `USER_RULE_CATALOGUE_PL.yaml` (PL-001..PL-099 inputs);
-- catalogue v2 (`contracts/catalogue_v2/rules.py` on the rules worktree: PL-100..PL-128 inputs and per-rule extras);
-- the 30 `ZenInput` data points (`contracts/zen.py` @ 7789416).
+**Coverage target:** every field of the contract data dictionary (`contracts_snapshot/data_dictionary.json` @ cc202ae, 229 fields,
+which covers PL-001..PL-129 inputs and per-rule extras) plus the 29 `ZenInput` data points (`zen_data_point_aliases`).
+`zen_input_catalogue.py` reads the dictionary at import, so there is no hand-kept snapshot to drift.
 
-The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.py`. `docs/saral/rule_catalogue.v2.json`, `contracts/data_dictionary.json`, `PRODUCT_MATRIX.md`, `product_matrix.json` and `ZEN_INPUT_COVERAGE.md` did not exist when it was taken. Re-snapshot when they land.
-
-**Classes:**
-- **APPLICANT:** must be present for every applicant.
+**Classes** (the dictionary's own `zen_input_class`):
+- **APPLICANT:** must be present for every applicant; `zen_inputs` holds exactly these.
 - **POLICY:** a catalogue parameter, not per-applicant data.
 - **ZEN:** produced by ZEN itself (`rule_results`, `policy_version`).
 
 **What `validate()` checks:**
 - It fails when an APPLICANT input is absent, or null where the applicant's scenario does not explain the null.
 - `test_every_zen_input_present_for_every_applicant` runs it on all 200 applicants.
+- `test_zen_inputs_keys_equal_the_dictionary_applicant_fields` asserts the key set is exactly the dictionary's APPLICANT fields.
 - `test_input_classification_is_total_and_doc_table_complete` checks every catalogue name appears in the table below.
 
 **Envelopes:** `zen_input_envelope(app)` builds a full `saral-zen-input/1` document. All 198 product applicants validate against the contracts' `ZenInput` (run with `SARAL_CONTRACTS_DIR=<contracts worktree>`). The 2 PURPOSE_NOT_OFFERED applicants have no product, so they get no envelope.
@@ -330,7 +343,8 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 **Notes:**
 - `suit_filed_status` and `restructured_account_count` are present, but always false/0: bureau-report/1 can't carry them (PL-049/050 are deferred).
 - `total_overdue_amount` is derived (3 × EMI on DEFAULT accounts) because bureau-report/1 has no overdue field.
-- `interest_rate`/`applicant_pricing_band` are a dataset assumption by risk grade (A 13%, B 16%, C 21%, NTC 24%) inside Bajaj's 10–30.5%.
+- `interest_rate` is the product's flat prototype rate (20%, A-05) and `applicant_pricing_band` is `FLAT_PER_PRODUCT`: no risk-grade pricing (ADR-0007 #3).
+- `low_confidence` is true when any OCR field confidence is under 60 (PL-089, A-16).
 - OCR confidences and signature similarity are **simulated**. Real values come from running the OCR chain on `--render-docs` images.
 
 <!-- BEGIN:coverage-table (generated) -->
@@ -338,13 +352,12 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 |---|---|---|---|---|---|
 | `active_account_count` | APPLICANT | PL-026, PL-033 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `active_credit_accounts` | APPLICANT | PL-058 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
-| `active_personal_loan_count` | APPLICANT | PL-033(extra) | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
+| `active_personal_loan_count` | APPLICANT | PL-033 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `actual_emi_debits` | APPLICANT | PL-082 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `address_match_status` | APPLICANT | PL-023 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `address_similarity` | APPLICANT | PL-023(extra) | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; no bureau identity on file | 200/200 |
-| `age_at_application` | APPLICANT | ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `age_at_assessment` | APPLICANT | PL-001(extra) | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `age_at_maturity` | APPLICANT | PL-002(extra), PL-073, ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `address_similarity` | APPLICANT | PL-023 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; no bureau identity on file | 200/200 |
+| `age_at_assessment` | APPLICANT | PL-001 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `age_at_maturity` | APPLICANT | PL-002, PL-073 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `amount_band` | APPLICANT | PL-120, PL-121, PL-122, PL-123 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `anomaly_indicators` | APPLICANT | PL-085 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `applicant_address` | APPLICANT | PL-023 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
@@ -366,20 +379,20 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 | `assessment_rate` | APPLICANT | PL-107 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `assessment_window` | APPLICANT | PL-041, PL-042, PL-043 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `average_monthly_balance` | APPLICANT | PL-079 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
-| `average_monthly_income` | APPLICANT | PL-010(extra) | bank statement (`bank_statements.jsonl`) | never | 200/200 |
-| `bank_salary_credit_avg` | APPLICANT | PL-009(extra), ZenInput | bank statement (`bank_statements.jsonl`) | never | 200/200 |
+| `average_monthly_income` | APPLICANT | PL-010 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
+| `bank_salary_credit_avg` | APPLICANT | PL-009 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `bank_transactions` | APPLICANT | PL-078, PL-079, PL-080, PL-081, PL-082, PL-083, PL-084, PL-085, PL-087 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
-| `bureau_accounts` | APPLICANT | PL-025, PL-032(extra), PL-033, PL-034, PL-035, PL-038, PL-039, PL-040, PL-047, PL-048, PL-049, PL-050, PL-055 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
+| `bureau_accounts` | APPLICANT | PL-025, PL-032, PL-033, PL-034, PL-035, PL-038, PL-039, PL-040, PL-047, PL-048, PL-049, PL-050, PL-055 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `bureau_address` | APPLICANT | PL-023 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts); no bureau identity on file | 200/200 |
 | `bureau_data_quality_flags` | APPLICANT | PL-028 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `bureau_dob` | APPLICANT | PL-022 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts); no bureau identity on file | 200/200 |
 | `bureau_enquiries` | APPLICANT | PL-052, PL-053, PL-054 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `bureau_identity` | APPLICANT | PL-020 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts); no bureau identity on file | 200/200 |
-| `bureau_match_status` | APPLICANT | PL-027, PL-118, PL-124 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `bureau_match_status` | APPLICANT | PL-027, PL-118, PL-124, PL-129 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `bureau_name` | APPLICANT | PL-021 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts); no bureau identity on file | 200/200 |
 | `bureau_report_date` | APPLICANT | PL-024 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `bureau_report_status` | APPLICANT | PL-019, PL-027 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `bureau_score` | APPLICANT | PL-029, PL-120, PL-124 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE | 200/200 |
+| `bureau_score` | APPLICANT | PL-029, PL-120, PL-124, PL-129 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE | 200/200 |
 | `calculated_emi` | APPLICANT | PL-074 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `cash_deposit_percentage` | APPLICANT | PL-083 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `closed_account_count` | APPLICANT | PL-034 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
@@ -389,14 +402,13 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 | `credit_card_balances` | APPLICANT | PL-036 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
 | `credit_card_payment_history` | APPLICANT | PL-051 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
 | `credit_history_months` | APPLICANT | PL-026, PL-031 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
-| `credit_score` | APPLICANT | ZenInput | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE | 200/200 |
-| `current_default_count` | APPLICANT | PL-040(extra) | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
+| `current_default_count` | APPLICANT | PL-040 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `current_exposure` | APPLICANT | PL-056 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `current_score` | APPLICANT | PL-030 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE | 200/200 |
 | `date_of_birth` | APPLICANT | PL-001, PL-002 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `days_since_last_decline` | APPLICANT | PL-114 | internal lists, universe cross-check, `application_history` | null = none / not applicable to the product | 200/200 |
 | `days_since_last_dpd` | APPLICANT | PL-045 | application, declared data, identity/e-KYC/PAN, or computed from them | null = none / not applicable to the product | 200/200 |
-| `debit_credit_ratio` | APPLICANT | PL-106, ZenInput | bank statement (`bank_statements.jsonl`) | never | 200/200 |
+| `debit_credit_ratio` | APPLICANT | PL-106 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `debt_mismatch` | APPLICANT | PL-086 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `declared_income` | APPLICANT | PL-017, PL-092 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `declared_obligations` | APPLICANT | PL-086 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
@@ -419,34 +431,31 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 | `eligible_loan_purposes` | POLICY | PL-076 | rule catalogue parameter (not per applicant) | - | n/a |
 | `eligible_nationalities` | POLICY | PL-003 | rule catalogue parameter (not per applicant) | - | n/a |
 | `email_hash` | APPLICANT | PL-115 | internal lists, universe cross-check, `application_history` | never | 200/200 |
-| `employer_category` | APPLICANT | ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `employer_caution_list_hit` | APPLICANT | PL-116 | internal lists, universe cross-check, `application_history` | never | 200/200 |
-| `employer_changes_24m` | APPLICANT | PL-013(extra) | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `employer_changes_24m` | APPLICANT | PL-013 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `employer_history` | APPLICANT | PL-013 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `employer_name` | APPLICANT | PL-105, PL-116 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `employer_name_similarity` | APPLICANT | PL-105 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `employer_stability_indicator` | APPLICANT | PL-013 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `employment_category` | APPLICANT | PL-005, PL-122 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `employment_category` | APPLICANT | PL-005, PL-122, PL-129 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `employment_gap_months` | APPLICANT | PL-015 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `employment_history` | APPLICANT | PL-015 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `employment_months` | APPLICANT | PL-014, PL-122, ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `employment_months` | APPLICANT | PL-014, PL-122, PL-129 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `employment_start_date` | APPLICANT | PL-014 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `employment_status` | APPLICANT | PL-016 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `employment_type` | APPLICANT | PL-004, PL-005(extra), PL-016, PL-078(extra), PL-105, PL-117, PL-122 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `enquiries_6m` | APPLICANT | ZenInput | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
+| `employment_type` | APPLICANT | PL-004, PL-005, PL-016, PL-078, PL-105, PL-117, PL-122 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `enquiries_last_30_days` | APPLICANT | PL-052 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
-| `enquiries_last_6_months` | APPLICANT | PL-053(extra) | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
+| `enquiries_last_6_months` | APPLICANT | PL-053 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `enquiries_last_90_days` | APPLICANT | PL-053 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `enquiry_count` | APPLICANT | PL-057 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `evidence_comparison_results` | APPLICANT | PL-097 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `evidence_references` | APPLICANT | PL-099 | `documents`, `consents`, all evidence ids | never | 200/200 |
-| `existing_emi_total` | APPLICANT | ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `existing_monthly_obligations` | APPLICANT | PL-058, PL-062, PL-125 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `existing_monthly_obligations` | APPLICANT | PL-058, PL-062, PL-125, PL-129 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `existing_obligations` | APPLICANT | PL-066, PL-067 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `expected_emi_debits` | APPLICANT | PL-082 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `exposure_growth_percentage` | APPLICANT | PL-056 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
 | `extracted_identity_fields` | APPLICANT | PL-094 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
-| `foir` | APPLICANT | PL-063, PL-064, PL-123, ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `foir` | APPLICANT | PL-063, PL-064, PL-123 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `fraud_indicators` | APPLICANT | PL-098 | internal lists, universe cross-check, `application_history` | never | 200/200 |
 | `gross_income` | APPLICANT | PL-009 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
 | `historical_exposure` | APPLICANT | PL-056 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
@@ -457,26 +466,25 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 | `identity_verification_status` | APPLICANT | PL-006 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `income_match_status` | APPLICANT | PL-017 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `income_reduction_percentage` | APPLICANT | PL-018 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
-| `income_variance_ratio` | APPLICANT | PL-012(extra), ZenInput | bank statement (`bank_statements.jsonl`) | never | 200/200 |
+| `income_variance_ratio` | APPLICANT | PL-012 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `income_variation` | APPLICANT | PL-011 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `independently_calculated_emi` | APPLICANT | PL-074 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `interest_rate` | APPLICANT | PL-061, PL-068, PL-074, PL-075(extra) | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `kyc_dob_match` | APPLICANT | PL-094(extra), ZenInput | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | IDENTITY_INCOMPLETE | 200/200 |
-| `kyc_id_last4_match` | APPLICANT | PL-094(extra), ZenInput | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
-| `kyc_name_match_score` | APPLICANT | PL-094(extra), ZenInput | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
+| `interest_rate` | APPLICANT | PL-061, PL-068, PL-074, PL-075 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `kyc_dob_match` | APPLICANT | PL-094 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | IDENTITY_INCOMPLETE | 200/200 |
+| `kyc_id_last4_match` | APPLICANT | PL-094 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
+| `kyc_name_match_score` | APPLICANT | PL-094 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
 | `last_decline_date` | APPLICANT | PL-114 | internal lists, universe cross-check, `application_history` | null = none / not applicable to the product | 200/200 |
 | `last_dpd_date` | APPLICANT | PL-045 | application, declared data, identity/e-KYC/PAN, or computed from them | null = none / not applicable to the product | 200/200 |
-| `loan_amount` | APPLICANT | ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `loan_purpose` | APPLICANT | PL-076, PL-109, PL-110, PL-111, PL-125, PL-126, PL-127, PL-128 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `loan_purpose` | APPLICANT | PL-076, PL-109, PL-110, PL-111, PL-125, PL-126, PL-127, PL-128, PL-129 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `loan_tenure_months` | APPLICANT | PL-002 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `max_dpd_12m` | APPLICANT | PL-041(extra), PL-042(extra), PL-124, ZenInput | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
-| `max_dpd_24m` | APPLICANT | PL-043(extra), PL-124, ZenInput | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
+| `low_confidence` | APPLICANT | (dictionary only) | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `max_dpd_12m` | APPLICANT | PL-041, PL-042, PL-124 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
+| `max_dpd_24m` | APPLICANT | PL-043, PL-124 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `maximum_affordable_emi` | APPLICANT | PL-068 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `maximum_age_at_maturity` | POLICY | PL-002, PL-073 | rule catalogue parameter (not per applicant) | - | n/a |
 | `maximum_loan_amount` | POLICY | PL-070 | rule catalogue parameter (not per applicant) | - | n/a |
 | `maximum_report_age_days` | POLICY | PL-024 | rule catalogue parameter (not per applicant) | - | n/a |
 | `maximum_tenure_months` | POLICY | PL-072 | rule catalogue parameter (not per applicant) | - | n/a |
-| `min_ocr_confidence` | APPLICANT | ZenInput | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
 | `minimum_age` | POLICY | PL-001 | rule catalogue parameter (not per applicant) | - | n/a |
 | `minimum_confidence` | POLICY | PL-089 | rule catalogue parameter (not per applicant) | - | n/a |
 | `minimum_income` | POLICY | PL-008 | rule catalogue parameter (not per applicant) | - | n/a |
@@ -485,34 +493,32 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 | `missed_payment_count` | APPLICANT | PL-051 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `monthly_income_history` | APPLICANT | PL-010, PL-011 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `monthly_income_variance` | APPLICANT | PL-084 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
-| `monthly_net_income` | APPLICANT | PL-008, PL-009, PL-063, PL-065, PL-066, PL-067, PL-077(extra), PL-108, PL-125 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `monthly_net_income` | APPLICANT | PL-008, PL-009, PL-063, PL-065, PL-066, PL-067, PL-077, PL-108, PL-125, PL-129 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `months_at_current_address` | APPLICANT | PL-101 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `name_match_status` | APPLICANT | PL-021 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `name_similarity` | APPLICANT | PL-021(extra) | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `nationality` | APPLICANT | PL-003, ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `name_similarity` | APPLICANT | PL-021 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `nationality` | APPLICANT | PL-003 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `negative_balance_count` | APPLICANT | PL-080 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `negative_list_hit` | APPLICANT | PL-113 | internal lists, universe cross-check, `application_history` | never | 200/200 |
-| `net_monthly_income` | APPLICANT | ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `observed_recurring_debits` | APPLICANT | PL-086 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `observed_salary_credits` | APPLICANT | PL-012 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `ocr_extracted_income` | APPLICANT | PL-092 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
 | `ocr_field_confidence` | APPLICANT | PL-089 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
 | `oldest_account_date` | APPLICANT | PL-031 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
-| `other_monthly_obligations` | APPLICANT | PL-060, PL-062(extra), PL-125 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
+| `other_monthly_obligations` | APPLICANT | PL-060, PL-062, PL-125, PL-129 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `pan_format_valid` | APPLICANT | PL-102 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
 | `pan_hash` | APPLICANT | PL-113, PL-114 | internal lists, universe cross-check, `application_history` | never | 200/200 |
 | `payee_account_present` | APPLICANT | PL-128 | product details and documents (`product`) | never | 200/200 |
 | `payment_regularity_indicator` | APPLICANT | PL-046 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
 | `payslip_count` | APPLICANT | PL-121 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
-| `payslip_net_avg` | APPLICANT | PL-009(extra), ZenInput | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
+| `payslip_net_avg` | APPLICANT | PL-009 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
 | `phone_hash` | APPLICANT | PL-115 | internal lists, universe cross-check, `application_history` | never | 200/200 |
 | `policy_version` | ZEN | PL-099 | produced by ZEN (decision trace) | - | n/a |
 | `principal` | APPLICANT | PL-074 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `product_purpose` | APPLICANT | PL-112 | application, declared data, identity/e-KYC/PAN, or computed from them | PURPOSE_NOT_OFFERED | 200/200 |
 | `property_ownership` | APPLICANT | PL-127 | product details and documents (`product`) | null = none / not applicable to the product | 200/200 |
-| `proposed_emi` | APPLICANT | PL-061, PL-062, PL-066, PL-079(extra), ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `purpose` | APPLICANT | ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
-| `purpose_evidence_amount` | APPLICANT | PL-126 | product details and documents (`product`) | no product document | 200/200 |
+| `proposed_emi` | APPLICANT | PL-061, PL-062, PL-066, PL-079 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `purpose_evidence_amount` | APPLICANT | PL-126, PL-129 | product details and documents (`product`) | no product document | 200/200 |
 | `purpose_evidence_status` | APPLICANT | PL-111 | product details and documents (`product`) | never | 200/200 |
 | `recent_income` | APPLICANT | PL-018 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `recent_loan_application_count` | APPLICANT | PL-054 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
@@ -521,10 +527,9 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 | `recently_opened_account_count` | APPLICANT | PL-057 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `recorded_consents` | APPLICANT | PL-095 | `documents`, `consents`, all evidence ids | never | 200/200 |
 | `repayment_history` | APPLICANT | PL-046 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
-| `reported_card_emi` | APPLICANT | PL-059(extra) | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
-| `requested_amount` | APPLICANT | PL-061, PL-069, PL-070, PL-108, PL-109, PL-118, PL-119, PL-125, PL-126 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `reported_card_emi` | APPLICANT | PL-059 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
+| `requested_amount` | APPLICANT | PL-061, PL-069, PL-070, PL-108, PL-109, PL-118, PL-119, PL-125, PL-126, PL-129 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `required_consents` | POLICY | PL-095 | rule catalogue parameter (not per applicant) | - | n/a |
-| `required_docs_present` | APPLICANT | ZenInput | `documents`, `consents`, all evidence ids | never | 200/200 |
 | `required_documents` | APPLICANT | PL-088 | `documents`, `consents`, all evidence ids | never | 200/200 |
 | `required_fields` | POLICY | PL-096 | rule catalogue parameter (not per applicant) | - | n/a |
 | `required_identity_fields` | POLICY | PL-006 | rule catalogue parameter (not per applicant) | - | n/a |
@@ -536,28 +541,28 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 | `rule_results` | ZEN | PL-099 | produced by ZEN (decision trace) | - | n/a |
 | `salary_credit_consistency` | APPLICANT | PL-078 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `salary_credit_employer` | APPLICANT | PL-105 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
-| `salary_credit_months` | APPLICANT | PL-078(extra), ZenInput | bank statement (`bank_statements.jsonl`) | never | 200/200 |
+| `salary_credit_months` | APPLICANT | PL-078 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `salary_match_status` | APPLICANT | PL-012 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `salary_reversal_indicator` | APPLICANT | PL-087 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `score_trend` | APPLICANT | PL-030 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE | 200/200 |
 | `secured_account_count` | APPLICANT | PL-032 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `settled_account_count` | APPLICANT | PL-047 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
-| `settled_within_lookback` | APPLICANT | PL-047(extra) | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
+| `settled_within_lookback` | APPLICANT | PL-047 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `shared_contact_pan_count` | APPLICANT | PL-115 | internal lists, universe cross-check, `application_history` | never | 200/200 |
 | `signature_anomaly_score` | APPLICANT | PL-104 | signature specimens + simulated screening (`signature`) | SIG_MISSING | 200/200 |
 | `signature_crop_sha256` | APPLICANT | PL-104 | signature specimens + simulated screening (`signature`) | SIG_MISSING | 200/200 |
 | `signature_present` | APPLICANT | PL-104 | signature specimens + simulated screening (`signature`) | never | 200/200 |
-| `signature_similarity` | APPLICANT | PL-104, ZenInput | signature specimens + simulated screening (`signature`) | SIG_MISSING | 200/200 |
+| `signature_similarity` | APPLICANT | PL-104 | signature specimens + simulated screening (`signature`) | SIG_MISSING | 200/200 |
 | `statement_integrity_result` | APPLICANT | PL-093 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `statement_months` | APPLICANT | PL-121 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `statement_validation_flags` | APPLICANT | PL-093 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `submitted_documents` | APPLICANT | PL-088 | `documents`, `consents`, all evidence ids | never | 200/200 |
 | `suit_filed_status` | APPLICANT | PL-049 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `supplied_fields` | APPLICANT | PL-096 | `documents`, `consents`, all evidence ids | never | 200/200 |
-| `supplied_identity_fields` | APPLICANT | PL-006(extra) | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `supplied_identity_fields` | APPLICANT | PL-006 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `supported_employment_types` | POLICY | PL-004 | rule catalogue parameter (not per applicant) | - | n/a |
 | `tampering_flags` | APPLICANT | PL-090 | payslips + simulated OCR (`employment.payslips`, `ocr_extractions`) | never | 200/200 |
-| `tenure_months` | APPLICANT | PL-061, PL-068, PL-071, PL-072, PL-074, PL-110, PL-125, ZenInput | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
+| `tenure_months` | APPLICANT | PL-061, PL-068, PL-071, PL-072, PL-074, PL-110, PL-125, PL-129 | application, declared data, identity/e-KYC/PAN, or computed from them | never | 200/200 |
 | `total_credit_limits` | APPLICANT | PL-036 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
 | `total_credits` | APPLICANT | PL-106 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `total_debits` | APPLICANT | PL-106 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
@@ -572,10 +577,8 @@ The snapshot is vendored as `synthetic_data/saral_kyc_bank/zen_input_catalogue.p
 | `utilisation_ratio` | APPLICANT | PL-036, PL-037 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE; NO_HIT/THIN_FILE (no accounts) | 200/200 |
 | `verified_income` | APPLICANT | PL-017, PL-092 | bank statement (`bank_statements.jsonl`) | never | 200/200 |
 | `wedding_date` | APPLICANT | PL-127 | product details and documents (`product`) | null = none / not applicable to the product | 200/200 |
-| `writeoff_settlement_24m` | APPLICANT | ZenInput | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
-| `writeoff_settlement_older` | APPLICANT | ZenInput | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 | `written_off_account_count` | APPLICANT | PL-048 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
-| `written_off_within_lookback` | APPLICANT | PL-048(extra) | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
+| `written_off_within_lookback` | APPLICANT | PL-048 | bureau report (`bureau_cases.json`) + `bureau_link.history_sidecar`/`identity_on_file` | BUREAU_UNAVAILABLE | 200/200 |
 <!-- END:coverage-table -->
 
 ## 7. Signatures and the OCR hook
@@ -628,5 +631,5 @@ The aim is to store references, hashes and masked values in the LMS, and keep ra
 - **Native pass history sits on a boundary:** native pass history opens every account exactly 183 days before `as_of`, on the C03/C14 boundaries. Most scenarios use `AGED`; the native-history ones list C03/C14 under `also_triggers`.
 - **Purpose mismatch can't reach ZEN:** the contracts' `ZenInput` rejects a `purpose` data point that differs from `product_id`. PURPOSE_PRODUCT_MISMATCH therefore exposes the declared purpose only in `zen_inputs.declared_purpose` vs `product_purpose`. PL-112 can't be evaluated from a `ZenInput` alone.
 - **Hex hashes and the raw-identifier check:** the contracts' `NoRawIdentifiers` Aadhaar pattern matches any 12-digit run, so hex hashes and numeric id bodies can trip it. This dataset avoids both; the contract owner may want to narrow the pattern.
-- **Simulated values:** OCR confidence, signature similarity and risk-grade pricing are simulated. PL-125 grade-based offer sizing is not modelled.
+- **Simulated values:** OCR confidence, signature similarity and the bank categoriser are simulated. PL-125 grade-based sizing is deferred (ADR-0007 #3).
 - **Sample coverage:** the 20-applicant committed sample covers 20 scenarios. Use `--count 200` for the full mix.

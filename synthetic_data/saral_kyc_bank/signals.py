@@ -19,7 +19,7 @@ from .product import income_floor
 T = {  # DRAFT thresholds from ZEN_RULES_PROPOSAL_v2.md; none is approved policy.
     "min_age": 21, "max_age_at_maturity": 80, "min_amount": 40_000, "max_amount": 7_500_000,
     "min_tenure": 12, "max_tenure": 108, "min_income": 25_001, "min_months_employer": 6,
-    "min_total_experience": 12, "min_score": 650, "max_report_age": 30, "max_enq_6m": 4,
+    "min_total_experience": 12, "min_score": 700, "max_report_age": 30, "max_enq_6m": 4,
     "max_enq_30d": 2, "max_pl_enq_90d": 2, "max_new_acc_6m": 2, "max_active_pl": 3, "max_util": 0.80,
     "max_foir": 0.50, "min_residual": 15_000, "max_payslip_gap": 0.10, "max_cash_share": 0.50,
 }
@@ -70,9 +70,9 @@ def balance_breaks(stmt: dict) -> list[str]:
     for t in stmt["transactions"]:
         amt = round(t["amount"] * 100)
         expect = prev + (amt if t["type"] == "CREDIT" else -amt)
-        if round(t["balance"] * 100) != expect:
+        if round(t["balance_after"] * 100) != expect:
             bad.append(t["txn_id"])
-        prev = round(t["balance"] * 100)
+        prev = round(t["balance_after"] * 100)
     return bad
 
 
@@ -125,7 +125,7 @@ def flags(app: dict, stmt: dict, report: dict | None, universe: dict) -> set[str
     if purpose == "higher_education" and prod["purpose_evidence_status"] == "MISSING":
         f.add("P02")
     zi = app["zen_inputs"]
-    if zi["min_ocr_confidence"] < 60:
+    if app["zen_data_points"]["min_ocr_confidence"]["value"] < 60:
         f.add("K07")
     if not zi["pan_format_valid"]:
         f.add("K01")
@@ -139,16 +139,16 @@ def flags(app: dict, stmt: dict, report: dict | None, universe: dict) -> set[str
         f.add("K04")
     # ---- identity / KYC (A, C, J)
     ek, pan = app["aadhaar_ekyc"], app["pan"]
-    if ek["poi"]["dob"] is None or not ek["poa"]["house"]:
+    if ek["dob"] is None or not ek["address"]["line_masked"]:
         f.add("G06")
-    names = {ek["poi"]["name"].upper(), pan["name_as_on_pan"].upper(), stmt["account"]["holder_name"].upper()}
+    names = {ek["name"].upper(), pan["name_on_pan"].upper(), stmt["account"]["holder_name"].upper()}
     if len(names) > 1:
         f.add("K02")
-    if ek["poi"]["dob"] and ek["poi"]["dob"] != pan["dob_as_on_pan"]:
+    if ek["dob"] and ek["dob"] != pan["dob_on_pan"]:
         f.add("K03")
     on_file = app["bureau_link"]["identity_on_file"]
     if on_file:
-        if on_file["name"].upper() != ek["poi"]["name"].upper():
+        if on_file["name"].upper() != ek["name"].upper():
             f.add("PL-021")
         if on_file["dob"] != ident["date_of_birth"]:
             f.add("PL-022")
@@ -162,11 +162,11 @@ def flags(app: dict, stmt: dict, report: dict | None, universe: dict) -> set[str
         f.add("K08")
     others = [a for a in universe["applicants"] if a["applicant_id"] != app["applicant_id"]]
     earlier = [a for a in others if a["applicant_id"] < app["applicant_id"]]
-    if any(a["pan"]["pan"] == pan["pan"] for a in earlier):
+    if any(a["specimen_truth"]["pan_number"] == app["specimen_truth"]["pan_number"] for a in earlier):
         f.add("X03")
-    if any(a["identity"]["phone"] == ident["phone"] and a["pan"]["pan"] != pan["pan"] for a in earlier):
+    if any(a["identity"]["phone"] == ident["phone"] and a["specimen_truth"]["pan_number"] != app["specimen_truth"]["pan_number"] for a in earlier):
         f.add("X04")
-    if any(n["pan"] == pan["pan"] for n in universe["internal_lists"]["negative_list"]):
+    if any(n["pan"] == app["specimen_truth"]["pan_number"] for n in universe["internal_lists"]["negative_list"]):
         f.add("X01")
     if any(c["employer_name"] == d["employer_name"] for c in universe["internal_lists"]["employer_caution_list"]):
         f.add("X05")
@@ -223,16 +223,16 @@ def flags(app: dict, stmt: dict, report: dict | None, universe: dict) -> set[str
             f.add("C16")
     # ---- bank (I) and affordability (G)
     tx = stmt["transactions"]
-    months = sorted({_month(t["txn_date"]) for t in tx})
+    months = sorted({_month(t["date"]) for t in tx})
     last3 = months[-3:]
     inc_by_month = {m: 0.0 for m in months}
     for t in tx:
         if t["type"] == "CREDIT" and t["synthetic_truth_tag"] in INCOME_TAGS:
-            inc_by_month[_month(t["txn_date"])] += t["amount"]
+            inc_by_month[_month(t["date"])] += t["amount"]
         if t["synthetic_truth_tag"] == "SALARY_REVERSAL":
-            inc_by_month[_month(t["txn_date"])] -= t["amount"]
+            inc_by_month[_month(t["date"])] -= t["amount"]
     salary = [t for t in tx if t["synthetic_truth_tag"] == "SALARY"]
-    sal_months = {_month(t["txn_date"]) for t in salary}
+    sal_months = {_month(t["date"]) for t in salary}
     salaried = d["applicant_profile"] == "SALARIED"
     if salaried and (len([m for m in last3 if m in sal_months]) < 3
                      or any(t["synthetic_truth_tag"] == "SALARY_REVERSAL" for t in tx)):
@@ -254,7 +254,7 @@ def flags(app: dict, stmt: dict, report: dict | None, universe: dict) -> set[str
         if abs(slips[-1]["net"] - salary[-1]["amount"]) / salary[-1]["amount"] > T["max_payslip_gap"]:
             f.add("I01")
     returns = sum(1 for t in tx if t["synthetic_truth_tag"] in ("EMI_RETURN", "CHEQUE_RETURN")
-                  and _month(t["txn_date"]) in last3)
+                  and _month(t["date"]) in last3)
     if returns >= 3:
         f.add("I05_DECLINE")
     elif returns:
@@ -263,7 +263,7 @@ def flags(app: dict, stmt: dict, report: dict | None, universe: dict) -> set[str
     cash = sum(t["amount"] for t in tx if t["synthetic_truth_tag"] == "CASH_DEPOSIT")
     if credits and cash / credits > T["max_cash_share"]:
         f.add("I07")
-    if any(t["balance"] < 0 for t in tx):
+    if any(t["balance_after"] < 0 for t in tx):
         f.add("PL-080")
     if any(t["synthetic_truth_tag"] == "EMI_UNDECLARED" for t in tx):
         f.add("I08")
@@ -276,7 +276,7 @@ def flags(app: dict, stmt: dict, report: dict | None, universe: dict) -> set[str
                     and a["monthly_obligation"]:
                 first_due = (date.fromisoformat(a["opened_on"]) + timedelta(days=31)).isoformat()[:7]
                 due = [m for m in last3 if m > first_due]
-                seen = {_month(t["txn_date"]) for t in tx if t["synthetic_truth_tag"] == "EMI_BUREAU"
+                seen = {_month(t["date"]) for t in tx if t["synthetic_truth_tag"] == "EMI_BUREAU"
                         and t["amount"] == a["monthly_obligation"] and t["type"] == "DEBIT"}
                 if any(m not in seen for m in due):
                     f.add("PL-082")

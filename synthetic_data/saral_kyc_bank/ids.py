@@ -75,6 +75,11 @@ def mask_aadhaar_contract(number: str) -> str:
     return f"XXXX XXXX {number[-4:]}"
 
 
+def mask_house(house: str) -> str:
+    """House number shown masked in the e-KYC address line (digits replaced)."""
+    return "".join("X" if c.isdigit() else c for c in house)
+
+
 def synthetic_pan(rng: random.Random, surname: str) -> str:
     """ZZ + letter + P (individual) + surname initial + 4 digits + letter."""
     initial = surname[0].upper()

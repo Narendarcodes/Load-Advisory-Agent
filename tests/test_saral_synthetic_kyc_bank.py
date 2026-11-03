@@ -45,8 +45,8 @@ def test_same_seed_same_output():
 
 
 def test_different_seed_differs():
-    a = build_universe(5, seed=SEED)["applicants"][0]["aadhaar_ekyc"]["uid"]
-    b = build_universe(5, seed=SEED + 1)["applicants"][0]["aadhaar_ekyc"]["uid"]
+    a = build_universe(5, seed=SEED)["applicants"][0]["specimen_truth"]["aadhaar_uid"]
+    b = build_universe(5, seed=SEED + 1)["applicants"][0]["specimen_truth"]["aadhaar_uid"]
     assert a != b
 
 
@@ -63,14 +63,14 @@ def test_verhoeff_known_vector_and_all_aadhaar_valid():
     assert ids.verhoeff_check_digit("236") == "3"
     assert ids.verhoeff_ok("2363") and not ids.verhoeff_ok("2364")
     for a in universe()["applicants"]:
-        uid = a["aadhaar_ekyc"]["uid"]
+        uid = a["specimen_truth"]["aadhaar_uid"]
         assert ids.verhoeff_ok(uid), uid
 
 
 def test_aadhaar_never_starts_with_2_to_9():
     rng = random.Random(1)
     draws = [ids.synthetic_aadhaar(rng) for _ in range(5000)]
-    draws += [a["aadhaar_ekyc"]["uid"] for a in universe()["applicants"]]
+    draws += [a["specimen_truth"]["aadhaar_uid"] for a in universe()["applicants"]]
     for uid in draws:
         assert len(uid) == 12 and uid.isdigit()
         assert uid[0] in "01", uid
@@ -80,12 +80,13 @@ def test_aadhaar_never_starts_with_2_to_9():
 def test_aadhaar_masking():
     for a in universe()["applicants"]:
         e = a["aadhaar_ekyc"]
-        assert e["uid_masked"] == f"XXXX-XXXX-{e['uid'][-4:]}"
+        assert e["aadhaar_last4"] == a["specimen_truth"]["aadhaar_uid"][-4:]
+        assert a["specimen_truth"]["aadhaar_uid"] not in json.dumps(e)
 
 
 def test_pan_format_prefix_and_surname_initial():
     for a in universe()["applicants"]:
-        p = a["pan"]["pan"]
+        p = a["specimen_truth"]["pan_number"]
         assert ids.PAN_FORMAT_RE.match(p) and ids.SYNTHETIC_PAN_RE.match(p), p
         assert p[3] == "P"
         assert p[4] == a["identity"]["surname"][0].upper()
@@ -124,15 +125,15 @@ def test_balance_arithmetic_and_summary():
         assert round(s["summary"]["total_credits"] * 100) == cr
         assert round(s["summary"]["total_debits"] * 100) == dr
         assert round(s["summary"]["opening_balance"] * 100) + cr - dr == round(s["summary"]["closing_balance"] * 100)
-        assert tx[-1]["balance"] == s["summary"]["closing_balance"]
-        dates = [t["txn_date"] for t in tx]
+        assert tx[-1]["balance_after"] == s["summary"]["closing_balance"]
+        dates = [t["date"] for t in tx]
         assert dates == sorted(dates)
-        assert s["summary"]["period_start"] <= dates[0] and dates[-1] <= s["summary"]["period_end"]
+        assert s["period"]["from"] <= dates[0] and dates[-1] <= s["period"]["to"]
 
 
 def test_negative_balance_only_where_designed():
     for a, s, _ in _triples(universe()):
-        negative = any(t["balance"] < 0 for t in s["transactions"])
+        negative = any(t["balance_after"] < 0 for t in s["transactions"])
         assert negative == (a["scenario"]["id"] == "NEGATIVE_BALANCE"), a["applicant_id"]
 
 
@@ -200,9 +201,9 @@ def test_obligations_consistent_across_bureau_bank_declared():
             assert a["declared"]["monthly_obligations"] == total
         if sc in deliberate_bank:
             continue
-        last = s["summary"]["period_end"][:7]
+        last = s["period"]["to"][:7]
         observed = sorted(t["amount"] for t in s["transactions"]
-                          if t["synthetic_truth_tag"] == "EMI_BUREAU" and t["txn_date"][:7] == last)
+                          if t["synthetic_truth_tag"] == "EMI_BUREAU" and t["date"][:7] == last)
         expected = sorted(float(x["monthly_obligation"]) for x in inst
                           if x["opened_on"][:7] < last and not x["account_id"].startswith("ACC-PL-NEW"))
         assert set(expected) <= set(observed), (a["applicant_id"], expected, observed)
@@ -295,8 +296,8 @@ def test_products_bands_and_outcomes_spread():
     for band in ("B1", "B2", "B3"):
         for outcome in ("APPROVE", "COUNTER_OFFER", "DECLINE"):
             assert (band, outcome) in cells, (band, outcome)
-    # B4 (> 25L) is above every product cap and PL-123 always sends it to manual review.
-    assert ("B4", "DECLINE") in cells and ("B4", "REFER") in cells
+    # B4 (> 25L) is outside what we offer (ADR-0007 #1): counter-offer within the ceiling, or a credit decline.
+    assert ("B4", "DECLINE") in cells and ("B4", "COUNTER_OFFER") in cells and ("B4", "REFER") not in cells
     matrix = {(a["label"]["purpose"], a["label"]["amount_band"], a["scenario"]["id"])
               for a in apps if a["scenario"]["id"].startswith("MATRIX_")}
     assert len(matrix) == 48
@@ -306,20 +307,34 @@ def test_products_bands_and_outcomes_spread():
             assert key in a["label"]
 
 
+def _pl129_args(a):
+    zi, lr = a["zen_inputs"], a["loan_request"]
+    return dict(purpose=lr["product_purpose"], income=zi["monthly_net_income"], existing=zi["existing_monthly_obligations"] or 0,
+                other=zi["other_monthly_obligations"] or 0, score=zi["bureau_score"], match_status=zi["bureau_match_status"],
+                employment_months=zi["employment_months"], category=zi["employment_category"],
+                evidence=zi["purpose_evidence_amount"])
+
+
 def test_counter_offers_and_approvals_are_arithmetically_right():
+    """Every APPROVE passes PL-129 as asked; every COUNTER_OFFER is the largest passing amount (ADR-0007 #2)."""
+    n = 0
     for a in universe()["applicants"]:
-        zi, lr, path = a["zen_inputs"], a["loan_request"], a["label"]["expected_path"]
-        if not a["scenario"]["id"].startswith("MATRIX_") and a["scenario"]["id"] != "CLEAN_PRIME":
+        lr, path = a["loan_request"], a["label"]["expected_path"]
+        if path not in ("APPROVE", "COUNTER_OFFER"):
             continue
-        income, existing = int(zi["monthly_net_income"]), int(zi["existing_obligations"])
+        n += 1
+        kw = _pl129_args(a)
         if path == "APPROVE":
-            assert product.failures(lr["amount"], lr["tenure_months"], income, existing, lr["product_purpose"]) == []
-        co = a["expected_outcome_hint"].get("expected_counter_offer")
-        if path == "COUNTER_OFFER":
-            assert co and product.failures(lr["amount"], lr["tenure_months"], income, existing, lr["product_purpose"])
-            assert product.failures(co["counter_amount"], co["counter_tenure"], income, existing,
-                                    lr["product_purpose"]) == []
-            assert co["counter_amount"] < lr["amount"] or co["counter_tenure"] > lr["tenure_months"]
+            assert product.pl129_passes(lr["amount"], lr["tenure_months"], **kw), a["applicant_id"]
+            assert "expected_counter_offer" not in a["expected_outcome_hint"]
+        else:
+            co = a["expected_outcome_hint"]["expected_counter_offer"]
+            assert not product.pl129_passes(lr["amount"], lr["tenure_months"], **kw), a["applicant_id"]
+            assert product.pl129_passes(co["counter_amount"], co["counter_tenure"], **kw), a["applicant_id"]
+            if co["counter_amount"] < lr["amount"]:  # reduced amount: the next 1,000 must fail
+                assert not product.pl129_passes(co["counter_amount"] + 1000, co["counter_tenure"], **kw), a["applicant_id"]
+            assert co["counter_amount"] < lr["amount"] or co["counter_tenure"] != lr["tenure_months"]
+    assert n >= 40
 
 
 def test_product_documents_linked():
@@ -413,8 +428,8 @@ def test_duplicate_and_lists_link_back():
         sc = a["scenario"]["id"]
         if sc == "DUPLICATE_APPLICANT":
             assert a["duplicate_of"] == first["applicant_id"]
-            assert a["pan"]["pan"] == first["pan"]["pan"] and a["applicant_id"] != first["applicant_id"]
-        assert (a["pan"]["pan"] in neg) == (sc == "NEGATIVE_LIST_HIT")
+            assert a["specimen_truth"]["pan_number"] == first["specimen_truth"]["pan_number"] and a["applicant_id"] != first["applicant_id"]
+        assert (a["specimen_truth"]["pan_number"] in neg) == (sc == "NEGATIVE_LIST_HIT")
         assert (a["declared"]["employer_name"] in caution) == (sc == "EMPLOYER_CAUTION_LIST")
 
 

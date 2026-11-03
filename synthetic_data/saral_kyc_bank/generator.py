@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import random
 from datetime import date, timedelta
 
@@ -113,7 +114,7 @@ def _identity(i: int, sc: str, seed: int, low_floor_city: bool = False) -> dict:
     }
 
 
-def _aadhaar(i: int, sc: str, seed: int, ident: dict) -> dict:
+def _aadhaar(i: int, sc: str, seed: int, ident: dict) -> tuple[dict, str]:
     rng = _rng(seed, f"{i}:aadhaar")
     uid = ids.synthetic_aadhaar(rng)
     dob = ident["date_of_birth"]
@@ -124,26 +125,28 @@ def _aadhaar(i: int, sc: str, seed: int, ident: dict) -> dict:
            "locality": a["locality"], "vtc": a["city"], "district": a["district"], "state": a["state"],
            "pincode": a["pincode"], "country": "India"}
     issued = date(2014 + rng.randint(0, 9), rng.randint(1, 12), rng.randint(1, 28))
-    return {
-        "schema": "saral-synthetic-ekyc/1",
+    # saral-kyc-aadhaar/1 (contracts/synthetic_sources.json SYNTHETIC_AADHAAR, reconciled one-to-one). The full number is
+    # never in the record: it stays in the applicant's specimen_truth (for rendering SPECIMEN cards only).
+    line = None if yob_only else f"{ids.mask_house(poa['house'])}, {poa['street']}"
+    rec = {
+        "schema": "saral-kyc-aadhaar/1",
         "synthetic": True,
         "specimen_marker": SPECIMEN + " (not a UIDAI record)",
+        "provider": {"name": "saral-synthetic-kyc", "synthetic": True},
         "record_id": _sid("EKYC-", seed, f"{i}:ekyc"),
-        "uid": uid,
-        "uid_masked": ids.mask_aadhaar(uid),
-        "uid_masked_contract": ids.mask_aadhaar_contract(uid),
+        "aadhaar_last4": uid[-4:],
         "verification_status": "VERIFIED_SYNTHETIC_EKYC" if not yob_only else "PARTIAL",
-        "uid_rule": "first digit 0/1 (never issued by UIDAI) + Verhoeff check digit",
-        "poi": {"name": ident["full_name"], "dob": None if yob_only else dob, "yob": int(dob[:4]),
-                "gender": ident["gender"]},
-        "poa": poa,
-        "photo": {"present": False, "placeholder": True},
+        "name": ident["full_name"], "dob": None if yob_only else dob, "year_of_birth": int(dob[:4]),
+        "gender": ident["gender"], "care_of": poa["care_of"],
+        "address": {"line_masked": line, "locality": poa["locality"], "city": poa["vtc"], "district": poa["district"],
+                    "state": poa["state"], "pincode": poa["pincode"], "country": poa["country"]},
         "issue_date": issued.isoformat(),
-        "ekyc_timestamp": f"{AS_OF.isoformat()}T10:00:00+05:30",
+        "verified_at": f"{AS_OF.isoformat()}T10:00:00+05:30",
     }
+    return rec, uid
 
 
-def _pan(i: int, sc: str, seed: int, ident: dict) -> dict:
+def _pan(i: int, sc: str, seed: int, ident: dict) -> tuple[dict, str, dict]:
     rng = _rng(seed, f"{i}:pan")
     number = ids.synthetic_pan(rng, ident["surname"])
     variant, kind = _name_variant(rng, ident["given_name"], ident["surname"])
@@ -151,24 +154,25 @@ def _pan(i: int, sc: str, seed: int, ident: dict) -> dict:
     dob = date.fromisoformat(ident["date_of_birth"])
     if sc == "DOB_MISMATCH_PAN":
         dob = dob + timedelta(days=rng.choice([-400, -35, 31, 366]))
-    return {
-        "schema": "saral-synthetic-pan/1",
+    # saral-kyc-pan/1 (contracts/synthetic_sources.json SYNTHETIC_PAN, reconciled one-to-one). No full PAN in the record.
+    rec = {
+        "schema": "saral-kyc-pan/1",
         "synthetic": True,
         "specimen_marker": SPECIMEN + " (not an Income Tax Department record)",
+        "provider": {"name": "saral-synthetic-kyc", "synthetic": True},
         "record_id": _sid("PANR-", seed, f"{i}:pan"),
-        "pan": number,
         "pan_masked": ids.mask_pan(number),
-        "pan_rule": "ZZ synthetic series; 4th char P (individual); 5th char = surname initial",
+        "pan_status": "VALID_SYNTHETIC",
         "holder_type": "P",
-        "name_as_on_pan": name.upper(),
-        "father_name_as_on_pan": ident["father_name"].upper(),
-        "dob_as_on_pan": dob.isoformat(),
-        "name_match_variant": {"name": variant.upper(), "kind": kind,
-                               "used": sc == "NAME_MISMATCH_PAN"},
-        "status": "VALID_SYNTHETIC",
-        "verification_status": "VERIFIED_SYNTHETIC",
+        "name_on_pan": name.upper(),
+        "father_name_on_pan": ident["father_name"].upper(),
+        "dob_on_pan": dob.isoformat(),
+        "pan_aadhaar_linked": True,
         "issue_date": date(2012 + rng.randint(0, 10), rng.randint(1, 12), rng.randint(1, 28)).isoformat(),
+        "verified_at": f"{AS_OF.isoformat()}T10:01:00+05:30",
     }
+    variant_info = {"name": variant.upper(), "kind": kind, "used": sc == "NAME_MISMATCH_PAN"}
+    return rec, number, variant_info
 
 
 def _doc_id(seed: int, key: str) -> str:
@@ -234,11 +238,11 @@ def _loan_design(i: int, sc: str, occ: int, rng: random.Random, city: str) -> di
         amount = _jitter(picks[(occ // 16 + occ) % len(picks)], rng, product.BANDS[band][0])
         cap = product.PRODUCTS[purpose]
         if band == "B4" and sc != "MATRIX_DECLINE":
-            # Above every product cap and PL-123 "B4 always manual review": an underwriter sees an
-            # indicative counter-offer at the cap.
+            # Deliberate out-of-range request (> Rs. 25 lakh): outside what we offer. ADR-0007 #1/#2: offered the
+            # largest passing amount within the cap (COUNTER_OFFER), never a referral; B4 is never offered.
             d = product.design_counter(amount, purpose, existing, city, "REDUCED_AMOUNT")
             tenure, income, counter = d["tenure"], d["income"], d
-            path = "REFER:PRODUCT"
+            path = "COUNTER_OFFER"
         elif sc == "MATRIX_APPROVE":
             if amount > cap["max_amount"]:
                 d = product.design_counter(amount, purpose, existing, city, "REDUCED_AMOUNT")
@@ -406,7 +410,7 @@ def _monthly_nets(sc: str, income: int, n: int, rng: random.Random) -> list[int]
     return [income] * n
 
 
-def _ocr(i: int, sc: str, seed: int, aadhaar: dict, pan: dict, employment: dict, stmt: dict) -> list[dict]:
+def _ocr(i: int, sc: str, seed: int, aadhaar: dict, pan: dict, pan_number: str, employment: dict, stmt: dict) -> list[dict]:
     """Simulated OCR extractions (what the OCR chain would read, with field confidence).
     SIMULATED: the real values come from running the OCR chain on rendered documents."""
     rng = _rng(seed, f"{i}:ocr")
@@ -414,54 +418,71 @@ def _ocr(i: int, sc: str, seed: int, aadhaar: dict, pan: dict, employment: dict,
     def conf():
         return rng.randint(84, 98)
 
-    pan_read = pan["pan"]
+    pan_read = pan_number
     if sc == "PAN_FORMAT_INVALID":
         pan_read = pan_read[:5] + pan_read[5:9].replace("0", "O", 1) if "0" in pan_read[5:9] else \
             pan_read[:5] + "O" + pan_read[6:]
+    # Keys are the contract's OCR keys (contracts/document_extraction.py FIELD_KEYS + the Paddle chain block); identifiers are
+    # read masked, so no extraction carries a full PAN or Aadhaar.
+    a = aadhaar["address"]
     out = [
-        {"extraction_id": _sid("SYN-EXT-", seed, f"{i}:ext:pan", 12), "document_kind": "PAN",
-         "document_id": _doc_id(seed, f"{i}:pan"),
-         "fields": {"pan_masked": {"value": "XXXXX" + pan_read[5:9] + "X", "confidence": conf()},
-                    "pan_format_valid": {"value": bool(ids.PAN_FORMAT_RE.match(pan_read)), "confidence": conf()},
-                    "name": {"value": pan["name_as_on_pan"], "confidence": conf()},
-                    "date_of_birth": {"value": pan["dob_as_on_pan"], "confidence": conf()}}},
-        {"extraction_id": _sid("SYN-EXT-", seed, f"{i}:ext:aadhaar", 12), "document_kind": "AADHAAR",
-         "document_id": _doc_id(seed, f"{i}:aadhaar"),
-         "fields": {"aadhaar_last4": {"value": aadhaar["uid"][-4:], "confidence": conf()},
-                    "name": {"value": aadhaar["poi"]["name"], "confidence": conf()},
-                    "date_of_birth": {"value": aadhaar["poi"]["dob"], "confidence": conf()},
-                    "pincode": {"value": aadhaar["poa"]["pincode"], "confidence": conf()}}},
+        ("pan_card", _doc_id(seed, f"{i}:pan"), aadhaar["verified_at"][:10], 1,
+         {"pan_number": ("XXXXX" + pan_read[5:9] + "X", conf()), "name": (pan["name_on_pan"], conf()),
+          "date_of_birth": (pan["dob_on_pan"], conf())}),
+        ("aadhaar_card", _doc_id(seed, f"{i}:aadhaar"), aadhaar["issue_date"], 1,
+         {"aadhaar_number": ("XXXX XXXX " + aadhaar["aadhaar_last4"], conf()), "name": (aadhaar["name"], conf()),
+          "date_of_birth": (aadhaar["dob"], conf()), "gender": (aadhaar["gender"], conf()),
+          "address": (f"{a['locality']}, {a['city']} {a['pincode']}", conf())}),
     ]
     for k, slip in enumerate(employment["payslips"]):
         c = 41 if (sc == "OCR_LOW_CONFIDENCE" and k == len(employment["payslips"]) - 1) else conf()
-        out.append({"extraction_id": _sid("SYN-EXT-", seed, f"{i}:ext:slip{k}", 12), "document_kind": "SALARY_SLIP",
-                    "document_id": slip["document_id"],
-                    "fields": {"gross_pay": {"value": slip["gross"], "confidence": conf()},
-                               "total_deductions": {"value": slip["total_deductions"], "confidence": conf()},
-                               "net_pay": {"value": slip["net"], "confidence": c},
-                               "employer_name": {"value": slip["employer_name"], "confidence": conf()},
-                               "pay_period": {"value": slip["pay_period"], "confidence": conf()}}})
-    out.append({"extraction_id": _sid("SYN-EXT-", seed, f"{i}:ext:stmt", 12), "document_kind": "BANK_STATEMENT",
-                "document_id": _doc_id(seed, f"{i}:stmt"),
-                "fields": {"holder_name": {"value": stmt["account"]["holder_name"], "confidence": conf()},
-                           "closing_balance": {"value": stmt["summary"]["closing_balance"], "confidence": conf()},
-                           "statement_id": {"value": stmt["statement_id"], "confidence": 99}}})
-    for e in out:
-        e["synthetic"] = True
-        e["simulated"] = True
-    return out
+        basic = slip["earnings"]["basic"]
+        out.append(("salary_slip", slip["document_id"], slip["document_date"], 1,
+                    {"employee_name": (aadhaar["name"].upper(), conf()),
+                     "employer_name": (slip["employer_name"], conf()), "pay_period": (slip["pay_period"], conf()),
+                     "salary_date": (slip["document_date"], conf()), "basic_salary": (basic, conf()),
+                     "gross_salary": (slip["gross"], conf()), "total_deductions": (slip["total_deductions"], conf()),
+                     "net_salary": (slip["net"], c)}))
+    sal = [t for t in stmt["transactions"] if t["category"] == "SALARY"]
+    sm = stmt["summary"]
+    out.append(("bank_statement", _doc_id(seed, f"{i}:stmt"), stmt["period"]["to"], max(1, len(stmt["transactions"]) // 40 + 1),
+                {"account_holder": (stmt["account"]["holder_name"], conf()),
+                 "statement_period": (f"{stmt['period']['from']}..{stmt['period']['to']}", conf()),
+                 "salary_credits": ([t["amount"] for t in sal], conf()),
+                 "salary_credit_months": (len({t["date"][:7] for t in sal}), conf()),
+                 "total_credits": (sm["total_credits"], conf()), "total_debits": (sm["total_debits"], conf()),
+                 "closing_balance": (sm["closing_balance"], conf()), "transaction_count": (sm["txn_count"], 99)}))
+    res = []
+    for kind, doc_id, doc_date, pages, fields in out:
+        confs = {k: v[1] for k, v in fields.items()}
+        res.append({"extraction_id": _sid("SYN-EXT-", seed, f"{i}:ext:{doc_id}", 12), "document_kind": kind,
+                    "document_id": doc_id, "synthetic": True, "simulated": True,
+                    "fields": {k: {"value": v[0], "confidence": v[1]} for k, v in fields.items()},
+                    "chain": {"ocr_route": "SIMULATED", "ocr_needs_manual_review": min(confs.values()) < 60,
+                              "field_confidence": confs},
+                    "document": {"sha256": _b32_doc(seed, doc_id), "date": doc_date, "pages": pages}})
+    return res
+
+
+def _b32_doc(seed: int, doc_id: str) -> str:
+    """Document hash in base32 (a hex digest could form a 12-digit run the contracts' Aadhaar regex rejects)."""
+    import base64  # noqa: PLC0415
+    return "b32:" + base64.b32encode(hashlib.sha256(f"{seed}:{doc_id}".encode()).digest()).decode().rstrip("=")[:32]
 
 
 def _signature_screening(sig: dict, rng: random.Random) -> dict:
     """Simulated screening output in the bands the OCR bake-off reported (screening only)."""
     label = sig["label"]
+    # Keys follow the contract's OCR signature.* block (present, similarity, anomaly_score, crop_sha256, method).
     if label == "MISSING":
-        return {"synthetic": True, "simulated": True, "signature_present": False, "signature_similarity": None,
-                "signature_anomaly_score": None}
+        return {"synthetic": True, "simulated": True, "present": False, "similarity": None, "anomaly_score": None,
+                "crop_sha256": None, "method": "SIMULATED"}
     sim = {"GENUINE_MATCH": (0.84, 0.95), "SKILLED_FORGERY": (0.55, 0.74), "RANDOM_FORGERY": (0.18, 0.40)}[label]
     s = round(rng.uniform(*sim), 3)
-    return {"synthetic": True, "simulated": True, "signature_present": True, "signature_similarity": s,
-            "signature_anomaly_score": round(1 - s, 3)}
+    import base64  # noqa: PLC0415
+    crop = "b32:" + base64.b32encode(hashlib.sha256(json.dumps(sig["form_signature"]["strokes"]).encode()).digest()).decode()[:32]
+    return {"synthetic": True, "simulated": True, "present": True, "similarity": s, "anomaly_score": round(1 - s, 3),
+            "crop_sha256": crop, "method": "SIMULATED"}
 
 
 # --------------------------------------------------------------------------- applicant
@@ -475,13 +496,15 @@ def build_applicant(i: int, sc_id: str, *, seed: int, registry: dict, occ: int =
 
     small_counter = sc_id == "MATRIX_COUNTER_OFFER" and matrix_cell(occ)[1] == "B1"
     ident = _identity(i, sc_id, seed, low_floor_city=small_counter)
-    aadhaar = _aadhaar(i, sc_id, seed, ident)
-    pan = _pan(i, sc_id, seed, ident)
+    aadhaar, uid = _aadhaar(i, sc_id, seed, ident)
+    pan, pan_number, pan_variant = _pan(i, sc_id, seed, ident)
     writer_key = f"{i}:writer"
     if sc_id == "DUPLICATE_APPLICANT" and original:
         ident = copy.deepcopy(original["identity"])
         aadhaar = copy.deepcopy(original["aadhaar_ekyc"])
         pan = copy.deepcopy(original["pan"])
+        uid, pan_number = original["specimen_truth"]["aadhaar_uid"], original["specimen_truth"]["pan_number"]
+        pan_variant = copy.deepcopy(original["specimen_truth"]["pan_name_variant"])
         writer_key = "0:writer"
     if sc_id == "SHARED_CONTACT" and original:
         ident["phone"] = original["identity"]["phone"]
@@ -583,6 +606,8 @@ def build_applicant(i: int, sc_id: str, *, seed: int, registry: dict, occ: int =
     profile = {
         "applicant_id": applicant_id,
         "statement_id": _sid("STM-", seed, f"{applicant_id}:statement", 12),
+        "consent_id": _sid("SYN-AACON-", seed, f"{applicant_id}:aa-consent", 10),
+        "fetched_on": AS_OF.isoformat(),
         "account_ref": _sid("ACCT-", seed, f"{applicant_id}:account", 10),
         "account_number": ids.synthetic_account_number(brng),
         "ifsc": ids.synthetic_ifsc(brng),
@@ -633,7 +658,7 @@ def build_applicant(i: int, sc_id: str, *, seed: int, registry: dict, occ: int =
     sig["record_id"] = _sid("SIG-", seed, f"{i}:signature")
     sig["document_ids"] = {"reference": _doc_id(seed, f"{i}:pan"), "form": _doc_id(seed, f"{i}:nach")}
     sig["screening"] = _signature_screening(sig, _rng(seed, f"{i}:sigscreen"))
-    ocr = _ocr(i, sc_id, seed, aadhaar, pan, employment, statement)
+    ocr = _ocr(i, sc_id, seed, aadhaar, pan, pan_number, employment, statement)
     last_decline = (AS_OF - timedelta(days=12)).isoformat() if sc_id == "COOLING_OFF_RECENT_DECLINE" else None
 
     product_id = product.PRODUCTS[design["product_purpose"]]["product_id"] if design["product_purpose"] else None
@@ -647,13 +672,14 @@ def build_applicant(i: int, sc_id: str, *, seed: int, registry: dict, occ: int =
         h["expected_counter_offer"] = {k: design["counter"][k] for k in
                                        ("kind", "counter_amount", "counter_tenure", "cap_limited")}
         if design["counter"]["cap_limited"]:
-            h["policy_conflict"] = ("Cap-only failure: proposal v2 P05 says REFER, the v2 aggregation rule says "
-                                    "COUNTER-OFFER at the largest passing amount; labelled COUNTER_OFFER.")
+            h["cap_rule"] = "ADR-0007 #2: above a product's cap -> COUNTER_OFFER at the largest passing amount (v2 P05 superseded)"
     if design["decline_reason"]:
         h["decline_driver"] = design["decline_reason"]
     label = {"synthetic": True, "scenario_id": sc.id, "product_id": product_id, "purpose": design["declared_purpose"],
              "amount_band": product.band_of(loan["amount"]), "requested_amount": loan["amount"],
-             "tenure_months": loan["tenure_months"], "expected_path": design["path"]}
+             "tenure_months": loan["tenure_months"], "expected_path": design["path"],
+             "request_outside_mvp_range": loan["amount"] > product.MVP_AMOUNT_CEILING,
+             "outside_offer_label": product.OUTSIDE_OFFER_LABEL if loan["amount"] > product.MVP_AMOUNT_CEILING else None}
 
     record = {
         "schema": SCHEMA,
@@ -673,6 +699,12 @@ def build_applicant(i: int, sc_id: str, *, seed: int, registry: dict, occ: int =
         "identity": ident,
         "aadhaar_ekyc": aadhaar,
         "pan": pan,
+        # Raw specimen identifiers: only for rendering SPECIMEN documents and building the synthetic internal
+        # lists. NEVER_STORE in the LMS; never inside the KYC records, zen_inputs or zen_data_points.
+        "specimen_truth": {"synthetic": True, "never_store": True, "pan_number": pan_number, "aadhaar_uid": uid,
+                           "aadhaar_rule": "first digit 0/1 (never issued by UIDAI) + Verhoeff check digit",
+                           "pan_rule": "ZZ synthetic series; 4th char P (individual); 5th char = surname initial",
+                           "pan_name_variant": pan_variant},
         "employment": employment,
         "declared": {
             "synthetic": True,
@@ -696,7 +728,7 @@ def build_applicant(i: int, sc_id: str, *, seed: int, registry: dict, occ: int =
                          "proposed_emi_at_assessment_rate": proposed},
         "product": prod,
         "bank_ref": {"synthetic": True, **statement["lms_reference"],
-                     "masked_account_number": statement["account"]["masked_account_number"],
+                     "masked_number": statement["account"]["masked_number"],
                      "ifsc": statement["account"]["ifsc"]},
         "bureau_link": {
             "synthetic": True,
@@ -733,7 +765,7 @@ def build_applicant(i: int, sc_id: str, *, seed: int, registry: dict, occ: int =
 
 def internal_lists(applicants: list[dict], seed: int) -> dict:
     rng = _rng(seed, "lists")
-    neg = [{"synthetic": True, "pan": a["pan"]["pan"], "reason_code": "SYN_FRAUD_CONFIRMED",
+    neg = [{"synthetic": True, "pan": a["specimen_truth"]["pan_number"], "reason_code": "SYN_FRAUD_CONFIRMED",
             "listed_on": (AS_OF - timedelta(days=200)).isoformat(), "applicant_id_hint": a["applicant_id"]}
            for a in applicants if a["scenario"]["id"] == "NEGATIVE_LIST_HIT"]
     for k in range(3):  # decoys that match nobody in the universe
@@ -775,4 +807,37 @@ def build_universe(count: int = 200, *, seed: int = DEFAULT_SEED) -> dict:
         "count": count,
     }
     attach_zen_inputs(u)
+    relabel_offers(u)
     return u
+
+
+OFFER_PATHS = {"APPROVE", "COUNTER_OFFER"}
+
+
+def relabel_offers(u: dict) -> None:
+    """Label every offer-driven applicant from catalogue PL-129 on its own resolved inputs (ADR-0007 #2, #3).
+
+    The design functions aim each applicant at APPROVE or COUNTER_OFFER; the label is the PL-129 result itself
+    (largest passing amount, flat rate), so the dataset and the catalogue cannot disagree on an amount.
+    """
+    for a in u["applicants"]:
+        h, lab = a["expected_outcome_hint"], a["label"]
+        offer = h.get("expected_offer")
+        if lab["expected_path"] not in OFFER_PATHS or offer is None:
+            continue
+        path = {"APPROVED": "APPROVE", "COUNTER_OFFER": "COUNTER_OFFER"}.get(offer["offer_outcome"], "DECLINE:AFFORDABILITY")
+        lab["expected_path"] = h["decision_path"] = path
+        h["outcome"] = path.split(":")[0]
+        h["reason_category"] = path.split(":")[1] if ":" in path else (
+            "PRODUCT" if path == "COUNTER_OFFER" and offer["binding_cap"] in ("product_cap", "evidence_cap") else
+            "AFFORDABILITY" if path == "COUNTER_OFFER" else None)
+        if path == "COUNTER_OFFER":
+            lr = a["loan_request"]
+            h["expected_counter_offer"] = {
+                "kind": "LONGER_TENURE" if offer["eligible_amount"] >= lr["amount"] else "REDUCED_AMOUNT",
+                "counter_amount": offer["eligible_amount"], "counter_tenure": offer["offer_tenure_months"],
+                "counter_emi": offer["offer_emi"], "binding_cap": offer["binding_cap"],
+                "cap_limited": offer["binding_cap"] == "product_cap",
+                "outside_what_we_offer": offer["request_outside_mvp_range"]}
+        else:
+            h.pop("expected_counter_offer", None)
