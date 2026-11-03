@@ -50,13 +50,14 @@ CopilotKit Node runtime ──(Authorization: Bearer <assertion>)──► FastA
                                                                        │
                                                     LangGraph + RAG + ZEN + Langfuse
                                                                        │
-                                                                       └─► evidence sink
-                                                                            (Frappe `Loan Decision Evidence`)
+                                                                       └─► read-only views
+                                                                            (Loan Application GET + one evidence
+                                                                             read method; no sink, no write path)
 ```
 
 - **One credential in the browser**: the Frappe session. Nothing else is stored in page memory.
 - **One credential to FastAPI**: the short-lived Frappe assertion from `services/assertion.py` (`iss = frappe:loan_advisory_portal`, `aud = loan-advisory-agent`, 60 s TTL, 30 s clock skew, `jti`).
-- **One writer for borrower data**: Frappe. FastAPI reads applications through the evidence/doctypes it is granted and writes only evidence rows.
+- **One writer for borrower data**: Frappe. The agent reads applications and stored evidence through the doctypes it is granted and writes nothing at all: since 2026-11-03 (Phase 1 security boundary B) `DecisionTools` refuses a store or evidence object that exposes `create`, `set_status`, `persist` or `call_method`, the live graph is wired to `ReadOnlyFrappeApplication` plus `FrappeEvidenceReader` instead of `FrappeClient` + `FrappeEvidenceSink`, and an application read is projected to the twelve decision fields rather than fetched whole. See `application/ports.py`.
 - **Evidence is written, not recomputed, by the portal**: the portal renders `Loan Decision Evidence.record_json` through a strict projection (`api/applications.py:_borrower_detail`) containing only `customer_visible` failing reason codes, missing fields, provider-error flag and outcome.
 
 ### Assertion contract (implemented on both sides)

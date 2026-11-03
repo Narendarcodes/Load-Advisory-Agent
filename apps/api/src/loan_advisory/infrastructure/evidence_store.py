@@ -7,13 +7,19 @@
   are NOT written to Frappe; they go to a content-addressed companion directory
   (EVIDENCE_TRACE_DIR, or AGENT_STATE_DIR/traces, default /root/hx/loan/agent/traces)
   and the record stores only their sha256.
+- FrappeEvidenceReader: the agent's side of the same store. One allowlisted read method,
+  built from configuration strings, with no ingest path anywhere behind it
+  (Phase 1 security boundary B).
 Idempotent: a record_id that already exists with the same content is not written twice.
 """
 import json
+import os
+
+import requests
 
 from decision_engine.evidence.evidence_record import stable_trace
 
-from loan_advisory.infrastructure.frappe_adapter import FrappeClient
+from loan_advisory.infrastructure.frappe_adapter import FrappeClient, FrappeUnavailable
 from loan_advisory.state_paths import LIVE_TRACE_DIR, TRACE_DIR, resolve, write_private
 
 EVIDENCE_METHOD = "loan_advisory_portal.api.evidence.ingest"
@@ -42,6 +48,37 @@ class InMemoryEvidenceSink:
             self.store.set_status(record["application_ref"], record["lifecycle_state"], native_status)
         if record["trace_ref"]["sha256"]:
             self.traces[record["trace_ref"]["sha256"]] = stable_trace(trace)
+
+
+class FrappeEvidenceReader:
+    """The agent's view of Decision Evidence: one allowlisted read method, and nothing else.
+
+    `FrappeEvidenceSink` can ingest; the advisory agent must not be able to. This class is built from
+    configuration strings and posts to exactly one whitelisted method, so there is no generic
+    `call_method` (and no `persist`) anywhere behind it for the agent graph to reach.
+    """
+
+    def __init__(self, base_url=None, api_key=None, api_secret=None):
+        env = os.environ
+        self.base_url = (base_url or env.get("EVIDENCE_FRAPPE_URL") or env.get("FRAPPE_URL") or "").rstrip("/")
+        self.api_key = api_key or env.get("EVIDENCE_FRAPPE_API_KEY") or ""
+        self.api_secret = api_secret or env.get("EVIDENCE_FRAPPE_API_SECRET") or ""
+        if not (self.base_url and self.api_key and self.api_secret):
+            raise FrappeUnavailable("EVIDENCE_FRAPPE_API_KEY / EVIDENCE_FRAPPE_API_SECRET not set")
+
+    def get_record(self, record_id: str):
+        headers = {"Authorization": f"token {self.api_key}:{self.api_secret}"}
+        try:
+            r = requests.post(f"{self.base_url}/api/method/{EVIDENCE_GET_METHOD}", headers=headers,
+                              json={"record_id": record_id}, timeout=20)
+        except requests.RequestException as e:
+            raise FrappeUnavailable(f"frappe unreachable: {e}")
+        if not r.ok:
+            raise FrappeUnavailable(f"frappe method {EVIDENCE_GET_METHOD} HTTP {r.status_code}: {r.text[:200]}")
+        try:
+            return r.json().get("message")
+        except ValueError:
+            raise FrappeUnavailable(f"frappe method {EVIDENCE_GET_METHOD} returned a non-JSON body") from None
 
 
 class FrappeEvidenceSink:

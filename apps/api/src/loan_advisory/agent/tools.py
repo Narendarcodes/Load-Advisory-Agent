@@ -4,6 +4,11 @@ Every applicant-specific tool re-checks authorization server-side against the sy
 (the Loan Application's `applicant`), never against the message, the thread id or the LLM.
 There is no generic Frappe/SQL/web tool and no write path: decisions are only READ from the stored
 Decision Evidence; what-if goes through lifecycle.simulate (in memory, never persisted).
+
+`DecisionTools` is where that promise becomes enforceable rather than aspirational. Its two
+dependencies are typed as the read-only ports in `application/ports.py` and checked at construction,
+so a store or evidence object that can write — directly, or through anything it holds — is refused
+before the first turn runs (Phase 1 security boundary B).
 """
 import hashlib
 import json
@@ -16,6 +21,7 @@ from loan_advisory.agent import observability as obs
 from loan_advisory.agent.contracts import Citation, Session
 from loan_advisory.agent.facts import SCORED, counterfactual_targets
 from loan_advisory.application.lifecycle import simulate
+from loan_advisory.application.ports import ApplicationReader, EvidenceSource, assert_reader
 from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
 from loan_advisory.state_paths import HANDOFF_LOG, append_private, resolve
 
@@ -38,35 +44,43 @@ class InvalidWhatIf(Exception):
 class FrappeEvidenceSource:
     """Latest stored `Loan Decision Evidence` for a Loan Application (written by the conventional workflow)."""
 
-    def __init__(self, sink):
-        self.sink = sink
+    def __init__(self, reader):
+        self.reader = reader   # a FrappeEvidenceReader: get_record only, never the sink that ingests
 
     def latest(self, application_ref: str, doc: dict) -> dict | None:
         rid = doc.get("custom_latest_evidence")
         if not rid:
             return None
         with obs.span("frappe.get_loan_decision_evidence", kind="TOOL", **{"frappe.doctype": "Loan Decision Evidence", "frappe.record_id": rid}):
-            return self.sink.get_record(rid)
+            return self.reader.get_record(rid)
 
 
 class InMemoryEvidenceSource:
-    """Same contract over an InMemoryEvidenceSink (tests, offline eval over synthetic personas)."""
+    """Same contract over an InMemoryEvidenceSink (tests, offline eval over synthetic personas).
+
+    Holds the sink's two dicts, not the sink: the records the agent reads stay live, and `persist()`
+    is not reachable through anything in the agent's object graph.
+    """
 
     def __init__(self, sink):
-        self.sink = sink
+        self.records, self.latest_ids = sink.records, sink.latest_ids
 
     def latest(self, application_ref: str, doc: dict) -> dict | None:
-        rid = getattr(self.sink, "latest_ids", {}).get(application_ref)
-        if rid in self.sink.records:
-            return self.sink.records[rid]
-        recs = [r for r in self.sink.records.values() if r["application_ref"] == application_ref and not r["is_simulation"]]
+        rid = self.latest_ids.get(application_ref)
+        if rid in self.records:
+            return self.records[rid]
+        recs = [r for r in self.records.values() if r["application_ref"] == application_ref and not r["is_simulation"]]
         return recs[-1] if recs else None
 
 
 @dataclass
 class DecisionTools:
-    store: object
-    evidence: object
+    store: ApplicationReader
+    evidence: EvidenceSource
+
+    def __post_init__(self):
+        assert_reader(self.store, role="the agent's application store")
+        assert_reader(self.evidence, role="the agent's evidence source")
 
     def owned_doc(self, application_ref: str, session: Session) -> dict:
         """The Loan Application document, only when the session's applicant owns it."""

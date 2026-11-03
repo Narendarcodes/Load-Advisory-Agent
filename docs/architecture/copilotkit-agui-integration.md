@@ -58,7 +58,7 @@ Node runtime  ──POST /api/method/loan_advisory_portal.api.agent.mint_asserti
    │ POST <agui_url>  Authorization: Bearer <assertion>
    ▼
 FastAPI /api/agui  ── verify issuer/audience/expiry + single-use jti
-   └─► LangGraph turn → evidence sink (Frappe `Loan Decision Evidence`)
+   └─► LangGraph turn → read-only views (application GET + one evidence read method)
 ```
 
 ### Implemented on the Frappe side

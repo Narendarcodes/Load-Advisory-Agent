@@ -1,15 +1,16 @@
 """Wiring: build the agent against (a) the live Frappe Lending stack or (b) offline synthetic stores.
 
-Live:    FrappeClient (system of record) + FrappeEvidenceSource (stored `Loan Decision Evidence`)
+Live:    ReadOnlyFrappeApplication + FrappeEvidenceReader (two GETs and one allowlisted read method)
          + hybrid/rerank policy retriever loaded from LOAN_POLICY_DIR (GPU container) + gpt-oss-120b.
-Offline: MockStore / PersonaStore, decided ONCE by the conventional workflow (process_application ->
-         ZEN -> InMemoryEvidenceSink) before the agent sees them. The agent itself never decides.
+Offline: MockStore / PersonaStore read through their read-only views, decided ONCE by the conventional
+         workflow (process_application -> ZEN -> InMemoryEvidenceSink) before the agent sees them.
+
+Either way `DecisionTools` refuses a write-capable dependency, so the agent explains decisions and
+cannot make one (Phase 1 security boundary B).
 """
 import json
 import os
 from pathlib import Path
-
-import requests
 
 from decision_engine.paths import repo_root
 from loan_advisory.agent.checkpoint import build_checkpointer
@@ -18,8 +19,9 @@ from loan_advisory.agent.llm import ChatLLM
 from loan_advisory.agent.tools import (DecisionTools, FrappeEvidenceSource, HandoffQueue, InMemoryEvidenceSource,
                                        PolicyTools)
 from loan_advisory.application.lifecycle import process_application
-from loan_advisory.infrastructure.evidence_store import FrappeEvidenceSink, InMemoryEvidenceSink
-from loan_advisory.infrastructure.frappe_adapter import FrappeClient, MockStore, UnknownApplication
+from loan_advisory.infrastructure.evidence_store import FrappeEvidenceReader, InMemoryEvidenceSink
+from loan_advisory.infrastructure.frappe_adapter import (MockStore, ReadOnlyDocumentStore, ReadOnlyFrappeApplication,
+                                                         UnknownApplication, read_only_view, resolve_application)
 
 PERSONAS = repo_root() / "data" / "synthetic" / "personas" / "personas_v1_narrated.jsonl"
 
@@ -43,6 +45,10 @@ class PersonaStore:
         except KeyError:
             raise UnknownApplication(f"unknown application: {application_id}")
 
+    def reader(self) -> ReadOnlyDocumentStore:
+        """The agent's view: the document mapping, with no store object behind it to write through."""
+        return ReadOnlyDocumentStore(self._apps)
+
 
 def decide_offline(store, refs) -> InMemoryEvidenceSink:
     """Run the CONVENTIONAL workflow (not the agent) so there is recorded evidence to explain."""
@@ -52,12 +58,9 @@ def decide_offline(store, refs) -> InMemoryEvidenceSink:
     return sink
 
 
-def frappe_resolve(client: FrappeClient, external_ref: str) -> dict | None:
-    r = requests.get(f"{client.base_url}/api/resource/Loan Application", headers=client._headers(), timeout=15,
-                     params={"filters": json.dumps([["custom_external_ref", "=", external_ref]]),
-                             "fields": json.dumps(["name", "applicant", "custom_external_ref", "custom_lifecycle_state"])})
-    rows = r.json().get("data", []) if r.ok else []
-    return rows[0] if rows else None
+def frappe_resolve(client, external_ref: str) -> dict | None:
+    """Map a borrower-visible reference to a Loan Application through any Frappe identity or read view."""
+    return resolve_application(client.base_url, client._headers(), external_ref)
 
 
 def load_chunks(policy_dir: str | Path) -> list[dict]:
@@ -131,19 +134,23 @@ def _open_dense(path: str, chunks: list[dict], identity: dict):
     return d
 
 
-def build_live_agent(policy_tools=None, profile=None, llm=None) -> tuple[AdvisoryAgent, FrappeClient]:
-    client = FrappeClient()
-    sink = FrappeEvidenceSink()  # dedicated Evidence Service credential, never the read client
-    tools = DecisionTools(client, FrappeEvidenceSource(sink))
+def build_live_agent(policy_tools=None, profile=None, llm=None) -> tuple[AdvisoryAgent, ReadOnlyFrappeApplication]:
+    """The live agent reads Frappe and nothing else: application GETs plus one evidence read method.
+
+    `FrappeEvidenceSink` — the ingest path — is deliberately not constructed here. It needs its own
+    Evidence Service credential and belongs to the pipeline that decides, not to this process.
+    """
+    reader = ReadOnlyFrappeApplication()
+    tools = DecisionTools(reader, FrappeEvidenceSource(FrappeEvidenceReader()))
     agent = AdvisoryAgent(tools, llm or ChatLLM.from_env(), policy_tools=policy_tools, handoff=HandoffQueue(),
                           profile=profile, checkpointer=build_checkpointer())
-    return agent, client
+    return agent, reader
 
 
 def build_offline_agent(store=None, refs=None, llm=None, policy_tools=None, profile=None) -> tuple[AdvisoryAgent, object, object]:
     store = store or MockStore()
     refs = refs if refs is not None else list(store._apps)
     sink = decide_offline(store, refs)
-    tools = DecisionTools(store, InMemoryEvidenceSource(sink))
+    tools = DecisionTools(read_only_view(store), InMemoryEvidenceSource(sink))
     return (AdvisoryAgent(tools, llm or ChatLLM.from_env(), policy_tools=policy_tools, handoff=HandoffQueue(),
                           profile=profile, checkpointer=build_checkpointer()), store, sink)

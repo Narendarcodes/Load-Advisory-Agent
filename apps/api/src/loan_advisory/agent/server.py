@@ -34,8 +34,16 @@ def _require_strings(body, keys):
 
 
 class App:
-    def __init__(self, agent, resolve):
-        self.agent, self.resolve = agent, resolve
+    """The service behind every route: one agent, and nothing else.
+
+    It used to also hold a `resolve` callable for the (now deleted) bureau route and for account
+    lookups. Nothing calls it, and in the live wiring it closed over the full Frappe client — an
+    unused handle on a write-capable object. The advisory agent resolves identity from the signed
+    assertion alone, so the handle is gone rather than narrowed (Phase 1 security boundary B).
+    """
+
+    def __init__(self, agent):
+        self.agent = agent
 
     def _request(self, claims, body):
         _require_strings(body, ("request_id", "conversation_id", "message"))
@@ -137,13 +145,12 @@ def main(argv=None):
         t = time.time(); policy, profile = load_policy_tools(); print(f"retriever loaded in {time.time() - t:.1f}s", file=sys.stderr)
     if a.offline:
         from loan_advisory.agent.runtime import build_offline_agent
-        agent, store, _ = build_offline_agent(policy_tools=policy, profile=profile)
-        resolve = lambda ref: {"name": ref, "applicant": store.get(ref)["applicant"]} if ref in store._apps else None
-        service = App(agent, resolve)
+        agent, *_ = build_offline_agent(policy_tools=policy, profile=profile)
+        service = App(agent)
     else:
-        from loan_advisory.agent.runtime import build_live_agent, frappe_resolve
-        agent, client = build_live_agent(policy_tools=policy, profile=profile)
-        service = App(agent, lambda ref: frappe_resolve(client, ref))
+        from loan_advisory.agent.runtime import build_live_agent
+        agent, _ = build_live_agent(policy_tools=policy, profile=profile)
+        service = App(agent)
 
     import uvicorn
     from loan_advisory.api.app import create_app

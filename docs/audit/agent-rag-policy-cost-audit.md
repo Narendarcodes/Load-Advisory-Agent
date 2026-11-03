@@ -98,11 +98,15 @@ the `bureau_client` wiring, `--bureau-url` and `BUREAU_BASE_URL` are **removed**
 unchanged and still reachable as `application/bureau_intake.py:run_bureau_evaluation()` for the separate upstream
 process, and the agent still *reads* and explains stored bureau evidence.
 
-**P0.1 is therefore half-closed, not closed.** Removing the route deletes the agent's only caller, but
-`DecisionTools` is still constructed with an evidence object that exposes a write-capable sink
-(`InMemoryEvidenceSource(sink)` offline, `FrappeEvidenceSource(sink)` live). The remaining half — inject a
-separately-constructed sink, or none, into the agent object graph — is Phase 1 boundary B/C work, tracked in
-`reports/phase1-write-path-inventory.md`.
+**P0.1 is closed for the agent, with the same date.** Boundary B (implemented 2026-11-03, same branch) removed
+the sink from the agent object graph rather than leaving it injected-but-unused: `DecisionTools` now refuses any
+store or evidence object that exposes `create`, `set_status`, `persist` or `call_method` (`application/ports.py`),
+the live graph is wired to `ReadOnlyFrappeApplication` + `FrappeEvidenceReader` instead of `FrappeClient` +
+`FrappeEvidenceSink`, an application read is projected to the twelve decision fields the mapping actually uses, and
+the unused `App.resolve` handle — which closed over the full Frappe client — is gone. Proofs:
+`tests/test_agent_read_boundary.py`. The residual, stated plainly: a bound method keeps its owner reachable via
+`method.__self__`, so the guard is a structural test of the shipped wiring and a startup refusal of accidental
+re-wiring, not a sandbox against code already running in this process.
 
 ---
 

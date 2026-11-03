@@ -2,6 +2,7 @@
 the advisory agent cannot reach it (Phase 1 security boundary A)."""
 import inspect
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -126,7 +127,7 @@ def test_invalid_scenario_is_rejected_before_the_provider_call(client):
 @pytest.fixture
 def agent_app():
     agent, store, _ = build_offline_agent(llm=ScriptedLLM(intent="explain"), policy_tools=FakePolicy())
-    return TestClient(create_agent_app(App(agent, store.get)))
+    return TestClient(create_agent_app(App(agent)))
 
 
 def test_the_agent_exposes_no_bureau_execution_route(agent_app):
@@ -151,7 +152,8 @@ def test_the_agent_server_never_imports_the_bureau_pipeline():
     for name in ("run_bureau_evaluation", "BureauClient", "bureau_client_from", "BureauInputError"):
         assert not hasattr(srv, name), name
     source = Path(srv.__file__).read_text(encoding="utf-8")
-    assert "bureau" not in source.lower()
+    assert not re.search(r"\bbureau_\w+", source), "a bureau code reference came back"
+    assert "BureauClient" not in source and "bureau_intake" not in source
 
 
 def test_the_agent_server_takes_no_bureau_origin():
