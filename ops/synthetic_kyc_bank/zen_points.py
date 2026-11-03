@@ -7,9 +7,9 @@ identity blocks (names, DOB, masked PAN), and honours AA consent like `/v1/aa/fe
 
     SARAL_SYNTH_DIR=/path/to/full200 python -m ops.synthetic_kyc_bank.zen_points --port 8012
 
+No `from __future__ import annotations` here: FastAPI must resolve the request model of the nested route.
 This is a test-bed stand-in for real preprocessors, not one: a live deployment derives these values itself.
 """
-from __future__ import annotations
 
 import os
 from pathlib import Path
