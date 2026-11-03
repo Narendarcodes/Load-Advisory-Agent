@@ -1,0 +1,242 @@
+{
+  "_description": "Demo applicant dataset with credit and profile features for customer segmentation and persona-based communication.",
+  "applicants": [
+    {
+      "applicant_id": "APP1001",
+      "application_id": "APP1001",
+      "profile": {
+        "age": 23,
+        "education_level": "Intermediate",
+        "occupation": "Retail Assistant",
+        "employment_type": "Salaried"
+      },
+      "cibil_report": {
+        "cibil_score": null,
+        "credit_history_months": 0,
+        "accounts": [],
+        "credit_card_utilization_percent": null,
+        "enquiries_last_6_months": 0
+      }
+    },
+    {
+      "applicant_id": "APP1002",
+      "application_id": "APP1002",
+      "profile": {
+        "age": 29,
+        "education_level": "Graduate",
+        "occupation": "Teacher",
+        "employment_type": "Salaried"
+      },
+      "cibil_report": {
+        "cibil_score": 682,
+        "credit_history_months": 30,
+        "accounts": [
+          {
+            "account_type": "Personal Loan",
+            "status": "Closed",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Credit Card",
+            "status": "Active",
+            "late_payments_12m": 1
+          }
+        ],
+        "credit_card_utilization_percent": 28,
+        "enquiries_last_6_months": 1
+      }
+    },
+    {
+      "applicant_id": "APP1003",
+      "application_id": "APP1003",
+      "profile": {
+        "age": 38,
+        "education_level": "Postgraduate",
+        "occupation": "IT Manager",
+        "employment_type": "Salaried"
+      },
+      "cibil_report": {
+        "cibil_score": 786,
+        "credit_history_months": 96,
+        "accounts": [
+          {
+            "account_type": "Home Loan",
+            "status": "Active",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Car Loan",
+            "status": "Closed",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Personal Loan",
+            "status": "Closed",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Credit Card",
+            "status": "Active",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Credit Card",
+            "status": "Closed",
+            "late_payments_12m": 0
+          }
+        ],
+        "credit_card_utilization_percent": 19,
+        "enquiries_last_6_months": 0
+      }
+    },
+    {
+      "applicant_id": "APP1004",
+      "application_id": "APP1004",
+      "profile": {
+        "age": 33,
+        "education_level": "Graduate",
+        "occupation": "Business Owner",
+        "employment_type": "Self-employed"
+      },
+      "cibil_report": {
+        "cibil_score": 615,
+        "credit_history_months": 54,
+        "accounts": [
+          {
+            "account_type": "Business Loan",
+            "status": "Active",
+            "late_payments_12m": 3
+          },
+          {
+            "account_type": "Credit Card",
+            "status": "Active",
+            "late_payments_12m": 2
+          },
+          {
+            "account_type": "Vehicle Loan",
+            "status": "Closed",
+            "late_payments_12m": 0
+          }
+        ],
+        "credit_card_utilization_percent": 82,
+        "enquiries_last_6_months": 4
+      }
+    },
+    {
+      "applicant_id": "APP1005",
+      "application_id": "APP1005",
+      "profile": {
+        "age": 26,
+        "education_level": "Graduate",
+        "occupation": "Sales Executive",
+        "employment_type": "Salaried"
+      },
+      "cibil_report": {
+        "cibil_score": 724,
+        "credit_history_months": 42,
+        "accounts": [
+          {
+            "account_type": "Personal Loan",
+            "status": "Closed",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Two-wheeler Loan",
+            "status": "Closed",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Credit Card",
+            "status": "Active",
+            "late_payments_12m": 0
+          }
+        ],
+        "credit_card_utilization_percent": 35,
+        "enquiries_last_6_months": 1
+      }
+    },
+    {
+      "applicant_id": "APP1006",
+      "application_id": "APP1006",
+      "profile": {
+        "age": 45,
+        "education_level": "Intermediate",
+        "occupation": "Transport Operator",
+        "employment_type": "Self-employed"
+      },
+      "cibil_report": {
+        "cibil_score": 758,
+        "credit_history_months": 120,
+        "accounts": [
+          {
+            "account_type": "Vehicle Loan",
+            "status": "Closed",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Business Loan",
+            "status": "Closed",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Gold Loan",
+            "status": "Closed",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Personal Loan",
+            "status": "Active",
+            "late_payments_12m": 0
+          }
+        ],
+        "credit_card_utilization_percent": null,
+        "enquiries_last_6_months": 0
+      }
+    },
+    {
+      "applicant_id": "APP1007",
+      "application_id": "APP1007",
+      "profile": {
+        "age": 31,
+        "education_level": "Graduate",
+        "occupation": "Accountant",
+        "employment_type": "Salaried"
+      },
+      "cibil_report": {
+        "cibil_score": 701,
+        "credit_history_months": 60,
+        "accounts": [
+          {
+            "account_type": "Credit Card",
+            "status": "Active",
+            "late_payments_12m": 0
+          },
+          {
+            "account_type": "Personal Loan",
+            "status": "Active",
+            "late_payments_12m": 0
+          }
+        ],
+        "credit_card_utilization_percent": 48,
+        "enquiries_last_6_months": 2
+      }
+    },
+    {
+      "applicant_id": "APP1008",
+      "application_id": "APP1008",
+      "profile": {
+        "age": 22,
+        "education_level": "Graduate",
+        "occupation": "Designer",
+        "employment_type": "Salaried"
+      },
+      "cibil_report": {
+        "cibil_score": 0,
+        "credit_history_months": 0,
+        "accounts": [],
+        "credit_card_utilization_percent": null,
+        "enquiries_last_6_months": 0
+      }
+    }
+  ]
+}
