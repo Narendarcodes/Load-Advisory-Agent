@@ -19,7 +19,7 @@ Sites present in the bench, with fixture counts read live:
 
 | Site | Loan Applications | Decision Evidence | Used here? |
 |---|---:|---:|---|
-| `p1loan.local` | 41 | 48 | **No.** The shared site, and the one the shipped frontend pins (`server_name p1loan.local`, `X-Frappe-Site-Name` hardcoded). Out of bounds for this milestone |
+| `p1loan.local` | 41 | 48 | **No verification ran against it.** The shared site, and the one the shipped frontend pins (`server_name p1loan.local`, `X-Frappe-Site-Name` hardcoded). Two read-only counts were taken to identify which site the shared frontend serves and to size the fixture gap; nothing was written, and no agent or proxy request reached it |
 | `loanportal.local` | 17 | 2 | **Yes** — disposable, reached only through the site-pinned proxy |
 | `repro.local` | 6 | 1 | inspected for fixtures only; not used for the journey |
 

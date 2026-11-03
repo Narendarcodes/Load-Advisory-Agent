@@ -99,7 +99,7 @@ both untouched.
   repository with only the upstream port changed — the `Host`/`X-Frappe-Site-Name` pinning to
   `loanportal.local` was kept and verified, so no request could reach the shared site.
 - Langfuse: no data deleted; the diagnostic observations age out under the project's own retention.
-- Frappe: no record created, modified or deleted by this run. One `Advisory Conversation` row per mint,
+- Frappe: no record was created, modified or deleted by this run, on any of the three sites. One `Advisory Conversation` row per mint,
   which is the portal's normal behaviour for an authenticated borrower.
 - `data/source_archive/` remained untracked and untouched throughout.
 
