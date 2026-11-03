@@ -32,9 +32,10 @@ DEFAULT_PRODUCT = "SYN-PERSONAL-001"
 LIST_FIELDS = ("name", "loan_amount", "repayment_periods", "custom_lifecycle_state", "status",
                "creation", "modified", "custom_loan_purpose")
 
-# Everything the decision path, the summary card, the ownership check and the evidence pointer read, and nothing
-# else. A full Loan Application also carries the applicant's name, contact details and document links: the agent
-# has no use for them, so it never receives them. Used by FrappeClient.get and by the agent's read-only view.
+# Everything the conversational agent reads, and nothing else. A full Loan Application also carries the
+# applicant's name, contact details and document links: the agent has no use for them, so it never receives
+# them. Used by `ReadOnlyFrappeApplication.get` only — the pipeline's `FrappeClient.get` reads the whole
+# document, because its field set is its own business (see `read_full_application`).
 #
 # Every name here must be a field Frappe actually has on Loan Application, because a `fields` list naming a
 # missing field is an error, not a null. The plain `monthly_income`-style fallbacks in `from_frappe_doc` and the
@@ -70,7 +71,7 @@ def _credentials(base_url, api_key, api_secret):
 
 
 def read_application(base_url: str, headers: dict, application_id: str) -> dict:
-    """Read one Loan Application, projected to READ_FIELDS. The only read implementation both paths use.
+    """Read one Loan Application, projected to READ_FIELDS. This is the agent's read.
 
     This is a list read filtered on `name`, not `GET /api/resource/<doctype>/<name>`, and that is not
     a style choice: measured against Frappe 16.51 on 2026-11-03, the single-document endpoint ignores a
@@ -94,6 +95,26 @@ def read_application(base_url: str, headers: dict, application_id: str) -> dict:
     if not rows:
         raise UnknownApplication(f"unknown application: {application_id}")
     return rows[0]
+
+
+def read_full_application(base_url: str, headers: dict, application_id: str) -> dict:
+    """Read one whole Loan Application, for the underwriting pipeline.
+
+    Deliberately *not* projected, unlike `read_application`. The pipeline reads fields that are not
+    decision inputs — `credit_score_origin`, which `resolve_credit_score` uses to tell a placeholder
+    score from a recorded one — so narrowing this list would change underwriting behaviour rather than
+    shrink a view. The agent cannot reach this function through its object graph: it is a method of
+    `FrappeClient`, which also exposes `create` and `call_method` and so fails `assert_reader`.
+    """
+    try:
+        r = requests.get(f"{base_url}/api/resource/{DOCTYPE}/{application_id}", headers=headers, timeout=15)
+    except requests.RequestException as e:
+        raise FrappeUnavailable(f"frappe unreachable: {e}")
+    if r.status_code == 404:
+        raise UnknownApplication(f"unknown application: {application_id}")
+    if not r.ok:
+        raise FrappeUnavailable(f"frappe HTTP {r.status_code}: {r.text[:200]}")
+    return r.json().get("data", {})
 
 
 def resolve_application(base_url: str, headers: dict, external_ref: str) -> dict | None:
@@ -247,7 +268,8 @@ class FrappeClient:
         return {"Authorization": f"token {self.api_key}:{self.api_secret}"}
 
     def get(self, application_id: str) -> dict:
-        return read_application(self.base_url, self._headers(), application_id)
+        """The pipeline's read: the whole document. The agent's read is `ReadOnlyFrappeApplication.get`."""
+        return read_full_application(self.base_url, self._headers(), application_id)
 
     def create(self, fields: dict) -> dict:
         """Create a Loan Application. Raises on any failure: the caller must not report success."""

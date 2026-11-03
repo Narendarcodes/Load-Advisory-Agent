@@ -7,8 +7,9 @@ Three things are proved here, each in the way that actually hurts to break:
    rather than on the first write.
 2. **The shipped wiring holds no writer.** The offline and live graphs are built from read-only views,
    and nothing reachable from `agent.tools` exposes `create`, `set_status`, `persist` or `call_method`.
-3. **The read is projected.** A Loan Application arrives as the fields the decision path uses, never as
-   the whole document.
+3. **The agent's read is projected.** A Loan Application reaches the turn as the fields the decision path
+   uses, never as the whole document — and the full-document read the pipeline still uses belongs to an
+   object the agent is refused at construction.
 """
 import json
 import re
@@ -154,14 +155,10 @@ def _frappe_like_server(monkeypatch):
     return calls
 
 
-@pytest.mark.parametrize("reader_factory", [
-    lambda: FrappeClient("https://p1loan.invalid", "k", "s"),
-    lambda: ReadOnlyFrappeApplication("https://p1loan.invalid", "k", "s"),
-])
-def test_an_application_read_returns_only_the_decision_fields(monkeypatch, reader_factory):
+def test_the_agent_read_returns_only_the_decision_fields(monkeypatch):
     """Asserted on the RESPONSE: the borrower's name, e-mail, phone and zip never reach the agent."""
     calls = _frappe_like_server(monkeypatch)
-    doc = reader_factory().get("APP-TEST-005")
+    doc = ReadOnlyFrappeApplication("https://p1loan.invalid", "k", "s").get("APP-TEST-005")
     assert sorted(doc) == sorted(READ_FIELDS)
     for pii in ("applicant_name", "applicant_email_address", "applicant_phone_number", "zip_code",
                 "customer_name", "owner", "modified_by", "documents"):
@@ -169,6 +166,23 @@ def test_an_application_read_returns_only_the_decision_fields(monkeypatch, reade
     assert doc["applicant"] == "CUS-TEST-005" and doc["custom_credit_score"] == 690
     assert calls[0]["url"].endswith("/api/resource/Loan Application"), "read must use the projecting endpoint"
     assert json.loads(calls[0]["params"]["filters"]) == [["name", "=", "APP-TEST-005"]]
+
+
+def test_the_pipeline_read_is_the_whole_document_and_cannot_be_the_agents_store(monkeypatch):
+    """The split is deliberate: the underwriting pipeline keeps its full document, the agent never gets it.
+
+    `read_full_application` is not projected because the pipeline's field set is its own business —
+    `resolve_credit_score` needs `credit_score_origin`, which is not a decision input, so projecting it
+    would have changed underwriting by accident. What makes that safe is the same object also exposing
+    `create` and `call_method`: `DecisionTools` refuses it before a turn can run.
+    """
+    calls = _frappe_like_server(monkeypatch)
+    doc = FrappeClient("https://p1loan.invalid", "k", "s").get("APP-TEST-005")
+    assert calls[0]["url"].endswith("/api/resource/Loan Application/APP-TEST-005")
+    assert doc == FULL_APPLICATION_DOC
+    assert "credit_score_origin" not in READ_FIELDS
+    with pytest.raises(ReadOnlyBoundaryViolation, match="FrappeClient exposes call_method, create"):
+        assert_reader(FrappeClient("https://p1loan.invalid", "k", "s"), role="the agent's application store")
 
 
 def test_a_missing_application_is_unknown_not_empty(monkeypatch):
