@@ -304,9 +304,15 @@ RULE_FIELD = {
 	"PL-088": "documents", "PL-094": "identity_documents", "PL-095": "consents", "PL-102": "pan",
 	"PL-111": "purpose_documents", "PL-112": "loan_purpose", "PL-121": "income_documents",
 }
-REASON_TEXT = {
+REASON_TEXT = {  # catalogue-v2 borrower reason categories (keys only; never a value or a cut-off)
+	"EMPLOYMENT_STABILITY": "Your time in your current job doesn't meet our requirements yet.",
+	"INCOME_NOT_VERIFIED_OR_INSUFFICIENT": "Your income couldn't be verified or doesn't support this loan right now.",
+	"REPAYMENTS_TOO_HIGH": "The new EMI would take too much of your monthly income.",
+	"CREDIT_HISTORY": "Your credit history doesn't meet our requirements right now.",
+	"RECENT_CREDIT_APPLICATIONS": "There have been several recent credit applications on your profile.",
 	"DETAILS_NOT_VERIFIED": "We couldn't verify some details.",
 	"DOCUMENTS_INCOMPLETE_OR_UNCLEAR": "Some documents are missing or unclear.",
+	"REQUEST_OUTSIDE_OFFER": "The amount or repayment period you asked for is outside what we offer.",
 }
 
 
