@@ -27,8 +27,10 @@ def test_explain_fallback_is_in_the_applicants_language(loc, tmp_path):
     assert "Monthly income:" not in r.answer
 
 
-def test_english_explain_fallback_is_unchanged(tmp_path):
+def test_english_explain_fallback_gives_categories_not_limits(tmp_path):
+    # Disclosure policy (2026-11-03): the fallback names each failed area but never the value next to the limit.
     ag, _, _ = agent_for(ScriptedLLM(fail=True), tmp_path=tmp_path)
     r = ask(ag, "Why was my application rejected?")
     assert r.answer.startswith("Your application's recorded decision is REJECTED under a ")
-    assert "; the policy needs " in r.answer and "I can show what would need to change, or answer questions." in r.answer
+    assert "did not meet our requirement." in r.answer and "the policy needs" not in r.answer
+    assert "or ask a person to review it." in r.answer
