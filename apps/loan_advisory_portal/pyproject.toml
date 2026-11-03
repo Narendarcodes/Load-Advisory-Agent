@@ -13,7 +13,10 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Framework :: Frappe",
 ]
-dependencies = []
+dependencies = [
+    "Pillow>=10.1",
+    "pypdfium2>=4.30",
+]
 
 [tool.bench.frappe-dependencies]
 frappe = ">=16.0.0,<17.0.0"

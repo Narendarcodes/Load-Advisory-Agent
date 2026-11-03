@@ -15,6 +15,30 @@ into the process environment does not exist for it.
 | `livekit_url`, `livekit_api_key`, `livekit_api_secret` | voice join tokens | no | the voice control stays disabled |
 | `db_host`, `db_name`, `db_password`, `db_user`, `redis-*` | written by the `configurator` service, not by you | managed | a stack with no `common_site_config.json` cannot open a site |
 
+## Loan portal OCR
+
+| Variable | Consumed by | Default | If missing or wrong |
+| --- | --- | --- | --- |
+| `TESSERACT_CMD` | `loan_advisory_portal.ocr.extractor` | `tesseract` on `PATH`, then standard Windows install locations | OCR returns a clear unavailable error. If set, it must name the Tesseract executable. |
+| `OCR_LANG` | `loan_advisory_portal.ocr.extractor` | `eng` | Tesseract reports that configured language data cannot be loaded; install that language pack or select an installed language. |
+
+These are process environment variables, not values read automatically from `.env`. For a
+Windows-hosted Python process or OCR test, set the executable in PowerShell before starting it:
+
+```powershell
+$env:TESSERACT_CMD = 'C:\Path\To\Tesseract-OCR\tesseract.exe'
+$env:OCR_LANG = 'eng'
+python -m pytest tests/test_ocr_extractor.py tests/test_ocr_pdf.py -q
+```
+
+The Frappe deployment documented here runs inside a Linux Docker container. A Windows `.exe` path
+cannot be used by that process. The backend image must have a Linux Tesseract executable and its
+language data installed, and the backend process must receive a container path such as
+`TESSERACT_CMD=/usr/bin/tesseract`. Installing Tesseract on the Windows host does not make it
+available inside Docker; the OCR code does not install or bundle the engine.
+
+The OCR path uses Tesseract over stdin/stdout and does not send documents or recognized text to Groq or another LLM.
+
 ## Agent (FastAPI)
 
 | Variable | Consumed by | Default | If missing or wrong |

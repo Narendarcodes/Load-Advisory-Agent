@@ -1,0 +1,24 @@
+FROM loanrangers-frappe:16
+
+USER root
+
+ENV TESSERACT_CMD=/usr/bin/tesseract \
+    OCR_LANG=eng
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        tesseract-ocr \
+        tesseract-ocr-eng \
+    && tesseract --list-langs | grep -Fxq eng \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --chown=frappe:root . /home/frappe/frappe-bench/apps/loan_advisory_portal/
+
+USER frappe
+
+RUN cd /home/frappe/frappe-bench \
+    && bench pip install -e apps/loan_advisory_portal \
+    && mkdir -p assets \
+    && ln -sfn \
+        /home/frappe/frappe-bench/apps/loan_advisory_portal/loan_advisory_portal/public \
+        /home/frappe/frappe-bench/assets/loan_advisory_portal
