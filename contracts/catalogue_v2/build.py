@@ -280,9 +280,13 @@ def dictionary_json(rules):
     for f in FE.FIELDS:
         if f["zen_input"]:
             fe_by_zen.setdefault(f["zen_input"], []).append(f["field_id"])
+    fmap = frappe_field_map()["fields"]
     out = []
     for name in sorted(dd):
         row = dict(dd[name])
+        loc = fmap.get(name)
+        row["frappe_location"] = loc["location"] if loc else None
+        row["frappe_location_kind"] = loc["kind"] if loc else None
         ok, why = supplied(name, dd)
         row["used_by_rules"] = sorted(users.get(name, []))
         row["frontend_fields"] = fe_by_zen.get(name, [])
@@ -299,6 +303,15 @@ def dictionary_json(rules):
         "fields": out,
         "never_store": [{"name": n, "description": d, "pii_class": p, "note": note} for n, d, p, note in F.NEVER_STORE_EXTRA],
     }
+
+
+# ---------------------------------------------------------------- Frappe field map
+FRAPPE_FIELD_MAP = "contracts/frappe_field_map.json"
+
+
+def frappe_field_map():
+    """Where each dictionary field lives in the Frappe app (feat/saral-lms-doctypes)."""
+    return json.loads((ROOT / FRAPPE_FIELD_MAP).read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------- markdown helpers

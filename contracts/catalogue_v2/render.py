@@ -67,6 +67,24 @@ GAPS = [
 ]
 
 
+GAP_STATUS = {
+    "G01": "RESOLVED: doctype KYC Verification",
+    "G02": "RESOLVED: doctype Bureau Report Summary (bureau-report/2 columns empty until Qoder ships v2)",
+    "G03": "RESOLVED: doctype Bank Statement Summary",
+    "G04": "RESOLVED: child table Rule Result on Decision Snapshot",
+    "G05": "RESOLVED: submittable, immutable doctype Decision Snapshot (+ Decision Policy Parameter rows)",
+    "G06": "RESOLVED: Loan Decision Evidence.decision options extended; APPROVED/REJECTED/ERROR kept",
+    "G07": "RESOLVED: doctypes Consent Record + Consent Text (PROTOTYPE texts, pending legal review)",
+    "G08": "RESOLVED: doctype Signature Screening Result",
+    "G09": "RESOLVED: Loan Application custom fields; custom_credit_score read-only and bureau-only (+ origin)",
+    "G10": "RESOLVED: Borrower Profile fields + Borrower Employment History child table",
+    "G11": "RESOLVED: doctype Document Extraction + Document Extraction Field (custom doctype; PR #41 not merged here)",
+    "G12": "RESOLVED: Loan Application purpose-detail custom fields",
+    "G13": "RESOLVED: doctypes Negative List Entry, Employer Caution Entry, Contact Fingerprint (hash only)",
+    "G14": "RESOLVED: Loan Application disbursal custom fields (account number in an encrypted Password field)",
+}
+
+
 def counts(rules):
     by_group = Counter(r["rule_group"] for r in rules)
     by_status = Counter(r["approval_status"] for r in rules)
@@ -182,6 +200,7 @@ def data_dictionary_md(cat, ddj):
     st = Counter(f["storage"] for f in fields)
     src = Counter(f["source"] for f in fields)
     missing = [f for f in fields if f["frappe_today"].startswith("MISSING")]
+    unplaced = [f for f in fields if f["storage"] != "NEVER_STORE" and not f.get("frappe_location")]
     L = ["# Saral data dictionary (rule inputs)", "", HDR,
          f"Machine-readable: [`contracts/data_dictionary.json`](../../contracts/data_dictionary.json). {len(fields)} distinct input fields "
          f"across {len(cat['rules'])} rules. Frappe locations were read from the doctype JSONs, `install.py` custom fields and the writers "
@@ -199,15 +218,24 @@ def data_dictionary_md(cat, ddj):
           "## PII classes and masking", "", md_table(["Class", "Rule"], list(ddj["pii_classes"].items())), "",
           "## Never stored", "", md_table(["Item", "PII", "Handling"], [[n["description"], n["pii_class"], n["note"]] for n in ddj["never_store"]]), "",
           "## Fields", "",
-          md_table(["Field", "Type", "Unit", "Source", "MVP supply", "Derived from / formula", "Rules", "Frappe today", "PII", "Storage", "MVP"],
+          md_table(["Field", "Type", "Unit", "Source", "MVP supply", "Derived from / formula", "Rules", "Frappe at 716db49", "Frappe location",
+                    "PII", "Storage", "MVP"],
                    [[f["name"], f["type"], f["unit"], f["source"], f["mvp_supply"],
                      (", ".join(f["derived_from"]) + (" — " if f["derived_from"] and f["formula_or_note"] else "") + f["formula_or_note"]),
-                     ", ".join(f["used_by_rules"]), f["frappe_today"], f["pii_class"], f["storage"],
+                     ", ".join(f["used_by_rules"]), f["frappe_today"], f.get("frappe_location"), f["pii_class"], f["storage"],
                      "yes" if f["mvp_available"] else "no: " + f["mvp_gap"]] for f in fields]), "",
           "Retention per storage tier is in the tier list above; every row in the JSON repeats it.", "",
-          "## LMS gap list (design only; no doctype was edited)", "",
-          f"{len(missing)} of {len(fields)} fields have no Frappe location today. Proposed additions:", "",
-          md_table(["Gap", "Kind", "Doctype / target", "Fields", "Storage", "Rules served"], [list(g) for g in GAPS]), "",
+          "## LMS gap list", "",
+          f"At 716db49, {len(missing)} of {len(fields)} fields had no Frappe location. On `feat/saral-lms-doctypes` every field has one: "
+          f"**{len(unplaced)} remaining**. The location of each field is in "
+          "[`contracts/frappe_field_map.json`](../../contracts/frappe_field_map.json) and in the `frappe_location` column above; "
+          "`tests/test_saral_lms_doctypes.py` fails if a field other than NEVER_STORE loses its location. NEVER_STORE items "
+          "(full PAN, full Aadhaar, OTP values, raw OCR text) have no field anywhere, enforced by the same test.", "",
+          md_table(["Gap", "Kind", "Doctype / target", "Fields", "Storage", "Rules served", "Status"],
+                   [list(g) + [GAP_STATUS[g[0]]] for g in GAPS]), "",
+          "Populating these fields is the job of the ZEN engine and the synthetic source adapters, which are not built yet (design only). "
+          "The trusted writers that exist today are `api.snapshots.record_decision_snapshot` (Decision Snapshot) and `api.review` "
+          "(officer actions). The bureau-report/2 columns stay empty until Qoder ships bureau-report/2.", "",
           "## bureau-report/1 fields no rule uses yet", "",
           ", ".join(f"`{p}`" for p in unused), "", "Most are provenance or display fields and are kept for audit, not decisions.", "",
           "## Rule inputs bureau-report/1 cannot supply", "",
