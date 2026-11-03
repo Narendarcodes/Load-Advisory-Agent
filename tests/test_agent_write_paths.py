@@ -158,6 +158,7 @@ def test_production_refuses_a_checkpoint_store_that_never_expires(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("AGENT_CHECKPOINT_BACKEND", "redis")
     monkeypatch.setenv("AGENT_CHECKPOINT_REDIS_URL", "redis://127.0.0.1:1")
+    monkeypatch.setenv("AGENT_CHECKPOINT_PREFIX", "p16-test:graph:")
     monkeypatch.delenv("AGENT_CHECKPOINT_TTL_S", raising=False)
     with pytest.raises(checkpoint.CheckpointUnavailable, match="AGENT_CHECKPOINT_TTL_S"):
         checkpoint.build_checkpointer()
@@ -178,6 +179,7 @@ def test_production_keeps_a_ttl_it_was_given(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("AGENT_CHECKPOINT_BACKEND", "redis")
     monkeypatch.setenv("AGENT_CHECKPOINT_REDIS_URL", "redis://127.0.0.1:1")
+    monkeypatch.setenv("AGENT_CHECKPOINT_PREFIX", "p16-test:graph:")
     monkeypatch.setenv("AGENT_CHECKPOINT_TTL_S", "86400")
     monkeypatch.setattr(checkpoint.redis, "Redis", _FakeRedis)
     assert checkpoint.build_checkpointer()._ttl == 86400

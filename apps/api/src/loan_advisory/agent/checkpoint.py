@@ -10,6 +10,12 @@ Process-local memory stays the development default, and is refused when `APP_ENV
 period itself is an owner decision, not a library default, so `AGENT_CHECKPOINT_TTL_S` is off
 unless an operator sets it; production is the one place where leaving it unset is refused, because
 "no expiry" is a retention policy nobody chose.
+
+Production also requires `AGENT_CHECKPOINT_PREFIX`, and not the shipped default. Every key is
+namespaced by that prefix (`advisory:graph:v1:idx:<thread digest>`, `...ckpt:...`, `...threads`), so two
+deployments pointed at one Redis database under one prefix share a keyspace: one can read, and the
+`threads` hash can even list, the other's conversation state. A unique prefix per deployment is what makes
+"my Redis, my threads" true.
 """
 from __future__ import annotations
 
@@ -254,12 +260,23 @@ def build_checkpointer():
     backend = (os.environ.get("AGENT_CHECKPOINT_BACKEND") or "auto").strip().lower()
     environment = (os.environ.get("APP_ENV") or os.environ.get("ENVIRONMENT") or "").strip().lower()
     ttl = int(os.environ.get("AGENT_CHECKPOINT_TTL_S") or 0)
-    prefix = (os.environ.get("AGENT_CHECKPOINT_PREFIX") or DEFAULT_PREFIX).strip()
+    prefix = (os.environ.get("AGENT_CHECKPOINT_PREFIX") or "").strip()
     if backend == "auto":
         backend = "redis" if url else "memory"
     if backend == "redis":
         if not url:
             raise CheckpointUnavailable("checkpoints are misconfigured: no Redis URL")
+        # Only the shared store has a namespace to collide in: every key is namespaced by this prefix, so
+        # two deployments on one Redis database under one prefix read each other's conversation threads.
+        # Unset means the shared default, and naming the default explicitly is the same collision, so the
+        # value has to be this deployment's own.
+        if environment in PRODUCTION_ENV and not prefix:
+            raise CheckpointUnavailable("production checkpoints need AGENT_CHECKPOINT_PREFIX: the default "
+                                        "namespace is shared, so two deployments in it can read each "
+                                        "other's threads")
+        if prefix == DEFAULT_PREFIX:
+            raise CheckpointUnavailable(f"AGENT_CHECKPOINT_PREFIX must be unique per deployment, not the "
+                                        f"shared default {DEFAULT_PREFIX!r}")
         if environment in PRODUCTION_ENV and not ttl:
             # A checkpoint holds the raw conversation and the loaded evidence. With no TTL the shared
             # Redis keeps every borrower's transcript until someone notices — that is a retention
@@ -271,7 +288,7 @@ def build_checkpointer():
             client.ping()
         except (redis.RedisError, OSError) as exc:
             raise CheckpointUnavailable(f"checkpoint store is unavailable: {exc}") from exc
-        return RedisCheckpointSaver(client, prefix=prefix, ttl_s=ttl)
+        return RedisCheckpointSaver(client, prefix=prefix or DEFAULT_PREFIX, ttl_s=ttl)
     if backend == "memory":
         if environment in PRODUCTION_ENV:
             raise CheckpointUnavailable("checkpoints cannot use process-local memory in production")

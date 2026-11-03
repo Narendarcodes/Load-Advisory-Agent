@@ -411,17 +411,62 @@ def test_b3_the_configured_ttl_is_applied_to_the_keys_this_run_wrote():
 
 
 @redis_required
-def test_b3_production_refuses_an_unbounded_checkpoint_store_against_the_live_server(monkeypatch):
+def test_b3_production_refuses_an_unbounded_or_shared_namespace_store_on_the_live_server(monkeypatch):
+    """Both refusals, decided against the real Redis — not against a fake that agrees with the code."""
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("AGENT_CHECKPOINT_BACKEND", "redis")
     monkeypatch.setenv("AGENT_CHECKPOINT_REDIS_URL", REDIS_URL)
     monkeypatch.delenv("AGENT_CHECKPOINT_TTL_S", raising=False)
+
+    # Namespace first: a production deployment left on the shared prefix is a collision waiting to happen,
+    # and it is refused before the retention question is asked.
+    monkeypatch.delenv("AGENT_CHECKPOINT_PREFIX", raising=False)
+    with pytest.raises(checkpoint_module.CheckpointUnavailable, match="AGENT_CHECKPOINT_PREFIX"):
+        checkpoint_module.build_checkpointer()
+    monkeypatch.setenv("AGENT_CHECKPOINT_PREFIX", checkpoint_module.DEFAULT_PREFIX)
+    with pytest.raises(checkpoint_module.CheckpointUnavailable, match="unique per deployment"):
+        checkpoint_module.build_checkpointer()
+    namespace = f"{PREFIX}graph:prod:"
+    monkeypatch.setenv("AGENT_CHECKPOINT_PREFIX", namespace)
+
     with pytest.raises(checkpoint_module.CheckpointUnavailable, match="AGENT_CHECKPOINT_TTL_S"):
         checkpoint_module.build_checkpointer()
     monkeypatch.setenv("AGENT_CHECKPOINT_TTL_S", "3600")
     saver = checkpoint_module.build_checkpointer()
-    assert saver._ttl == 3600
+    assert saver._ttl == 3600 and saver._prefix == namespace
     assert saver._client.ping() is True, "the refused/accepted decision must be made against the real server"
+
+
+@redis_required
+def test_b3_two_deployments_on_one_server_cannot_read_each_others_threads():
+    """The isolation §C asks for, on the live store: same key name, different namespace, nothing shared."""
+    web = _saver(prefix=f"{PREFIX}graph:web:")
+    voice = _saver(prefix=f"{PREFIX}graph:voice:")
+    thread = f"{PREFIX}shared-thread-name"          # deliberately identical: namespacing is the only separator
+
+    def at(answer: str, cid: str = "c1") -> dict:
+        return {"id": cid, "ts": "x", "channel_values": {"answer": answer}, "versions_seen": {}, "parent_id": None}
+
+    def cfg(cid: str = "c1") -> dict:
+        return {"configurable": {"thread_id": thread, "checkpoint_ns": "", "checkpoint_id": cid}}
+
+    meta = {"step": 1, "source": "input"}
+    try:
+        web.put(cfg(), at("from the web deployment"), meta, {})
+        assert web.get_tuple(cfg()) is not None
+        assert voice.get_tuple(cfg()) is None, \
+            "the voice deployment read the web deployment's checkpoint"
+        assert list(voice.list(None)) == [], "one deployment's thread list showed the other's thread"
+        voice.put(cfg(), at("from the voice deployment"), meta, {})
+        # the same (thread, checkpoint id) under two prefixes are two different objects — neither overwrote
+        assert web.get_tuple(cfg()).checkpoint["channel_values"]["answer"] == "from the web deployment"
+        assert voice.get_tuple(cfg()).checkpoint["channel_values"]["answer"] == "from the voice deployment"
+        web_keys = {k.decode() for k in _client().scan_iter(match=f"{web._prefix}*", count=500)}
+        voice_keys = {k.decode() for k in _client().scan_iter(match=f"{voice._prefix}*", count=500)}
+        assert web_keys and voice_keys and not (web_keys & voice_keys)
+    finally:
+        _purge([f"{web._prefix}*", f"{voice._prefix}*"])
+    assert not list(_client().scan_iter(match=f"{PREFIX}graph:*", count=500)), "this run left keys behind"
 
 
 @redis_required
