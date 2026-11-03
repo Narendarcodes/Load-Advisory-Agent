@@ -13,15 +13,15 @@
 Idempotent: a record_id that already exists with the same content is not written twice.
 """
 import json
-import os
 
 import requests
 
 from decision_engine.evidence.evidence_record import stable_trace
 
-from loan_advisory.infrastructure.frappe_adapter import FrappeClient, FrappeUnavailable
+from loan_advisory.infrastructure.frappe_adapter import FrappeClient, FrappeUnavailable, _credentials
 from loan_advisory.state_paths import LIVE_TRACE_DIR, TRACE_DIR, resolve, write_private
 
+EVIDENCE_DOCTYPE = "Loan Decision Evidence"
 EVIDENCE_METHOD = "loan_advisory_portal.api.evidence.ingest"
 EVIDENCE_GET_METHOD = "loan_advisory_portal.api.evidence.get_record"
 
@@ -51,34 +51,46 @@ class InMemoryEvidenceSink:
 
 
 class FrappeEvidenceReader:
-    """The agent's view of Decision Evidence: one allowlisted read method, and nothing else.
+    """The agent's view of Decision Evidence: one projected read of the stored record, on the read identity.
 
-    `FrappeEvidenceSink` can ingest; the advisory agent must not be able to. This class is built from
-    configuration strings and posts to exactly one whitelisted method, so there is no generic
-    `call_method` (and no `persist`) anywhere behind it for the agent graph to reach.
+    This deliberately does NOT call `loan_advisory_portal.api.evidence.get_record`. Measured on live
+    Frappe 16.51 (2026-11-03), that method answers 403 for the `Agent Integration` role and 200 only for
+    `Evidence Service` — so routing the agent through it would keep the *ingest* credential inside the
+    conversational process, which is the exact condition boundary B exists to remove. The `Agent
+    Integration` role holds read=1/write=0/create=0/delete=0 on `Loan Decision Evidence`, so the agent
+    reads the same document with the same read-only identity it uses for applications.
     """
 
-    def __init__(self, base_url=None, api_key=None, api_secret=None):
-        env = os.environ
-        self.base_url = (base_url or env.get("EVIDENCE_FRAPPE_URL") or env.get("FRAPPE_URL") or "").rstrip("/")
-        self.api_key = api_key or env.get("EVIDENCE_FRAPPE_API_KEY") or ""
-        self.api_secret = api_secret or env.get("EVIDENCE_FRAPPE_API_SECRET") or ""
-        if not (self.base_url and self.api_key and self.api_secret):
-            raise FrappeUnavailable("EVIDENCE_FRAPPE_API_KEY / EVIDENCE_FRAPPE_API_SECRET not set")
+    FIELDS = ("name", "loan_application", "record_json")
 
-    def get_record(self, record_id: str):
-        headers = {"Authorization": f"token {self.api_key}:{self.api_secret}"}
+    def __init__(self, base_url=None, api_key=None, api_secret=None):
+        self.base_url, self._api_key, self._api_secret = _credentials(base_url, api_key, api_secret)
+
+    def _headers(self) -> dict:
+        return {"Authorization": f"token {self._api_key}:{self._api_secret}"}
+
+    def get_record(self, record_id: str) -> dict:
         try:
-            r = requests.post(f"{self.base_url}/api/method/{EVIDENCE_GET_METHOD}", headers=headers,
-                              json={"record_id": record_id}, timeout=20)
+            r = requests.get(f"{self.base_url}/api/resource/{EVIDENCE_DOCTYPE}", headers=self._headers(), timeout=20,
+                             params={"filters": json.dumps([["name", "=", record_id]]),
+                                     "fields": json.dumps(list(self.FIELDS)),
+                                     "limit_page_length": "1"})
         except requests.RequestException as e:
             raise FrappeUnavailable(f"frappe unreachable: {e}")
         if not r.ok:
-            raise FrappeUnavailable(f"frappe method {EVIDENCE_GET_METHOD} HTTP {r.status_code}: {r.text[:200]}")
-        try:
-            return r.json().get("message")
-        except ValueError:
-            raise FrappeUnavailable(f"frappe method {EVIDENCE_GET_METHOD} returned a non-JSON body") from None
+            raise FrappeUnavailable(f"frappe evidence read HTTP {r.status_code}: {r.text[:200]}")
+        rows = r.json().get("data") or []
+        if not rows:
+            raise FrappeUnavailable(f"evidence record {record_id} not found")
+        stored = rows[0].get("record_json")
+        if isinstance(stored, str):
+            try:
+                return json.loads(stored)
+            except ValueError as e:
+                raise FrappeUnavailable(f"evidence record {record_id} holds unreadable json") from e
+        if not isinstance(stored, dict):
+            raise FrappeUnavailable(f"evidence record {record_id} holds no record json")
+        return stored
 
 
 class FrappeEvidenceSink:

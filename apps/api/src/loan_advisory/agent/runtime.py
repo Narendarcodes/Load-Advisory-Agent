@@ -135,10 +135,12 @@ def _open_dense(path: str, chunks: list[dict], identity: dict):
 
 
 def build_live_agent(policy_tools=None, profile=None, llm=None) -> tuple[AdvisoryAgent, ReadOnlyFrappeApplication]:
-    """The live agent reads Frappe and nothing else: application GETs plus one evidence read method.
+    """The live agent reads Frappe and nothing else, on one read-only identity.
 
-    `FrappeEvidenceSink` — the ingest path — is deliberately not constructed here. It needs its own
-    Evidence Service credential and belongs to the pipeline that decides, not to this process.
+    Both readers take `FRAPPE_*`: applications as a projected list read, evidence as a projected read of
+    the stored record. `FrappeEvidenceSink` and the `EVIDENCE_FRAPPE_*` ingest credential are not
+    constructed here at all — the method the sink calls requires the Evidence Service role, so using it
+    for reads would have left a write-capable secret inside the conversational process.
     """
     reader = ReadOnlyFrappeApplication()
     tools = DecisionTools(reader, FrappeEvidenceSource(FrappeEvidenceReader()))

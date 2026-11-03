@@ -70,17 +70,30 @@ def _credentials(base_url, api_key, api_secret):
 
 
 def read_application(base_url: str, headers: dict, application_id: str) -> dict:
-    """GET one Loan Application, projected to READ_FIELDS. The only read implementation both paths use."""
+    """Read one Loan Application, projected to READ_FIELDS. The only read implementation both paths use.
+
+    This is a list read filtered on `name`, not `GET /api/resource/<doctype>/<name>`, and that is not
+    a style choice: measured against Frappe 16.51 on 2026-11-03, the single-document endpoint ignores a
+    `fields` parameter and returns all 41 columns — including `applicant_name`, `applicant_email_address`,
+    `applicant_phone_number` and `zip_code`. The list endpoint honours `fields` and returned exactly the
+    twelve decision fields with no PII. Projecting the request without checking the response is how the
+    first attempt at this boundary passed every offline test and failed live.
+    """
     try:
-        r = requests.get(f"{base_url}/api/resource/{DOCTYPE}/{application_id}", headers=headers, timeout=15,
-                         params={"fields": json.dumps(list(READ_FIELDS))})
+        r = requests.get(f"{base_url}/api/resource/{DOCTYPE}", headers=headers, timeout=15,
+                         params={"filters": json.dumps([["name", "=", application_id]]),
+                                 "fields": json.dumps(list(READ_FIELDS)),
+                                 "limit_page_length": "1"})
     except requests.RequestException as e:
         raise FrappeUnavailable(f"frappe unreachable: {e}")
     if r.status_code == 404:
         raise UnknownApplication(f"unknown application: {application_id}")
     if not r.ok:
         raise FrappeUnavailable(f"frappe HTTP {r.status_code}: {r.text[:200]}")
-    return r.json().get("data", {})
+    rows = r.json().get("data") or []
+    if not rows:
+        raise UnknownApplication(f"unknown application: {application_id}")
+    return rows[0]
 
 
 def resolve_application(base_url: str, headers: dict, external_ref: str) -> dict | None:

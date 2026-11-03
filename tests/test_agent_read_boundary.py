@@ -81,10 +81,10 @@ def test_the_live_agent_is_wired_without_an_evidence_sink(monkeypatch):
     monkeypatch.setenv("EVIDENCE_FRAPPE_API_SECRET", "es")
     monkeypatch.setattr(frappe_adapter.requests, "get",
                         lambda url, headers=None, timeout=None, params=None, **kw:
-                        _Response({"data": dict(OWNED, custom_latest_evidence="EV-1")}))
-    monkeypatch.setattr(evidence_store.requests, "post",
-                        lambda url, headers=None, json=None, timeout=None, **kw:
-                        _Response({"message": None}))
+                        _Response({"data": [dict(OWNED, custom_latest_evidence="EV-1")]}))
+    monkeypatch.setattr(evidence_store.requests, "get",
+                        lambda url, headers=None, timeout=None, params=None, **kw:
+                        _Response({"data": [{"record_json": "{}"}]}))
     agent, _reader = runtime.build_live_agent(llm=object())
     assert_reader(agent.tools.store, role="live store")
     assert_reader(agent.tools.evidence, role="live evidence")
@@ -103,6 +103,27 @@ def test_no_live_writer_is_constructed_or_imported_in_the_agent_wiring():
 
 
 # ------------------------------------------------------------------ 3. the read is projected
+# The full column set a live Loan Application returns. Measured against Frappe 16.51 on 2026-11-03,
+# where the single-document endpoint ignored `fields` and handed back all 41 of these, including
+# applicant_name / applicant_email_address / applicant_phone_number / zip_code.
+FULL_APPLICATION_DOC = {
+    "name": "APP-TEST-005", "owner": "Administrator", "creation": "2026-01-01 00:00:00",
+    "modified": "2026-01-02 00:00:00", "modified_by": "Administrator", "docstatus": 1, "idx": 0,
+    "applicant": "CUS-TEST-005", "applicant_type": "Customer", "applicant_name": "Synthetic Borrower",
+    "applicant_email_address": "borrower@example.invalid", "applicant_phone_number": "9000000000",
+    "zip_code": "500001", "company": "Loan Rangers Test NBFC", "loan_product": "SYN-PERSONAL-001",
+    "loan_amount": 300000, "repayment_method": "Repay Over Number of Periods", "repayment_periods": 36,
+    "repayment_amount": 9000, "rate_of_interest": 14.5, "posting_date": "2026-01-01",
+    "is_term_loan": 1, "is_secured_loan": 0, "maximum_loan_amount": 2000000,
+    "total_payable_amount": 324000, "total_payable_interest": 24000, "proposed_pledges": [],
+    "co_applicants": [], "documents": [], "status": "Rejected",
+    "custom_external_ref": "REF-5", "custom_loan_purpose": "travel", "custom_submitted_at": "2026-01-01 00:00:00",
+    "custom_policy_version": "synthetic-v1", "custom_lifecycle_state": "REJECTED",
+    "custom_latest_evidence": "EV-1", "custom_monthly_income": 90000, "custom_monthly_obligations": 12000,
+    "custom_credit_score": 690, "custom_employment_months": 18,
+}
+
+
 class _Response:
     def __init__(self, payload, status_code=200):
         self._payload, self.status_code = payload, status_code
@@ -113,12 +134,21 @@ class _Response:
         return self._payload
 
 
-def _recorded_get(monkeypatch):
+def _frappe_like_server(monkeypatch):
+    """A fake that behaves like the real endpoint, not like the one we wish we had.
+
+    `GET /api/resource/<doctype>/<name>` returns the whole document whatever `fields` says;
+    `GET /api/resource/<doctype>?fields=[...]` projects. A read implementation that picks the first
+    form therefore fails here even though its request looks correct.
+    """
     calls = []
 
     def fake_get(url, headers=None, timeout=None, params=None, **kwargs):
-        calls.append({"url": url, "params": params})
-        return _Response({"data": {k: None for k in json.loads(params["fields"])}} if params else {"data": dict(OWNED)})
+        calls.append({"url": url, "params": params or {}})
+        if url.rstrip("/").endswith("/Loan Application"):
+            wanted = json.loads(params["fields"]) if params and "fields" in params else sorted(FULL_APPLICATION_DOC)
+            return _Response({"data": [{k: FULL_APPLICATION_DOC.get(k) for k in wanted}]})
+        return _Response({"data": dict(FULL_APPLICATION_DOC)})        # single-doc GET: ignores `fields`
 
     monkeypatch.setattr(frappe_adapter.requests, "get", fake_get)
     return calls
@@ -128,13 +158,30 @@ def _recorded_get(monkeypatch):
     lambda: FrappeClient("https://p1loan.invalid", "k", "s"),
     lambda: ReadOnlyFrappeApplication("https://p1loan.invalid", "k", "s"),
 ])
-def test_an_application_read_is_projected_to_the_decision_fields(monkeypatch, reader_factory):
-    calls = _recorded_get(monkeypatch)
-    reader_factory().get("APP-TEST-005")
-    requested = json.loads(calls[0]["params"]["fields"])
-    assert requested == list(READ_FIELDS)
-    assert "applicant_name" not in requested and "mobile_number" not in requested
-    assert "custom_monthly_income" in requested  # scored, so it must stay readable
+def test_an_application_read_returns_only_the_decision_fields(monkeypatch, reader_factory):
+    """Asserted on the RESPONSE: the borrower's name, e-mail, phone and zip never reach the agent."""
+    calls = _frappe_like_server(monkeypatch)
+    doc = reader_factory().get("APP-TEST-005")
+    assert sorted(doc) == sorted(READ_FIELDS)
+    for pii in ("applicant_name", "applicant_email_address", "applicant_phone_number", "zip_code",
+                "customer_name", "owner", "modified_by", "documents"):
+        assert pii not in doc, pii
+    assert doc["applicant"] == "CUS-TEST-005" and doc["custom_credit_score"] == 690
+    assert calls[0]["url"].endswith("/api/resource/Loan Application"), "read must use the projecting endpoint"
+    assert json.loads(calls[0]["params"]["filters"]) == [["name", "=", "APP-TEST-005"]]
+
+
+def test_a_missing_application_is_unknown_not_empty(monkeypatch):
+    calls = []
+
+    def fake_get(url, headers=None, timeout=None, params=None, **kwargs):
+        calls.append(url)
+        return _Response({"data": []})
+
+    monkeypatch.setattr(frappe_adapter.requests, "get", fake_get)
+    from loan_advisory.infrastructure.frappe_adapter import UnknownApplication
+    with pytest.raises(UnknownApplication):
+        ReadOnlyFrappeApplication("https://p1loan.invalid", "k", "s").get("ACC-LOAP-9999-99999")
 
 
 def test_the_projection_covers_every_field_the_agent_reads():
@@ -196,25 +243,47 @@ def test_the_service_object_holds_only_the_agent():
 
 
 # ------------------------------------------------------------------ the evidence read itself
-def test_the_evidence_reader_calls_only_its_one_allowlisted_method(monkeypatch):
+def test_the_evidence_reader_uses_the_read_identity_and_no_writer(monkeypatch):
+    """It reads the stored document, so the ingest credential stays outside the agent process entirely."""
     calls = []
+    record = {"record_id": "EV-1", "application_ref": "APP-TEST-005", "decision": "REJECTED"}
 
-    def fake_post(url, headers=None, json=None, timeout=None, **kwargs):
-        calls.append((url, json))
-        return _Response({"message": {"record_id": "EV-1"}})
+    def fake_get(url, headers=None, timeout=None, params=None, json_body=None, **kwargs):
+        calls.append({"url": url, "headers": headers, "params": params})
+        return _Response({"data": [{"name": "EV-1", "loan_application": "APP-TEST-005",
+                                    "record_json": json.dumps(record)}]})
 
-    monkeypatch.setattr(evidence_store.requests, "post", fake_post)
-    reader = FrappeEvidenceReader("https://p1loan.invalid", "k", "s")
-    assert reader.get_record("EV-1") == {"record_id": "EV-1"}
-    assert calls == [("https://p1loan.invalid/api/method/loan_advisory_portal.api.evidence.get_record",
-                      {"record_id": "EV-1"})]
-    for writer in ("persist", "call_method", "create", "set_status"):
+    monkeypatch.setattr(evidence_store.requests, "get", fake_get)
+    monkeypatch.setenv("FRAPPE_URL", "https://p1loan.invalid")
+    monkeypatch.setenv("FRAPPE_API_KEY", "rk")
+    monkeypatch.setenv("FRAPPE_API_SECRET", "rs")
+    monkeypatch.delenv("EVIDENCE_FRAPPE_API_KEY", raising=False)      # no ingest credential exists
+    reader = FrappeEvidenceReader()
+    assert reader.get_record("EV-1") == record
+    assert calls[0]["url"].endswith("/api/resource/Loan Decision Evidence")
+    assert json.loads(calls[0]["params"]["filters"]) == [["name", "=", "EV-1"]]
+    assert json.loads(calls[0]["params"]["fields"]) == list(FrappeEvidenceReader.FIELDS)
+    assert calls[0]["headers"]["Authorization"].startswith("token rk:rs")
+    for writer in ("persist", "call_method", "create", "set_status", "put", "post"):
         assert not hasattr(reader, writer), writer
 
 
+def test_the_evidence_reader_fails_closed_on_an_unreadable_record(monkeypatch):
+    monkeypatch.setattr(evidence_store.requests, "get",
+                        lambda url, **kw: _Response({"data": [{"name": "EV-1", "record_json": "{not json"}]}))
+    from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable
+    reader = FrappeEvidenceReader("https://p1loan.invalid", "k", "s")
+    with pytest.raises(FrappeUnavailable):
+        reader.get_record("EV-1")
+    monkeypatch.setattr(evidence_store.requests, "get", lambda url, **kw: _Response({"data": []}))
+    with pytest.raises(FrappeUnavailable):
+        reader.get_record("EV-1")
+
+
 def test_the_evidence_source_reads_through_that_reader(monkeypatch):
-    monkeypatch.setattr(evidence_store.requests, "post",
-                        lambda url, headers=None, json=None, timeout=None, **kw: _Response({"message": {"record_id": "EV-9"}}))
+    record = {"record_id": "EV-9", "decision": "APPROVED"}
+    monkeypatch.setattr(evidence_store.requests, "get",
+                        lambda url, **kw: _Response({"data": [{"record_json": json.dumps(record)}]}))
     source = FrappeEvidenceSource(FrappeEvidenceReader("https://p1loan.invalid", "k", "s"))
     assert source.latest("APP-1", {"custom_latest_evidence": "EV-9"})["record_id"] == "EV-9"
     assert source.latest("APP-1", {}) is None            # no pointer: nothing is fetched
