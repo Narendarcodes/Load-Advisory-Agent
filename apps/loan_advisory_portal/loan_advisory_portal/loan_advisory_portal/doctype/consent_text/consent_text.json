@@ -1,0 +1,36 @@
+{
+ "actions": [],
+ "autoname": "field:text_id",
+ "creation": "2026-11-03 00:00:00.000000",
+ "description": "Versioned consent wording shown to borrowers. Seeded texts are PROTOTYPE, pending legal review (ADR-0009).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["text_id", "consent_type", "version", "title", "body", "status", "legal_review", "effective_from"],
+ "fields": [
+  {"fieldname": "text_id", "fieldtype": "Data", "label": "Text ID", "reqd": 1, "unique": 1, "in_list_view": 1, "description": "<consent_type>@<version>"},
+  {"fieldname": "consent_type", "fieldtype": "Select", "label": "Consent Type", "options": "BUREAU_PULL\nKYC_AADHAAR\nBANK_DATA_AA\nDATA_USE_AND_PROCESSING\nDOCUMENT_PROCESSING\nTERMS\nPRIVACY\nMARKETING\nDECLARATION_TRUE_AND_COMPLETE\nDECLARATION_ALL_EMIS_DECLARED\nDECLARATION_END_USE", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "version", "fieldtype": "Data", "label": "Version", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "title", "fieldtype": "Data", "label": "Title", "reqd": 1},
+  {"fieldname": "body", "fieldtype": "Small Text", "label": "Plain-language Text", "reqd": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "PROTOTYPE\nAPPROVED\nRETIRED", "default": "PROTOTYPE", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "legal_review", "fieldtype": "Select", "label": "Legal Review", "options": "PENDING\nAPPROVED", "default": "PENDING", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "effective_from", "fieldtype": "Date", "label": "Effective From"}
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Consent Text",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1},
+  {"role": "Loan Officer", "read": 1, "report": 1},
+  {"role": "Agent Integration", "read": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -82,6 +82,8 @@ docker run -d --name repro-acceptance-proxy --network frappe_docker_default \
   -v <temp>/nginx.repro.conf:/etc/nginx/conf.d/default.conf:ro nginx:alpine
 
 # Agent and runtime, launched from the clone's own venv and build output
+# (As run on 2026-11-02. --bureau-url was removed on 2026-11-03 with the agent's bureau
+# execution route, so the current command is the same line without that flag.)
 .venv-repro/Scripts/python -m loan_advisory.agent.server \
   --host 127.0.0.1 --port 8097 --no-rag --bureau-url http://127.0.0.1:8011
 node apps/runtime/dist/index.js                        # AGENT_RUNTIME_PORT=4201

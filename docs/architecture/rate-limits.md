@@ -49,7 +49,10 @@ application selection and (for AG-UI) input validation — never inside a stream
 | Scope | Routes | Limit |
 | --- | --- | ---: |
 | `agent-turn` | `/api/chat`, `/api/chat/stream`, `/api/agui` | 60 / minute |
-| `bureau-run` | `/api/bureau/run` (provider call + evidence write) | 10 / hour |
+
+> **2026-11-03 (Phase 1 boundary A).** A `bureau-run` scope of 10 / hour used to cap
+> `POST /api/bureau/run`. That route is removed, so the scope no longer exists: a borrower cannot
+> trigger a provider call at all, which is a stronger limit than a count of them.
 
 Budgets are counted per verified `sub`, so rotating assertions does not reset them. The store
 selection mirrors replay: Redis when configured; process-local counters only outside
@@ -58,10 +61,10 @@ production; `APP_ENV=production` with no Redis, or an unreachable store, refuses
 ## Why these numbers
 
 They are guard rails, not product policy. A borrower cannot produce 30 applications an hour by
-hand, and 60 agent turns a minute is far above a person typing. The bureau allowance is the
-tightest because it spends provider credit and writes evidence; ten runs an hour covers
-retrying a failed evaluation and a handful of what-if checks. Any future product decision that
-needs different numbers changes the table here and the matching test.
+hand, and 60 agent turns a minute is far above a person typing. The bureau allowance used to be
+the tightest because it spent provider credit and wrote evidence; it is now gone entirely, which is
+why the table has one scope. Any future product decision that needs different numbers changes the
+table here and the matching test.
 
 ## Verification
 
@@ -69,7 +72,8 @@ needs different numbers changes the table here and the matching test.
 | --- | --- |
 | `tests/test_limits.py` (Frappe) | a budget is per account, 429 carries `retry_after`, guests are not counted |
 | `tests/test_agent_guards.py::test_chat_budget_is_per_borrower` | the 3rd call in a 2-call window is 429 with `Retry-After`; another borrower still succeeds |
-| `tests/test_agent_guards.py::test_bureau_budget_refuses_before_provider_work` | the bureau allowance refuses before `bureau_run` executes |
+| `tests/test_agent_guards.py::test_no_bureau_scope_is_budgeted_on_the_agent_surface` | no bureau scope is spent; the only counter a borrower turn touches is `agent-turn` |
+| `tests/test_agent_guards.py::test_the_bureau_execution_route_is_not_part_of_the_agent_surface` | the removed route is 404 with forged headers *and* with a valid assertion |
 | `tests/test_agent_guards.py::test_budget_store_failure_fails_closed` | an unavailable store is 503, never an uncounted call |
 | `tests/test_agent_guards.py::test_memory_budget_is_refused_in_production` | no process-local fallback in production |
 | `tests/test_agent_guards.py::test_redis_budget_is_shared_across_workers` | two store instances (two workers) share one counter |

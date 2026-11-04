@@ -1,0 +1,347 @@
+{
+  "$comment": "Generated from contracts/*.py by contracts/export_schemas.py. Synthetic development contract; cross-field rules are enforced by the pydantic models only.",
+  "$defs": {
+    "BureauAggregates": {
+      "additionalProperties": false,
+      "description": "Derived from tradelines/enquiries; the validator recomputes and must agree.",
+      "properties": {
+        "active_emi_total": {
+          "minimum": 0,
+          "title": "Active Emi Total",
+          "type": "integer"
+        },
+        "enquiries_6m": {
+          "minimum": 0,
+          "title": "Enquiries 6M",
+          "type": "integer"
+        },
+        "max_dpd_12m": {
+          "minimum": 0,
+          "title": "Max Dpd 12M",
+          "type": "integer"
+        },
+        "max_dpd_24m": {
+          "minimum": 0,
+          "title": "Max Dpd 24M",
+          "type": "integer"
+        },
+        "writeoff_or_settlement_24m": {
+          "title": "Writeoff Or Settlement 24M",
+          "type": "boolean"
+        },
+        "writeoff_or_settlement_ever": {
+          "title": "Writeoff Or Settlement Ever",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "active_emi_total",
+        "max_dpd_12m",
+        "max_dpd_24m",
+        "enquiries_6m",
+        "writeoff_or_settlement_24m",
+        "writeoff_or_settlement_ever"
+      ],
+      "title": "BureauAggregates",
+      "type": "object"
+    },
+    "Enquiry": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "minimum": 0,
+          "title": "Amount",
+          "type": "integer"
+        },
+        "enquired_on": {
+          "format": "date",
+          "title": "Enquired On",
+          "type": "string"
+        },
+        "enquiry_id": {
+          "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+          "title": "Enquiry Id",
+          "type": "string"
+        },
+        "purpose": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Purpose",
+          "type": "string"
+        }
+      },
+      "required": [
+        "enquiry_id",
+        "enquired_on",
+        "purpose",
+        "amount"
+      ],
+      "title": "Enquiry",
+      "type": "object"
+    },
+    "Score": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/ScoreStatus"
+        },
+        "type": {
+          "const": "SYNTHETIC",
+          "default": "SYNTHETIC",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "maximum": 900,
+              "minimum": 300,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Score",
+      "type": "object"
+    },
+    "ScoreStatus": {
+      "enum": [
+        "AVAILABLE",
+        "NO_HIT",
+        "INSUFFICIENT_HISTORY"
+      ],
+      "title": "ScoreStatus",
+      "type": "string"
+    },
+    "SyntheticMarker": {
+      "additionalProperties": false,
+      "description": "Stamped on every record so nothing synthetic is ever mistaken for real data.",
+      "properties": {
+        "synthetic": {
+          "const": true,
+          "default": true,
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "warning": {
+          "default": "SYNTHETIC DEVELOPMENT DATA. Never use for a real lending decision.",
+          "title": "Warning",
+          "type": "string"
+        }
+      },
+      "title": "SyntheticMarker",
+      "type": "object"
+    },
+    "Tradeline": {
+      "additionalProperties": false,
+      "properties": {
+        "closed_on": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Closed On"
+        },
+        "current_balance": {
+          "minimum": 0,
+          "title": "Current Balance",
+          "type": "integer"
+        },
+        "emi": {
+          "description": "reported monthly obligation (provider monthly_obligation)",
+          "minimum": 0,
+          "title": "Emi",
+          "type": "integer"
+        },
+        "max_dpd_12m": {
+          "minimum": 0,
+          "title": "Max Dpd 12M",
+          "type": "integer"
+        },
+        "max_dpd_24m": {
+          "minimum": 0,
+          "title": "Max Dpd 24M",
+          "type": "integer"
+        },
+        "opened_on": {
+          "format": "date",
+          "title": "Opened On",
+          "type": "string"
+        },
+        "sanctioned_amount": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "original amount or credit limit",
+          "title": "Sanctioned Amount"
+        },
+        "status": {
+          "$ref": "#/$defs/TradelineStatus"
+        },
+        "status_changed_on": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "date of write-off / settlement, when known",
+          "title": "Status Changed On"
+        },
+        "tradeline_id": {
+          "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+          "title": "Tradeline Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/TradelineType"
+        }
+      },
+      "required": [
+        "tradeline_id",
+        "type",
+        "status",
+        "opened_on",
+        "current_balance",
+        "emi",
+        "max_dpd_12m",
+        "max_dpd_24m"
+      ],
+      "title": "Tradeline",
+      "type": "object"
+    },
+    "TradelineStatus": {
+      "enum": [
+        "ACTIVE",
+        "CLOSED",
+        "DEFAULT",
+        "WRITTEN_OFF",
+        "SETTLED"
+      ],
+      "title": "TradelineStatus",
+      "type": "string"
+    },
+    "TradelineType": {
+      "enum": [
+        "CREDIT_CARD",
+        "PERSONAL_LOAN",
+        "AUTO_LOAN",
+        "HOME_LOAN",
+        "OVERDRAFT"
+      ],
+      "title": "TradelineType",
+      "type": "string"
+    }
+  },
+  "$id": "https://saral.invalid/contracts/bureau_report.schema.json",
+  "additionalProperties": false,
+  "properties": {
+    "aggregates": {
+      "$ref": "#/$defs/BureauAggregates"
+    },
+    "applicant_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Applicant Id",
+      "type": "string"
+    },
+    "data_quality_valid": {
+      "title": "Data Quality Valid",
+      "type": "boolean"
+    },
+    "enquiries": {
+      "items": {
+        "$ref": "#/$defs/Enquiry"
+      },
+      "title": "Enquiries",
+      "type": "array"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "identity_match": {
+      "title": "Identity Match",
+      "type": "boolean"
+    },
+    "marker": {
+      "$ref": "#/$defs/SyntheticMarker"
+    },
+    "provider_report_id": {
+      "maxLength": 80,
+      "minLength": 3,
+      "title": "Provider Report Id",
+      "type": "string"
+    },
+    "provider_schema": {
+      "const": "bureau-report/1",
+      "default": "bureau-report/1",
+      "title": "Provider Schema",
+      "type": "string"
+    },
+    "report_date": {
+      "format": "date",
+      "title": "Report Date",
+      "type": "string"
+    },
+    "report_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Report Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "saral-bureau-report/1",
+      "default": "saral-bureau-report/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "score": {
+      "$ref": "#/$defs/Score"
+    },
+    "tradelines": {
+      "items": {
+        "$ref": "#/$defs/Tradeline"
+      },
+      "title": "Tradelines",
+      "type": "array"
+    }
+  },
+  "required": [
+    "report_id",
+    "applicant_id",
+    "provider_report_id",
+    "report_date",
+    "generated_at",
+    "identity_match",
+    "score",
+    "aggregates",
+    "data_quality_valid"
+  ],
+  "title": "BureauReport",
+  "type": "object"
+}

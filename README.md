@@ -52,9 +52,9 @@ test inventory and known gaps.
 |---|---|---|
 | Decision core | Canonical pydantic schema → ZEN Engine 2.1.2 → rule-level PASS/FAIL evidence; sha256-pinned policy registry that fails closed | `decision_engine/`, `apps/api/src/loan_advisory/application/` |
 | Conventional workflow | Frappe Lending 16 lifecycle (SUBMITTED → UNDER_REVIEW → APPROVED / REJECTED / INFO_REQUESTED / MANUAL_REVIEW, plus dispute/resubmit/withdraw); stores a `Loan Decision Evidence` record | `lifecycle.py`, `infra/frappe/` |
-| Synthetic bureau (development only) | Local-only FastAPI stand-in for a credit bureau, a deterministic 120-case fixture, a loopback-only client and data-quality gates; the resolved score still goes through unchanged ZEN | `apps/bureau/`, `decision_engine/bureau/`, `application/bureau_intake.py` |
-| Advisory agent | One LangGraph `StateGraph`: explain, improve (ZEN-verified plan), what-if (in-memory ZEN, never persisted), policy Q&A with citations, boundary refusals, human handoff | `apps/api/src/loan_advisory/agent/` |
-| Guards | Deterministic request guards before the LLM (guarantee, override, record edit, other applicant, injection, auto-submit, dispute, misrepresentation, not-available); answer guards after it (guarantee/decision language, NBFC written-reason claims, ungrounded numbers, citation labels); one rewrite, then a template | `guards.py`, `graph.py` |
+| Synthetic bureau (development only) | Local-only FastAPI stand-in for a credit bureau, a deterministic 120-case fixture, a loopback-only client and data-quality gates; the resolved score still goes through unchanged ZEN. The advisory agent cannot start it: it is called by the separate bureau pipeline process | `apps/bureau/`, `decision_engine/bureau/`, `application/bureau_intake.py` |
+| Advisory agent | One LangGraph `StateGraph`: explain, improve (ZEN-verified plan), what-if (in-memory ZEN, never persisted), policy Q&A with citations, boundary refusals, human handoff. It reads Frappe through read-only views that `DecisionTools` verifies at construction, so it holds no write path and no bureau trigger | `apps/api/src/loan_advisory/agent/`, `application/ports.py` |
+| Guards | Deterministic request guards before the LLM (guarantee, override, record edit, other applicant, injection, auto-submit, dispute, misrepresentation, not-available), in English, Hindi and Telugu; answer guards after it (guarantee/decision language, NBFC written-reason claims, ungrounded numbers, citation labels); one rewrite, then a template. The model names an intent from six fixed values and never selects a tool | `guards.py`, `graph.py` |
 | Policy RAG | 38-source register with approval status and supersedes links; BM25 + EmbeddingGemma 2 in Qdrant, weighted RRF, `bge-reranker-v2-m3`; lender-profile filter applied before ranking | `data/sources/`, `rag/`, `config/rag.yaml` |
 | Personalisation | Literacy level (low / medium / high) and locale (en / hi / te) shape the wording | `prompts.py` |
 | Voice | Self-hosted LiveKit 1.13 + LiveKit Agents 1.8, Silero VAD, IndicConformer-600M (hi/te) and Whisper large-v3-turbo (en) STT, svara-tts-v1 TTS; sentence-streamed answers behind the same guards | `apps/voice/`, `infra/voice/` |
@@ -64,7 +64,8 @@ test inventory and known gaps.
 The advisory server is FastAPI served with uvicorn (`apps/api/src/loan_advisory/api/app.py`); its AG-UI endpoint,
 assertion verification and request admission live there. It is reached only through the CopilotKit runtime, never
 from the browser. The synthetic bureau (PR #17) is a separate, local-only **FastAPI** service under `apps/bureau/`;
-it is not part of the advisory server and never decides credit.
+it is not part of the advisory server and never decides credit. Since Phase 1 boundary A the advisory server exposes no
+route that runs a bureau evaluation, so being reachable from the agent is not enough to trigger one.
 
 ## Quick start
 
@@ -110,19 +111,17 @@ AGENT_ASSERTION_SECRET=<same value as the site> \
 #   --no-rag    do not load the GPU retriever (policy questions abstain)
 ```
 
-Endpoints: `GET /healthz`, `POST /api/agui` (SSE for the CopilotKit runtime), `POST /api/chat`,
-`POST /api/chat/stream` (NDJSON sentences, then the final response) and `POST /api/bureau/run`. There is no
-browser surface: Frappe renders every page and its Node runtime calls these on the borrower's behalf.
+Endpoints: `GET /healthz`, `POST /api/agui` (SSE for the CopilotKit runtime), `POST /api/chat` and
+`POST /api/chat/stream` (NDJSON sentences, then the final response). There is no browser surface:
+Frappe renders every page and its Node runtime calls these on the borrower's behalf.
 
-`POST /api/bureau/run` takes the application from the assertion (optional body `{scenario}` is a synthetic-provider
-test switch) and evaluates it through the local synthetic bureau and data-quality gates. The server needs a loopback
-bureau origin via `--bureau-url` or `BUREAU_BASE_URL` (default `http://127.0.0.1:8001`); the self-hosted LLM uses the
-same default port, so run the bureau elsewhere and point the server at it:
+The agent never starts a bureau enquiry or a decision run. `POST /api/bureau/run` was removed on
+2026-11-03 (Phase 1 security boundary A): the bureau pipeline is a separate upstream process with its
+own credential, and the agent only reads the evidence that process leaves behind. To run the synthetic
+bureau for tests, start the service and call `run_bureau_evaluation()` directly:
 
 ```bash
 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m synthetic_bureau.app --port 8011
-AGENT_ASSERTION_SECRET=<same value as the site> \
-  PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --offline --bureau-url http://127.0.0.1:8011
 ```
 
 The bureau is **not CIBIL/FICO and not a real bureau**; every field is synthetic. Flow, `REVIEW` vs `ERROR` and score
@@ -159,12 +158,13 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | – | Frappe Lending REST access (token auth) |
+| `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | – | Frappe Lending REST access (token auth). For the agent this is a **read-only** identity (`Agent Integration` + `Loan Reporter`): projected application reads and stored-evidence reads, nothing else |
 | `LLM_BASE`, `LLM_MODEL` | `http://127.0.0.1:8001/v1`, `llm` | OpenAI-compatible LLM endpoint (gpt-oss-120b on vLLM) |
 | `LLM_API_KEY`, `GROQ_API_KEY` | – | Bearer token for a remote OpenAI-compatible endpoint; `LLM_API_KEY` wins |
 | `LLM_TIMEOUT_S`, `LLM_RETRIES` | `120`, `3` | Per-call limits; the per-turn deadline below still applies |
 | `LOAN_POLICY_DIR` | `/root/hx/loan/policy` | Policy text, `chunks.jsonl`, Qdrant dir (text stays off git) |
 | `AGENT_QDRANT_DIR` | `$LOAN_POLICY_DIR/qdrant_v2` | Local Qdrant collection `policy_chunks_v2` |
+| `AGENT_QDRANT_URL` (+ `AGENT_QDRANT_API_KEY`, `AGENT_QDRANT_COLLECTION`) | unset | Serve dense retrieval from a Qdrant Server. Unset keeps the embedded collection; both set at once is refused, and the serving handle is query-only (create/upsert/delete are refused at startup) |
 | `EMBED_MODEL` | `google/embeddinggemma-2` | Dense embedder |
 | `LENDER_PROFILE` | `bajaj_finance` (from `config/rag.yaml`) | Lender profile for retrieval filters |
 | `AGENT_RETRIEVER_DEVICE`, `AGENT_GPU_FRACTION` | auto, unset | Retriever device; VRAM cap on the shared GPU (e.g. `0.016` ≈ 3 GB on MI300X) |
@@ -183,8 +183,8 @@ Copy `.env.example` to `.env`. Never commit real secrets.
 | `LANGFUSE_BASE_URL`, `LANGFUSE_ENVIRONMENT` | `http://127.0.0.1:3000`, `local` | Self-hosted endpoint (Cloud refused) and environment label |
 | `LANGFUSE_CAPTURE_CONTENT`, `LANGFUSE_ALLOW_REMOTE` | off, off | Include prompt/answer text; allow a non-loopback self-hosted endpoint |
 | `LANGFUSE_SAMPLE_RATE`, `LANGFUSE_TIMEOUT`, `LANGFUSE_RELEASE` | `1.0`, `5`, – | Sampling, HTTP timeout (s), optional release label |
-| `BUREAU_BASE_URL` | `http://127.0.0.1:8001` | Loopback origin of the synthetic bureau for `/api/bureau/run`; non-loopback origins are refused |
 | `AGENT_AUDIT_LOG`, `AGENT_HANDOFF_LOG` | – | Audit rows (ids, intent, flags, timings; no message text or money values) and the handoff JSONL queue |
+| `AGENT_LOG_MAX_BYTES` | `52428800` | Size cap for each active JSONL log. At the cap the file is renamed to a dated archive and a fresh one starts, so rotation never drops a row; `0` disables rotation |
 | `AGENT_STATE_DIR` | – | Root for `turns.jsonl`, `handoffs.jsonl` and `traces/`; a per-artifact env var or an explicit argument wins. New directories are 0700 and new files 0600 on POSIX; existing files are never moved or chmodded |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | – | Voice; Frappe mints the room token (`api/livekit.py`) and returns 503 without them |
 | `AGENT_HTTP`, `STT_HTTP`, `TTS_HTTP` | `:8095`, `:8791`, `:8793` | Voice worker targets |

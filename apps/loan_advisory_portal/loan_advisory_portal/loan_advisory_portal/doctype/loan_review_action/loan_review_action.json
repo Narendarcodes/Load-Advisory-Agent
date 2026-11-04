@@ -1,0 +1,31 @@
+{
+ "actions": [],
+ "creation": "2026-11-03 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["action", "from_state", "to_state", "reviewer", "acted_at", "note", "decision_snapshot", "snapshot_sha256"],
+ "fields": [
+  {"fieldname": "action", "fieldtype": "Select", "label": "Action", "options": "Approve\nDecline\nRequest info", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "from_state", "fieldtype": "Data", "label": "From State", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "to_state", "fieldtype": "Data", "label": "To State", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "reviewer", "fieldtype": "Link", "label": "Reviewer", "options": "User", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "acted_at", "fieldtype": "Datetime", "label": "Acted At", "reqd": 1},
+  {"fieldname": "note", "fieldtype": "Small Text", "label": "Note (internal)", "reqd": 1},
+  {"fieldname": "decision_snapshot", "fieldtype": "Link", "label": "Decision Snapshot", "options": "Decision Snapshot"},
+  {"fieldname": "snapshot_sha256", "fieldtype": "Data", "label": "Snapshot Input SHA256", "length": 64}
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Loan Review Action",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
