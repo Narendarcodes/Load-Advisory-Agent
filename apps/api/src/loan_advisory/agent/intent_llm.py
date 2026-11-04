@@ -11,7 +11,7 @@ Why: on 2026-11-04 the answer model behind OmniRoute took 10-13 s per call, so 8
 Order inside one classify call: primary -> Groq backup -> fallback (same overall classifier budget) -> the graph's regex/rules."""
 import os
 
-from loan_advisory.agent.llm import ChatLLM, LLMError
+from loan_advisory.agent.llm import ChatLLM, FallbackChatLLM, LLMError
 
 DEFAULT_GROQ_INTENT_MODEL = "openai/gpt-oss-120b"  # 135/140 dev agent turns, 0 timeouts (2026-11-04)
 DEFAULT_GROQ_BACKUP_MODEL = "openai/gpt-oss-20b"  # its own Groq rate-limit bucket; 124/140
@@ -43,15 +43,28 @@ class FallbackLLM:
             return self.fallback.chat_json(system, user, max_tokens=max_tokens, tag=f"{tag}_fallback", deadline=deadline)
 
 
-def _gateway(llm: ChatLLM, model: str) -> ChatLLM:
+def _gateway(llm: ChatLLM, model: str, chain=None) -> ChatLLM:
+    """`model` on the answer client's gateway. The default fast model is an OmniRoute route id: when the answer
+    generator is not on OmniRoute (River default since 2026-11-04) it goes to the chain's OmniRoute client, else to
+    OmniRoute's own endpoint (OMNIROUTE_BASE_URL), never to a provider that does not serve it."""
     if model == llm.model:
         return llm
+    if model == DEFAULT_INTENT_FALLBACK_MODEL and llm.provider != "omniroute":
+        omni = next((c for c in (chain or []) if c.provider == "omniroute"), None)
+        if omni is not None:
+            return ChatLLM(base=omni.base, model=model, provider="omniroute", api_key=omni._secret,
+                           reasoning_effort=omni.reasoning_effort or "", timeout=llm.timeout, retries=llm.retries)
+        return ChatLLM(model=model, provider="omniroute", timeout=llm.timeout, retries=llm.retries)
     return ChatLLM(base=llm.base, model=model, provider=llm.provider, api_key=llm._secret,
                    reasoning_effort=llm.reasoning_effort, timeout=llm.timeout, retries=llm.retries)
 
 
 def build_intent_llm(llm, settings, env=None):
-    """The classifier client for answer client `llm`. Anything that is not a ChatLLM (test doubles) is used as is."""
+    """The classifier client for answer client `llm` (a ChatLLM or the SARAL_LLM_* FallbackChatLLM chain). Anything
+    else (test doubles) is used as is."""
+    chain = None
+    if isinstance(llm, FallbackChatLLM):
+        chain, llm = llm.clients, llm.primary
     if not isinstance(llm, ChatLLM):
         return llm
     env = os.environ if env is None else env
@@ -68,7 +81,7 @@ def build_intent_llm(llm, settings, env=None):
         backup = (getattr(settings, "intent_groq_backup", DEFAULT_GROQ_BACKUP_MODEL) or "").strip()
         if backup and backup != primary.model:
             primary = FallbackLLM(primary, groq(backup))
-        return FallbackLLM(primary, _gateway(llm, fb_model)) if fb_model else primary
+        return FallbackLLM(primary, _gateway(llm, fb_model, chain)) if fb_model else primary
     if provider in ("", "groq"):  # no Groq key here (e.g. the hark-2 containers): the gateway's fast model
         model = fb_model if (provider == "groq" or not model) else model
-    return _gateway(llm, model) if model else llm
+    return _gateway(llm, model, chain) if model else llm

@@ -3,17 +3,26 @@
 No LiteLLM / SDK wrapper: plain `requests` against /v1/chat/completions. Streaming is used so the
 time-to-first-token (TTFT) of every call is measured and reported in the turn trace.
 
-Provider selection is explicit and env-driven (see `provider_from_env`):
+Provider selection is explicit and env-driven (see `provider_from_env`). SARAL_LLM_* wins over the generic LLM_*:
 
-    LLM_PROVIDER=groq        https://api.groq.com/openai/v1, key GROQ_API_KEY
-    LLM_PROVIDER=omniroute   http://127.0.0.1:20128/v1 by default (OMNIROUTE_BASE_URL overrides),
-                             key OMNIROUTE_API_KEY when the gateway requires one
-    LLM_MODEL                required by the runtime wiring (`ChatLLM.from_env`); there is no
-                             assumed model name
+    SARAL_LLM_PROVIDER / LLM_PROVIDER   river (default) | omniroute | groq
+        river      https://api.river.ai/v1 (RIVER_BASE_URL overrides), key RIVER_API_KEY,
+                   default model deepseek-ai/DeepSeek-V4.1-Flash
+        omniroute  http://127.0.0.1:20128/v1 (OMNIROUTE_BASE_URL overrides), key OMNIROUTE_API_KEY if required
+        groq       https://api.groq.com/openai/v1, key GROQ_API_KEY
+    SARAL_LLM_BASE_URL / LLM_BASE       endpoint override for the primary
+    SARAL_LLM_MODEL / LLM_MODEL         model id (required for omniroute/groq; river has a default)
+    SARAL_LLM_FALLBACK_MODEL            comma list of `model[@river|omniroute|groq|URL]` tried in order when the
+                                        primary fails (a bare model uses the primary's provider). Default with the
+                                        river provider: GLM-5.3@river,antigravity/claude-sonnet-4-6@omniroute.
+                                        Set it empty for no fallback.
+    SARAL_LLM_REASONING_EFFORT / LLM_REASONING_EFFORT   empty omits the parameter. Default `low`, except DeepSeek
+                                        on River (sending it switches reasoning on and slows the answer).
 
-`LLM_BASE` / `LLM_API_KEY` remain generic overrides (an explicit argument wins over both).
-There is deliberately no fallback to a local vLLM server: an unconfigured provider fails loudly
-at startup, and a failing provider raises LLMError so the graph uses its safe template fallback.
+Why River is the default: on 2026-11-04 the OmniRoute gateway (owner's laptop) was unreachable, so the answer
+generator moved to River AI; OmniRoute claude-sonnet-4-6 stays supported (primary via SARAL_LLM_PROVIDER=omniroute,
+and the last fallback by default). There is deliberately no fallback to a local vLLM server: an unconfigured
+provider fails loudly at startup, and an exhausted chain raises LLMError so the graph uses its safe template.
 """
 import json
 import os
@@ -26,11 +35,15 @@ import requests
 
 from loan_advisory.agent import observability as obs
 
-DEFAULT_PROVIDER = "omniroute"
+DEFAULT_PROVIDER = "river"
 PROVIDERS = {
+    "river": {"base": "https://api.river.ai/v1", "key_env": "RIVER_API_KEY", "base_env": "RIVER_BASE_URL",
+              "model": "deepseek-ai/DeepSeek-V4.1-Flash"},
     "groq": {"base": "https://api.groq.com/openai/v1", "key_env": "GROQ_API_KEY", "base_env": None},
     "omniroute": {"base": "http://127.0.0.1:20128/v1", "key_env": "OMNIROUTE_API_KEY", "base_env": "OMNIROUTE_BASE_URL"},
 }
+# Answer-generator fallback chain per primary provider (SARAL_LLM_FALLBACK_MODEL overrides; empty = none).
+DEFAULT_FALLBACKS = {"river": "GLM-5.3@river,antigravity/claude-sonnet-4-6@omniroute"}
 DEFAULT_BASE = PROVIDERS[DEFAULT_PROVIDER]["base"]
 DEFAULT_MODEL = os.environ.get("LLM_MODEL") or "llm"  # lenient default for ad-hoc clients only
 
@@ -48,26 +61,71 @@ class ProviderConfig:
     reasoning_effort: str | None
 
 
+def _env(env, *names):
+    """First of `names` present in env (present-but-empty counts, so an empty value can switch a default off)."""
+    for n in names:
+        if n in env:
+            return env[n]
+    return None
+
+
+def default_reasoning_effort(provider: str, model: str) -> str | None:
+    # DeepSeek-V4.1-Flash on River answers without reasoning unless reasoning_effort is sent (then it reasons and is
+    # ~1.5x slower); GLM-5.3 cannot disable reasoning and is fastest on `low` (probe 2026-11-04).
+    if provider == "river" and "deepseek" in model.lower():
+        return None
+    return "low"
+
+
 def provider_from_env(env=None, *, base=None, model=None, api_key=None, provider=None,
                       require_model: bool = False) -> ProviderConfig:
-    """Resolve one active provider. Explicit arguments win over env; env wins over defaults."""
+    """Resolve one active provider. Explicit arguments win over env; SARAL_LLM_* wins over LLM_*; env over defaults."""
     env = os.environ if env is None else env
-    name = (provider or env.get("LLM_PROVIDER") or DEFAULT_PROVIDER).strip().lower()
+    name = (provider or _env(env, "SARAL_LLM_PROVIDER") or env.get("LLM_PROVIDER") or DEFAULT_PROVIDER).strip().lower()
     if name not in PROVIDERS:
-        raise LLMConfigError(f"LLM_PROVIDER must be one of {sorted(PROVIDERS)}, got {name!r}")
+        raise LLMConfigError(f"SARAL_LLM_PROVIDER / LLM_PROVIDER must be one of {sorted(PROVIDERS)}, got {name!r}")
     spec = PROVIDERS[name]
-    base_url = (base or (env.get(spec["base_env"]) if spec["base_env"] else "") or env.get("LLM_BASE")
-                or spec["base"]).strip().rstrip("/")
-    model_id = (model or env.get("LLM_MODEL") or "").strip()
+    base_url = (base or env.get("SARAL_LLM_BASE_URL") or (env.get(spec["base_env"]) if spec["base_env"] else "")
+                or env.get("LLM_BASE") or spec["base"]).strip().rstrip("/")
+    model_id = (model or env.get("SARAL_LLM_MODEL") or env.get("LLM_MODEL")
+                or ("" if base else spec.get("model")) or "").strip()  # an ad-hoc client on its own base: no default
     if not model_id:
         if require_model:
             raise LLMConfigError(
-                f"LLM_MODEL is not set; configure the model ID exposed by the {name} provider")
+                f"SARAL_LLM_MODEL / LLM_MODEL is not set; configure the model ID exposed by the {name} provider")
         model_id = DEFAULT_MODEL
     key = (api_key if api_key is not None else env.get("LLM_API_KEY") or env.get(spec["key_env"]) or "").strip()
-    effort = (env.get("LLM_REASONING_EFFORT") if "LLM_REASONING_EFFORT" in env else "low")
+    effort = _env(env, "SARAL_LLM_REASONING_EFFORT", "LLM_REASONING_EFFORT")
+    effort = default_reasoning_effort(name, model_id) if effort is None else effort
     effort = (effort or "").strip() or None
     return ProviderConfig(provider=name, base=base_url, model=model_id, api_key=key, reasoning_effort=effort)
+
+
+def parse_fallbacks(spec: str, primary: ProviderConfig, env) -> list[ProviderConfig]:
+    """`model[@river|omniroute|groq|URL]` entries. A bare model uses the primary's provider and endpoint. A provider
+    alias uses that provider's own endpoint and key; a URL entry sends no key (never leak one provider's key)."""
+    out = []
+    for item in (spec or "").split(","):
+        item = item.strip()
+        if not item:
+            continue
+        model_id, _, where = item.rpartition("@") if "@" in item else (item, "", "")
+        where = where.strip()
+        if not where:
+            out.append(ProviderConfig(primary.provider, primary.base, model_id.strip(), primary.api_key,
+                                      default_reasoning_effort(primary.provider, model_id)))
+        elif where.lower() in PROVIDERS:
+            p = where.lower()
+            pspec = PROVIDERS[p]
+            b = ((env.get(pspec["base_env"]) if pspec["base_env"] else "") or pspec["base"]).strip().rstrip("/")
+            out.append(ProviderConfig(p, b, model_id.strip(), (env.get(pspec["key_env"]) or "").strip(),
+                                      default_reasoning_effort(p, model_id)))
+        elif where.startswith(("http://", "https://")):
+            out.append(ProviderConfig(primary.provider, where.rstrip("/"), model_id.strip(), "",
+                                      default_reasoning_effort(primary.provider, model_id)))
+        else:
+            raise LLMConfigError(f"SARAL_LLM_FALLBACK_MODEL entry {item!r}: endpoint must be a provider or a URL")
+    return out
 
 
 def _retryable_status(status: int) -> bool:
@@ -98,13 +156,13 @@ class ChatLLM:
                  reasoning_effort: str | None = None, retries: int | None = None, api_key: str | None = None,
                  provider: str | None = None, env=None):
         cfg = provider_from_env(env, base=base, model=model, api_key=api_key, provider=provider)
+        env = os.environ if env is None else env
         self.provider = cfg.provider
         self.base = cfg.base
         self.model = cfg.model
-        self.retries = retries if retries is not None else int(os.environ.get("LLM_RETRIES", "3"))
-        self.timeout = timeout if timeout is not None else float(os.environ.get("LLM_TIMEOUT_S", "120"))
-        self.reasoning_effort = reasoning_effort if reasoning_effort is not None else cfg.reasoning_effort
-        env = os.environ if env is None else env
+        self.retries = retries if retries is not None else int(env.get("LLM_RETRIES", "3"))
+        self.timeout = timeout if timeout is not None else float(env.get("LLM_TIMEOUT_S", "120"))
+        self.reasoning_effort = (reasoning_effort or None) if reasoning_effort is not None else cfg.reasoning_effort
         self.stream_usage = env.get("LLM_STREAM_USAGE", "1") not in ("0", "false", "no")
         self._local = threading.local()
         self._secret = cfg.api_key
@@ -112,10 +170,23 @@ class ChatLLM:
 
     @classmethod
     def from_env(cls, *, env=None, **kw) -> "ChatLLM":
-        """The runtime wiring: requires an explicit LLM_MODEL and a known LLM_PROVIDER."""
+        """The runtime wiring: a known provider and a model (explicit, or the provider's default). Returns a
+        FallbackChatLLM when a fallback chain is configured (SARAL_LLM_FALLBACK_MODEL or the provider default)."""
+        env = os.environ if env is None else env
         cfg = provider_from_env(env, require_model=True)
-        return cls(base=cfg.base, model=cfg.model, api_key=cfg.api_key, provider=cfg.provider,
-                   reasoning_effort=cfg.reasoning_effort, env=env, **kw)
+        primary = cls(base=cfg.base, model=cfg.model, api_key=cfg.api_key, provider=cfg.provider,
+                      reasoning_effort=cfg.reasoning_effort or "", env=env, **kw)
+        fb_spec = _env(env, "SARAL_LLM_FALLBACK_MODEL")
+        fb_spec = DEFAULT_FALLBACKS.get(cfg.provider, "") if fb_spec is None else fb_spec
+        fbs = [c for c in parse_fallbacks(fb_spec, cfg, env) if (c.provider, c.base, c.model) != (cfg.provider, cfg.base, cfg.model)]
+        if not fbs:
+            return primary
+        return FallbackChatLLM([primary] + [cls(base=c.base, model=c.model, api_key=c.api_key, provider=c.provider,
+                                                reasoning_effort=c.reasoning_effort or "", env=env, **kw) for c in fbs])
+
+    @property
+    def api_key_set(self) -> bool:
+        return bool(self._secret)
 
     def _redact(self, text: str) -> str:
         return text.replace(self._secret, "***") if self._secret else text
@@ -181,7 +252,7 @@ class ChatLLM:
         usage = {}
         last_err = None
         yielded = False
-        rec = {"tag": tag}
+        rec = {"tag": tag, "model": self.model}
 
         def left():
             return None if deadline is None else deadline - time.perf_counter()
@@ -261,6 +332,65 @@ class ChatLLM:
     def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "", deadline: float | None = None) -> dict:
         txt = self.chat(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline)
         return parse_json(txt)
+
+
+class FallbackChatLLM:
+    """The answer generator's provider chain: each call goes to the first client; on LLMError before any text was
+    streamed, the same call goes to the next one. Deadline errors are not retried elsewhere (no time left).
+    Fallback use is counted per model in `fallback_uses` and every attempt lands in the shared per-thread `calls`."""
+
+    supports_deadline = True
+
+    def __init__(self, clients: list[ChatLLM]):
+        if not clients:
+            raise LLMConfigError("FallbackChatLLM needs at least one client")
+        self.clients = clients
+        self.primary = clients[0]
+        self.fallback_uses: dict[str, int] = {}
+        self._lock = threading.Lock()
+
+    # the primary's identity, so tracing/intent wiring that reads these keeps working
+    def __getattr__(self, name):
+        if name in ("model", "provider", "base", "timeout", "retries", "reasoning_effort", "stream_usage", "_secret",
+                    "api_key_set"):
+            return getattr(self.primary, name)
+        raise AttributeError(name)
+
+    @property
+    def calls(self) -> list[dict]:
+        return self.primary.calls
+
+    def chat_stream(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
+                    deadline: float | None = None):
+        last = None
+        for i, c in enumerate(self.clients):
+            yielded = False
+            try:
+                for d in c.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
+                                       deadline=deadline):
+                    yielded = True
+                    yield d
+                if i:
+                    with self._lock:
+                        self.fallback_uses[c.model] = self.fallback_uses.get(c.model, 0) + 1
+                    if c.calls:
+                        self.primary.calls.append(c.calls.pop())
+                return
+            except LLMError as e:
+                last = e
+                if c is not self.primary and c.calls:
+                    self.primary.calls.append(c.calls.pop())
+                if yielded or "deadline" in str(e):
+                    raise
+        raise last
+
+    def chat(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
+             deadline: float | None = None) -> str:
+        return "".join(self.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
+                                        deadline=deadline)).strip()
+
+    def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "", deadline: float | None = None) -> dict:
+        return parse_json(self.chat(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline))
 
 
 def parse_json(txt: str) -> dict:
