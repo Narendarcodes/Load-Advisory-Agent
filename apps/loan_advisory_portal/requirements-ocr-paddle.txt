@@ -1,0 +1,13 @@
+# Default OCR engine for Saral: PaddleOCR PP-OCRv5 mobile (CPU). Tesseract stays the fallback.
+# Versions are the ones the bake-off and the real-sample benchmark ran on (InstaBox, 4 vCPU).
+#
+#   pip install -r apps/loan_advisory_portal/requirements-ocr-paddle.txt \
+#       --extra-index-url https://www.paddlepaddle.org.cn/packages/stable/cpu/
+#
+# Memory: ~2 GB peak RSS per worker process with the mobile models loaded (models stay
+# resident between pages). Budget 2.5 GB per OCR worker; do not use the server models on the
+# 7-8 GB boxes (~4.7 GB RSS). Models (~20 MB) download on first use into
+# PADDLE_PDX_CACHE_HOME (default ~/.paddlex); bake them into the image for offline sites.
+paddlepaddle==3.2.0
+paddleocr==3.7.0
+numpy>=1.26

@@ -277,10 +277,22 @@ def extract_from_image(content: bytes) -> tuple[list[TextLine], int]:
     """OCR one image in memory. Returns (lines, page_count=1)."""
     image = _load_image(content)
     try:
-        lines = _ocr_lines(image)
+        lines = _ocr_levelled(image)
     finally:
         image.close()
     return lines, 1
+
+
+def _ocr_levelled(image) -> list[TextLine]:
+    """Deskew (see `preprocess`), then OCR. The levelled copy is closed here."""
+    from .preprocess import deskew  # noqa: PLC0415
+
+    levelled = deskew(image)
+    try:
+        return _ocr_lines(levelled)
+    finally:
+        if levelled is not image:
+            levelled.close()
 
 
 def extract_from_pdf(content: bytes) -> tuple[list[TextLine], int, bool]:
@@ -342,7 +354,7 @@ def extract_from_pdf(content: bytes) -> tuple[list[TextLine], int, bool]:
                 try:
                     image = bitmap.to_pil()
                     try:
-                        lines.extend(_ocr_lines(image))
+                        lines.extend(_ocr_levelled(image))
                     finally:
                         image.close()
                 finally:
