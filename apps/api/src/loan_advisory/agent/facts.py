@@ -192,6 +192,13 @@ def decision_card(record: dict) -> dict:
     return card
 
 
+def _number(v):
+    """A finite int/float from the engine record, else None (never a string or bool)."""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return None
+    return v if v == v and v not in (float("inf"), float("-inf")) else None
+
+
 # ------------------------------------------------------------------ borrower projection (Q-07 / Q-14)
 BORROWER_LABEL = "Synthetic prototype policy, not any real lender's policy. Not a loan sanction."
 REASON_LABELS = {  # catalogue v2 borrower_reason_categories (keys only reach the client, never values)
@@ -241,9 +248,6 @@ def _finite(v):
     if isinstance(v, bool) or not isinstance(v, (int, float)):
         return None
     return v if v == v and v not in (float("inf"), float("-inf")) else None
-
-
-_number = _finite  # "A finite int/float from the engine record, else None" (name used by #38 on main)
 
 
 # E2E D-16: the borrower never sees a recorded outcome code. The card speaks the assistant UI's vocabulary (genui
