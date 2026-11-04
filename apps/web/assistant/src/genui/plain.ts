@@ -276,5 +276,7 @@ export function safeText(value: unknown): string | null {
 export function whatIfMeets(result: string | null | undefined): boolean | null {
   if (!result) return null;
   const value = result.toUpperCase();
-  return value === "APPROVED" || value === "WOULD_LIKELY_MEET" || value === "MEET";
+  // An estimate that could not be made is never shown as "wouldn't meet" (agent eval fix 5).
+  if (["COULD_NOT_ESTIMATE", "ERROR", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED", "REVIEW"].includes(value)) return null;
+  return value === "APPROVED" || value === "WOULD_LIKELY_MEET" || value === "MEET" || value === "ELIGIBILITY_CONDITIONS_MET";
 }
