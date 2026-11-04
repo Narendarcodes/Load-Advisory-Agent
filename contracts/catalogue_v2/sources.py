@@ -51,41 +51,55 @@ BUREAU_V2_PROPOSED = {
     "enquiries[].enquiry_type": "Enum (PERSONAL_LOAN, CREDIT_CARD, HOME_LOAN, AUTO_LOAN, OTHER) replacing free-text purpose for PL-054.",
 }
 
-PAN_PROPOSED = ["pan_masked", "pan_status", "name_on_pan", "dob_on_pan", "father_name_on_pan", "pan_aadhaar_linked",
-                "verified_at", "provider.synthetic"]
-AADHAAR_PROPOSED = ["aadhaar_last4", "verification_status", "name", "dob", "year_of_birth", "gender", "care_of",
-                    "address.line_masked", "address.locality", "address.city", "address.state", "address.pincode",
-                    "verified_at", "provider.synthetic"]
-BANK_PROPOSED = ["consent_id", "fip_id", "account.masked_number", "account.ifsc", "account.holder_name", "account.type",
-                 "period.from", "period.to", "summary.opening_balance", "summary.closing_balance",
-                 "transactions[].txn_id", "transactions[].date", "transactions[].amount", "transactions[].type",
-                 "transactions[].mode", "transactions[].narration", "transactions[].balance_after", "transactions[].category",
-                 "fetched_at", "provider.synthetic"]
-BANK_CATEGORIES = ["SALARY", "SALARY_REVERSAL", "EMI", "NACH_RETURN", "CHEQUE_RETURN", "CASH_DEPOSIT", "UPI", "TRANSFER",
-                   "RENT", "UTILITY", "OTHER"]
+# Reconciled one-to-one with feat/saral-synthetic-kyc-bank (2026-11-03): the original proposal plus the record envelope and the
+# fields that dataset already carries. A test on each branch asserts the dataset emits exactly these paths.
+ENVELOPE = ["schema", "synthetic", "specimen_marker", "provider.name", "provider.synthetic"]
+PAN_PROPOSED = ENVELOPE + ["record_id", "pan_masked", "pan_status", "holder_type", "name_on_pan", "dob_on_pan", "father_name_on_pan",
+                           "pan_aadhaar_linked", "issue_date", "verified_at"]
+AADHAAR_PROPOSED = ENVELOPE + ["record_id", "aadhaar_last4", "verification_status", "name", "dob", "year_of_birth", "gender", "care_of",
+                               "address.line_masked", "address.locality", "address.city", "address.district", "address.state",
+                               "address.pincode", "address.country", "issue_date", "verified_at"]
+BANK_PROPOSED = ENVELOPE + ["statement_id", "applicant_id", "consent_id", "fip_id", "fi_type", "fetched_at",
+                            "account.masked_number", "account.account_ref", "account.ifsc", "account.bank_name", "account.branch",
+                            "account.holder_name", "account.type", "account.od_limit", "account.currency",
+                            "period.from", "period.to", "summary.months", "summary.opening_balance", "summary.closing_balance",
+                            "summary.txn_count", "summary.total_credits", "summary.total_debits",
+                            "transactions[].txn_id", "transactions[].date", "transactions[].value_date", "transactions[].amount",
+                            "transactions[].type", "transactions[].mode", "transactions[].narration", "transactions[].balance_after",
+                            "transactions[].reference", "transactions[].category",
+                            "integrity.content_sha256", "integrity.hash_scope", "integrity.issued_by",
+                            "lms_reference.statement_id", "lms_reference.content_sha256", "lms_reference.period_from",
+                            "lms_reference.period_to", "lms_reference.txn_count", "lms_reference.synthetic"]
+# Generation ground truth carried only by the synthetic dataset. Rules and preprocessing must never read it.
+BANK_TEST_ONLY = ["transactions[].synthetic_truth_tag"]
+BANK_CATEGORIES = ["SALARY", "SALARY_REVERSAL", "EMI", "NACH_RETURN", "CHEQUE_RETURN", "BOUNCE_CHARGE", "CASH_DEPOSIT", "UPI",
+                   "CARD", "ATM", "TRANSFER", "RENT", "UTILITY", "OTHER"]
 
 OCR_KEYS = sorted(f"{kind.value}.{key}" for kind, keys in FIELD_KEYS.items() for key in keys) + [
     "chain.ocr_route", "chain.ocr_needs_manual_review", "chain.field_confidence",
     "signature.present", "signature.crop_sha256", "signature.anomaly_score", "signature.similarity", "signature.method",
     "document.sha256", "document.date", "document.pages",
 ]
+# OCR keys the MVP does not produce: the lean form collects no employment letter, and the signature lives in signature.*.
+OCR_NOT_IN_MVP = sorted(k for k in OCR_KEYS if k.startswith(("employment_letter.", "signature_specimen.")))
 
 SOURCES = {
     "SYNTHETIC_BUREAU": {"schema": "bureau-report/1", "status": "BUILT", "owner": "Qoder",
                          "where": "decision_engine/schemas/bureau.py @ 716db49", "paths": BUREAU_V1_PATHS},
     "SYNTHETIC_BUREAU_V2": {"schema": "bureau-report/2", "status": "PROPOSED (design only)", "owner": "Qoder",
                             "where": "this design", "paths": sorted(BUREAU_V2_PROPOSED)},
-    "SYNTHETIC_PAN": {"schema": "saral-kyc-pan/1", "status": "PROPOSED for feat/saral-synthetic-kyc-bank", "owner": "synthetic-kyc-bank",
-                      "where": "not committed", "paths": PAN_PROPOSED},
-    "SYNTHETIC_AADHAAR": {"schema": "saral-kyc-aadhaar/1", "status": "PROPOSED for feat/saral-synthetic-kyc-bank",
-                          "owner": "synthetic-kyc-bank", "where": "not committed", "paths": AADHAAR_PROPOSED,
+    "SYNTHETIC_PAN": {"schema": "saral-kyc-pan/1", "status": "RECONCILED with feat/saral-synthetic-kyc-bank", "owner": "synthetic-kyc-bank",
+                      "where": "synthetic_data/saral_kyc_bank (applicant.pan)", "paths": PAN_PROPOSED,
+                      "note": "Never returns the full PAN; the dataset keeps it only in specimen_truth (NEVER_STORE)."},
+    "SYNTHETIC_AADHAAR": {"schema": "saral-kyc-aadhaar/1", "status": "RECONCILED with feat/saral-synthetic-kyc-bank",
+                          "owner": "synthetic-kyc-bank", "where": "synthetic_data/saral_kyc_bank (applicant.aadhaar_ekyc)", "paths": AADHAAR_PROPOSED,
                           "note": "Never returns or accepts a full Aadhaar number; last 4 digits and verification status only."},
-    "SYNTHETIC_BANK": {"schema": "saral-bank-statement-aa/1", "status": "PROPOSED for feat/saral-synthetic-kyc-bank (AA-style)",
-                       "owner": "synthetic-kyc-bank", "where": "not committed", "paths": BANK_PROPOSED,
-                       "categories": BANK_CATEGORIES},
+    "SYNTHETIC_BANK": {"schema": "saral-bank-statement-aa/1", "status": "RECONCILED with feat/saral-synthetic-kyc-bank (AA-style)",
+                       "owner": "synthetic-kyc-bank", "where": "synthetic_data/saral_kyc_bank (bank_statements.jsonl)", "paths": BANK_PROPOSED,
+                       "test_only_paths": BANK_TEST_ONLY, "categories": BANK_CATEGORIES},
     "OCR": {"schema": "saral-document-extraction/1 + Paddle chain", "status": "PR #41 open; Paddle chain prototype @ 0b5dede",
             "owner": "OCR stream", "where": "contracts/document_extraction.py FIELD_KEYS; apps/.../ocr/chain.py @ 0b5dede",
-            "paths": OCR_KEYS},
+            "paths": OCR_KEYS, "not_in_mvp_paths": OCR_NOT_IN_MVP},
 }
 MVP_SOURCES = {"SYNTHETIC_BUREAU", "SYNTHETIC_PAN", "SYNTHETIC_AADHAAR", "SYNTHETIC_BANK", "OCR"}
 

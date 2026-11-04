@@ -51,10 +51,14 @@ def test_there_is_no_tool_binding_surface_anywhere_in_the_serving_code():
 
 
 def test_the_classifier_returns_an_intent_and_the_graph_owns_the_rest():
-    """The only decision the model makes is which of six named intents this is; node names are not in its vocabulary."""
+    """The only decision the model makes is which named intent this is; node and tool names are not in its vocabulary.
+    (Agent eval fixes 2026-11-04 added status / vague / human_review / distress / misrepresentation; each maps to a
+    fixed node, and the tool plan per intent stays deterministic.)"""
     for hostile in ("delete_record", "run_bureau", "approve", "execute_sql", "handoff"):
         assert G._after_classify({"intent": hostile}) == "simple", hostile   # unknown intent: a template, never a tool
-    assert set(G.INTENTS) == {"explain", "improve", "what_if", "policy", "greeting", "other"}
+    assert set(G.INTENTS) == {"explain", "improve", "what_if", "policy", "greeting", "other", "status", "vague",
+                              "human_review", "distress", "misrepresentation"}
+    assert not set(G.INTENTS) & {"load_evidence", "create_human_handoff", "run_what_if", "get_decision_evidence"}
 
 
 @pytest.mark.parametrize("intent,node", [("explain", "compose"), ("improve", "plan"), ("what_if", "what_if")])

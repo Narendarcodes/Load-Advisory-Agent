@@ -1,0 +1,15 @@
+{
+ "judge_model": "codex/gpt-6-luna",
+ "deepeval": "4.3.2",
+ "jobs": 636,
+ "errors": 0,
+ "skipped_deadline": 0,
+ "endpoints": "https://victus-laptop.tailbe5bba.ts.net/v1",
+ "fallback_models": [
+  "gpt-5.6-terra"
+ ],
+ "jobs_using_fallback": [
+  "R2-LTE-04|Faithfulness"
+ ],
+ "seconds": 29.2
+}

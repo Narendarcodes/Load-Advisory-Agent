@@ -55,12 +55,17 @@ echo "==> copying $APP from $SRC"
 STAGE_DIR=$(mktemp -d)
 tar -czf "$STAGE_DIR/$APP.tgz" --exclude='__pycache__' --exclude='*.pyc' -C "$SRC" .
 docker cp "$STAGE_DIR/$APP.tgz" "$BACKEND:/tmp/$APP.tgz"
+docker cp "$REPO_ROOT/apps/$APP/pyproject.toml" "$BACKEND:/tmp/$APP-pyproject.toml"
+docker cp "$REPO_ROOT/apps/$APP/README.md" "$BACKEND:/tmp/$APP-README.md"
 rm -rf "$STAGE_DIR"
 docker exec -u root "$BACKEND" bash -lc "
   rm -rf $BENCH/apps/$APP/$APP &&
   mkdir -p $BENCH/apps/$APP/$APP &&
   tar -xzf /tmp/$APP.tgz -C $BENCH/apps/$APP/$APP &&
   rm -f /tmp/$APP.tgz &&
+  cp /tmp/$APP-pyproject.toml $BENCH/apps/$APP/pyproject.toml &&
+  cp /tmp/$APP-README.md $BENCH/apps/$APP/README.md &&
+  rm -f /tmp/$APP-pyproject.toml /tmp/$APP-README.md &&
   chown -R frappe:root $BENCH/apps/$APP"
 
 # Shape check. Correct tree: exactly one hooks.py in the app, at <app>/<app>/hooks.py, with the
@@ -82,6 +87,14 @@ if [ "$SHAPE" != "ok" ]; then
   echo "  got:  $(docker exec "$BACKEND" bash -lc "ls -p $BENCH/apps/$APP/$APP 2>&1 | tr '\n' ' '")" >&2
   exit 1
 fi
+
+echo "==> registering $APP in the bench app list"
+docker exec "$BACKEND" bash -lc "
+  grep -Fxq '$APP' $BENCH/sites/apps.txt ||
+  printf '%s\n' '$APP' >> $BENCH/sites/apps.txt"
+
+echo "==> installing $APP and its declared Python dependencies"
+docker exec "$BACKEND" bash -lc "cd $BENCH && bench pip install -e apps/$APP"
 
 echo "==> exposing public/ under /assets/$APP"
 # Frappe serves app assets from sites/assets/<app>; the image has no build step for this app

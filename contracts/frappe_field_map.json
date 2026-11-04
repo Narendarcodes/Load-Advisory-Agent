@@ -899,6 +899,10 @@
       "kind": "child_row",
       "note": "Decision Policy Parameter row with parameter_name = required_identity_fields"
     },
+    "residency_status": {
+      "location": "KYC Verification.residency_status",
+      "kind": "field"
+    },
     "residual_income": {
       "location": "Decision Snapshot.residual_income",
       "kind": "field"

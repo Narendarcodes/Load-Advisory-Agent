@@ -108,6 +108,31 @@ Windows gotcha that will otherwise cost you an hour: `core.autocrlf` bakes CRLF 
 containers then restart-loop with `no such file or directory`. Before building, LF-convert those
 scripts and set `core.autocrlf false` + `core.eol lf` in that clone.
 
+### OCR-enabled backend image
+
+Tesseract is a native dependency and must be present in the Linux image that runs Frappe. Build the
+OCR layer after `loanrangers-frappe:16` exists:
+
+```powershell
+docker build --platform linux/amd64 -t loanrangers-frappe:16-ocr `
+  -f infra/frappe/Dockerfile.ocr apps/loan_advisory_portal
+```
+
+The OCR image includes Tesseract, the English language data, and the Portal package/dependencies so
+the backend and frontend containers can both import the app and serve its static assets. For the
+existing `loanhx` deployment, keep using its existing Compose file, environment file, and named
+volumes; apply `infra/frappe/loanrangers.ocr.yml` as an image-only override:
+
+```powershell
+docker compose -p loanhx `
+  --env-file D:\path\to\infra\frappe\.env `
+  -f D:\path\to\infra\frappe\loanrangers.droplet.yml `
+  -f infra/frappe/loanrangers.ocr.yml up -d
+```
+
+This rebuilds/recreates the Frappe services with `/usr/bin/tesseract` and `eng` language data while
+leaving the database and named volumes unchanged.
+
 **Volume hazard, read before starting a second stack.** `loanrangers.yml` pins its volumes to fixed
 names (`frappe_docker_db-data`, `frappe_docker_sites`, `frappe_docker_redis-queue-data`) that do not
 carry the compose project prefix. `docker compose -f loanrangers.yml -p anything up` therefore mounts

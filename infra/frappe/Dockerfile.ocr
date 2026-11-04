@@ -1,0 +1,41 @@
+FROM loanrangers-frappe:16
+
+# Saral OCR: PaddleOCR PP-OCRv5 mobile is the default engine, Tesseract the automatic
+# fallback (kept installed below). Build with --build-arg SARAL_OCR_PADDLE=0 for a
+# Tesseract-only image on small hosts; then also set SARAL_OCR_ENGINES=tesseract.
+# Memory: ~2-3 GB peak RSS per process that has run Paddle (models stay resident). Every
+# gunicorn worker that serves an OCR request loads its own copy, so keep OCR workers few
+# (budget 3 GB each) or run Tesseract-only. Details: docs/saral/OCR_DEPLOY.md.
+ARG SARAL_OCR_PADDLE=1
+
+USER root
+
+ENV TESSERACT_CMD=/usr/bin/tesseract \
+    OCR_LANG=eng \
+    SARAL_OCR_ENGINES=paddle,tesseract \
+    PADDLE_OCR_DET_MODEL=PP-OCRv5_mobile_det \
+    PADDLE_OCR_REC_MODEL=PP-OCRv5_mobile_rec \
+    PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        tesseract-ocr \
+        tesseract-ocr-eng \
+        libgomp1 libgl1 libglib2.0-0 \
+    && tesseract --list-langs | grep -Fxq eng \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --chown=frappe:root . /home/frappe/frappe-bench/apps/loan_advisory_portal/
+
+USER frappe
+
+RUN cd /home/frappe/frappe-bench \
+    && bench pip install -e apps/loan_advisory_portal \
+    && if [ "$SARAL_OCR_PADDLE" = "1" ]; then \
+        bench pip install -r apps/loan_advisory_portal/requirements-ocr-paddle.txt \
+            --extra-index-url https://www.paddlepaddle.org.cn/packages/stable/cpu/ ; \
+    fi \
+    && mkdir -p assets \
+    && ln -sfn \
+        /home/frappe/frappe-bench/apps/loan_advisory_portal/loan_advisory_portal/public \
+        /home/frappe/frappe-bench/assets/loan_advisory_portal

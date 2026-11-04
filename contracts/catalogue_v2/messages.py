@@ -75,6 +75,21 @@ MESSAGES = {
     "REQUEST_OUTSIDE_OFFER.review": (
         "REQUEST_OUTSIDE_OFFER",
         "We need to review the loan amount, tenure or purpose you requested. We may suggest a different option."),
+    "REQUEST_OUTSIDE_OFFER.counter_offer": (
+        "REQUEST_OUTSIDE_OFFER",
+        "The amount or repayment period you asked for is more than we can offer for this loan. We have shown the most we can offer instead."),
+    "REQUEST_OUTSIDE_OFFER.outside_range": (
+        "REQUEST_OUTSIDE_OFFER",
+        "The amount you asked for is outside what we offer. We have shown the most we can offer instead."),
+    "REPAYMENTS_TOO_HIGH.counter_offer": (
+        "REPAYMENTS_TOO_HIGH",
+        "A smaller amount fits better alongside your income and existing repayments. We have shown the amount we can offer."),
+    "CREDIT_HISTORY.counter_offer": (
+        "CREDIT_HISTORY",
+        "Based on your credit history, we can offer a smaller amount than you asked for."),
+    "EMPLOYMENT_STABILITY.counter_offer": (
+        "EMPLOYMENT_STABILITY",
+        "Based on your time with your current employer, we can offer a smaller amount than you asked for."),
     "OTHER.eligibility": (
         "OTHER",
         "Your application did not meet our basic eligibility criteria for this loan."),

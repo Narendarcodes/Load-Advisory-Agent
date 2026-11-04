@@ -12,7 +12,10 @@ from loan_advisory.agent.facts import _norm
 
 # ------------------------------------------------------------------ applicant request
 _REQ = {
-    "guarantee": r"\b(guarantee[ds]?|assure[ds]?|promise|definitely|for sure|surely|certainly|for certain)\b|100 ?%|"
+    # a guarantee *product* ("credit guarantee scheme fee", "CGTMSE guarantee fee", "bank guarantee") is a fee or
+    # security question, not a request to promise approval (DeepEval baseline R2-FEE-08)
+    "guarantee": r"(?<!credit\s)(?<!bank\s)(?<!cgtmse\s)\bguarantee[ds]?\b(?!\s+(?:scheme|fee|fund|charges?|cover|trust)\b)|"
+                 r"\b(assure[ds]?|promise|definitely|for sure|surely|certainly|for certain)\b|100 ?%|"
                  r"\b(will|would|can|could)\s+(i|we|my\s+(loan|application))\s+(get|be|definitely)\s+(approv|sanction|the loan)|"
                  r"\b(chances?|odds|probability|likely|likelihood)\b.{0,30}\b(approv|sanction|get the loan)|"
                  # a rate promise, not any mention of rates: "will I get the best rate", "can you get me the cheapest
@@ -51,7 +54,16 @@ _REQ = {
                      r"\b(my|me)\b.{0,40}\brisk\s+(grade|rating|band|category|tier|bucket|segment)s?\b|"
                      r"किस\s+(अधिकारी|कर्मचारी)|कौन.{0,20}(अधिकारी|कर्मचारी)|आंतरिक\s+(रिस्क|जोखिम|क्रेडिट)?\s*(ग्रेड|रेटिंग|स्कोर)|"
                      r"ఏ\s+(అధికారి|ఉద్యోగి)|(అధికారి|ఉద్యోగి)\s+ఎవరు|అంతర్గత\s+(రిస్క్|క్రెడిట్)?\s*(గ్రేడ్|రేటింగ్|స్కోర్)",
-    "other_applicant": r"\b(another|other|someone else'?s?|my (friend|brother|sister|wife|husband)'?s?)\b.{0,25}\b(application|loan|score|record)\b|"
+    # someone else's data: a possessive ("my friend's score", "another applicant's loan", "someone else's file") or
+    # "<record> of my sister". Mentioning a person in the applicant's OWN question ("my friend and I took the same
+    # loan", DeepEval baseline R2-RAT-07) or "other charges on the loan" is not a request for another person's data.
+    "other_applicant": r"\b(?:another|other)\s+(?:person|applicant|customer|borrower|user|people)(?:'s|’s|s'|s)?\b"
+                       r".{0,25}\b(?:application|loan|score|record|details|data|status)|"
+                       r"\bsomeone\s+else(?:'s|’s)?\b.{0,25}\b(?:application|loan|score|record|details|data|status)|"
+                       r"\bmy\s+(?:friend|brother|sister|wife|husband|father|mother|son|daughter|colleague|cousin|"
+                       r"neighbou?r|relative)(?:'s|’s|s')\s+.{0,25}\b(?:application|loan|score|record|details|data|status|cibil|report)|"
+                       r"\b(?:application|loan|score|record|details|data|status|report)\s+of\s+(?:my\s+(?:friend|brother|sister|"
+                       r"wife|husband|father|mother|son|daughter|colleague|cousin|relative)|another|someone\s+else)\b|"
                        r"\b(SYN-APP|APP-TEST|ACC-LOAP)-[0-9]+",
     # Prompt-injection framing, in every language the agent serves. Until 2026-11-03 (Phase 1 boundary E)
     # this was English-only, so a Hindi or Telugu borrower could say "forget your instructions" in their own
@@ -202,6 +214,144 @@ def ungrounded_numbers(answer: str, allowed: set[str]) -> list[str]:
             continue
         bad.append(n)
     return sorted(set(bad))
+
+
+# ------------------------------------------------------------------ borrower-visible text hygiene
+# Internal labels and retrieval machinery must never reach the borrower (DeepEval baseline: 91/178 answers said
+# "passages" or P1..P5). The POLICY prompt forbids them; sanitize_answer() is the deterministic last line of defence and
+# leaked_terms() the check. LEAK_CASED/LEAK_WORDS match scripts/policy/eval_saral_deepeval.py, plus Hindi/Telugu forms.
+LEAK_CASED = re.compile(r"\b(OCR|ZEN|RAG|LLM|P[1-5])\b")
+LEAK_WORDS = re.compile(r"\b(bureau|chunks?|passages?|retriev\w*|embedding\w*|system prompt)\b|पैसेज\w*|పాసేజ్\w*", re.I)
+_LBL = r"P[1-5]"
+_LBL_LIST = rf"{_LBL}(?:\s*(?:,|/|&|and|और|మరియు)\s*{_LBL})*"
+_PASS = r"(?:the\s+)?(?:provided\s+|given\s+|above\s+|available\s+|retrieved\s+|source\s+)?(?:passages?|chunks?)"
+_SAN = [
+    # bracketed label groups: " (P1)", " (P2, P3)", "[P1][P5]", " (see P2)"
+    (re.compile(rf"\s*[\(\[]\s*(?:see\s+|source:?\s+|sources:?\s+)?{_LBL_LIST}\s*[\)\]]", re.I), ""),
+    # "(referenced as X in P1)" -> "(referenced as X)"
+    (re.compile(rf"\s+(?:in|from|per)\s+{_LBL_LIST}(?=\s*[\)\].,;:!?।]|$)"), ""),
+    # lead-ins: "According to the passages, ", "Based on the passages, ", "Per the passages, " -> drop
+    (re.compile(rf"\b(?:according\s+to|based\s+on|as\s+per|per|from)\s+{_PASS}\s*,\s*", re.I), "\x00"),
+    (re.compile(r"पैसेज\w*\s+के\s+(?:अनुसार|मुताबिक)\s*,?\s*"), "\x00"),
+    (re.compile(r"పాసేజ్\w*\s+(?:ప్రకారం)\s*,?\s*"), ""),
+    # "both P1 and P4" / "P1 and P4" as a subject -> "both sources" / "the sources"
+    (re.compile(rf"\bboth\s+{_LBL}\s+and\s+{_LBL}\b"), "both sources"),
+    (re.compile(rf"\b{_LBL}(?:\s*(?:,|and)\s*{_LBL})+\b"), "the sources"),
+    (re.compile(rf"\b{_LBL}\b"), "one source"),
+    # remaining words: "the passages" -> "the sources"; "credit bureau" -> "credit information company"
+    (re.compile(r"\b(?:the\s+)?(?:provided|given|above|available|retrieved)\s+(passages|chunks)\b", re.I), "the sources"),
+    (re.compile(r"\b(passages|chunks)\b", re.I), "sources"),
+    (re.compile(r"\b(passage|chunk)\b", re.I), "source"),
+    (re.compile(r"पैसेज\w*"), "स्रोत"),
+    (re.compile(r"పాసేజ్\w*"), "ఆధారం"),
+    (re.compile(r"\bcredit\s+bureaus\b", re.I), "credit information companies"),
+    (re.compile(r"\bcredit\s+bureau\b", re.I), "credit information company"),
+    (re.compile(r"\bbureaus\b", re.I), "credit information companies"),
+    (re.compile(r"\bbureau\b", re.I), "credit information company"),
+]
+
+
+# Recorded outcome codes must never reach the borrower (E2E D-16: "ELIGIBILITY_CONDITIONS_MET", "COUNTER_OFFER" and a
+# bare "DECLINE" were shown). The EXPLAIN prompt forbids them; sanitize_answer() swaps any that slip through for plain
+# words in the answer's language. A bare v2 short code (DECLINE, COUNTER, REFER) only counts in capitals at the end of a
+# sentence or alone on a line; legacy v1 words (APPROVED/REJECTED) are left to the v1 templates.
+OUTCOME_WORDS = {
+    "en": {"ELIGIBILITY_CONDITIONS_MET": "Your application met our conditions.",
+           "COUNTER_OFFER": "We can't offer the full amount you asked for, but we can offer a smaller loan.",
+           "MANUAL_REVIEW": "A person on our team will look at your application.",
+           "MORE_INFORMATION_REQUIRED": "We need a few more details from you.",
+           "DECLINE": "We can't approve this application right now."},
+    "hi": {"ELIGIBILITY_CONDITIONS_MET": "आपका आवेदन हमारी शर्तें पूरी करता है।",
+           "COUNTER_OFFER": "हम आपकी माँगी गई पूरी राशि नहीं दे सकते, पर कम राशि का लोन दे सकते हैं।",
+           "MANUAL_REVIEW": "हमारी टीम का एक व्यक्ति आपका आवेदन देखेगा।",
+           "MORE_INFORMATION_REQUIRED": "हमें आपसे कुछ और जानकारी चाहिए।",
+           "DECLINE": "हम अभी यह आवेदन स्वीकृत नहीं कर सकते।"},
+    "te": {"ELIGIBILITY_CONDITIONS_MET": "మీ దరఖాస్తు మా షరతులను నెరవేర్చింది.",
+           "COUNTER_OFFER": "మీరు అడిగిన పూర్తి మొత్తం ఇవ్వలేము, కానీ తక్కువ మొత్తంలో లోన్ ఇవ్వగలము.",
+           "MANUAL_REVIEW": "మా బృందంలోని ఒక వ్యక్తి మీ దరఖాస్తును చూస్తారు.",
+           "MORE_INFORMATION_REQUIRED": "మాకు మీ నుండి మరికొన్ని వివరాలు కావాలి.",
+           "DECLINE": "ప్రస్తుతం ఈ దరఖాస్తును మేము ఆమోదించలేము."},
+}
+_ALIASES = {"COUNTER": "COUNTER_OFFER", "REJECTED": "DECLINE", "REJECT": "DECLINE", "APPROVED": "ELIGIBILITY_CONDITIONS_MET",
+            "APPROVE": "ELIGIBILITY_CONDITIONS_MET", "REFER": "MANUAL_REVIEW", "REVIEW": "MANUAL_REVIEW",
+            "INFO_REQUESTED": "MORE_INFORMATION_REQUIRED"}
+LEAK_OUTCOME = re.compile(r"\b(ELIGIBILITY_CONDITIONS_MET|COUNTER_OFFER|MANUAL_REVIEW|MORE_INFORMATION_REQUIRED|INFO_REQUESTED)\b"
+                          r"|\bDECLINE\b(?=\s*(?:[.:]|$))|^[ \t]*(?:COUNTER|REFER)[ \t]*$", re.M)
+
+
+def leaked_terms(text: str) -> list[str]:
+    """Internal labels / machinery words in borrower-visible text (case kept for labels, lower-cased words)."""
+    found = [m.group(0) for m in LEAK_CASED.finditer(text or "")]
+    found += [m.group(0).lower() for m in LEAK_WORDS.finditer(text or "")]
+    found += [m.group(0) for m in LEAK_OUTCOME.finditer(text or "")]
+    return sorted(set(found))
+
+
+def _plain_outcome(m: re.Match, locale: str) -> str:
+    code = m.group(0).strip()
+    words = OUTCOME_WORDS.get(locale, OUTCOME_WORDS["en"])
+    return words[_ALIASES.get(code, code)]
+
+
+def sanitize_answer(text: str, locale: str = "en") -> str:
+    """Strip passage labels, retrieval words and outcome codes from an answer before the borrower sees it.
+
+    Facts, numbers and qualifiers are left untouched; only the machinery is removed or replaced by "source(s)", and an
+    outcome code is replaced by plain words in `locale`. Idempotent and a no-op on clean text."""
+    if not text or not leaked_terms(text):
+        return text
+    # "Your decision is COUNTER_OFFER." -> the plain sentence on its own (only right before a code)
+    out = re.sub(r"\b(?:[Yy]our |[Tt]he )?(?:recorded )?(?:[Dd]ecision|[Oo]utcome|[Ss]tatus)(?: is| was|:)\s*(?=" + LEAK_OUTCOME.pattern + ")", "", text)
+    out = LEAK_OUTCOME.sub(lambda m: _plain_outcome(m, locale), out)
+    out = re.sub(r"([.!?।])\.", r"\1", out)
+    for pat, rep in _SAN:
+        out = pat.sub(rep, out)
+    out = re.sub(r"[ \t]{2,}", " ", out)
+    out = re.sub(r"[ \t]+([,.;:!?।])", r"\1", out)
+    out = re.sub(r"\(\s*\)|\[\s*\]", "", out)
+    # a dropped lead-in ("Based on the passages, a loan ...") leaves a sentence that must start with a capital
+    out = re.sub(r"(^|[.!?।]\s+|\n\s*(?:-\s+)?)\x00([a-z])", lambda m: m.group(1) + m.group(2).upper(), out)
+    out = out.replace("\x00", "")
+    out = re.sub(r"(^|[.!?।]\s+|\n\s*(?:-\s+)?)(one source|both sources|the sources|sources|source)\b",
+                 lambda m: m.group(1) + m.group(2)[0].upper() + m.group(2)[1:], out)
+    return out.strip()
+
+
+# ------------------------------------------------------------------ final output check (agent eval fix 2)
+# A deterministic last check on every generated borrower answer. Any hit forces a rewrite, then the template fallback.
+_OUT_CODE = re.compile(r"\b[A-Z]{2,}(?:_[A-Z0-9]{2,})+\b")                    # MIN_CREDIT_SCORE, DQ_BUREAU_NO_HIT, ...
+_OUT_RULE = re.compile(r"\b(?:PL|DQ|BFL|RBI)-[A-Z]*-?\d{2,3}\b|\bPL-\d{3}\b")  # PL-047, BFL-PL-OVERVIEW#017-style ids
+_OUT_MACHINE = re.compile(r"\b(?:ZEN|RAG|LLM|JDM|OCR)\b|\bsynthetic-v\d\b|\bpolicy[_ ]version\b", re.I)
+_OUT_HIDDEN = re.compile(
+    r"\b(settle(?:d|ment)s?|write-?offs?|written[- ]off|fraud\w*|black-?list\w*|negative[- ]list|duplicate\s+(?:application|pan|"
+    r"identity)|tamper\w*|forg(?:ed|ery)|signature\s+(?:mismatch|did\s+not\s+match|didn'?t\s+match|failed))\b|"
+    r"धोखाधड़ी|ब्लैकलिस्ट|सेटलमेंट|राइट-?ऑफ़?|जालसाज़ी|మోసం|బ్లాక్\s*లిస్ట్|సెటిల్మెంట్|రైట్-?ఆఫ్", re.I)
+_OUT_SCORE = re.compile(r"(?:score|cibil|स्कोर|సిబిల్|స్కోర్)\D{0,20}?(?<![\d,])([3-9]\d\d)(?![\d,])|"
+                        r"(?<![\d,])([3-9]\d\d)(?![\d,])\s*(?:\+\s*)?(?:credit\s+|cibil\s+)?(?:score|cibil)", re.I)
+
+
+def output_violations(text: str, *, decision_turn: bool = True, own_numbers=(), limit_numbers=()) -> list[str]:
+    """Kinds of internal detail in a borrower answer: outcome codes, rule ids / internal codes, passage labels and
+    machinery words (all turns); on decision turns also hidden-flag words, a credit-score number that is not the
+    applicant's own and any cut-off in `limit_numbers`. Empty list = clean."""
+    t = text or ""
+    out = [f"outcome_code:{m.group(0)}" for m in LEAK_OUTCOME.finditer(t)]
+    out += [f"internal_term:{m.group(0)}" for m in _OUT_CODE.finditer(t)]
+    out += [f"internal_term:{m.group(0)}" for m in _OUT_RULE.finditer(t)]
+    out += [f"internal_term:{m.group(0)}" for m in _OUT_MACHINE.finditer(t)]
+    out += [f"passage_label:{m.group(0)}" for m in re.finditer(rf"\b{_LBL}\b", t)]
+    out += [f"passage_label:{m.group(0)}" for m in re.finditer(r"\bpassages?\b|पैसेज\w*|పాసేజ్\w*", t, re.I)]
+    if decision_turn:
+        if _OUT_HIDDEN.search(_strip_negated(t)) or _OUT_HIDDEN.search(t):
+            out.append("hidden_flag")
+        own = {str(x) for x in own_numbers or ()}
+        for m in _OUT_SCORE.finditer(t):
+            n = m.group(1) or m.group(2)
+            if n not in own:
+                out.append(f"score_value:{n}")
+        lim = {str(x) for x in limit_numbers or ()}
+        out += [f"limit_value:{n}" for n in numbers_in(t) if n in lim and n not in own]
+    return sorted(set(out))
 
 
 def citation_flags(cited: list[str], available: list[str], abstained: bool) -> list[str]:
