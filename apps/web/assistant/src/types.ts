@@ -1,3 +1,5 @@
+import type { ThemeKey } from "./genui/plain";
+
 export type Literacy = "low" | "medium" | "high";
 export type Locale = "en" | "hi" | "te";
 
@@ -13,71 +15,55 @@ export interface Citation {
   source_url?: string | null;
   relationship?: string | null;
   applies_to_entity?: string[] | null;
+  /** Opening of the cited passage, plain text (server-trimmed). Shown in the source chip. */
+  excerpt?: string | null;
 }
 
+/**
+ * One improvement step as the island keeps it: only the borrower theme it belongs to. The server's task
+ * text, targets and gaps (Qoder Q-07/Q-09) are dropped at parse time; the words come from genui/plain.ts.
+ */
 export interface ImprovementTask {
-  rule_id: string;
-  task: string;
-  general_guidance: string;
-  guidance_source?: string;
-  target_display?: string;
-  gap_display?: string;
-  rule_passes_after_change?: boolean;
+  theme: ThemeKey;
 }
 
+/**
+ * A what-if as the island keeps it: the estimate's verdict and the amount it was run for. Per-rule results,
+ * the changed values and server error text are dropped at parse time.
+ */
 export interface WhatIf {
-  changes?: Record<string, number>;
-  simulated_decision?: string;
-  is_simulation?: boolean;
-  rule_results?: Record<string, string>;
-  failed_reason_codes?: string[];
+  /** true = "would likely meet", false = "wouldn't meet", null = no verdict sent. */
+  meets: boolean | null;
+  /** The hypothetical loan amount, when the estimate was run for one. */
+  amount: number | null;
   original_record_unchanged?: boolean;
-  label?: string;
-  error?: string;
+  /** The server refused or failed the estimate; its message is not shown. */
+  error: boolean;
 }
 
-/** One row of the recorded decision's rule table (facts.decision_card → rules[]). */
-export interface DecisionRule {
-  rule_id: string;
-  name: string;
-  reason_code?: string | null;
-  result: string;
-  actual?: string | null;
-  threshold?: string | null;
-  threshold_source?: string | null;
+/** The borrower's own offer on an approved decision. */
+export interface DecisionOffer {
+  amount: number | null;
+  emi: number | null;
+  tenure_months: number | null;
 }
 
-/** facts.bureau_facts(): present only when the decision used a bureau report. */
-export interface BureauFacts {
-  outcome_kind?: string | null;
-  review_required?: boolean | null;
-  info_requested?: boolean | null;
-  review_reason_codes?: string[];
-  info_requested_fields?: string[];
-  data_quality_category?: string | null;
-  score_source?: string | null;
-  score_conflict?: boolean | null;
-  provider_error?: string | null;
-  retryable?: boolean | null;
-  synthetic_report?: boolean | null;
-}
-
-/** The server's decision card (agent/facts.py). A projection of a stored record, never a new decision. */
+/**
+ * The recorded decision as the island keeps it. Rule rows, values, thresholds, rule ids, reason codes,
+ * flags and bureau details from the server's card are reduced to borrower themes at parse time and never
+ * stored, so nothing downstream can render them.
+ */
 export interface DecisionCard {
   application_ref?: string | null;
   decision?: string | null;
   recorded_outcome?: string | null;
   lifecycle_state?: string | null;
-  record_id?: string | null;
-  policy_version?: string | null;
-  policy_synthetic: boolean;
-  policy_label?: string | null;
   evaluated_at?: string | null;
-  rules: DecisionRule[];
-  failed_reason_codes: string[];
+  policy_synthetic: boolean;
+  offer: DecisionOffer | null;
+  /** At most three borrower-safe reason themes. */
+  themes: ThemeKey[];
   missing_fields: string[];
-  flags: string[];
-  bureau?: BureauFacts | null;
 }
 
 /** A safe public stage id, emitted by the real graph node that just started. */

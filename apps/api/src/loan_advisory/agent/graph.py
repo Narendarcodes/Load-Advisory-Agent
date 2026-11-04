@@ -134,6 +134,23 @@ not mention internal systems, and do not use any number.
 Recent conversation: {history}
 Latest message: {message}
 Return JSON only: {{"question": "..."}}"""
+
+EXCERPT_MAX_CHARS = 320  # source-chip excerpt: plain text, bounded
+
+
+def citation_excerpt(text) -> str | None:
+    """The opening of a cited passage for a source chip: whitespace collapsed, cut at a word, no markup added."""
+    if not isinstance(text, str):
+        return None
+    flat = " ".join(text.split())
+    if not flat:
+        return None
+    if len(flat) <= EXCERPT_MAX_CHARS:
+        return flat
+    cut = flat[:EXCERPT_MAX_CHARS].rsplit(" ", 1)[0].rstrip(" ,;:")
+    return cut + "…"
+
+
 DISPUTE = re.compile(r"\b(wrong|incorrect|mistake|error in|not correct|not mine|is false|dispute|outdated|old (data|salary|income))\b|"
                      r"గలత్|తప్పు|ग़लत|गलत", re.I)
 TEMPORAL = re.compile(r"\b(previous|prior|earlier|older|superseded|withdrawn|repealed|historical|used to be)\b|"
@@ -898,7 +915,8 @@ class AdvisoryAgent:
         cites = []
         if intent == "policy" and not s.get("abstained"):
             by_label = {p["label"]: p for p in s.get("passages") or []}
-            cites = [by_label[c]["citation"] for c in s.get("cited") or [] if c in by_label]
+            cites = [{**by_label[c]["citation"], "excerpt": citation_excerpt(by_label[c].get("text"))}
+                     for c in s.get("cited") or [] if c in by_label]
         missing = []
         if s.get("status") in ("info_requested", "bureau_review"):
             missing = F.borrower_missing_fields(s.get("record") or {})

@@ -21,6 +21,9 @@ const http = require("node:http");
 const HOST = process.env.STUB_HOST || "127.0.0.1";
 const PORT = Number(process.env.STUB_PORT || 8096);
 const ANSWER_PREFIX = "Acceptance fixture response: ";
+// Recordings slow the stream down so stacked progress is visible; defaults keep tests fast.
+const STAGE_MS = Number(process.env.STUB_STAGE_MS || 120);
+const CHUNK_MS = Number(process.env.STUB_CHUNK_MS || 60);
 
 const APPLICATION = process.env.STUB_APPLICATION || "ACC-LOAP-2026-00018";
 
@@ -77,6 +80,40 @@ const DECISION_CARD = {
   flags: ["info_requested"],
 };
 
+// The rejected card the redesign screenshots use (fixture application ACC-LOAP-2026-00021).
+const REJECTED_CARD = {
+  ...DECISION_CARD,
+  application_ref: process.env.STUB_REJECTED_APPLICATION || "ACC-LOAP-2026-00021",
+  decision: "REJECTED",
+  recorded_outcome: "REJECTED",
+  lifecycle_state: "REJECTED",
+  // Same shape as facts.decision_card(): display strings plus the engine's numbers (v2 meters).
+  rules: [
+    { rule_id: "FOIR_MAX_45", name: "Existing EMIs vs income (FOIR)", reason_code: "FOIR_TOO_HIGH",
+      result: "FAIL", actual: "50.0%", threshold: "\u2264 45.0%", threshold_source: "synthetic",
+      actual_value: 0.5, threshold_value: 0.45, operator: "<=" },
+    { rule_id: "MIN_CREDIT_SCORE", name: "Credit score", reason_code: "CREDIT_SCORE_LOW",
+      result: "FAIL", actual: "612", threshold: "\u2265 650", threshold_source: "synthetic",
+      actual_value: 612, threshold_value: 650, operator: ">=" },
+    { rule_id: "MIN_MONTHLY_INCOME", name: "Monthly income", reason_code: null,
+      result: "PASS", actual: "\u20b952,000", threshold: "\u2265 \u20b925,000", threshold_source: "synthetic",
+      actual_value: 52000, threshold_value: 25000, operator: ">=" },
+  ],
+  failed_reason_codes: ["FOIR_TOO_HIGH", "CREDIT_SCORE_LOW"],
+  missing_fields: [],
+  flags: [],
+};
+
+const MARKDOWN_ANSWER =
+  "your application was **not approved** because two checks on the recorded decision did not pass.\n\n" +
+  "### What did not pass\n\n" +
+  "1. **Existing EMIs vs income:** your repayments are 50% of your income; the limit is 45%.\n" +
+  "2. **Credit score:** 612 is recorded; this product needs at least 650.\n\n" +
+  "### What you can do\n\n" +
+  "- Pay down or close one existing loan to bring EMIs under 45%.\n" +
+  "- Keep repayments on time for a few months, then check your score again.\n\n" +
+  "> A what-if never changes your application. A person makes the final decision.";
+
 const CITATIONS = [
   {
     label: "S1",
@@ -87,6 +124,9 @@ const CITATIONS = [
     source_url: "https://example.invalid/policy/credit",
     relationship: "synthetic fixture, not a live policy source",
     applies_to_entity: ["SME"],
+    excerpt:
+      "Fixture excerpt (synthetic policy): an applicant's bureau score must be at least 650 at the time of " +
+      "assessment. Scores below this threshold are not approved under this product.",
   },
   {
     label: "S2",
@@ -96,6 +136,9 @@ const CITATIONS = [
     page: 7,
     source_url: null,
     relationship: "synthetic fixture, not a live policy source",
+    excerpt:
+      "Fixture excerpt (synthetic policy): total existing monthly repayments (EMIs) may be at most 45% of " +
+      "verified monthly income.",
   },
 ];
 
@@ -188,6 +231,42 @@ function stateFor(scenario) {
           "These passages are fixture text, not live policy.",
         citations: CITATIONS,
       };
+    case "markdown":
+      return {
+        ...base,
+        answer: ANSWER_PREFIX + MARKDOWN_ANSWER,
+        decision_card: REJECTED_CARD,
+      };
+    case "whatif":
+      return {
+        ...base,
+        intent: "what_if",
+        action: "simulate",
+        answer:
+          ANSWER_PREFIX +
+          "with a credit score of 720 the score check would pass, but the EMI check still would not, " +
+          "so the simulated outcome stays **not approved**. Your recorded decision is unchanged.",
+        decision_card: REJECTED_CARD,
+        what_if: {
+          changes: { credit_score: 720 },
+          simulated_decision: "REJECTED",
+          is_simulation: true,
+          rule_results: { MIN_CREDIT_SCORE: "PASS", FOIR_MAX_45: "FAIL", MIN_MONTHLY_INCOME: "PASS" },
+          failed_reason_codes: ["FOIR_TOO_HIGH"],
+          original_record_unchanged: true,
+          label: "Hypothetical - not your recorded decision",
+        },
+      };
+    case "handoff":
+      return {
+        ...base,
+        intent: "human_help",
+        action: "handoff",
+        answer:
+          ANSWER_PREFIX +
+          "I have recorded that you want a person to look at this decision. The reference is below.",
+        handoff_ref: "HO-FIXTURE-0001",
+      };
     default:
       return {
         ...base,
@@ -204,6 +283,7 @@ function answerText(scenario) {
 function scenarioOf(text) {
   const value = String(text || "").toLowerCase();
   if (value.includes("upstream failure") || value.includes("simulate failure")) return "error";
+  if (value.includes("talk to a person") || value.includes("human review")) return "handoff";
   if (value.includes("malformed")) return "malformed";
   if (value.includes("unknown component")) return "unknown";
   if (value.includes("required fields") && value.includes("absent")) return "absent_fields";
@@ -212,6 +292,8 @@ function scenarioOf(text) {
   if (value.includes("very long")) return "longtext";
   if (value.includes("citation") || value.includes("policy source")) return "citations";
   if (value.includes("slow")) return "slow";
+  if (value.includes("what if")) return "whatif";
+  if (value.includes("why was this decision") || value.includes("markdown")) return "markdown";
   if (value.includes("missing")) return "valid";
   return "valid";
 }
@@ -262,9 +344,15 @@ async function run(res, input) {
   send({ type: "RUN_STARTED", threadId, runId });
   send({ type: "TEXT_MESSAGE_START", messageId, role: "assistant" });
 
-  for (const stage of ["authenticate", "load_evidence", "compose"]) {
+  // The real graph's node order per intent: what-if re-runs the checks; a policy question retrieves.
+  const stages = scenario === "whatif"
+    ? ["authenticate", "load_evidence", "what_if", "compose"]
+    : scenario === "citations"
+      ? ["authenticate", "retrieve_policy", "compose"]
+      : ["authenticate", "load_evidence", "compose"];
+  for (const stage of stages) {
     if (!progress(stage)) return;
-    await sleep(slow ? 900 : 120);
+    await sleep(slow ? 900 : STAGE_MS);
   }
 
   if (scenario === "error") {
@@ -276,7 +364,7 @@ async function run(res, input) {
   const answer = answerText(scenario);
   for (const sentence of splitSentences(answer)) {
     if (!send({ type: "TEXT_MESSAGE_CONTENT", messageId, delta: sentence.trimEnd() + " " })) return;
-    await sleep(slow ? 500 : 60);
+    await sleep(slow ? 500 : CHUNK_MS);
   }
 
   send({ type: "STATE_SNAPSHOT", snapshot: { ...stateFor(scenario), request_id: runId } });

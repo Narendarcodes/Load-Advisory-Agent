@@ -1,16 +1,16 @@
 {% extends "templates/portal/base.html" %}
 {% block title %}Loans explained in plain language{% endblock %}
+
 {% block page_content %}
 {%- set signed_in = boot.get("user") and boot.get("user") != "Guest" -%}
 <div class="landing">
 
 	<section class="hero" aria-labelledby="hero-title">
 		<div class="hero__copy">
-			<p class="eyebrow">Borrow with clarity</p>
 			<h1 id="hero-title">A loan you can understand before you sign.</h1>
 			<p class="lede">
 				See what you may qualify for, apply in a few short steps, and read the reasoning behind every
-				decision in plain language. A person makes the final call, not a chatbot.
+				decision in plain language.
 			</p>
 			<div class="hero__actions">
 				<a class="btn btn--lg" href="{{ '/borrower/eligibility' if signed_in else '/login?redirect-to=%2Fborrower%2Feligibility' }}">
@@ -25,26 +25,13 @@
 			</div>
 		</div>
 		<div class="hero__art">
-			<div class="plate plate--welcome" role="img" aria-label="Illustration of a loan summary card with a clear status">
-				<div class="plate__card">
-					<span class="plate__line plate__line--ink"></span>
-					<span class="plate__line plate__line--coral"></span>
-					<span class="plate__line"></span>
-					<span class="plate__line plate__line--short"></span>
-					<span class="plate__badge">Clear terms</span>
-				</div>
-			</div>
-			<div class="hero__art-note">
-				<span class="tiny muted">Inside the portal</span>
-				<strong>Every step explained</strong>
-			</div>
+			<img class="hero__img" src="/assets/loan_advisory_portal/illustrations/products.svg" alt="" width="320" height="240">
 		</div>
 	</section>
 
 	<section class="section" id="products" aria-labelledby="products-heading">
 		<div class="section__head">
 			<div>
-				<p class="eyebrow">The product</p>
 				<h2 id="products-heading">What we lend</h2>
 			</div>
 			{% if signed_in %}
@@ -53,15 +40,14 @@
 		</div>
 
 		{% if products %}
-		<div class="product-grid">
+		<div class="product-list">
 			{% for product in products %}
-			<article class="product-card">
-				<span class="product-card__mark" aria-hidden="true">TL</span>
-				<div>
+			<article class="product-row">
+				<div class="product-row__copy">
 					<h3>{{ product.name | e }}</h3>
 					<p>Term loan with a fixed repayment schedule. The amount and terms you are offered depend on your application.</p>
 				</div>
-				<dl>
+				<dl class="def-rows">
 					<div>
 						<dt>Maximum amount</dt>
 						<dd>₹{{ "{:,.0f}".format(product.maximum_loan_amount or 0) }}</dd>
@@ -80,7 +66,7 @@
 		</div>
 		{% else %}
 		<div class="card empty">
-			<span class="empty__mark" aria-hidden="true">TL</span>
+			<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/service-unavailable.svg" alt="" width="180" height="135">
 			<h2>No product is available right now</h2>
 			<p>Ask your loan advisor when applications can be started again.</p>
 			<a class="btn btn--ghost" href="/borrower/help">Read the help page</a>
@@ -92,13 +78,11 @@
 	<section class="section" aria-labelledby="calculator-heading">
 		<div class="section__head">
 			<div>
-				<p class="eyebrow">Work the numbers</p>
 				<h2 id="calculator-heading">Indicative monthly repayment</h2>
 				<p class="small muted">An estimate using the product rate. It is not an offer.</p>
 			</div>
-			<span class="badge badge--brand">Estimate only</span>
 		</div>
-		<div class="card calculator">
+		<div class="calculator">
 			<div class="stack">
 				<div class="field">
 					<label for="calc-amount">Amount you want to borrow (₹)</label>
@@ -143,63 +127,49 @@
 	<section class="section" aria-labelledby="process-heading">
 		<div class="section__head">
 			<div>
-				<p class="eyebrow">How it works</p>
-				<h2 id="process-heading">Three steps, no surprises</h2>
+				<h2 id="process-heading">How it works</h2>
 			</div>
 		</div>
-		<div class="process">
-			<article class="process__step">
-				<h3>Check what fits</h3>
-				<p>Answer a few questions about income and commitments. You get an indicative range, not a promise.</p>
-			</article>
-			<article class="process__step">
-				<h3>Apply with the details you know</h3>
-				<p>Tell us what the loan is for, add your documents, and review everything before you submit.</p>
-			</article>
-			<article class="process__step">
-				<h3>Read the decision</h3>
-				<p>You see the outcome, the reasons that shaped it and what to do next. Our team can talk it through.</p>
-			</article>
-		</div>
+		<dl class="def-list">
+			<div>
+				<dt>Check what fits</dt>
+				<dd>Answer a few questions about income and commitments. You get an indicative range, not a promise.</dd>
+			</div>
+			<div>
+				<dt>Apply with the details you know</dt>
+				<dd>Tell us what the loan is for, add your documents, and review everything before you submit.</dd>
+			</div>
+			<div>
+				<dt>Read the decision</dt>
+				<dd>You see the outcome, the reasons that shaped it and what to do next. Our team can talk it through.</dd>
+			</div>
+		</dl>
 	</section>
 
 	<section class="section" aria-labelledby="trust-heading">
 		<div class="section__head">
 			<div>
-				<p class="eyebrow">Why borrowers stay</p>
 				<h2 id="trust-heading">Built to be understood</h2>
 			</div>
 		</div>
-		<div class="assurance">
-			<div class="assurance__item">
-				<span class="assurance__mark" aria-hidden="true">01</span>
-				<div>
-					<strong>Plain language</strong>
-					<p>No abbreviations invented for the file. If a term matters, it is explained where you meet it.</p>
-				</div>
+		<dl class="def-list">
+			<div>
+				<dt>Plain language</dt>
+				<dd>No abbreviations invented for the file. If a term matters, it is explained where you meet it.</dd>
 			</div>
-			<div class="assurance__item">
-				<span class="assurance__mark" aria-hidden="true">02</span>
-				<div>
-					<strong>Reasons, not just results</strong>
-					<p>Whenever a decision is made, you can read which parts of your application mattered.</p>
-				</div>
+			<div>
+				<dt>Reasons, not just results</dt>
+				<dd>Whenever a decision is made, you can read which parts of your application mattered.</dd>
 			</div>
-			<div class="assurance__item">
-				<span class="assurance__mark" aria-hidden="true">03</span>
-				<div>
-					<strong>Your data stays yours</strong>
-					<p>Documents are private to you and the review team. The assistant never reads raw identity numbers.</p>
-				</div>
+			<div>
+				<dt>Your data stays yours</dt>
+				<dd>Documents are private to you and the review team. The assistant never reads raw identity numbers.</dd>
 			</div>
-			<div class="assurance__item">
-				<span class="assurance__mark" aria-hidden="true">04</span>
-				<div>
-					<strong>A person is accountable</strong>
-					<p>The assistant explains. A human reviews and decides. You can ask for the decision to be looked at again.</p>
-				</div>
+			<div>
+				<dt>A person is accountable</dt>
+				<dd>The assistant explains. A human reviews and decides. You can ask for the decision to be looked at again.</dd>
 			</div>
-		</div>
+		</dl>
 	</section>
 
 	<section class="section grid-2" aria-label="Costs and questions">
@@ -239,17 +209,17 @@
 		</div>
 	</section>
 
-	<section class="section card card--accent" aria-labelledby="cta-heading">
+	<section class="section closing" aria-labelledby="cta-heading">
 		<div class="row row--between">
 			<div>
 				<h2 id="cta-heading">Ready to see where you stand?</h2>
 				<p class="small muted mt">The check takes a few minutes and does not affect your credit score.</p>
 			</div>
 			<div class="row">
-				<a class="btn" href="{{ '/borrower/eligibility' if signed_in else '/login?redirect-to=%2Fborrower%2Feligibility' }}">
+				<a class="btn btn--ghost" href="{{ '/borrower/eligibility' if signed_in else '/login?redirect-to=%2Fborrower%2Feligibility' }}">
 					{{ 'Check indicative eligibility' if signed_in else 'Sign in' }}
 				</a>
-				<a class="btn btn--ghost" href="/borrower/help">How decisions work</a>
+				<a class="link-arrow" href="/borrower/help">How decisions work</a>
 			</div>
 		</div>
 	</section>

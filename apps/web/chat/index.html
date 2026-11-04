@@ -85,7 +85,7 @@
 <script>
 const $ = s => document.querySelector(s);
 let token = null, conv = null;
-const CHIPS = ["Why was my loan rejected?", "What can I do to improve before reapplying?", "What if my credit score was 720?",
+const CHIPS = ["Why was my loan rejected?", "What can I do to improve before reapplying?",
                "How do I raise a complaint with the lender?", "Will I definitely get approved if I reapply?"];
 function md(t){ // tiny, safe subset: escape first, then **bold**, *italic*
   return esc(t).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/(^|\s)\*([^*\n]+)\*/g, "$1<i>$2</i>");

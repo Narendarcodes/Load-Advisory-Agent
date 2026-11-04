@@ -1,8 +1,7 @@
 {% extends "templates/portal/base.html" %}
 {% block page_content %}
-<div class="page-head">
+<div class="page-head page-head--art">
 	<div>
-		<p class="eyebrow">Account</p>
 		<h1>Your profile</h1>
 		<p>These details prefill new applications. Changing them never changes an application that has already been submitted.</p>
 	</div>
@@ -10,6 +9,7 @@
 		<span class="stat__label">Completed</span>
 		<span class="stat__value" id="completion">—</span>
 	</div>
+	<img class="page-head__art" src="/assets/loan_advisory_portal/illustrations/profile-header.svg" alt="" width="160" height="120">
 </div>
 
 <form class="card" id="profile-form" novalidate>

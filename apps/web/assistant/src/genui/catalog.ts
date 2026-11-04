@@ -27,31 +27,6 @@ export function outcomeLabel(value: string | null | undefined): OutcomeLabel {
   return OUTCOMES[value.toUpperCase()] ?? { label: "Decision recorded", tone: "neutral" };
 }
 
-const RULE_RESULTS: Record<string, string> = {
-  PASS: "Met",
-  FAIL: "Not met",
-  NOT_EVALUABLE: "Not checked",
-  ERROR: "Check failed",
-};
-
-export function ruleResultLabel(value: string): string {
-  return RULE_RESULTS[value] ?? value;
-}
-
-const BUREAU_KINDS: Record<string, string> = {
-  APPROVED: "Bureau check passed",
-  CREDIT_REJECTION: "Declined on the bureau report",
-  DATA_QUALITY_HOLD: "Bureau information needs review",
-  PROVIDER_FAILURE: "Bureau service could not be reached",
-  EVALUATION_ERROR: "Bureau check could not be completed",
-  OTHER: "Bureau check recorded",
-};
-
-export function bureauKindLabel(value: string | null | undefined): string {
-  if (!value) return "Bureau check recorded";
-  return BUREAU_KINDS[value] ?? value;
-}
-
 interface FieldHelp {
   label: string;
   explanation: string;
@@ -67,8 +42,8 @@ const FIELDS: Record<string, FieldHelp> = {
     explanation: "Your total monthly loan payments (EMIs) are missing or were flagged as needing correction.",
   },
   credit_score: {
-    label: "Credit score",
-    explanation: "The credit score used for this check is missing or was flagged as needing correction.",
+    label: "Credit history details",
+    explanation: "We need your credit history details to finish checking your application.",
   },
   employment_months: {
     label: "Months in current employment",

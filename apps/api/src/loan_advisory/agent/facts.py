@@ -172,7 +172,10 @@ def decision_card(record: dict) -> dict:
                       "reason_code": e["reason_code"], "result": e["result"],
                       "actual": actual_disp,
                       "threshold": ("≥ " if e["operator"] == ">=" else "≤ ") + _display(e["rule_id"], e["threshold"]),
-                      "threshold_source": "synthetic" if pol.get("synthetic") else e.get("threshold_source")})
+                      "threshold_source": "synthetic" if pol.get("synthetic") else e.get("threshold_source"),
+                      # The engine's own numbers, for meters. None when the engine did not evaluate the rule.
+                      "actual_value": _number(e.get("actual_value")), "threshold_value": _number(e.get("threshold")),
+                      "operator": e.get("operator") if e.get("operator") in (">=", "<=") else None})
     card = {"application_ref": record.get("application_ref"), "decision": record.get("decision"),
             "recorded_outcome": record.get("outcome") or record.get("decision"),
             "lifecycle_state": record.get("lifecycle_state"), "record_id": record.get("record_id"),
@@ -238,6 +241,9 @@ def _finite(v):
     if isinstance(v, bool) or not isinstance(v, (int, float)):
         return None
     return v if v == v and v not in (float("inf"), float("-inf")) else None
+
+
+_number = _finite  # "A finite int/float from the engine record, else None" (name used by #38 on main)
 
 
 # E2E D-16: the borrower never sees a recorded outcome code. The card speaks the assistant UI's vocabulary (genui
