@@ -3,6 +3,7 @@
 How Saral is built and why, as submitted on 2026-11-04. Architecture drawing (opens in draw.io):
 [docs/architecture.drawio.svg](docs/architecture.drawio.svg). Phases, dates and owners:
 [docs/build-plan.md](docs/build-plan.md). Final numbers: [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md).
+Demo logins and test applicants: [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).
 
 ## Who it is for
 

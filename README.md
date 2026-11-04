@@ -12,7 +12,8 @@ Built by Team Loan Rangers for the VaaniLabs.AI capstone (CBIT, AI/ML). The repo
 
 > **Read this first**
 > - **All applicant data is synthetic.** No real person, PAN, Aadhaar number, employer or bank account is used.
->   Synthetic PANs start `ZZ`, Aadhaar numbers start `9999`, and emails use `example.invalid`.
+>   Synthetic PANs start `ZZ`, Aadhaar numbers start with 0 or 1 (never issued by UIDAI), and emails use
+>   `example.invalid`.
 > - **The thresholds are a prototype, not a lender's policy.** They are labelled `prototype_synthetic`. The owner
 >   approved the top ten for this prototype only (ADR-0011, 2026-11-04); the rest are approved as a batch (ADR-0009).
 > - **Bajaj Finance Ltd is a public reference lender, not a partner.** Saral follows the public documents of one
@@ -212,17 +213,19 @@ Start in this order (ports are the defaults; all bind to 127.0.0.1):
 |---|---|---|---:|
 | 1 | Frappe Lending + Saral portal (Docker) | `docker compose -f infra/frappe/loanrangers.yml up -d --pull missing`, then create the site and install the portal app as in [setup.md](docs/development/setup.md) (`bash infra/frappe/bootstrap/install_portal_app.sh`) | 8080 |
 | 2 | Synthetic applicants (once) | `python -m synthetic_data.saral_kyc_bank --count 200 --seed 20261103 --out ../saral-data/full200` | — |
-| 3 | Seed borrowers and applications (once) | `ops/saral_seed/plan.py` on the generated folder, then `ops/saral_seed/frappe_seed.py` inside the backend container (usage at the top of each file). Logins and service keys go to a 0600 JSON file; put the reader key in `FRAPPE_API_KEY` / `FRAPPE_API_SECRET` | — |
+| 3 | Seed borrowers and applications (once) | `python -m ops.saral_seed.plan ../saral-data/full200 ../saral-data/plan.json`, then copy `plan.json` and `ops/saral_seed/frappe_seed.py` into the backend container and run it there (exact `docker cp` / `docker exec` lines at the top of `frappe_seed.py`). It writes logins and service keys to a 0600 `creds.json` and a `mapping.json`; copy both out, and put the reader key in `FRAPPE_API_KEY` / `FRAPPE_API_SECRET` | — |
 | 4 | Synthetic KYC + AA bank API | `SARAL_SYNTH_DIR=../saral-data/full200 python -m ops.synthetic_kyc_bank.app --port 8012` | 8012 |
-| 5 | Synthetic bureau | `python -m ops.bureau_fixture_server --fixture <bureau_cases.json from step 2/3> --port 8011` | 8011 |
+| 5 | Synthetic bureau | re-key the generated cases once: `python -c "from ops.saral_seed.plan import rekey_cli; rekey_cli('../saral-data/full200/bureau_cases.json', '../saral-data/mapping.json', '../saral-data/bureau_rekeyed.json')"`, then `python -m ops.bureau_fixture_server --fixture ../saral-data/bureau_rekeyed.json --port 8011` | 8011 |
 | 6 | Policy index (once, optional) | `python scripts/policy/fetch_sources.py`, `python scripts/policy/build_corpus_v3.py --src ... --out ...`, `python scripts/policy/index_corpus_v3.py --chunks ... --qdrant-dir ...` (copyrighted texts stay outside git) | embedded Qdrant |
 | 7 | Decision runner | `SARAL_POLICY_VERSION=synthetic-v2 SARAL_BUREAU_URL=http://127.0.0.1:8011 SARAL_KYC_AA_URL=http://127.0.0.1:8012 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m ops.decision_runner` | — |
 | 8 | Saral agent | `PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095` (add `--no-rag` if you skipped step 6) | 8095 |
 | 9 | Assistant runtime | `cd apps/runtime && npm ci && npm run build && AGENT_AGUI_URL=http://127.0.0.1:8095/api/agui AGENT_RUNTIME_PORT=4200 FRAPPE_BASE_URL=http://127.0.0.1:8080 npm start` | 4200 |
 | 10 | Chat island (once per change) | `cd apps/web/assistant && npm ci && npm run build` (writes into the portal app) | — |
+| 11 | Demo Loan Officer (once) | `bench --site <site> set-config allow_demo_users 1`, then `bench --site <site> execute loan_advisory_portal.setup_demo.create_demo_officer` inside the backend container; the password is printed once | — |
 
 Then open **http://127.0.0.1:8080**, sign in with a seeded borrower from the 0600 logins file, and open the Saral
-portal. The Loan Officer desk is at `/app` with the officer login. Health checks: `/healthz` on 8011, 8012 and 8095.
+portal. Demo logins, the synthetic applicants to use for each decision path and a 5-minute presenter script:
+**[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md)**. The Loan Officer desk is at `/app` with the officer login. Health checks: `/healthz` on 8011, 8012 and 8095.
 
 ### Windows notes
 
@@ -401,6 +404,7 @@ Full list with counts, examples and a fix per item:
 | What the borrower may be told | [docs/saral/REASON_DISCLOSURE_POLICY.md](docs/saral/REASON_DISCLOSURE_POLICY.md) |
 | ZEN and RAG consistency | [docs/saral/ZEN_RAG_CONSISTENCY.md](docs/saral/ZEN_RAG_CONSISTENCY.md) |
 | Synthetic datasets | [docs/saral/SYNTHETIC_DATASETS.md](docs/saral/SYNTHETIC_DATASETS.md) |
+| Demo logins, test applicants, presenter script | [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) |
 | Final evaluation numbers | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) |
 | Editable architecture drawing | [docs/architecture.drawio.svg](docs/architecture.drawio.svg) |
 | Build plan (phases, dates, owners) | [docs/build-plan.md](docs/build-plan.md) |
