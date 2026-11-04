@@ -1054,9 +1054,14 @@ RULES += [
          note="Prototype proposal (D-13): Bajaj states nationality only; an Indian national living abroad (NRI) is outside the MVP.")],
       fail="FAIL", effect=DEC, msg="OTHER.eligibility", missing_msg="DOCUMENTS_INCOMPLETE_OR_UNCLEAR.missing",
       internal="Residency status {residency_status} is not in {eligible_residency_statuses}.",
+      # Owner decision 2026-11-04 10:15 IST: home renovation only; wedding, higher education and medical emergency never
+      # evaluate PL-130 (compile: NOT_APPLICABLE for them, no effect).
+      applies="loan_purpose == home_renovation",
+      note="Scoped to the home renovation product only (owner decision 2026-11-04 10:15 IST); the other three products never evaluate it.",
       new=dict(name="Residency eligibility", group="A_APPLICANT_ELIGIBILITY", impl="ZEN_DIRECT",
-               inputs=["residency_status"], check="Applicant is resident in India"),
-      tests=[T({"residency_status": "RESIDENT"}, "PASS"), T({"residency_status": "NRI"}, "FAIL")]),
+               inputs=["residency_status"], check="Home renovation applicant is resident in India"),
+      tests=[T({"loan_purpose": "home_renovation", "residency_status": "RESIDENT"}, "PASS"),
+             T({"loan_purpose": "home_renovation", "residency_status": "NRI"}, "FAIL")]),
 ]
 
 # Active although an input has no MVP-form source: on the synthetic test bed the KYC/AA data points supply it

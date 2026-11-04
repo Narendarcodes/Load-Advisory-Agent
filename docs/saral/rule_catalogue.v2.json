@@ -17749,7 +17749,7 @@
       "rule_name": "Residency eligibility",
       "rule_group": "A_APPLICANT_ELIGIBILITY",
       "implementation_type": "ZEN_DIRECT",
-      "check": "Applicant is resident in India",
+      "check": "Home renovation applicant is resident in India",
       "rule_origin": "OWNER_DIRECTIVE",
       "kind": "GATE",
       "enabled": true,
@@ -17763,7 +17763,7 @@
         }
       ],
       "condition": "residency_status in eligible_residency_statuses",
-      "applies_when": "ALL",
+      "applies_when": "loan_purpose == home_renovation",
       "parameters": [
         {
           "name": "eligible_residency_statuses",
@@ -17827,6 +17827,7 @@
         {
           "case_id": "PL-130-T1",
           "inputs": {
+            "loan_purpose": "home_renovation",
             "residency_status": "RESIDENT"
           },
           "expected_outcome": "PASS",
@@ -17836,6 +17837,7 @@
         {
           "case_id": "PL-130-T2",
           "inputs": {
+            "loan_purpose": "home_renovation",
             "residency_status": "NRI"
           },
           "expected_outcome": "FAIL",
@@ -17850,7 +17852,7 @@
           "expected_value": null
         }
       ],
-      "note": ""
+      "note": "Scoped to the home renovation product only (owner decision 2026-11-04 10:15 IST); the other three products never evaluate it."
     }
   ]
 }

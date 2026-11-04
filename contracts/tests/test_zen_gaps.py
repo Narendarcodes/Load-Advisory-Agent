@@ -33,6 +33,15 @@ def test_residency_gate_declines_non_residents_and_asks_when_missing():
     assert [t["expected_outcome"] for t in r["test_cases"][:2]] == ["PASS", "FAIL"]
 
 
+def test_residency_gate_is_scoped_to_home_renovation_only():
+    """Owner decision 2026-11-04 10:15 IST: PL-130 applies to home renovation; the other three products never evaluate it."""
+    r = _rule(_cat(), "PL-130")
+    assert r["applies_when"] == "loan_purpose == home_renovation"
+    assert all(t["inputs"].get("loan_purpose") == "home_renovation" for t in r["test_cases"][:2])
+    from contracts.catalogue_v2 import products as PR
+    assert "home renovation only" in PR.PRODUCT_RULE_DIFFERENCES["PL-130"]
+
+
 def test_blank_signature_is_a_missing_document_not_a_signature_finding():
     cat = _cat()
     assert "signature_present false" in _rule(cat, "PL-088")["note"]
