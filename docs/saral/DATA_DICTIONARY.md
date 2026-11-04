@@ -244,7 +244,7 @@ Signature results (presence, crop hash, similarity, anomaly score, REFER flag) a
 | required_documents | list |  | POLICY_PARAMETER | POLICY | PL-088 | PL-088 | Loan Application.documents link Loan Document Type (types only) | Decision Snapshot.policy_parameters | NONE | LMS_SNAPSHOT | yes |
 | required_fields | list |  | POLICY_PARAMETER | POLICY | PL-096 | PL-096 | MISSING | Decision Snapshot.policy_parameters | NONE | LMS_SNAPSHOT | yes |
 | required_identity_fields | list |  | POLICY_PARAMETER | POLICY | PL-006 | PL-006 | MISSING | Decision Snapshot.policy_parameters | NONE | LMS_SNAPSHOT | yes |
-| residency_status | enum | RESIDENT/NRI | APPLICATION | NONE | Declared residency; not in the MVP form; the KYC/AA data points supply it on the synthetic test bed (PL-130, D-13) | PL-130 | MISSING |  | PERSONAL | LMS_SNAPSHOT | no: residency_status: no MVP source (Declared residency; not in the MVP form; the KYC/AA data points supply it on the synthetic test bed (PL-130, D-13)) |
+| residency_status | enum | RESIDENT/NRI | APPLICATION | NONE | Declared residency; not in the MVP form; the KYC/AA data points supply it on the synthetic test bed (PL-130, D-13) | PL-130 | MISSING | KYC Verification.residency_status | PERSONAL | LMS_SNAPSHOT | no: residency_status: no MVP source (Declared residency; not in the MVP form; the KYC/AA data points supply it on the synthetic test bed (PL-130, D-13)) |
 | residual_income | float | INR/month | DERIVED | DERIVED | monthly_net_income, total_monthly_obligations — PL-065 | PL-065 | MISSING | Decision Snapshot.residual_income | FINANCIAL | LMS_SNAPSHOT | yes |
 | restructured_account_count | int | count | SYNTHETIC_BUREAU_V2 | SYNTHETIC_BUREAU_V2:accounts[].restructured | Not in bureau-report/1 | PL-050 | MISSING | Bureau Report Summary.restructured_account_count | CREDIT | SOURCE_REFERENCE | no: needs bureau-report/2 (accounts[].restructured) |
 | return_count | int | count | DERIVED | DERIVED | SYNTHETIC_BANK:transactions[].category — PRE-BANK: NACH_RETURN + CHEQUE_RETURN in 3 months | PL-081 | MISSING | Bank Statement Summary.return_count | FINANCIAL | LMS_SNAPSHOT | yes |
@@ -296,7 +296,7 @@ Retention per storage tier is in the tier list above; every row in the JSON repe
 
 ## LMS gap list
 
-At 716db49, 187 of 230 fields had no Frappe location. On `feat/saral-lms-doctypes` every field has one: **1 remaining**. The location of each field is in [`contracts/frappe_field_map.json`](../../contracts/frappe_field_map.json) and in the `frappe_location` column above; `tests/test_saral_lms_doctypes.py` fails if a field other than NEVER_STORE loses its location. NEVER_STORE items (full PAN, full Aadhaar, OTP values, raw OCR text) have no field anywhere, enforced by the same test.
+At 716db49, 187 of 230 fields had no Frappe location. On `feat/saral-lms-doctypes` every field has one: **0 remaining**. The location of each field is in [`contracts/frappe_field_map.json`](../../contracts/frappe_field_map.json) and in the `frappe_location` column above; `tests/test_saral_lms_doctypes.py` fails if a field other than NEVER_STORE loses its location. NEVER_STORE items (full PAN, full Aadhaar, OTP values, raw OCR text) have no field anywhere, enforced by the same test.
 
 | Gap | Kind | Doctype / target | Fields | Storage | Rules served | Status |
 |---|---|---|---|---|---|---|

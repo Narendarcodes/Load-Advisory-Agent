@@ -4734,8 +4734,8 @@
       "masking_rule": "Personal data. Borrower and authorised staff only; never in logs, traces sent to observability, or LLM prompts.",
       "storage": "LMS_SNAPSHOT",
       "retention": "Kept immutable with the decision record (ADR-0010 #3, owner 2026-11-03 23:58 IST). Disbursed loan: at least 5 years after the business relationship ends (loan closure). Basis: RBI (NBFC – Know Your Customer) Directions, 2025 para 47(2), identification records 'for at least five years after the business relationship has ended', and para 47(1), transaction records 'for at least five years from the date of transaction' (rbi.org.in id=12943). Declined or withdrawn application: 5 years from the decision date, which is SARAL'S CHOICE (no RBI period was found for applications that never became a relationship). The earlier 8-year proposal is withdrawn; it had no RBI basis.",
-      "frappe_location": null,
-      "frappe_location_kind": null,
+      "frappe_location": "KYC Verification.residency_status",
+      "frappe_location_kind": "field",
       "used_by_rules": [
         "PL-130"
       ],
