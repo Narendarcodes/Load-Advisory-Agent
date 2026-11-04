@@ -121,7 +121,7 @@ def configured_policy_version() -> str | None:
     return (os.environ.get("SARAL_POLICY_VERSION") or "").strip() or None
 
 
-def _v2_data_points(doc: dict, inputs: dict, score, kyc_points: dict | None) -> dict:
+def _v2_data_points(doc: dict, inputs: dict, score, kyc_points: dict | None, *, bureau_unavailable: bool = False) -> dict:
     """ZEN v2 input: the KYC/AA consumer's preprocessed data points, then the application's own request values,
     then the bureau-resolved score. An off-product purpose is passed through so PL-076 declines it."""
     dp = dict(kyc_points or {})
@@ -134,6 +134,8 @@ def _v2_data_points(doc: dict, inputs: dict, score, kyc_points: dict | None) -> 
         "declared_obligations": inputs.get("monthly_obligations"),
         "bureau_score": score,
     })
+    if bureau_unavailable:  # D-11: no report this time; PL-019 decides (catalogue: retry once, then manual review)
+        dp.update({"bureau_report_status": "UNAVAILABLE", "bureau_score": None})
     if kyc_points is None:  # no verified figures: the declared ones are all ZEN gets
         dp.update({"monthly_net_income": inputs.get("monthly_income"),
                    "existing_monthly_obligations": inputs.get("monthly_obligations"),
@@ -142,14 +144,14 @@ def _v2_data_points(doc: dict, inputs: dict, score, kyc_points: dict | None) -> 
 
 
 def _decide_v2(application_ref, doc, inputs, applicant, gate_score, kyc_client, pv, sink, current_state,
-               blocks, flags, now):
+               blocks, flags, now, *, bureau_unavailable=False):
     from decision_engine.catalogue_v2.engine import LIFECYCLE_FOR, build_record_v2, decide_v2
     from loan_advisory.infrastructure.kyc_aa_client import KycAaClient
 
     kyc = (kyc_client or KycAaClient()).data_points(applicant)
     if kyc.data_points is None:
         flags.append(kyc.error or "KYC_AA_UNAVAILABLE")
-    dp = _v2_data_points(doc, inputs, gate_score, kyc.data_points)
+    dp = _v2_data_points(doc, inputs, gate_score, kyc.data_points, bureau_unavailable=bureau_unavailable)
     result = decide_v2(dp)
     to = LIFECYCLE_FOR[result["decision"]]
     if to in ("APPROVED", "REJECTED") and _contradictory_obligations(inputs):
@@ -249,6 +251,13 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
 
     blocks = bureau_outcome(gate, report, fetch_error=fetch_error)
     evidence_inputs = inputs
+    if gate.category == "PROVIDER_FAILURE" and configured_policy_version() == V2_VERSION:
+        # D-11: under catalogue v2 a provider failure is a v2 decision (PL-019 -> MANUAL_REVIEW), never ERROR with
+        # the synthetic-v1 rule ids. The fetch error stays in the bureau block for the officer.
+        flags.append("BUREAU_PROVIDER_ERROR")
+        return _decide_v2(application_ref, doc, inputs, applicant, None, kyc_client,
+                          load_policy("PERSONAL_LOAN", V2_VERSION), sink, current_state, blocks, flags, now,
+                          bureau_unavailable=True)
     if gate.category == "PROVIDER_FAILURE":
         ev = {"decision": "ERROR", "rule_evaluations": [], "zen_trace": {},
               "error": f"{fetch_error['code']}: {fetch_error['message']}"}
