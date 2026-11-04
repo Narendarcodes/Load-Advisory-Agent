@@ -116,6 +116,9 @@ script: [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).
 | RAM | 16 GB recommended | Frappe (about 4 GB), PaddleOCR (about 3 GB per worker), embeddings |
 | An OpenAI-compatible LLM endpoint | — | answers. Default: an OmniRoute gateway serving `antigravity/gemini-3.8-flash` |
 | Groq API key | optional | fast intent classifier; without it the classifier falls back to the gateway, then to rules |
+| Hugging Face account | — | one-time `huggingface-cli login` for the gated EmbeddingGemma-2 model (policy search) |
+| Git Bash (Windows) | Git for Windows 2.x | running the Frappe bootstrap scripts |
+| cloudflared | optional | a temporary public URL for a demo (Deployment options) |
 
 ### 1. Clone and install
 
@@ -126,8 +129,13 @@ python -m venv .venv
 # Windows (PowerShell):  .venv\Scripts\Activate.ps1      Linux / macOS:  source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt -r requirements-test.txt
+pip install -r requirements-rag.txt                   # policy search with citations: CPU torch is fine on a laptop
 python -m ruff check . && python -m pytest -q        # sanity check; live-service tests skip
 ```
+
+Policy search embeds with EmbeddingGemma-2 (`google/embeddinggemma-2`), a gated Hugging Face model: run
+`huggingface-cli login` and accept its licence once before the first run. Set `AGENT_RETRIEVER_DEVICE=cpu` on a
+machine without a GPU. Ignore the "GPU container only" comment in `requirements-rag.txt`; the CPU wheel works.
 
 ### 2. Configure `.env`
 
@@ -145,6 +153,7 @@ Fill these (names only here; values never go in git):
 | `OMNIROUTE_BASE_URL`, `OMNIROUTE_API_KEY` | your gateway, e.g. `http://127.0.0.1:20128/v1`. For any other OpenAI-compatible endpoint set `SARAL_LLM_BASE_URL` (or `LLM_BASE`) and `LLM_API_KEY` |
 | `GROQ_API_KEY` | optional (intent classifier) |
 | `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | after step 4: the read-only agent identity the seeder creates |
+| `LOAN_POLICY_DIR`, `AGENT_RETRIEVER_DEVICE` | folder of the built policy index (step 6), and `cpu` without a GPU |
 | `LANGFUSE_*` | optional; leave `LANGFUSE_ENABLED=0` for no telemetry |
 
 Load it into the shell before starting each Python process: `set -a; . ./.env; set +a` (bash), or in PowerShell
@@ -166,17 +175,17 @@ Start in this order (ports are the defaults; all bind to 127.0.0.1):
 
 | # | Service | Command | Port |
 |---|---|---|---:|
-| 1 | Frappe Lending + Saral portal (Docker) | `docker compose -f infra/frappe/loanrangers.yml up -d --pull missing`, then create the site and install the portal app as in [setup.md](docs/development/setup.md) (`bash infra/frappe/bootstrap/install_portal_app.sh`) | 8080 |
+| 1 | Frappe Lending + Saral portal (Docker) | `docker compose -f infra/frappe/loanrangers.yml up -d --pull missing` (build the `loanrangers-frappe:16` image first if you have never built it, see [setup.md](docs/development/setup.md)); create the site: `docker exec loanrangers-backend-1 bash -lc 'cd /home/frappe/frappe-bench && bench new-site saral.local --mariadb-user-host-login-scope=% --db-root-password "$MYSQL_ROOT_PASSWORD" --admin-password "$ADMINPW" --install-app erpnext && bench --site saral.local install-app lending'` (about 6 min; pass both variables with `-e`; the root password is the db container's `MYSQL_ROOT_PASSWORD`); then `FRAPPE_SITE=saral.local FRAPPE_BACKEND=loanrangers-backend-1 bash infra/frappe/bootstrap/install_portal_app.sh`. The script copies the app into the backend container only: restart (or copy into) the queue and scheduler containers too. Put `agent_assertion_secret`, `allow_tests` and `allow_demo_users` into `sites/saral.local/site_config.json` by editing the file inside the container, not with `bench set-config`, so the secret stays out of `logs/bench.log`. For document-upload OCR use the `loanrangers-frappe:16-ocr` image (`infra/frappe/Dockerfile.ocr`, `infra/frappe/loanrangers.ocr.yml`); the seeded applicants do not need it | 8080 |
 | 2 | Synthetic applicants (once) | `python -m synthetic_data.saral_kyc_bank --count 200 --seed 20261103 --out ../saral-data/full200` | — |
 | 3 | Seed borrowers and applications (once) | `python -m ops.saral_seed.plan ../saral-data/full200 ../saral-data/plan.json`, then copy `plan.json` and `ops/saral_seed/frappe_seed.py` into the backend container and run it there (exact `docker cp` / `docker exec` lines at the top of `frappe_seed.py`). It writes logins and service keys to a 0600 `creds.json` and a `mapping.json`; copy both out, and put the reader key in `FRAPPE_API_KEY` / `FRAPPE_API_SECRET` | — |
 | 4 | Synthetic KYC + AA bank API | `SARAL_SYNTH_DIR=../saral-data/full200 python -m ops.synthetic_kyc_bank.app --port 8012` | 8012 |
 | 5 | Synthetic bureau | re-key the generated cases once: `python -c "from ops.saral_seed.plan import rekey_cli; rekey_cli('../saral-data/full200/bureau_cases.json', '../saral-data/mapping.json', '../saral-data/bureau_rekeyed.json')"`, then `python -m ops.bureau_fixture_server --fixture ../saral-data/bureau_rekeyed.json --port 8011` | 8011 |
-| 6 | Policy index (once, optional) | `python scripts/policy/fetch_sources.py`, `python scripts/policy/build_corpus_v3.py --src ... --out ...`, `python scripts/policy/index_corpus_v3.py --chunks ... --qdrant-dir ...` (copyrighted texts stay outside git) | embedded Qdrant |
+| 6 | Policy index (once; needed for cited policy answers) | `python scripts/policy/fetch_sources.py` → `python scripts/policy/build_corpus_v3.py --src <src> --out <chunks>` → `python scripts/policy/index_corpus_v3.py --chunks <chunks> --qdrant-dir <qdrant>`. Then lay it out the way the agent reads it: for each collection (`saral_nbfc_policy`, `rbi_regulatory`) put `chunks.jsonl` in `$LOAN_POLICY_DIR/<collection>/` and move `<qdrant>/<collection>` to `$LOAN_POLICY_DIR/<collection>/qdrant_v2/`, and set `LOAN_POLICY_DIR` in `.env`. Keep it outside the repo (copyrighted texts are never committed). Some RBI PDFs must be downloaded in a browser into `$LOAN_POLICY_DIR/manual/` (see the script header) | embedded Qdrant |
 | 7 | Decision runner | `SARAL_POLICY_VERSION=synthetic-v2 SARAL_BUREAU_URL=http://127.0.0.1:8011 SARAL_KYC_AA_URL=http://127.0.0.1:8012 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m ops.decision_runner` | — |
 | 8 | Saral agent | `PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095` (add `--no-rag` if you skipped step 6) | 8095 |
 | 9 | Assistant runtime | `cd apps/runtime && npm ci && npm run build && AGENT_AGUI_URL=http://127.0.0.1:8095/api/agui AGENT_RUNTIME_PORT=4200 FRAPPE_BASE_URL=http://127.0.0.1:8080 npm start` | 4200 |
 | 10 | Chat island (once per change) | `cd apps/web/assistant && npm ci && npm run build` (writes into the portal app) | — |
-| 11 | Demo Loan Officer (once) | `bench --site <site> set-config allow_demo_users 1`, then `bench --site <site> execute loan_advisory_portal.setup_demo.create_demo_officer` inside the backend container; the password is printed once | — |
+| 11 | Demo Loan Officer (once) | with `allow_demo_users` in the site config (step 1), run `bench --site <site> execute loan_advisory_portal.setup_demo.create_demo_officer` inside the backend container; the password is printed once | — |
 
 Then open **http://127.0.0.1:8080**, sign in with a seeded borrower from the 0600 logins file, and open the Saral
 portal. Demo logins, the synthetic applicants to use for each decision path and a 5-minute presenter script:
@@ -187,7 +196,9 @@ portal. Demo logins, the synthetic applicants to use for each decision path and 
 - Use Docker Desktop with Linux containers and Compose v2 (`docker compose`).
 - Set `git config core.autocrlf false` before cloning `frappe_docker` if you build the Frappe image yourself; CRLF in
   its shell scripts makes the containers restart-loop (see setup.md).
-- Run the bootstrap scripts with `bash` (Git Bash or WSL); they are not executable in git.
+- Run the bootstrap scripts with **Git Bash explicitly** (`"C:\Program Files\Git\bin\bash.exe" -lc "..."`). The `bash`
+  on PATH is often WSL's `C:\Windows\system32\bash.exe`, which has no docker CLI. The scripts are not executable in
+  git, so always call them through `bash`.
 - In PowerShell, set variables with `$env:NAME="value"` and use `;` instead of `&&` on older shells. `PYTHONPATH`
   uses `;` as separator on Windows: `$env:PYTHONPATH=".;apps/api/src"`.
 

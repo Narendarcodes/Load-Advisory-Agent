@@ -18,8 +18,8 @@ No password is committed anywhere. Each one is generated when you run the setup 
 | `loan.officer.demo@example.invalid` | Loan Officer (reviewer: manual-review queue, internal reasons, Approve / Decline / Request info) | `bench --site <site> execute loan_advisory_portal.setup_demo.create_demo_officer` | Printed once on your terminal. Run again with `rotate=1` for a new one |
 
 Both setup commands refuse to run unless the site config has `allow_demo_users` (or `developer_mode` for the
-officer, `allow_tests` for the seeder): `bench --site <site> set-config allow_demo_users 1`. Never set it on a
-production site.
+officer, `allow_tests` for the seeder). Add the flag to `sites/<site>/site_config.json` inside the backend
+container. Never set it on a production site.
 
 Borrowers sign in at the portal (`http://127.0.0.1:8080`); the officer signs in to the desk (`/app`).
 
