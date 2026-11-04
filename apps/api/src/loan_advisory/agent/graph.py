@@ -667,7 +667,10 @@ class AdvisoryAgent:
                 self._ev(s, "verify_citations", kept=cited, dropped=dropped)
         if not ab and mode == "llm_verify" and cited and self._left(s) >= self.settings.verify_min_left_s:
             cited = self._llm_verify_citations(s, req, ans, cited)
-        return {"draft": ans, "abstained": ab, "cited": cited, "attempts": attempts, "action": "answer"}
+        # Q-16: a clarifying question is surfaced as a question (action clarify), not as an abstention
+        clar = bool(j.get("clarify")) and ab and ans.rstrip().endswith(("?", "？", "।?")) and len(ans.split()) <= 40
+        return {"draft": ans, "abstained": ab, "cited": cited, "attempts": attempts,
+                "action": "clarify" if clar else "answer", "clarify": clar}
 
     def _llm_verify_citations(self, s, req, ans, cited):
         """Post-hoc citation verification by a focused LLM call: of the passages the answer cites, keep those the
@@ -1028,7 +1031,7 @@ class AdvisoryAgent:
         g.add_edge("receive", "authenticate")
         g.add_conditional_edges("authenticate", lambda s: "simple" if s.get("status") in ("not_authorized", "unavailable") else "classify",
                                 ["simple", "classify"])
-        g.add_conditional_edges("classify", self._after_classify,
+        g.add_conditional_edges("classify", _after_classify,
                                 ["boundary", "human_review", "clarify", "load_evidence", "retrieve_policy", "simple"])
         g.add_conditional_edges("load_evidence", _after_evidence, ["compose", "plan", "what_if", "simple"])
         g.add_edge("plan", "compose")
@@ -1044,22 +1047,25 @@ class AdvisoryAgent:
         g.add_edge("finalize", END)
         return g
 
-    def _after_classify(self, s):
-        """Fixed tool plan per intent: only explain / status / distress / improve / what-if read the decision."""
-        i = s["intent"]
-        if i == "boundary":
-            return "boundary"
-        if i == "human_review":
-            return "human_review"
-        if i == "vague":
-            return "clarify"
-        if i == "what_if" and s.get("status") == "what_if_cap":
-            return "simple"
-        if i in DECISION_INTENTS:
-            return "load_evidence"
-        if i == "policy":
-            return "retrieve_policy"
+
+
+def _after_classify(s):
+    """Fixed tool plan per intent: only explain / status / distress / improve / what-if read the decision. An unknown
+    intent gets a template, never a tool."""
+    i = s.get("intent")
+    if i == "boundary":
+        return "boundary"
+    if i == "human_review":
+        return "human_review"
+    if i == "vague":
+        return "clarify"
+    if i == "what_if" and s.get("status") == "what_if_cap":
         return "simple"
+    if i in DECISION_INTENTS:
+        return "load_evidence"
+    if i == "policy":
+        return "retrieve_policy"
+    return "simple"
 
 
 def _after_evidence(s):

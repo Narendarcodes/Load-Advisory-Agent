@@ -217,9 +217,14 @@ def _v2_agent(llm, tmp_path, decision="COUNTER_OFFER", cats=("REPAYMENTS_TOO_HIG
     from decision_engine.catalogue_v2.engine import build_record_v2
     from decision_engine.policies.registry import load_policy
     from loan_advisory.infrastructure.evidence_store import InMemoryEvidenceSink
-    from loan_advisory.infrastructure.frappe_adapter import MockStore
+    from loan_advisory.infrastructure.frappe_adapter import UnknownApplication
 
-    class Store(MockStore):
+    class Store:  # read-only by construction (Phase 1 boundary B): get only
+        def get(self, app_id):
+            if app_id not in self._apps:
+                raise UnknownApplication(app_id)
+            return dict(self._apps[app_id])
+
         def __init__(self):
             self._apps = {"SYN-LA-0040": {"name": "SYN-LA-0040", "applicant": "SYN-APP-0040", "loan_product": "SYNTHETIC-PERSONAL-LOAN",
                                           "loan_amount": 1200000, "repayment_periods": 60, "custom_monthly_income": 60000,
@@ -404,3 +409,12 @@ def test_spans_record_guard_pass_what_if_count_sim_status_and_cache(tmp_path, mo
     assert caches == ["miss", "hit"]
     comp = [s for s in spans if s.name == "node.compose"]
     assert comp and "llm.facts_keys" in comp[0].attributes
+
+
+def test_policy_clarifying_question_is_a_question_not_an_abstention(tmp_path):
+    """Q-16: the POLICY prompt's clarify output reaches the borrower as action=clarify, abstained False, no citations."""
+    llm = ScriptedLLM(intent="policy", policy={"abstain": True, "clarify": True, "citations": [],
+                                               "answer": "Do you mean the processing fee, or the charge for closing early?"})
+    ag, _, _, _ = _agent(llm, tmp_path, FakePolicy())
+    r = ask(ag, "Is the fee refundable for the loan I took last year?")
+    assert r.action == "clarify" and r.abstained is False and r.citations == [] and r.answer.endswith("?")

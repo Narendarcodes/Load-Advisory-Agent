@@ -229,12 +229,8 @@ def _mark_sim(sp, decision, version, basis=None):
                          "zen.estimate_basis": basis},
                   **({"langfuse.observation.level": "ERROR", "langfuse.observation.status_message": "simulation not estimable"}
                      if status == "error" else {}))
-    if sp is not None and status == "error":
-        try:
-            from opentelemetry.trace import Status, StatusCode
-            sp.set_status(Status(StatusCode.ERROR, "simulation not estimable"))
-        except Exception:  # telemetry must never break the turn
-            pass
+    if status == "error":
+        obs.mark_error(sp, "simulation not estimable")
 
 
 # ------------------------------------------------------------------ policy retrieval (read-only)
