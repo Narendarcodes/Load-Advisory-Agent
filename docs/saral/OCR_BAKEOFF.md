@@ -141,7 +141,7 @@ Latency comes from the 80-page banner run. Memory comes from the 120-page run, w
 
 All 24 manual-review routes in the mobile chain are PAN pages. The critical PAN DOB is never parsed (finding 2), so the chain works as designed and the parser fix would clear these routes.
 
-## 4. Proposed integration design (prototype code on this branch, not wired into the API)
+## 4. Integration design (now the default path; see `OCR_DEPLOY.md`)
 
 ```
 upload -> validate_document (PR #41, unchanged)
@@ -161,7 +161,12 @@ upload -> validate_document (PR #41, unchanged)
 * **Validation** (`ocr/field_checks.py`). Each check is recorded with its result and note, and a failed check downgrades the field to INVALID. Nothing is ever filled in.
 * **Deployment.** Paddle is optional: when it is missing, `OcrUnavailable` falls through to Tesseract. Budget about 2 GB RSS per OCR worker with mobile and one worker per 4 vCPU. Keep Tesseract installed in `Dockerfile.ocr` as it is now. Add `paddlepaddle==3.2.0` (CPU index) and `paddleocr==3.7.0` (about 0.7 GB installed for `paddle`, plus 22 MB of mobile det+rec model files; the server models are 167 MB and the PP-Structure table models about 1.1 GB) only in an opt-in image.
 
-## 5. Before Paddle becomes the default
+## 5. Before Paddle becomes the default (status 2026-11-04: items 1-3 done, Paddle mobile is the default)
+
+Done on this branch: deskew (`ocr/preprocess.py`), space-tolerant rules, stacked/bilingual/unlabelled
+PAN and Aadhaar names, PAN DOB (labelled, next line, or standalone), plus fixes found on the real
+samples in §9. Item 4 is still not built. Item 5 is §9 (public specimens, not consented real scans).
+
 
 1. **Deskew and orientation** before OCR (Paddle's `use_doc_orientation_classify` or a Hough deskew). Rotated pages are the weakest case for both engines.
 2. **Space-tolerant parser rules.** For example, `salary` without `\b`, and a whitespace-free comparison of employer names. Better still, use mobile, which drops fewer spaces.
@@ -237,3 +242,110 @@ masked is read as its last four digits with a note that the checksum cannot be v
 The bake-off generator now emits `1000…` Aadhaar numbers (same random draws as before, so every other value
 is unchanged for a seed) and the bake-off runs validation in synthetic mode. The numbers in this report were
 produced earlier with the real-format `9999…` prefix and have not been re-run.
+
+
+## 9. Real-sample benchmark (public specimen / sample documents, 2026-11-04)
+
+> **AUTOMATED. Public specimen, sample and third-party synthetic documents only. No real person's
+> PAN, Aadhaar, payslip or statement was used.** These layouts and fonts are real-world-like (issuer
+> specimens, a phone photo of the UIDAI specimen sheet, third-party generators, payroll-vendor and
+> educational statement samples), which the §1-§3 synthetic set was not. They are still not
+> real customer scans, so read the numbers as engine ranking and failure analysis, not production
+> accuracy. Labels were written by hand (or taken from the dataset's own ground truth and
+> spot-checked); nobody has double-checked them.
+
+**Documents (46 originals, 184 pages with variants).** Sources, licences and provenance per file are in
+`docs/saral/ocr_real/manifest.csv`; masked labels in `docs/saral/ocr_real/labels_masked.json`. Images are
+kept out of git.
+
+| Type | Originals | Sources |
+|---|---|---|
+| PAN | 13 | 12 third-party synthetic cards (HF `whoismatz/pan-card-ocr-synthetic`, Apache-2.0); 1 Wikimedia rendered specimen (CC BY-SA 4.0) |
+| Aadhaar | 16 | 12 synthetic fake-app cards (Mendeley `wk6n8fhx3c`, CC BY 4.0); 1 phone photo of the UIDAI PVC specimen sheet (Wikimedia, CC BY-SA); 1 UIDAI e-Aadhaar sample (masked); 2 blank templates as negatives (Wikimedia) |
+| Bank statement | 11 | 6 scanned synthetic statements (HF `AgamiAI/Indian-Bank-Statements`, Apache-2.0, page 1); 5 educational sample statements (bankfileconverter.net, fictional holder) |
+| Salary slip | 6 | 4 Zoho Payroll samples, 1 Keka sample, 1 Husys sample |
+
+Each original also gets three phone-camera-style variants (`scripts/saral_ocr/real_benchmark.py prepare`):
+perspective warp + 4° tilt on a desk-coloured background, the same with a glare blob, and a 0.6x
+JPEG at quality 30. Digital PDFs were rasterised at 200 DPI so both engines had to read pixels.
+Engines ran through PR #47's interface (`chain._run`: `extract_lines` / `extract_lines_paddle` →
+`document_parser.parse` → field checks) in normal (non-synthetic) mode, one process per engine,
+on InstaBox (4 vCPU, no GPU). Deskew was on for both engines.
+
+**How "parser outcome correct" is scored.** Many specimen numbers are not valid identifiers
+(6 of 13 PANs fail the format or holder-type rule; 11 of the 12 synthetic Aadhaar numbers fail the
+Verhoeff checksum or start with 1). For those, the correct outcome is that the parser flags the value INVALID; for valid ones
+it is the masked value (`XXXXX1234X`, `XXXX XXXX 1234`). An engine that read nothing scores every
+field as wrong.
+
+### Results (all 184 pages; full tables incl. originals-only and phone-only splits in `docs/saral/ocr_real/tables_real_samples.md`)
+
+| Doc type | Field | Tesseract | Paddle mobile | Default chain (Paddle → Tesseract) |
+|---|---|---|---|---|
+| PAN | PAN, all 10 characters read | 2% (1/52) | 60% (31/52) | 60% (31/52) |
+| PAN | PAN, parser outcome correct | 2% (1/52) | 63% (33/52) | 63% (33/52) |
+| PAN | Name | 10% (5/48) | 44% (21/48) | 44% (21/48) |
+| PAN | DOB | 2% (1/48) | 65% (31/48) | 65% (31/48) |
+| Aadhaar | Number read (12 digits / masked last 4) | 29% (16/56) | 96% (54/56) | 96% (54/56) |
+| Aadhaar | Parser outcome correct | 29% (16/56) | 96% (54/56) | 96% (54/56) |
+| Aadhaar | Name / DOB / gender | 85% / 85% / 88% | 100% / 100% / 100% | 100% / 100% / 100% |
+| Aadhaar | Blank template: no number invented | 100% (8/8) | 100% (8/8) | 100% (8/8) |
+| Bank | Account holder | 2% (1/44) | 41% (18/44) | 41% (18/44) |
+| Bank | Closing balance | 9% (4/44) | 55% (24/44) | 55% (24/44) |
+| Bank | Transaction rows (amount + balance on one line), originals | 78% (69/88) | 100% (88/88) | — |
+| Salary slip | Employee name | 69% (11/16) | 100% (16/16) | 100% (16/16) |
+| Salary slip | Employer | 50% (10/20) | 30% (6/20) | 30% (6/20) |
+| Salary slip | Gross / net salary | 46% / 46% | 88% / 88% | 92% / 92% |
+| **All fields** | PAN / Aadhaar / bank / slip | 4% / 62% / 6% / 51% | 58% / 98% / 48% / 76% | 58% / 98% / 48% / 79% |
+
+Originals only, all fields: Tesseract 12% / 56% / 9% / 48%, Paddle 88% / 100% / 41% / 71%.
+Phone-style variants only: Tesseract 1% / 64% / 5% / 52%, Paddle 48% / 98% / 50% / 78%.
+
+| Engine | pages | median s/page | p90 s/page | peak RSS |
+|---|---|---|---|---|
+| Tesseract 5 | 184 (24 read nothing) | 0.33 | 2.26 | 172 MB (tesseract) + 164 MB (python) |
+| Paddle PP-OCRv5 mobile | 184 (1 read nothing) | 0.52 | 5.96 | **2,990 MB** |
+
+Default-chain routes (pages): PAN 11 Paddle / 0 Tesseract / 41 manual review; Aadhaar 48 / 0 / 16;
+bank 0 / 0 / 44; slip 18 / 1 / 5.
+
+### What this shows
+
+1. **Paddle mobile is clearly better on real-world-like layouts**, more than on the §1 synthetic set:
+   PAN 60% vs 2% read exactly, Aadhaar 96% vs 29%, statement rows 100% vs 78% on originals and 97-100%
+   vs 1-38% on phone/glare variants. This supports making it the default.
+2. **Tesseract failed to read anything on 24 pages** (small-font PAN cards after JPEG, glare), and it
+   misses wide-spaced Aadhaar digits. As a fallback it still helps: on salary slips the chain beats
+   Paddle alone (79% vs 76% all fields) because Tesseract rescued one page Paddle missed.
+3. **Manual-review routes are mostly correct behaviour, not misses.** 41 PAN pages route to review
+   because the specimen PANs fail the holder-type check (correctly INVALID) or the photo variants
+   blur them. All 44 bank pages route to review because these are business current accounts with no
+   salary credits, a critical field for a salaried applicant.
+4. **Remaining failures, by cause:**
+   * PAN on phone/JPEG variants: the HF cards use ~10 px text; at 0.6x JPEG neither engine reads it
+     (Paddle 49%). Real phone photos are usually higher resolution.
+   * Bank account holder: Paddle merges words in the bold header (`DISTRIBUTIONNETWORKS INDIA`), and
+     the educational samples print the holder under a column heading on a line shared with the
+     statement period. Not fixed; a column-aware layout step would be needed.
+   * Closing balance on the educational samples sits in a header row above its value. Not fixed.
+   * Employer on Zoho slips: the header line has no company word (`Zylker`) or carries logo text
+     (`Zylker Corp OOUD`). Not fixed.
+   * Hindi on Aadhaar cards is read as garbage by both English models; the parser now tolerates a
+     garbled token before `/Name:` and `D0B` for `DOB`.
+5. **Memory is higher than the §3 estimate.** Peak RSS reached ~3.0 GB on 1,650x2,340 statement
+   pages (vs 1.9 GB on the smaller synthetic pages). Budget 3 GB per OCR-serving worker
+   (`OCR_DEPLOY.md`).
+
+### Parser fixes made from these samples (all with tests in `tests/test_ocr_paddle_default.py`)
+`D0B` read for `DOB`; garbled Hindi label before `/Name:`; masked Aadhaar never matched across a line
+break (a blank template's `XXXX XXXX XXXX` above a `1947` helpline line); up to 40 non-digit
+characters between a salary label and its amount (`NET PAY (Gross Earnings - Total Deductions) ₹…`,
+`Total Net Payable`, `Take Home Salary`); employee number and next column dropped from the name;
+`Account Holders Name` / `Account Holder's Name`.
+
+### Limits
+Specimen, sample and third-party synthetic documents only; no consented real scans. Small sample:
+13 PAN, 16 Aadhaar, 11 statements, 6 slips (46 originals), with augmentation standing in for phone
+capture. English models only. One page per statement. Labels hand-written by one person (an
+automated agent), not double-checked. Images under "no licence stated" were used for internal
+evaluation only and are not redistributed.

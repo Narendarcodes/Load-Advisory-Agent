@@ -264,3 +264,35 @@ def test_bank_account_holder_label_variants(label):
     fields, _, _ = _parse("Bank Statement", [f"{label} HEALTHPLUS PHARMA LTD", "Closing Balance Rs. 94,495.02"])
     assert fields["account_holder"].value == "HEALTHPLUS PHARMA LTD"
     assert fields["closing_balance"].value == 94495.02
+
+
+# --------------------------------------------------------------------------- real-sample findings
+
+
+def test_aadhaar_dob_read_with_zero_for_o_and_garbled_hindi_label():
+    fields, _, _ = _parse("Aadhaar Card", ["HaHRTR", "GOVERNMENT OF INDIYA", "H/Name:", "Rudra",
+                                           "q/D0B:05-03-1993", "Male"])
+    assert fields["name"].value == "Rudra"
+    assert fields["date_of_birth"].value == "1993-03-05"
+
+
+def test_masked_aadhaar_never_spans_a_line_break():
+    fields, _, _ = _parse("Aadhaar Card", ["Government of India", "XXXX XXXX XXXX XXXX",
+                                           "1947help@uidai.gov.in www.uidai.gov.in"])
+    assert fields["aadhaar_number"].value is None
+
+
+@pytest.mark.parametrize("line, amount", [
+    ("NET PAY (Gross Earnings - Total Deductions) ₹87,300.00", 87300.0),
+    ("Total Net Payable ₹87,300.00 (Indian Rupee Eighty-Seven Thousand Three Hundred Only)", 87300.0),
+    ("| Net Salary (Earnings - Deductions) | ₹49,200|", 49200.0),
+    ("Take Home Salary 46,800 Net salary credited", 46800.0),
+])
+def test_net_salary_with_text_between_label_and_amount(line, amount):
+    fields, _, _ = _parse("Salary Slip", ["Zylker Corp", "Employee Net Pay", line])
+    assert fields["net_salary"].value == amount
+
+
+def test_employee_name_drops_employee_number_and_next_column():
+    fields, _, _ = _parse("Salary Slip", ["Zylker Corp", "Employee Name: Gaurav, 43521 Employee Net Pay"])
+    assert fields["employee_name"].value == "Gaurav"

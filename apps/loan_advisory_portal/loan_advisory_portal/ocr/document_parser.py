@@ -27,7 +27,8 @@ from .validator import (
 # A card printed masked (UIDAI "masked Aadhaar", or a SPECIMEN): only the last four digits exist.
 # OCR often reads the printed hyphen as "=", "_" or "." with stray spaces, so allow a short
 # separator run.
-MASKED_AADHAAR_RE = re.compile(r"(?i)(?<![A-Z0-9])X{4}[\s\-=_.]{0,3}X{4}[\s\-=_.]{0,3}(\d{4})(?!\d)")
+# Separators never include a line break: "XXXX XXXX XXXX" above a "1947 helpline" line is not a number.
+MASKED_AADHAAR_RE = re.compile(r"(?i)(?<![A-Z0-9])X{4}[ \t\-=_.]{0,3}X{4}[ \t\-=_.]{0,3}(\d{4})(?!\d)")
 
 # --------------------------------------------------------------------------- classification
 
@@ -159,7 +160,7 @@ def _find_date(raw: str | None) -> str | None:
 
 # Labels that start another field: a stacked value is never taken from one of these lines.
 _FIELD_LABEL_RE = re.compile(
-    r"(?i)^\s*(?:[\u0900-\u097F\s/]*)(?:father|date\s*of\s*birth|d\s*o\s*b|year\s*of\s*birth|"
+    r"(?i)^\s*(?:[\u0900-\u097F\s/]*)(?:father|date\s*of\s*birth|d\s*[o0]\s*b|year\s*of\s*birth|"
     r"gender|sex|male\b|female\b|address|permanent\s*account|pan\b|signature|name\b|"
     r"income\s*tax|govt|government|आयकर|पिता|जन्म|पता|लिंग)"
 )
@@ -202,7 +203,9 @@ def _name_like(text: str) -> bool:
 
 # Name labels: "Name", "नाम / Name", "नाम" -- anchored at the line start so "Father's Name"
 # and "पिता का नाम" never match.
-_NAME_LABEL = r"^\s*(?:नाम\s*/?\s*)?(?:name|नाम)\b"
+# A Hindi label the English model cannot read comes out as a short garbled token before the
+# slash ("HTH/Name:"), so allow one such token.
+_NAME_LABEL = r"^\s*(?:\S{1,8}\s*/\s*)?(?:नाम\s*/?\s*)?(?:name|नाम)\b"
 
 
 _COMPANY_RE = re.compile(
@@ -230,7 +233,8 @@ def _clean_name(raw: str | None) -> str | None:
     if not raw:
         return None
     value = re.sub(r"\s{2,}", " ", raw).strip(" :\t-")
-    value = re.sub(r"\s*(employee\s*(id|code)|emp\s*(id|code)|designation).*$", "", value, flags=re.I)
+    value = re.sub(r"\s*(employee\s*(id|code|no|net)|emp\s*(id|code)|designation).*$", "", value, flags=re.I)
+    value = re.sub(r"\s*,\s*\d+\s*$", "", value)  # "Gaurav, 43521": employee number after the name
     if not value or len(value) > 80 or not re.search(r"[A-Za-z\u0900-\u097F]", value):
         return None
     return value
@@ -265,12 +269,14 @@ _SALARY_PATTERNS = {
     "employer_name": (r"(?:employer|company|organisation|organization|firm)\s*(?:name)?\s*[:\-]\s*(.+)",),
     "basic_salary": (r"basic\s*(?:salary|pay)?\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)",),
     "gross_salary": (
-        r"gross\s*(?:salary|pay|earnings|monthly)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)",
-        r"total\s*earnings\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)",
+        r"gross\s*(?:salary|pay|earnings|monthly)[^\d\n]{0,12}?([\d,]+(?:\.\d{1,2})?)",
+        r"total\s*earnings[^\d\n]{0,12}?([\d,]+(?:\.\d{1,2})?)",
     ),
+    # Up to 40 non-digit characters may sit between the label and the amount: "(Gross Earnings -
+    # Total Deductions)", "| ₹", or a rupee sign the engine read as "?" or "Z".
     "net_salary": (
-        r"net\s*(?:salary|pay|amount|monthly)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)",
-        r"take\s*home\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)",
+        r"net\s*(?:salary|pay(?:able)?|amount|monthly)[^\d\n]{0,40}?([\d,]+(?:\.\d{1,2})?)",
+        r"take\s*home(?:\s*(?:salary|pay))?[^\d\n]{0,20}?([\d,]+(?:\.\d{1,2})?)",
     ),
     "total_deductions": (r"(?:total\s*)?deductions?\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)",),
     "pay_period": (
@@ -525,7 +531,7 @@ def _parse_pan_card(lines: list[TextLine], text: str, *,
     fields["name"] = field("name", _LABELS["name"], _clean_name(name), confidence=confidence)
 
     raw_dob, confidence = _stacked_value(
-        lines, r"^\s*(?:[\u0900-\u097F\s]*/\s*)?(?:date\s*of\s*birth|d\s*o\s*b|जन्म\s*(?:की\s*)?(?:तिथि|तारीख|दिनांक)?)")
+        lines, r"^\s*(?:[\u0900-\u097F\s]*/\s*)?(?:date\s*of\s*birth|d\s*[o0]\s*b|जन्म\s*(?:की\s*)?(?:तिथि|तारीख|दिनांक)?)")
     if not raw_dob:
         raw_dob, confidence = _capture(lines, r"(?:date\s*of\s*birth|\bdob)\s*[:\-]?\s*(.+)")
     if not raw_dob:
@@ -542,7 +548,7 @@ def _parse_pan_card(lines: list[TextLine], text: str, *,
 
 # --------------------------------------------------------------------------- Aadhaar card
 
-_AADHAAR_DOB_LINE_RE = re.compile(r"(?i)date\s*of\s*birth|\bd\s*o\s*b|year\s*of\s*birth|\byob|जन्म")
+_AADHAAR_DOB_LINE_RE = re.compile(r"(?i)date\s*of\s*birth|\bd\s*[o0]\s*b|year\s*of\s*birth|\byob|जन्म")
 
 
 def _aadhaar_unlabelled_name(lines: list[TextLine]) -> tuple[str | None, float | None]:
@@ -601,7 +607,7 @@ def _parse_aadhaar_card(lines: list[TextLine], text: str, *,
     fields["name"] = field("name", _LABELS["name"], _clean_name(name), confidence=confidence)
 
     raw_dob, confidence = _capture(
-        lines, r"(?:date\s*of\s*birth|\bd\s*o\s*b|year\s*of\s*birth|\byob)\s*[:\-]?\s*(.+)")
+        lines, r"(?:date\s*of\s*birth|\bd\s*[o0]\s*b|year\s*of\s*birth|\byob)\s*[:\-]?\s*(.+)")
     dob = _find_date(raw_dob)
     fields["date_of_birth"] = field("date_of_birth", _LABELS["date_of_birth"], dob, confidence=confidence,
                                     note=None if dob else ("only a year was printed" if raw_dob else None))

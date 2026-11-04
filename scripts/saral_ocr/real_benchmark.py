@@ -168,8 +168,8 @@ def _score(item, result, lines) -> dict:
         s["pan_raw"] = any(pan in re.sub(r"[^A-Z0-9]", "", t.upper()) for t in texts)
         if pan_ok(pan, synthetic=False):
             s["pan_parsed"] = value("pan_number") == f"XXXXX{pan[5:9]}X" and status("pan_number") == "found"
-        else:  # a format-invalid specimen PAN must be flagged, never accepted
-            s["pan_parsed"] = status("pan_number") in ("invalid", "missing") and value("pan_number") is None
+        else:  # a format-invalid specimen PAN must be flagged (INVALID), never accepted as FOUND
+            s["pan_parsed"] = status("pan_number") == "invalid"
         s["pan_expected_valid"] = pan_ok(pan, synthetic=False)
         if gt.get("name"):
             s["name"] = _norm_name(value("name")) == _norm_name(gt["name"])
@@ -257,7 +257,8 @@ def run(engine: str, labels: Path, images: Path, out: Path, limit: int | None = 
             captured.clear()
             attempt = chain._run(engine, item["doc_type"], content, path.name, synthetic=False)
             lines = captured.pop("lines", [])
-            score = _score(item, attempt.result, lines) if attempt.result else {}
+            # An engine that read nothing scores every labelled field as wrong (not skipped).
+            score = _score(item, attempt.result, lines)
             del lines
             rows.append({
                 "id": item["id"], "doc_type": item["doc_type"], "source": item["source"], "variant": variant,
