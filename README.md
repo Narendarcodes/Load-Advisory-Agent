@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <a href="docs/DEMO_GUIDE.md"><b>Demo</b></a> ·
+  <a href="docs/DEMO_GUIDE.md"><b>Try it</b></a> ·
   <a href="#run-it-locally"><b>Quickstart</b></a> ·
   <a href="#architecture"><b>Architecture</b></a> ·
   <a href="#evaluation-setup-and-results"><b>Evals</b></a> ·
@@ -25,13 +25,16 @@
 
 ## Demo video
 
-<!-- VIDEO: unlisted link added after film -->
-_Coming after the demo film is cut._ Until then, follow the 5-minute script in [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).
+https://github.com/user-attachments/assets/b9219db1-4f68-4628-a316-4523c82611bb
 
-<!-- SCREENSHOTS: strip to be filled from evidence/recordings_20261104 (portal decision card, chat in EN/HI/TE, officer desk) -->
-| Decision card | Assistant chat | Loan Officer desk |
+Also on YouTube: [Saral: explains, never decides (1:42)](https://youtu.be/tbh_9CAlzvI)
+
+**Live prototype:** [saral.narendar.tech](https://saral.narendar.tech) (available during the evaluation window; test
+accounts in the [Reviewer guide](docs/DEMO_GUIDE.md)).
+
+| Counter-offer, explained | A decline, in plain words | Telugu decision card |
 |---|---|---|
-| _screenshot to be added_ | _screenshot to be added_ | _screenshot to be added_ |
+| <img src="docs/media/screen-counter-offer.png" alt="Counter-offer decision card" width="280"> | <img src="docs/media/screen-decline-chat.png" alt="Assistant explaining a decline" width="280"> | <img src="docs/media/screen-telugu.png" alt="Approved card with a Telugu summary" width="280"> |
 
 ## About
 
@@ -49,8 +52,8 @@ Built by Team Loan Rangers for the VaaniLabs.AI capstone (CBIT, AI/ML). The repo
 > - **All applicant data is synthetic.** No real person, PAN, Aadhaar number, employer or bank account is used.
 >   Synthetic PANs start `ZZ`, Aadhaar numbers start with 0 or 1 (never issued by UIDAI), and emails use
 >   `example.invalid`.
-> - **The thresholds are a prototype, not a lender's policy.** They are labelled `prototype_synthetic`. The owner
->   approved the top ten for this prototype only (ADR-0011, 2026-11-04); the rest are approved as a batch (ADR-0009).
+> - **The thresholds are a prototype, not a lender's policy.** They are labelled `prototype_synthetic`. The ten
+>   that matter most were approved for this prototype only (ADR-0011); the rest are approved as a batch (ADR-0009).
 > - **Bajaj Finance Ltd is a public reference lender, not a partner.** Saral follows the public documents of one
 >   NBFC, Bajaj Finance. Bajaj's published numbers are *indicative public guidance*; ZEN is the authority.
 > - **Scope:** personal loans for salaried applicants only, in four purposes.
@@ -102,8 +105,8 @@ Copy `.env.example` to `.env` and fill only these keys (names only; no value is 
 | `AGENT_ASSERTION_SECRET`, `AGENT_SESSION_SECRET` | signed assertions and sessions (generate locally) | yes |
 | `LANGFUSE_ENABLED`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | tracing | optional |
 
-Demo logins (generated at run time, never committed), test applicants for each decision path and a presenter
-script: [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).
+Test logins (generated at run time, never committed) and one synthetic applicant for each decision path:
+[Reviewer guide](docs/DEMO_GUIDE.md).
 
 ### Prerequisites
 
@@ -189,8 +192,7 @@ Start in this order (ports are the defaults; all bind to 127.0.0.1):
 | 11 | Demo Loan Officer (once) | with `allow_demo_users` in the site config (step 1), run `bench --site <site> execute loan_advisory_portal.setup_demo.create_demo_officer` inside the backend container; the password is printed once | — |
 
 Then open **http://127.0.0.1:8080**, sign in with a seeded borrower from the 0600 logins file, and open the Saral
-portal. Demo logins, the synthetic applicants to use for each decision path and a 5-minute presenter script:
-**[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md)**. The Loan Officer desk is at `/app` with the officer login. Health checks: `/healthz` on 8011, 8012 and 8095.
+portal. Test logins and the synthetic applicant to use for each decision path: **[Reviewer guide](docs/DEMO_GUIDE.md)**. The Loan Officer desk is at `/app` with the officer login. Health checks: `/healthz` on 8011, 8012 and 8095.
 
 ### Windows notes
 
@@ -207,8 +209,8 @@ portal. Demo logins, the synthetic applicants to use for each decision path and 
 
 | Option | Status | Notes |
 |---|---|---|
-| Laptop + tunnel | **used for the submission** | The stack above on the owner's laptop, exposed through a temporary Cloudflare quick tunnel. The tunnel URL changes on every start and is never committed |
-| Test bed (InstaBox + sandbox) | used for the live end-to-end test | [docs/saral/INTEGRATION_DEPLOY.md](docs/saral/INTEGRATION_DEPLOY.md) |
+| Local machine + Cloudflare tunnel | **live prototype** | The stack above on one machine, published at [saral.narendar.tech](https://saral.narendar.tech) through a named Cloudflare tunnel to the front door. Available during the evaluation window |
+| Cloud test bed | used for the live end-to-end test | [docs/saral/INTEGRATION_DEPLOY.md](docs/saral/INTEGRATION_DEPLOY.md) |
 | Azure VM | future | One VM with Docker for Frappe, Qdrant and the services, a managed TLS front door, and the LLM gateway as a hosted endpoint with health checks |
 
 ## Architecture
@@ -278,7 +280,7 @@ Bajaj Finance's personal-loan variants (Flexi Dropline, Flexi Hybrid) are not of
 | Home renovation (`PL_HOME_RENOVATION`) | ₹40,000 to ₹25 lakh | 12 to 84 months | contractor quote or property proof |
 | Medical emergency (`PL_MEDICAL_EMERGENCY`) | ₹40,000 to ₹25 lakh | 12 to 60 months | hospital estimate or bill (priority review) |
 
-Caps, tenures and the sizing rate are owner-approved for `prototype_synthetic` (ADR-0011). Purpose documents and
+Caps, tenures and the sizing rate are approved for `prototype_synthetic` (ADR-0011). Purpose documents and
 purpose fields are assumptions. Full matrix: [docs/saral/PRODUCT_MATRIX.md](docs/saral/PRODUCT_MATRIX.md).
 
 Main prototype checks (ADR-0011): credit score floor 700; FOIR including the new EMI at most 0.50 (manual review above
@@ -347,8 +349,7 @@ PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095
 
 The agent accepts only a 60-second signed assertion minted by Frappe. It cannot start a bureau enquiry or a decision.
 
-The configuration and test tables from the previous README are kept in
-[docs/development/developer-reference.md](docs/development/developer-reference.md).
+Configuration and test reference: [docs/development/developer-reference.md](docs/development/developer-reference.md).
 
 ## Evaluation setup and results
 
@@ -356,14 +357,14 @@ The configuration and test tables from the previous README are kept in
 
 | Item | Value |
 |---|---|
-| RAG golden set | Golden A v2: 227 questions (178 dev, 49 held out), EN/HI/TE, with refuse / abstain / clarify / conflict items. Drafted with an LLM, **human review pending** (PR #44) |
-| Agent golden set | Golden B v1: 60 conversations (49 dev, 11 held out), salaried applicants plus 1-2 "outside what we offer" cases (PR #44) |
+| RAG golden set | Golden A v2: 227 questions (178 dev, 49 held out), EN/HI/TE, with refuse / abstain / clarify / conflict items. Drafted with an LLM, **human review pending** |
+| Agent golden set | Golden B v1: 60 conversations (49 dev, 11 held out), salaried applicants plus 1-2 "outside what we offer" cases |
 | Retrieval runs | Kaggle (2x T4), retrieval only: embedding, indexing, retrieval, reranking. No LLM runs on Kaggle |
 | Generator and judge | Final agent runs: generator `antigravity/gemini-3.8-flash` via OmniRoute (the shipped answer model; Sonnet 4.6 fallback, never used in the runs) and judge **the same model**, with `codex/gpt-6-luna` as judge fallback. RAG numbers are from the earlier run with generator `claude-sonnet-4-6` and judge `gpt-6-luna`. Intent classifier: the production Groq chain. See [Disclosures](#disclosures) |
 | Framework | DeepEval 4.3.2: Faithfulness, AnswerRelevancy, ContextualRecall/Precision, RoleAdherence, ToolCorrectness, GEval rubrics; plus deterministic leak regexes |
-| Live end to end | Real Chromium, recorded, against the integration build on the InstaBox test bed and the Frappe desk |
+| Live end to end | Real Chromium, recorded, against the integration build on a cloud test bed and the Frappe desk |
 | Decision check | Re-decide all 200 synthetic applicants with catalogue v2 and compare with the dataset labels |
-| Harness | `scripts/policy/eval_saral_*.py` and reports on PR #55; live E2E harness kept outside the repo |
+| Harness | `scripts/policy/eval_saral_*.py`; reports in `docs/saral/` |
 
 Pass bars (ADR-0009): RAG faithfulness ≥ 0.85, answer relevancy ≥ 0.80, context recall ≥ 0.80; agent 0 leaks, role
 adherence ≥ 0.90, tool correctness ≥ 0.95.
@@ -375,17 +376,17 @@ a real browser on the live stack and recorded. **blocked** = could not run; the 
 
 | Area | Result | Label | Source |
 |---|---|---|---|
-| RAG, dev split (178), after fixes | Faithfulness 0.981, AnswerRelevancy 0.960, ContextualRecall 0.837 (all pass), ContextualPrecision 0.897; 0/178 shown answers leak an internal term; multi-hop recall 0.657 (weakest). Generator was `claude-sonnet-4-6`; **the shipped Gemini 3.8 Flash was not RAG-evaluated** | automated | DEEPEVAL_BASELINE §11 (PR #55), [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §4 |
-| RAG, held-out (49) | Not run (owner decision 2026-11-04 14:49 IST: no new RAG eval) | blocked | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §4 |
+| RAG, dev split (178), after fixes | Faithfulness 0.981, AnswerRelevancy 0.960, ContextualRecall 0.837 (all pass), ContextualPrecision 0.897; 0/178 shown answers leak an internal term; multi-hop recall 0.657 (weakest). Generator was `claude-sonnet-4-6`; **the shipped Gemini 3.8 Flash was not RAG-evaluated** | automated | [DEEPEVAL_BASELINE §11](docs/saral/DEEPEVAL_BASELINE.md), [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §4 |
+| RAG, held-out (49) | Not run: kept for a future run on the shipped model | blocked | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §4 |
 | Agent, dev split (49 conversations, 158 turns) | First run 2026-11-04: leaks 22/158, RoleAdherence 0.464, tool correctness 0.456 (all fail). **Final (Gemini 3.8 Flash generator and judge): no-leak 48/49 conversations, leak turns 1/158, role adherence 0.680, tool correctness exact 0.835 / lenient 0.937, expected behaviour pass@0.5 0.658: every bar fails.** Superseded River DeepSeek run: 48/49, role 0.695, exact 0.867, lenient 0.951 | automated | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §2 |
-| Agent, held-out (11) | Single run, 11 conversations / 33 turns: no-leak 10/11 (AC-014 quotes Bajaj's public 650 guidance the question asks for; strict regex), role adherence 0.750, tool exact 0.788 / lenient 0.909, pass@0.5 0.697: every bar fails. Held-out ids were visible to reviewers in the golden review sheet from 07:42 IST | automated | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §3 |
-| Live E2E, GUI cases (59) | 55 pass, 3 fail, 1 blocked (no counter-offer accept action) | GUI/live | evidence REPORT (live E2E) |
-| Live E2E, agent in the frontend (A5, 64 cases) | Full 64-case run on the owner's laptop from `main` @ 658ce44, 2026-11-04. **Harness labels: 41 pass, 17 fail, 6 blocked.** After reading every failing answer: **51 pass, 7 real fails, 6 blocked** (10 harness fails were harness false positives: the Sources card's P1–P5 labels hit the old citation selector and leak regex, "cut-off" inside a correct refusal was flagged as a leak, and "Approved" was on the card, not in the answer text). No real leak. Real fails: POL-02-EN, POL-05-EN (agent timeout, "busy" fallback); POL-09-TE, POL-10-TE (abstained, no citations); CLAR-HI (what-if error instead of a clarifying question); EXP-REVIEW-HI, EXP-REVIEW-TE (answered in English). Blocked = Q-03 (tenure and loan-amount what-ifs in HI/TE; no 3-what-if cap in HI/TE). Applicants: SYN-APP-0098 replaces 0087 (portal refuses requests above ₹25L); the 0031 decline cases ran as EN 0031 / HI 0002 / TE 0003 | GUI/live (harness) + manual review | evidence REPORT_A5_LAPTOP (A5 laptop run, 2026-11-04) |
-| Decision label agreement (200 applicants) | 174/200 (87.0%) on 2026-11-04 03:50 IST; after the ZEN gap fixes: 187/200 offline, 188/200 with the owner's SYN-APP-0131 ruling, plus 12 owner-accepted design choices; 0 open defects | automated (live API, then offline) | REDECIDE reports, [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §7 |
+| Agent, held-out (11) | Single run, 11 conversations / 33 turns: no-leak 10/11 (AC-014 quotes Bajaj's public 650 guidance the question asks for; strict regex), role adherence 0.750, tool exact 0.788 / lenient 0.909, pass@0.5 0.697: every bar fails. Held-out ids were visible to reviewers in the golden review sheet before the run | automated | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §3 |
+| Live E2E, GUI cases (59) | 55 pass, 3 fail, 1 blocked (no counter-offer accept action) | GUI/live | live browser run, 2026-11-04 |
+| Live E2E, agent in the frontend (A5, 64 cases) | Full 64-case run on a local deployment of `main` @ 658ce44, 2026-11-04. **Harness labels: 41 pass, 17 fail, 6 blocked.** After reading every failing answer: **51 pass, 7 real fails, 6 blocked** (10 harness fails were harness false positives: the Sources card's P1–P5 labels hit the old citation selector and leak regex, "cut-off" inside a correct refusal was flagged as a leak, and "Approved" was on the card, not in the answer text). No real leak. Real fails: POL-02-EN, POL-05-EN (agent timeout, "busy" fallback); POL-09-TE, POL-10-TE (abstained, no citations); CLAR-HI (what-if error instead of a clarifying question); EXP-REVIEW-HI, EXP-REVIEW-TE (answered in English). Blocked: tenure and loan-amount what-ifs in HI/TE, and the 3-what-if cap in HI/TE. Applicants: SYN-APP-0098 replaces 0087 (portal refuses requests above ₹25L); the 0031 decline cases ran as EN 0031 / HI 0002 / TE 0003 | GUI/live (harness) + manual review | live browser run, 2026-11-04 |
+| Decision label agreement (200 applicants) | 174/200 (87.0%) before the ZEN gap fixes; after them: 187/200 offline, 188/200 with the SYN-APP-0131 ruling, plus 12 accepted design choices; 0 open defects | automated (live API, then offline) | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §7 |
 | OCR (120 synthetic pages; then 46 public sample documents / 184 pages) | Synthetic, all fields exact: Tesseract 65.5%, PaddleOCR 75.5%. Public samples, all fields, Tesseract vs PaddleOCR: PAN 4% vs 58%, Aadhaar 62% vs 98%, bank statement 6% vs 48%, payslip 51% vs 79%; Paddle median 0.52 s, p90 5.96 s per page; single annotator; six sources have no licence, so images are internal only. PaddleOCR is the default | automated | [docs/saral/OCR_BAKEOFF.md](docs/saral/OCR_BAKEOFF.md) |
 | Intent classifier (140 dev turns) | Groq gpt-oss-120b 135/140 (96.4%), 0 over budget, vs OmniRoute Sonnet 116/140 (82.9%) with 88 timeouts | automated | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §5 |
 | Fast intent router (Laya, optional, off by default) | Fine-tuned hybrid 84.3% vs 82.9% (+1.4; gate needed +2.0): failed, router off | automated | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §6, `project-management/LAYA_ROUTER.md` |
-| Langfuse trace review (7 cases) | 5 pass, 2 fail (counter-offer reason dropped; what-if cap not enforced) before the agent fixes | automated + manual reading | evidence/langfuse |
+| Langfuse trace review (7 cases) | 5 pass, 2 fail (counter-offer reason dropped; what-if cap not enforced) before the agent fixes | automated + manual reading | trace review |
 
 ## Disclosures
 
@@ -396,33 +397,31 @@ Read these before quoting any number from this repository.
   depend on the judge. When the Gemini judge failed, `codex/gpt-6-luna` scored the row, and those rows are counted
   (35 of 256 dev rows; 5 of 110 held-out judge calls).
 - **Superseded runs.** Earlier runs with River (generator DeepSeek-V4.1-Flash, judge Kimi-K3) are superseded: River
-  returned HTTP 402 from about 12:58 IST on 2026-11-04. They are shown only for comparison.
+  ran out of credit on 2026-11-04. They are shown only for comparison.
 - **RAG numbers are not from the shipped model.** The reported RAG dev numbers come from the earlier Sonnet-generated
-  run. The Gemini RAG run was stopped by the owner (14:49 IST) and nothing from it is reported. The RAG held-out split
+  run. A Gemini RAG run was stopped part-way and nothing from it is reported. The RAG held-out split
   was not run. A partial River RAG run (not final) had one strict word-list hit (R2-KYC-03 quotes Bajaj's public KYC
   consent text containing "retrieve").
-- **Held-out exposure.** The 11 held-out conversation ids were visible to reviewers in the golden review sheet from
-  07:42 IST; the held-out agent run was done once, afterwards, with no tuning on it.
+- **Held-out exposure.** The 11 held-out conversation ids were visible to reviewers in the golden review sheet before
+  the run; the held-out agent run was done once, afterwards, with no tuning on it.
 - **Public-figure leak flags.** The one leak turn in each agent split (AC-009 in dev, AC-014 in held-out) quotes a
   public Bajaj figure that the golden answer asks for. The strict regex counts it; it is not tied to the applicant.
-- **Gateway and tunnel.** The OmniRoute gateway runs on the owner's laptop. Its Tailscale Funnel address returned 502,
-  so the evals reached it through a temporary Cloudflare quick tunnel, set only in local environment files. The
-  gateway was down several times on 2026-11-04 (about 02:18, 11:00–11:20 and 11:55–12:03 IST).
+- **Gateway availability.** The evals reached a self-hosted OmniRoute gateway through a temporary tunnel set only in
+  local environment files. The gateway was down several times during the final eval day.
 - **Groq free tier.** 33 dev turns hit Groq's per-minute limit on `gpt-oss-120b` and were classified by `gpt-oss-20b`.
 - **Hindi and Telugu what-if errors.** Apart from "out of range" and "not a number", what-if errors in Hindi and Telugu
-  show one generic sentence, and the error frame sentence is in English (owner deprioritised, 10:55 IST).
-- **What-if scope.** The what-if accepts amount, tenure, existing EMIs and income (Q-03); score and job months are
+  show one generic sentence, and the error frame sentence is in English (deprioritised for this release).
+- **What-if scope.** The what-if accepts amount, tenure, existing EMIs and income ; score and job months are
   refused. On a catalogue-v2 decision an estimate that cannot be computed is shown as "couldn't be estimated", never
-  as "would not meet" (Q-23, owner approved 10:07 IST).
-- **Rules switched on by owner decision.** PL-013 (at most 2 employer changes in 24 months) and PL-016 (permanent
-  employment only) are active on all four products; the owner's "if everything is green it is ok to merge" was taken
-  as approval (inferred). PL-130 (resident only) applies to home renovation only.
-- **Group B labels.** SYN-APP-0118 and SYN-APP-0131 are DECLINE by owner decision (10:38 IST); 0131's dataset label
+  as "would not meet" (by design).
+- **Rules switched on by design.** PL-013 (at most 2 employer changes in 24 months) and PL-016 (permanent
+  employment only) are active on all four products. PL-130 (resident only) applies to home renovation only.
+- **Group B labels.** SYN-APP-0118 and SYN-APP-0131 are DECLINE by team decision; 0131's dataset label
   is superseded, the dataset itself is not edited. Twelve catalogue design differences were accepted as intended.
 - **Tracing gaps.** Langfuse instrumentation gaps 2, 3, 6, 9 and 10 are still open (no sanitiser span, no input-guard
   span, retriever logs ids not text, identity check before the trace starts, panels empty with content capture off).
 - **Tests.** One sandbox test fails (a proxy-environment test); 1,849 passed on the
-  integration build at 10:51 IST.
+  integration build.
 
 ## Known limitations
 
@@ -435,21 +434,25 @@ Full list with counts, examples and a fix per item:
 - **The judge grades its own model.** Gemini 3.8 Flash is both the answer generator and the judge in the final agent
   runs (self-grading bias); RAG numbers come from an earlier Sonnet-generated run. See [Disclosures](#disclosures).
 - **Some decision inputs did not reach the rules** in the 2026-11-04 03:50 run (contract employment, residency, missing EMI
-  debits, missing signature) and a bureau outage ended as an error. Fixed (D-11 to D-15) on #56, merged to `main` 2026-11-04.
-- **Six catalogue rules were not compiled** in that run (PL-074, 075, 079, 082, 099, 127). Compiled on #56, merged to `main` 2026-11-04.
+  debits, missing signature) and a bureau outage ended as an error. Since fixed on `main`.
+- **Six catalogue rules were not compiled** in that run (PL-074, 075, 079, 082, 099, 127). Since compiled on `main`.
 - **Every agent bar fails** on dev and held-out (role adherence 0.68 / 0.75 vs 0.90; tool exact 0.835 / 0.788 vs 0.95).
 - **No counter-offer accept action** in the portal or the desk.
-- **Test bed, not production.** Frappe runs on a test bench; the LLM gateway used in the evals ran on the owner's
-  laptop and was a single point of failure; InstaBox sessions stop after 8 hours.
+- **Test bed, not production.** Frappe runs on a test bench; the LLM gateway used in the evals ran on a single
+  machine and was a single point of failure; cloud test-bed sessions stop after 8 hours.
 - **Hindi and Telugu samples are small** (9 hi and 11 te RAG dev items; 7 hi and 5 te agent conversations).
 
 ## Future scope
 
+- **Voice chat (LiveKit).** Let borrowers talk to Saral instead of typing: a LiveKit room per session, streaming
+  speech-to-text in English, Hindi and Telugu, the same LangGraph agent and guards in the middle, and text-to-speech
+  for the reply. The chat panel already reserves a Voice tab; the integration design is in
+  [docs/architecture/livekit-integration.md](docs/architecture/livekit-integration.md).
 - **Laya intent router.** Fine-tune on the prepared 1,027-row EN/HI/TE set, refit the per-intent thresholds,
-  re-benchmark against the Groq classifier, then wire it in front of the classifier (#57 ships flag-off).
+  re-benchmark against the Groq classifier, then wire it in front of the classifier (the router ships switched off).
 - **River generator return.** Re-run the River DeepSeek generator (and a second judge family) once the account is
   funded, to cross-check the self-graded Gemini numbers.
-- **Azure deployment.** Move from laptop + tunnel to an Azure VM with a stable TLS endpoint and a hosted LLM gateway
+- **Azure deployment.** Move from one machine + tunnel to an Azure VM with a stable TLS endpoint and a hosted LLM gateway
   with health checks.
 - **Multi-hop RAG.** Per-collection retrieval slots and query decomposition for multi-hop questions (recall 0.657),
   plus more multi-hop golden items; run the RAG held-out split on the shipped model.
@@ -467,7 +470,8 @@ Full list with counts, examples and a fix per item:
 | ZEN and RAG consistency | [docs/saral/ZEN_RAG_CONSISTENCY.md](docs/saral/ZEN_RAG_CONSISTENCY.md) |
 | Synthetic datasets | [docs/saral/SYNTHETIC_DATASETS.md](docs/saral/SYNTHETIC_DATASETS.md) |
 | Functional document (problem, domain, interventions, user journey, tech construct) | [docs/functional.md](docs/functional.md) |
-| Demo logins, test applicants, presenter script | [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) |
+| Reviewer guide: test logins and one applicant per outcome | [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) |
+| Index of all docs, and which are development records | [docs/README.md](docs/README.md) |
 | Final evaluation numbers | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) |
 | Editable architecture drawing | [docs/architecture.drawio.svg](docs/architecture.drawio.svg) |
 | Build plan (phases, dates, owners) | [docs/build-plan.md](docs/build-plan.md) |

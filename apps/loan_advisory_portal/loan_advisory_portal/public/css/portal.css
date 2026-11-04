@@ -6782,3 +6782,14 @@ textarea:focus-visible {
 		align-items: baseline;
 	}
 }
+
+/* Sign in: lift the illustration so it lines up with the top of the sign-in card (desktop). */
+@media (min-width: 900px) {
+	.auth__panel {
+		padding-top: 0;
+	}
+
+	.auth__panel .auth__art {
+		margin-top: -64px;
+	}
+}

@@ -24,7 +24,7 @@ Sources:
 | Anchored chunk not in the top 5 | 24 items (baseline) → 20 (after fixes); ContextualRecall 0.796 → 0.837 | R2-AMT-02, R2-DIS-04 | Sub-query decomposition (done); next: give each collection its own slots instead of 5 shared, so one hop is not dropped |
 | Multi-hop questions | ContextualRecall 0.593 → 0.657 on 41 multi-hop items; 8 of the 20 remaining misses | R2-WED-03, R2-PUR-01 | Same as above; add more multi-hop golden items |
 | Gold document missing entirely | 10 → 4 items | R2-AMT-02, R2-RAT-07 | Check chunking of the rates-and-fees and privacy pages |
-| Settings tuned on dev | merge settings chosen on the dev split | — | RAG held-out run: not run (owner decision 2026-11-04 14:49 IST) |
+| Settings tuned on dev | merge settings chosen on the dev split | — | RAG held-out run: not run (kept for a future run on the shipped model) |
 
 ### 1.2 Faithfulness (automated)
 
@@ -75,7 +75,7 @@ Sources:
 | Session cap of 3 not enforced in the agent | 1 of 1 traced session (4th what-if answered) | Langfuse case D | Read the cap in the agent and count per session; add a span. Status: cap enforced in the agent and a what-if count span added (#56) |
 | What-if ran the old v1 policy on a v2 decision, error shown as "would still not meet" | every what-if in the traced session | Langfuse case D | Simulate with the decision's own policy version; show an error as "couldn't estimate", never as a result |
 | Amount and tenure what-ifs blocked (Q-03) | endpoint accepted only the four old fields | — | Contract extended in the agent (amount, tenure, existing EMIs, income; score and job months refused); a v2 estimate that cannot be computed shows "couldn't be estimated" (Q-23) |
-| Hindi / Telugu what-if errors | every error except "out of range" and "not a number" | — | One generic sentence, and the error frame sentence is English (owner deprioritised 10:55 IST); add HI/TE strings |
+| Hindi / Telugu what-if errors | every error except "out of range" and "not a number" | — | One generic sentence, and the error frame sentence is English (deprioritised for this release); add HI/TE strings |
 | Agent asked for clarification instead of running the what-if | 2 turns | AC-005-3, AC-005-4 | Route clear what-if requests straight to the simulation |
 
 ### 1.8 Tool use (agent)
@@ -94,12 +94,12 @@ Sources:
 | RAG generation latency (gateway, per item) | p50 5.9 s, p95 10.5 s, max 18.6 s (after fixes) | Shipped answer model: Gemini 3.8 Flash via OmniRoute |
 | Generator / judge fallback to the backup model | 0 items in the RAG v2 run and the agent run; 1 judge call in the baseline | Every fallback use is listed in the reports |
 | Classifier budget (6 s) exceeded | 15 agent turns | See 1.4 |
-| Gateway outage | 502 at about 02:18, 11:00–11:20 and 11:55–12:03 IST on 2026-11-04; evals reached the laptop gateway through a temporary Cloudflare quick tunnel | Hosted endpoint with health checks (Azure VM, future) |
+| Gateway outage | 502 several times on 2026-11-04; evals reached the self-hosted gateway through a temporary Cloudflare quick tunnel | Hosted endpoint with health checks (Azure VM, future) |
 | Groq free-tier limit | 33 dev turns fell back from gpt-oss-120b to gpt-oss-20b | Paid tier or keep eval concurrency at 1-2 workers |
 
 ### 1.10 Decisions (ZEN, 200 synthetic applicants, automated via the live API)
 
-174/200 (87.0%) match the dataset labels (2026-11-04 03:50 IST). After the ZEN gap fixes: 187/200 offline, 188/200 with the owner's SYN-APP-0131 ruling, plus 12 owner-accepted
+174/200 (87.0%) match the dataset labels (2026-11-04 03:50 IST). After the ZEN gap fixes: 187/200 offline, 188/200 with the SYN-APP-0131 ruling, plus 12 accepted
 design choices; 0 open defects.
 
 | Failure | Count | Examples | Mitigation |
@@ -108,12 +108,12 @@ design choices; 0 open defects.
 | INSUFFICIENT_DATA still approves (missing signature, D-15) | 2 | 0072, 0191 | Missing required document → more information. Status: fixed on #56 |
 | Bureau provider error ends as ERROR (D-11) | 2 | 0023, 0142 | Treat like no-hit: manual review with a plain reason |
 | Catalogue design differs from the label (accepted behaviour) | 12 | fraud → review (4), missing docs → review (2), stale report → review (2), affordability → counter-offer (2), tenure refused at input (2) | Accepted as intended by the owner (10:38 IST); a stale report needs its own reason category (shows "Other") |
-| Owner call needed | 2 | 0118, 0131 | Decided 10:38 IST: both DECLINE; 0131's dataset label is superseded (dataset not edited) |
+| Team decision | 2 | 0118, 0131 | Both DECLINE; 0131's dataset label is superseded (dataset not edited) |
 | Rules not compiled | 6 | PL-074, 075, 079, 082, 099, 127 | Status: compiled on #56 |
 
 ### 1.11 Live GUI (59 cases)
 
-55 GUI/live, 3 fail, 1 blocked. Agent in the frontend (A5, 64 cases, full run on the owner's laptop from `main` @ 658ce44, 2026-11-04): harness labels 41 pass / 17 fail / 6 blocked; after manual review of every failing answer **51 pass / 7 real fails / 6 blocked**. The 10 harness false positives: the Sources card's P1–P5 labels (old citation selector and leak regex), "cut-off" inside a correct refusal flagged as a leak, "Approved" on the card rather than in the answer text. No real leak. Applicants: SYN-APP-0098 replaces 0087 (the portal refuses requests above ₹25L); the 0031 decline cases were split EN 0031 / HI 0002 / TE 0003.
+55 GUI/live, 3 fail, 1 blocked. Agent in the frontend (A5, 64 cases, full run on a local deployment of `main` @ 658ce44, 2026-11-04): harness labels 41 pass / 17 fail / 6 blocked; after manual review of every failing answer **51 pass / 7 real fails / 6 blocked**. The 10 harness false positives: the Sources card's P1–P5 labels (old citation selector and leak regex), "cut-off" inside a correct refusal flagged as a leak, "Approved" on the card rather than in the answer text. No real leak. Applicants: SYN-APP-0098 replaces 0087 (the portal refuses requests above ₹25L); the 0031 decline cases were split EN 0031 / HI 0002 / TE 0003.
 
 | Failure | Count | Examples | Mitigation |
 |---|---:|---|---|
@@ -147,7 +147,7 @@ design choices; 0 open defects.
 | Held-out splits | Dev numbers can be optimistic | RAG held-out: not run. Agent held-out (11): no-leak 10/11, role 0.750, tool exact 0.788, every bar fails; ids were visible to reviewers from 07:42 IST |
 | Voice | Only one voice-channel conversation (text in/out) | Voice eval with audio |
 | Streaming and latency SLOs | Not measured end to end | Load test on the integration stack |
-| Agent eval reads an in-memory record store | Frappe reads are covered only by the live E2E | A5 live cases (64, laptop, 2026-11-04): 51 pass / 7 real fails / 6 blocked after manual review (harness: 41 / 17 / 6); no real leak |
+| Agent eval reads an in-memory record store | Frappe reads are covered only by the live E2E | A5 live cases (64, local deployment, 2026-11-04): 51 pass / 7 real fails / 6 blocked after manual review (harness: 41 / 17 / 6); no real leak |
 | Dense retrieval in the agent eval | The agent eval used BM25 only to save memory | The RAG eval covers the hybrid retriever |
 | Prompt injection inside retrieved passages | Not tested | Add poisoned-passage items |
 | Production Frappe | Test bench only; permissions and load untested | Staging bench with production settings |
