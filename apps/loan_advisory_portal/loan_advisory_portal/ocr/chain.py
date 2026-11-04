@@ -1,8 +1,10 @@
-"""Fallback chain: PaddleOCR -> Tesseract -> manual review. EXPERIMENTAL (bake-off branch).
+"""Fallback chain: PaddleOCR (mobile) -> Tesseract -> manual review. The default path.
 
-Proposed integration, not wired into the API. It keeps PR #41's contract intact:
+`pipeline.extract_document` runs this chain, so the API gets Paddle first and Tesseract
+automatically when Paddle is missing, errors, or reads the critical fields with low
+confidence. It keeps PR #41's contract intact:
 
-* `pipeline.extract_document` (Tesseract) is untouched and remains the default.
+* `SARAL_OCR_ENGINES=tesseract` restores the Tesseract-only path.
 * Both engines feed the *same* `document_parser.parse`, so field rules live in one place.
 * Each attempt is scored on the document's critical fields; the first attempt that clears
   the gate is used, otherwise the better attempt is returned with ``route="manual_review"``.
@@ -35,7 +37,28 @@ CRITICAL_FIELDS: dict[DocumentKind, tuple[str, ...]] = {
     DocumentKind.BANK_STATEMENT: ("salary_credits", "account_holder"),
     DocumentKind.EMPLOYMENT_LETTER: ("employer_name", "employment_start_date"),
 }
-DEFAULT_ORDER = tuple(e.strip() for e in os.environ.get("SARAL_OCR_ENGINES", "paddle,tesseract").split(",") if e.strip())
+KNOWN_ENGINES = ("paddle", "tesseract")
+FALLBACK_ORDER = ("paddle", "tesseract")
+# Critical fields read below this mean line confidence (0-100) send the document to the next
+# engine. Fields under 60 are already LOW_CONFIDENCE in the parser; this is the stricter gate.
+DEFAULT_MIN_CONFIDENCE = 70.0
+
+
+def engine_order() -> tuple[str, ...]:
+    """`SARAL_OCR_ENGINES` (default ``paddle,tesseract``); unknown names are ignored."""
+    raw = os.environ.get("SARAL_OCR_ENGINES", ",".join(FALLBACK_ORDER))
+    order = tuple(dict.fromkeys(e.strip().lower() for e in raw.split(",") if e.strip().lower() in KNOWN_ENGINES))
+    return order or FALLBACK_ORDER
+
+
+def min_confidence() -> float:
+    try:
+        return float(os.environ.get("SARAL_OCR_MIN_CONFIDENCE", DEFAULT_MIN_CONFIDENCE))
+    except ValueError:
+        return DEFAULT_MIN_CONFIDENCE
+
+
+DEFAULT_ORDER = engine_order()
 
 
 @dataclass
@@ -44,6 +67,7 @@ class Attempt:
     result: ExtractionResult | None
     seconds: float
     error: str | None = None
+    message: str | None = None
     checks: list[Check] = field(default_factory=list)
 
     @property
@@ -57,7 +81,15 @@ class Attempt:
     def passes(self) -> bool:
         if self.result is None:
             return False
-        return self.critical_found == len(CRITICAL_FIELDS.get(self.result.kind, ("_",)))
+        keys = CRITICAL_FIELDS.get(self.result.kind)
+        if not keys:
+            # Unsupported document type: another engine cannot change that, so do not re-read.
+            return True
+        if self.critical_found != len(keys):
+            return False
+        gate = min_confidence()
+        return all((self.result.fields[k].confidence is None or self.result.fields[k].confidence >= gate)
+                   for k in keys)
 
 
 @dataclass
@@ -112,12 +144,14 @@ def _run(engine: str, document_type: str, content: bytes, filename: str,
                 item.note = check.note
         return Attempt(engine, result, time.perf_counter() - started, checks=checks)
     except (OcrUnavailable, ExtractionFailed) as exc:
-        return Attempt(engine, None, time.perf_counter() - started, error=type(exc).__name__)
+        return Attempt(engine, None, time.perf_counter() - started, error=type(exc).__name__,
+                       message=str(exc))
 
 
 def extract_document_chain(document_type: str, content: bytes, filename: str,
-                           engines: tuple[str, ...] = DEFAULT_ORDER, *,
+                           engines: tuple[str, ...] | None = None, *,
                            synthetic: bool | None = None) -> ChainOutcome:
+    engines = engines or engine_order()
     attempts: list[Attempt] = []
     for engine in engines:
         attempt = _run(engine, document_type, content, filename, synthetic=synthetic)
@@ -128,4 +162,4 @@ def extract_document_chain(document_type: str, content: bytes, filename: str,
     return ChainOutcome(best.result if best else None, "manual_review", attempts)
 
 
-__all__ = ["CRITICAL_FIELDS", "ChainOutcome", "extract_document_chain"]
+__all__ = ["CRITICAL_FIELDS", "ChainOutcome", "engine_order", "extract_document_chain", "min_confidence"]

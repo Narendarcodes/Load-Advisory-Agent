@@ -1,9 +1,12 @@
-"""PaddleOCR (PP-OCRv5) behind the same line interface as the Tesseract path. EXPERIMENTAL.
+"""PaddleOCR (PP-OCRv5 mobile) behind the same line interface as the Tesseract path.
 
 `extract_lines_paddle(content, filename)` returns ``(lines, pages, used_text_layer)``, the
 exact shape of `extractor.extract_lines`, so `document_parser.parse` and every rule in
-PR #41 run unchanged on either engine. Nothing here is imported by the default pipeline;
-`chain.extract_document_chain` is the only caller.
+PR #41 run unchanged on either engine. `pipeline.extract_document` reaches it through
+`chain.extract_document_chain`: Paddle is the default engine and Tesseract the fallback.
+
+The mobile models are the default (bake-off: better than server on this hardware, ~2 GB RSS,
+~0.9 s/page on 4 vCPU). Override with ``PADDLE_OCR_DET_MODEL`` / ``PADDLE_OCR_REC_MODEL``.
 
 PaddleOCR returns one box per text region, not per line: a table row comes back as five
 boxes. `group_boxes_into_lines` merges boxes whose vertical centres overlap into one
@@ -22,7 +25,10 @@ import threading
 from io import BytesIO
 
 from .extractor import (
+    MAX_IMAGE_DIMENSION,
     MAX_OCR_PAGES,
+    MAX_TEXT_LAYER_PAGES,
+    MIN_TEXT_LAYER_CHARS,
     OCR_DPI,
     ExtractionFailed,
     OcrUnavailable,
@@ -31,8 +37,8 @@ from .extractor import (
 )
 from .schemas import TextLine
 
-DEFAULT_DET = os.environ.get("PADDLE_OCR_DET_MODEL", "PP-OCRv5_server_det")
-DEFAULT_REC = os.environ.get("PADDLE_OCR_REC_MODEL", "PP-OCRv5_server_rec")
+DEFAULT_DET = os.environ.get("PADDLE_OCR_DET_MODEL", "PP-OCRv5_mobile_det")
+DEFAULT_REC = os.environ.get("PADDLE_OCR_REC_MODEL", "PP-OCRv5_mobile_rec")
 MIN_BOX_SCORE = 0.30  # boxes below this are almost always watermark fragments or noise
 
 _lock = threading.Lock()
@@ -64,14 +70,17 @@ def _engine(det: str = DEFAULT_DET, rec: str = DEFAULT_REC, orientation: bool = 
                 from paddleocr import PaddleOCR  # noqa: PLC0415
             except Exception as exc:  # noqa: BLE001
                 raise OcrUnavailable("PaddleOCR is not installed on this machine.") from exc
-            _engines[key] = PaddleOCR(
-                text_detection_model_name=det,
-                text_recognition_model_name=rec,
-                use_doc_orientation_classify=orientation,
-                use_doc_unwarping=False,
-                use_textline_orientation=orientation,
-                device="cpu",
-            )
+            try:
+                _engines[key] = PaddleOCR(
+                    text_detection_model_name=det,
+                    text_recognition_model_name=rec,
+                    use_doc_orientation_classify=orientation,
+                    use_doc_unwarping=False,
+                    use_textline_orientation=orientation,
+                    device="cpu",
+                )
+            except Exception as exc:  # noqa: BLE001 - missing models / bad runtime: let Tesseract take over
+                raise OcrUnavailable("PaddleOCR could not start on this machine.") from exc
         return _engines[key]
 
 
@@ -134,7 +143,12 @@ def ocr_image_lines(image, *, det: str = DEFAULT_DET, rec: str = DEFAULT_REC,
     """OCR one PIL image already validated and size-capped by `_load_image`."""
     import numpy as np  # noqa: PLC0415
 
-    array = np.asarray(image.convert("RGB"))[:, :, ::-1]  # Paddle expects BGR like OpenCV
+    from .preprocess import deskew  # noqa: PLC0415
+
+    levelled = deskew(image)
+    array = np.asarray(levelled.convert("RGB"))[:, :, ::-1]
+    if levelled is not image:
+        levelled.close()  # Paddle expects BGR like OpenCV
     try:
         results = _engine(det, rec, orientation).predict(array)
     except OcrUnavailable:
@@ -167,19 +181,42 @@ def extract_lines_paddle(content: bytes, filename: str) -> tuple[list[TextLine],
         raise ExtractionFailed("The PDF could not be opened.") from exc
     lines: list[TextLine] = []
     pages = 0
+    rasterised = 0
+    used_text_layer = False
     try:
-        for index in range(min(len(pdf), MAX_OCR_PAGES)):
+        for index in range(min(len(pdf), MAX_TEXT_LAYER_PAGES)):
             page = pdf[index]
             try:
-                bitmap = page.render(scale=OCR_DPI / 72).to_pil()
+                # A digital PDF's text layer is exact: use it, as the Tesseract path does.
+                text_page = page.get_textpage()
+                try:
+                    page_text = (text_page.get_text_range() or "").strip()
+                finally:
+                    text_page.close()
+                if len(page_text) >= MIN_TEXT_LAYER_CHARS:
+                    used_text_layer = True
+                    lines.extend(TextLine(text=raw.strip(), confidence=100.0)
+                                 for raw in page_text.splitlines() if raw.strip())
+                    pages += 1
+                    continue
+                if rasterised >= MAX_OCR_PAGES:
+                    continue
+                width, height = page.get_size()
+                scale = OCR_DPI / 72
+                if max(width, height) * scale > MAX_IMAGE_DIMENSION:
+                    scale = MAX_IMAGE_DIMENSION / max(width, height)
+                bitmap = page.render(scale=scale).to_pil()
             finally:
                 page.close()
-            lines.extend(ocr_image_lines(bitmap))
-            bitmap.close()
+            try:
+                lines.extend(ocr_image_lines(bitmap))
+            finally:
+                bitmap.close()
+            rasterised += 1
             pages += 1
     finally:
         pdf.close()
-    return lines, pages, False
+    return lines, pages, used_text_layer
 
 
 __all__ = ["engine_version", "extract_lines_paddle", "group_boxes_into_lines", "is_available",

@@ -141,6 +141,70 @@ def _capture_context(lines: list[TextLine], *patterns: str) -> tuple[str | None,
     return (value.strip(" :\t-") if value else None), confidence_of(line), (line.text if line else "")
 
 
+_DATE_TOKEN_RE = re.compile(r"(?<!\d)(\d{1,2})\s*([./-])\s*(\d{1,2})\s*[./-]\s*(\d{2,4})(?!\d)")
+_STANDALONE_DATE_RE = re.compile(r"^\s*\d{1,2}\s*[./-]\s*\d{1,2}\s*[./-]\s*\d{4}\s*$")
+
+
+def _find_date(raw: str | None) -> str | None:
+    """First exact date in a string, tolerating OCR spaces around separators (`14 / 01 / 1975`)."""
+    if not raw:
+        return None
+    for match in _DATE_TOKEN_RE.finditer(raw):
+        sep = match.group(2)
+        parsed = parse_date(f"{match.group(1)}{sep}{match.group(3)}{sep}{match.group(4)}")
+        if parsed:
+            return parsed
+    return parse_date(raw.split(" ")[0])
+
+
+# Labels that start another field: a stacked value is never taken from one of these lines.
+_FIELD_LABEL_RE = re.compile(
+    r"(?i)^\s*(?:[\u0900-\u097F\s/]*)(?:father|date\s*of\s*birth|d\s*o\s*b|year\s*of\s*birth|"
+    r"gender|sex|male\b|female\b|address|permanent\s*account|pan\b|signature|name\b|"
+    r"income\s*tax|govt|government|आयकर|पिता|जन्म|पता|लिंग)"
+)
+
+
+def _stacked_value(lines: list[TextLine], label: str) -> tuple[str | None, float | None]:
+    """Value after a label on the same line, else on the next line (stacked card layouts).
+
+    ``label`` is matched at the start of a line. The next line is used only when it is not
+    itself another field's label, so "Name" followed by "Father's Name" stays missing.
+    """
+    compiled = re.compile(label + r"\s*[:\-]?\s*(.*)$", re.IGNORECASE)
+    usable = _lines(lines)
+    for index, line in enumerate(usable):
+        match = compiled.match(line.text)
+        if not match:
+            continue
+        value = (match.group(match.lastindex or 1) or "").strip(" :\t-/|")
+        if value:
+            return value, confidence_of(line)
+        if index + 1 < len(usable) and not _FIELD_LABEL_RE.match(usable[index + 1].text):
+            return usable[index + 1].text.strip(" :\t-/|"), confidence_of(usable[index + 1])
+        return None, None
+    return None, None
+
+
+_NAME_LIKE_RE = re.compile(r"^[A-Za-z][A-Za-z.' ]{1,58}[A-Za-z.]$")
+_NOT_A_NAME_RE = re.compile(
+    r"(?i)\b(government|govt|india|income|tax|department|permanent|account|number|card|signature|"
+    r"aadhaar|aadhar|uidai|unique|identification|authority|male|female|dob|birth|address|enrol|"
+    r"issue|download|vid|help|www)\b"
+)
+
+
+def _name_like(text: str) -> bool:
+    words = text.split()
+    return (1 <= len(words) <= 5 and bool(_NAME_LIKE_RE.match(text.strip()))
+            and not _NOT_A_NAME_RE.search(text))
+
+
+# Name labels: "Name", "नाम / Name", "नाम" -- anchored at the line start so "Father's Name"
+# and "पिता का नाम" never match.
+_NAME_LABEL = r"^\s*(?:नाम\s*/?\s*)?(?:name|नाम)\b"
+
+
 _COMPANY_RE = re.compile(
     r"\b(pvt|private|ltd|limited|llp|inc|corp|corporation|technologies|solutions|"
     r"services|industries|enterprises|consulting|systems|labs|bank)\b",
@@ -246,7 +310,10 @@ def _parse_salary_slip(lines: list[TextLine]) -> tuple[dict[str, ExtractedField]
 # --------------------------------------------------------------------------- bank statement
 
 _BANK_PATTERNS = {
-    "account_holder": (r"(?:account\s*(?:holder|name)|name\s*of\s*(?:the\s*)?account\s*holder)\s*[:\-]?\s*(.+)",),
+    "account_holder": (
+        r"(?:account\s*holders?(?:['\u2019]s)?\s*(?:name)?|account\s*name|name\s*of\s*(?:the\s*)?account\s*holder)"
+        r"\s*[:\-]?\s*(.+)",
+    ),
     "statement_period": (r"(?:statement|account)\s*period\s*[:\-]?\s*(.+)",),
     "closing_balance": (
         r"(?:closing|available|current)\s*balance\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)",
@@ -258,7 +325,8 @@ _BANK_PATTERNS = {
 _TRANSACTION_RE = re.compile(
     r"^\s*(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})\b.*?([\d,]+\.\d{2})\s*(cr|dr)?\s*$", re.IGNORECASE
 )
-_SALARY_LINE_RE = re.compile(r"\bsalary\b|\bpayroll\b|\bwages\b", re.IGNORECASE)
+# No word boundaries: OCR often merges narration words ("CRSALARYDECCAN").
+_SALARY_LINE_RE = re.compile(r"salary|payroll|wages", re.IGNORECASE)
 _SALARY_AMOUNT_RE = re.compile(r"\d[\d,]*(?:\.\d{1,2})?")
 _LEADING_DATE_RE = re.compile(r"^\s*\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\s*")
 
@@ -290,7 +358,7 @@ def _parse_bank_statement(lines: list[TextLine]) -> tuple[dict[str, ExtractedFie
             if when:
                 transactions.append({"date": when, "amount": amount, "direction": direction or None})
         if _SALARY_LINE_RE.search(line.text):
-            if re.search(r"\b(cr|credit|deposit)\b", line.text, re.I):
+            if re.search(r"(?<![a-z])(cr|credit|deposit)", line.text, re.I):
                 rest = _LEADING_DATE_RE.sub("", line.text)
                 amounts = [
                     amount
@@ -389,6 +457,21 @@ def _parse_employment_letter(lines: list[TextLine]) -> tuple[dict[str, Extracted
 
 # --------------------------------------------------------------------------- PAN card
 
+def _pan_unlabelled_name(lines: list[TextLine]) -> tuple[str | None, float | None]:
+    """Old PAN design: holder name is the first name-like line after the department header."""
+    usable = _lines(lines)
+    start = next((i for i, line in enumerate(usable)
+                  if re.search(r"income\s*tax|govt|government", line.text, re.I)), None)
+    if start is None:
+        return None, None
+    for line in usable[start + 1:start + 4]:
+        if _FIELD_LABEL_RE.match(line.text) or _STANDALONE_DATE_RE.match(line.text):
+            return None, None
+        if _name_like(line.text):
+            return line.text.strip(), confidence_of(line)
+    return None, None
+
+
 def _parse_pan_card(lines: list[TextLine], text: str, *,
                     synthetic: bool = False) -> tuple[dict[str, ExtractedField], list[str]]:
     fields: dict[str, ExtractedField] = {}
@@ -436,11 +519,20 @@ def _parse_pan_card(lines: list[TextLine], text: str, *,
             fields["pan_number"] = field("pan_number", _LABELS["pan_number"],
                                          note="no PAN number was recognised")
 
-    name, confidence = _capture(lines, r"^\s*(?:name|नाम)\s*[:\-]?\s*(.+)$")
+    name, confidence = _stacked_value(lines, _NAME_LABEL)
+    if not name:
+        name, confidence = _pan_unlabelled_name(lines)
     fields["name"] = field("name", _LABELS["name"], _clean_name(name), confidence=confidence)
 
-    raw_dob, confidence = _capture(lines, r"(?:date\s*of\s*birth|dob|जन्म\s*(?:तिथि|दिनांक)?)\s*[:\-]?\s*(.+)")
-    dob = parse_date((raw_dob or "").split(" ")[0]) if raw_dob else None
+    raw_dob, confidence = _stacked_value(
+        lines, r"^\s*(?:[\u0900-\u097F\s]*/\s*)?(?:date\s*of\s*birth|d\s*o\s*b|जन्म\s*(?:की\s*)?(?:तिथि|तारीख|दिनांक)?)")
+    if not raw_dob:
+        raw_dob, confidence = _capture(lines, r"(?:date\s*of\s*birth|\bdob)\s*[:\-]?\s*(.+)")
+    if not raw_dob:
+        # Old PAN design: the date of birth is printed alone on its line, with no label.
+        line = next((item for item in _lines(lines) if _STANDALONE_DATE_RE.match(item.text)), None)
+        raw_dob, confidence = (line.text, confidence_of(line)) if line else (None, None)
+    dob = _find_date(raw_dob)
     fields["date_of_birth"] = field("date_of_birth", _LABELS["date_of_birth"], dob, confidence=confidence,
                                     note=None if dob else ("could not read the date" if raw_dob else None))
     if not number:
@@ -449,6 +541,21 @@ def _parse_pan_card(lines: list[TextLine], text: str, *,
 
 
 # --------------------------------------------------------------------------- Aadhaar card
+
+_AADHAAR_DOB_LINE_RE = re.compile(r"(?i)date\s*of\s*birth|\bd\s*o\s*b|year\s*of\s*birth|\byob|जन्म")
+
+
+def _aadhaar_unlabelled_name(lines: list[TextLine]) -> tuple[str | None, float | None]:
+    """e-Aadhaar and PVC cards print the name with no label, on the line above the DOB."""
+    usable = _lines(lines)
+    for index, line in enumerate(usable):
+        if _AADHAAR_DOB_LINE_RE.search(line.text):
+            for previous in reversed(usable[max(0, index - 2):index]):
+                if _name_like(previous.text):
+                    return previous.text.strip(), confidence_of(previous)
+            return None, None
+    return None, None
+
 
 def _parse_aadhaar_card(lines: list[TextLine], text: str, *,
                         synthetic: bool = False) -> tuple[dict[str, ExtractedField], list[str]]:
@@ -488,11 +595,14 @@ def _parse_aadhaar_card(lines: list[TextLine], text: str, *,
         fields["aadhaar_number"] = field("aadhaar_number", _LABELS["aadhaar_number"],
                                          note="no Aadhaar number was recognised")
 
-    name, confidence = _capture(lines, r"^\s*(?:name|नाम)\s*[:\-]?\s*(.+)$")
+    name, confidence = _stacked_value(lines, _NAME_LABEL)
+    if not name:
+        name, confidence = _aadhaar_unlabelled_name(lines)
     fields["name"] = field("name", _LABELS["name"], _clean_name(name), confidence=confidence)
 
-    raw_dob, confidence = _capture(lines, r"(?:date\s*of\s*birth|dob|year\s*of\s*birth|yob)\s*[:\-]?\s*(.+)")
-    dob = parse_date((raw_dob or "").split(" ")[0]) if raw_dob else None
+    raw_dob, confidence = _capture(
+        lines, r"(?:date\s*of\s*birth|\bd\s*o\s*b|year\s*of\s*birth|\byob)\s*[:\-]?\s*(.+)")
+    dob = _find_date(raw_dob)
     fields["date_of_birth"] = field("date_of_birth", _LABELS["date_of_birth"], dob, confidence=confidence,
                                     note=None if dob else ("only a year was printed" if raw_dob else None))
 

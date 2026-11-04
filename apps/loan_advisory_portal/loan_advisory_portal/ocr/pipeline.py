@@ -8,17 +8,23 @@ returning. Callers get structured fields, statuses and warnings — never the do
 never an unmasked PAN or Aadhaar number.
 """
 
-from .document_parser import parse
+from .chain import engine_order, extract_document_chain
 from .extractor import (
     ExtractionFailed,
     OcrError,
     OcrUnavailable,
-    extract_lines,
     tesseract_version,
+    validate_document,
 )
 from .schemas import DocumentKind, ExtractionResult, FieldStatus
 
-ENGINE = "tesseract"
+# The default engine. PaddleOCR PP-OCRv5 mobile reads first; Tesseract takes over when Paddle
+# is not installed, fails, or reads a critical field with low confidence (see `chain`).
+# `SARAL_OCR_ENGINES=tesseract` restores the Tesseract-only path.
+ENGINE = "paddle"
+
+REVIEW_WARNING = ("Some details on this document could not be read clearly. "
+                  "They will be checked by a person before they are used.")
 
 # Salary slip -> the existing underwriting fields. `custom_monthly_income` is the one the
 # ZEN adapter reads (`monthly_income` in UnderwritingInput).
@@ -30,45 +36,40 @@ _BANK_MAP = (("salary_credits", "custom_monthly_income"),)
 
 
 def extract_document(document_type: str, content: bytes, filename: str, *,
-                     synthetic: bool | None = None) -> ExtractionResult:
-    """Run extraction for one document.
+                     synthetic: bool | None = None,
+                     engines: tuple[str, ...] | None = None) -> ExtractionResult:
+    """Run extraction for one document: Paddle first, Tesseract as the automatic fallback.
 
     ``synthetic`` is True only for a document or request flagged synthetic (server-side
     state, never a browser value); None follows the SARAL_SYNTHETIC_MODE setting. See
-    `ocr.synthetic` for what synthetic mode accepts.
+    `ocr.synthetic` for what synthetic mode accepts. ``engines`` overrides
+    ``SARAL_OCR_ENGINES`` for one call.
 
     Raises `UnsupportedDocument`, `ExtractionFailed` or `OcrUnavailable`; those are the
     three conditions a borrower can act on (choose another file, re-scan, install the
     engine). A readable document always returns a result, even when every field is missing.
     """
-    lines, pages, used_text_layer = extract_lines(content, filename)
-
-    if not lines:
+    validate_document(content, filename)  # refuse a bad file once, before any engine runs
+    outcome = extract_document_chain(document_type, content, filename, engines or engine_order(),
+                                     synthetic=synthetic)
+    result = outcome.result
+    if result is None:
+        errors = {attempt.error for attempt in outcome.attempts}
+        if errors and errors <= {"OcrUnavailable"}:
+            # The last engine is the fallback (Tesseract): its message says what to install.
+            raise OcrUnavailable(outcome.attempts[-1].message or "No OCR engine is available on this machine.")
         raise ExtractionFailed(
             "No text could be recognised in this document. Try a clearer scan or photo."
         )
 
-    text = "\n".join(line.text for line in lines)
-    fields, warnings, kind = parse(document_type, lines, text, synthetic=synthetic)
-
-    if kind is DocumentKind.UNKNOWN:
-        warnings.insert(
+    if result.kind is DocumentKind.UNKNOWN:
+        result.warnings.insert(
             0,
             "This document could not be matched to a supported type; no fields were read.",
         )
-
-    result = ExtractionResult(
-        document_type=document_type or "Unknown",
-        kind=kind,
-        engine=ENGINE,
-        engine_version=_engine_version(used_text_layer),
-        pages=pages,
-        fields=fields,
-        warnings=warnings,
-        used_text_layer=used_text_layer,
-    )
-    # Never return raw text by accident: `text` goes out of scope here.
-    del text
+    elif outcome.route == "manual_review" and REVIEW_WARNING not in result.warnings:
+        result.warnings.append(REVIEW_WARNING)
+    # Raw recognised text never leaves the chain; only structured, masked fields are here.
     return result
 
 
@@ -122,4 +123,5 @@ def suggested_application_values(result: ExtractionResult) -> dict[str, dict]:
     return suggestions
 
 
-__all__ = ["ENGINE", "OcrError", "extract_document", "suggested_application_values"]
+__all__ = ["ENGINE", "REVIEW_WARNING", "OcrError", "engine_order", "extract_document",
+           "suggested_application_values"]
