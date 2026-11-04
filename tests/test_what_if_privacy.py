@@ -12,9 +12,9 @@ SENTINEL = "987654321"  # recognizable and far outside every allowed what-if ran
 
 
 def test_out_of_range_what_if_value_is_not_persisted(tmp_path, caplog):
-    llm = ScriptedLLM(intent="what_if", changes={"credit_score": {"set": int(SENTINEL)}})
+    llm = ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": int(SENTINEL)}})
     ag, _, _ = agent_for(llm, tmp_path=tmp_path)
-    r = ask(ag, f"what if my score were {SENTINEL}")
+    r = ask(ag, f"what if my EMIs were {SENTINEL}")
 
     assert r.action == "clarify"
     raw = ag.audit_path.read_text(encoding="utf-8")
@@ -22,7 +22,7 @@ def test_out_of_range_what_if_value_is_not_persisted(tmp_path, caplog):
     assert SENTINEL not in r.answer
     assert SENTINEL not in caplog.text
     event = [e for e in json.loads(raw.strip().splitlines()[-1])["events"] if e["node"] == "run_what_if"][-1]
-    assert "credit_score" in event["error"] and "outside the allowed range" in event["error"]
+    assert "monthly_obligations" in event["error"] and "outside the allowed range" in event["error"]
 
 
 def test_tool_error_keeps_field_and_category_without_the_value():
@@ -55,7 +55,8 @@ def test_unknown_field_key_is_not_echoed_or_persisted(tmp_path):
     raw = ag.audit_path.read_text(encoding="utf-8")
     assert SENTINEL not in raw and SENTINEL not in r.answer
     event = [e for e in json.loads(raw.strip().splitlines()[-1])["events"] if e["node"] == "run_what_if"][-1]
-    assert "unsupported what-if field" in event["error"] and "credit_score" in event["error"]
+    # agent eval fix 5: only the four editable fields are named (never the score)
+    assert "I can only estimate" in event["error"] and "credit score" not in event["error"]
 
 
 def test_unknown_field_key_is_not_echoed_by_the_tool():

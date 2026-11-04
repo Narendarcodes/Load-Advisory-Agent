@@ -1,12 +1,14 @@
-import type { Citation, DecisionCard, DecisionRule, ImprovementTask, WhatIf } from "../types";
-import {
-  bureauKindLabel,
-  missingInformationItem,
-  outcomeLabel,
-  progressLabel,
-  ruleResultLabel,
-  type MissingInformationItem,
-} from "./catalog";
+import { useId } from "react";
+
+import type { Locale } from "../types";
+import type { Citation, DecisionCard, ImprovementTask, WhatIf } from "../types";
+import { missingInformationItem, outcomeLabel, type MissingInformationItem } from "./catalog";
+import { classify, decisionSummary, improvementSteps, lang, themeText, WHAT_IF, type ReasonSignal, type ThemeKey } from "./plain";
+
+/*
+ * Calm cards only. Nothing here renders a rule row, a meter, a threshold, a score, a rule id or a
+ * per-rule result: the parsed card (schema.ts) no longer holds them. Words come from genui/plain.ts.
+ */
 
 function safeUrl(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -18,134 +20,111 @@ function safeUrl(value: string | null | undefined): string | null {
   }
 }
 
-function fieldName(field: string): string {
-  return field.replaceAll("_", " ");
+function rupees(value: number): string {
+  return `₹${Math.round(value).toLocaleString("en-IN")}`;
 }
 
-function amount(value: number): string {
-  return value.toLocaleString("en-IN");
+/** Hindi and Telugu copy carries its own lang so screen readers switch voice. */
+function langOf(locale: Locale): string | undefined {
+  return locale === "en" ? undefined : locale;
 }
 
-export function ApplicationContextBlock({ application }: { application: string }) {
-  const name = encodeURIComponent(application);
+/** The borrower's own offer: amount, EMI and tenure. */
+function OfferFacts({ card }: { card: DecisionCard }) {
+  const offer = card.offer;
+  if (!offer) return null;
+  const rows: [string, string][] = [];
+  if (offer.amount) rows.push(["Amount", rupees(offer.amount)]);
+  if (offer.emi) rows.push(["Monthly EMI", rupees(offer.emi)]);
+  if (offer.tenure_months) rows.push(["Tenure", `${offer.tenure_months} months`]);
   return (
-    <div className="appctx">
-      <span className="appctx__label">This conversation is about</span>
-      <span className="mono appctx__ref">{application}</span>
-      <span className="appctx__links">
-        <a href={`/borrower/application?name=${name}`}>Open the recorded decision</a>
-        <a href={`/borrower/documents?name=${name}`}>Documents</a>
-      </span>
+    <dl className="offer-facts">
+      {rows.map(([label, value]) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function ThemeList({ themes, locale }: { themes: ThemeKey[]; locale: Locale }) {
+  if (!themes.length) return null;
+  return (
+    <ul className="reason-themes" lang={langOf(locale)}>
+      {themes.slice(0, 3).map((key) => (
+        <li key={key}>{themeText(key, locale)}</li>
+      ))}
+    </ul>
+  );
+}
+
+export function DecisionCardBlock({ card, locale = "en" }: { card: DecisionCard; locale?: string }) {
+  const language = lang(locale);
+  const code =
+    card.lifecycle_state === "INFO_REQUESTED"
+      ? "INFO_REQUESTED"
+      : (card.recorded_outcome ?? card.decision ?? card.lifecycle_state ?? "").toUpperCase();
+  const known = outcomeLabel(card.recorded_outcome ?? card.decision);
+  // E2E D-16: a label the catalogue does not know comes back as the code itself; never show it.
+  const outcome = /^[A-Z_]+$/.test(known.label) ? { label: "Decision recorded", tone: "neutral" as const } : known;
+  const summary = decisionSummary(code, language);
+  const approved = code === "APPROVED";
+  const showThemes = code === "REJECTED" || code === "REVIEW" || code === "MANUAL_REVIEW";
+  // A conversation can hold several decision cards: each gets its own id and is a labelled group, not a
+  // landmark, so repeated cards never produce duplicate landmarks.
+  const heading = `decision-card-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  return (
+    <div className="card-block decision" role="group" aria-labelledby={heading}>
+      <div className="card-block__head">
+        <h3 id={heading}>Your decision</h3>
+        <span className={`badge badge--${outcome.tone}`}>{outcome.label}</span>
+      </div>
+      {summary ? (
+        <p className="decision__summary" lang={langOf(language)}>
+          {summary}
+        </p>
+      ) : null}
+      {approved || code === "COUNTER" ? <OfferFacts card={card} /> : null}
+      {showThemes ? <ThemeList themes={card.themes} locale={language} /> : null}
+      <p className="note">
+        {card.policy_synthetic ? "Demo data. " : ""}This is the decision already on file, not a new assessment.
+      </p>
     </div>
   );
 }
 
-export function RuleEvaluationList({ rules }: { rules: DecisionRule[] }) {
-  if (!rules.length) {
-    return <p className="note">No rule checks are recorded on this decision.</p>;
-  }
-  return (
-    <table className="rules">
-      <caption className="sr-only">Checks recorded on this decision</caption>
-      <thead>
-        <tr>
-          <th scope="col">Check</th>
-          <th scope="col">Your recorded value</th>
-          <th scope="col">Requirement</th>
-          <th scope="col">Result</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rules.map((rule) => (
-          <tr key={rule.rule_id}>
-            <th scope="row">{rule.name}</th>
-            <td>{rule.actual ?? "Not recorded"}</td>
-            <td>{rule.threshold ?? "Not recorded"}</td>
-            <td className={`r-${rule.result}`}>{ruleResultLabel(rule.result)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-export function DecisionCardBlock({ card }: { card: DecisionCard }) {
-  const outcome = outcomeLabel(card.recorded_outcome ?? card.decision);
-  return (
-    <section className="card-block decision" aria-labelledby="decision-card-heading">
-      <div className="card-block__head">
-        <h3 id="decision-card-heading">Recorded decision</h3>
-        <span className={`badge badge--${outcome.tone}`}>{outcome.label}</span>
-      </div>
-      <p className="note">
-        Recorded for {card.application_ref ?? "this application"}. This is the decision already on file, not a new
-        assessment.
-      </p>
-      {card.policy_synthetic ? (
-        <p className="synthetic">
-          <span className="badge badge--warn">Synthetic policy</span>{" "}
-          {card.policy_label ?? "The thresholds on this decision are prototype assumptions, not the lender's real policy."}
-        </p>
-      ) : card.policy_label ? (
-        <p className="note">Policy source: {card.policy_label}</p>
-      ) : null}
-      <RuleEvaluationList rules={card.rules} />
-      {card.missing_fields.length ? (
-        <p className="note">
-          Checks that could not run: {card.missing_fields.map(fieldName).join(", ")}.
-        </p>
-      ) : null}
-      {card.failed_reason_codes.length ? (
-        <p className="note">Reason codes on the record: {card.failed_reason_codes.join(", ")}.</p>
-      ) : null}
-      {card.bureau ? (
-        <div className="bureau">
-          <h4>Bureau check</h4>
-          <p>
-            {bureauKindLabel(card.bureau.outcome_kind)}
-            {card.bureau.synthetic_report ? " · synthetic report, demo data" : ""}
-          </p>
-          {card.bureau.review_required ? <p>A person needs to review the bureau information.</p> : null}
-          {card.bureau.info_requested ? <p>More information was requested before the check could finish.</p> : null}
-          {card.bureau.provider_error ? (
-            <p>
-              The bureau service returned an error ({card.bureau.provider_error}).{" "}
-              {card.bureau.retryable ? "A retry may work later." : "This error is not marked retryable."}
-            </p>
-          ) : null}
-          {card.bureau.score_source ? <p>Score source recorded: {card.bureau.score_source}.</p> : null}
-          {card.bureau.score_conflict ? <p>The bureau report and the application disagree on the recorded score.</p> : null}
-          {card.bureau.review_reason_codes?.length ? (
-            <p>Review codes: {card.bureau.review_reason_codes.join(", ")}.</p>
-          ) : null}
-        </div>
-      ) : null}
-      <p className="provenance">
-        {card.record_id ? `Decision record ${card.record_id}` : "Decision record"}
-        {card.policy_version ? ` · policy ${card.policy_version}` : ""}
-        {card.evaluated_at ? ` · evaluated ${card.evaluated_at}` : ""}
-        {card.flags.length ? ` · flags: ${card.flags.join(", ")}` : ""}
-      </p>
-    </section>
-  );
-}
-
-function CitationItem({ citation }: { citation: Citation }) {
+function CitationChip({ citation }: { citation: Citation }) {
   const href = safeUrl(citation.source_url);
-  const title = href ? (
-    <a href={href} target="_blank" rel="noopener noreferrer">
-      {citation.title}
-    </a>
-  ) : (
-    citation.title
-  );
+  const where = [citation.section ? `Section ${citation.section}` : null, citation.page ? `page ${citation.page}` : null]
+    .filter(Boolean)
+    .join(", ");
   return (
     <li>
-      <span className="cite-label">[{citation.label}]</span> {title}
-      {citation.section ? ` · ${citation.section}` : ""}
-      {citation.page ? ` · p.${citation.page}` : ""}
-      {citation.relationship ? <span className="rel"> · {citation.relationship}</span> : null}
-      {citation.applies_to_entity?.length ? ` · applies to: ${citation.applies_to_entity.join("/")}` : null}
+      <details className="source-chip">
+        <summary>
+          <span className="source-chip__label">{citation.label}</span>
+          <span className="source-chip__title">{citation.title}</span>
+        </summary>
+        <div className="source-chip__body">
+          {citation.excerpt ? (
+            <blockquote className="source-chip__quote">{citation.excerpt}</blockquote>
+          ) : (
+            <p className="note">No excerpt was sent with this source.</p>
+          )}
+          <p className="note">
+            {where ? `${where}. ` : ""}
+            {citation.relationship ? `${citation.relationship}. ` : ""}
+            {citation.applies_to_entity?.length ? `Applies to: ${citation.applies_to_entity.join(", ")}.` : ""}
+          </p>
+          {href ? (
+            <a href={href} target="_blank" rel="noopener noreferrer">
+              Open the source document
+            </a>
+          ) : null}
+        </div>
+      </details>
     </li>
   );
 }
@@ -155,100 +134,95 @@ export function PolicyCitationBlock({ citations }: { citations: Citation[] }) {
   return (
     <div className="cites">
       <h3>Sources</h3>
-      <ul>
+      <ul className="source-chips">
         {citations.map((citation) => (
-          <CitationItem key={`${citation.label}-${citation.document_id}-${citation.section ?? ""}`} citation={citation} />
+          <CitationChip key={`${citation.label}-${citation.document_id}-${citation.section ?? ""}`} citation={citation} />
         ))}
       </ul>
     </div>
   );
 }
 
-export function WhatIfResultBlock({ whatIf, card }: { whatIf: WhatIf; card?: DecisionCard }) {
-  if (whatIf.error) {
-    return (
-      <div className="whatif">
-        <h3>What-if</h3>
-        <p className="note">That what-if could not be run: {whatIf.error}</p>
-      </div>
-    );
-  }
-  const changes = Object.entries(whatIf.changes ?? {});
-  const results = Object.entries(whatIf.rule_results ?? {});
-  const recorded = new Map((card?.rules ?? []).map((rule) => [rule.rule_id, rule]));
+export function WhatIfResultBlock({
+  whatIf,
+  onAdjust,
+  locale = "en",
+}: {
+  whatIf: WhatIf;
+  card?: DecisionCard;
+  onAdjust?: () => void;
+  locale?: string;
+}) {
+  const copy = WHAT_IF[lang(locale)];
+  const english = WHAT_IF.en;
   return (
     <div className="whatif">
-      <h3>
-        What-if <span className="badge badge--warn">Hypothetical simulation, not a decision</span>
-      </h3>
-      {changes.length ? (
-        <p className="note">
-          With {changes.map(([field, value]) => `${fieldName(field)} = ${amount(value)}`).join(", ")}:
+      <div className="whatif__head">
+        <h3>What-if</h3>
+        <span className="badge badge--neutral">{english.label}</span>
+      </div>
+      {whatIf.error ? (
+        <p className="note" lang={langOf(lang(locale))}>
+          {copy.error}
+        </p>
+      ) : (
+        <>
+          {whatIf.amount ? (
+            <p className="whatif__amount">
+              <span className="whatif__label">Loan amount</span> <b>{rupees(whatIf.amount)}</b>
+            </p>
+          ) : null}
+          {whatIf.meets !== null ? (
+            <p className="whatif__outcome" lang={langOf(lang(locale))}>
+              {whatIf.meets ? copy.meet : copy.miss}
+            </p>
+          ) : null}
+        </>
+      )}
+      {lang(locale) !== "en" ? (
+        <p className="note" lang={lang(locale)}>
+          {copy.label}
         </p>
       ) : null}
-      {whatIf.simulated_decision ? (
-        <p>
-          Simulated outcome: <b>{outcomeLabel(whatIf.simulated_decision).label}</b>
-          {whatIf.is_simulation === false ? "" : " (simulation only)"}
-        </p>
-      ) : null}
-      {results.length ? (
-        <table>
-          <caption className="sr-only">Hypothetical rule results compared with the recorded decision</caption>
-          <thead>
-            <tr>
-              <th scope="col">Check</th>
-              {card ? <th scope="col">Recorded</th> : null}
-              <th scope="col">Hypothetical</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.map(([rule, result]) => {
-              const prior = recorded.get(rule);
-              return (
-                <tr key={rule}>
-                  <th scope="row">{prior?.name ?? rule}</th>
-                  {card ? <td>{prior ? ruleResultLabel(prior.result) : "Not recorded"}</td> : null}
-                  <td className={`r-${result}`}>{ruleResultLabel(result)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      ) : null}
-      <p className="note">
-        {whatIf.label ?? "Hypothetical result under the synthetic prototype policy; not a decision and not a guarantee."}
-      </p>
-      {whatIf.original_record_unchanged === true ? (
-        <p className="note">Your recorded application was not changed by this simulation.</p>
+      {onAdjust ? (
+        <button type="button" className="btn btn--ghost btn--sm" onClick={onAdjust}>
+          Try other numbers
+        </button>
       ) : null}
     </div>
   );
 }
 
-export function ImprovementPlanBlock({ plan, showHeading = true }: { plan: ImprovementTask[]; showHeading?: boolean }) {
+export function ImprovementPlanBlock({
+  plan,
+  showHeading = true,
+  locale = "en",
+}: {
+  plan: ImprovementTask[];
+  showHeading?: boolean;
+  locale?: string;
+}) {
+  const id = useId();
   if (!plan.length) return null;
+  const language = lang(locale);
+  const heading = `improvement-plan-${id.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const steps = improvementSteps(
+    // A step that skipped the parser (raw server shape) is still reduced to its theme here.
+    plan.map((step) => step.theme ?? classify(step as unknown as ReasonSignal)),
+    language,
+  );
   return (
-    <section className="plan" aria-labelledby={showHeading ? "improvement-plan-heading" : undefined}>
-      {showHeading ? <h3 id="improvement-plan-heading">What could change the outcome</h3> : null}
-      <ol>
-        {plan.map((step) => (
-          <li key={step.rule_id}>
-            <p>{step.task}</p>
-            {step.target_display || step.gap_display ? (
-              <p className="note">
-                {step.target_display ? `Target: ${step.target_display}${step.gap_display ? ` (${step.gap_display})` : ""}` : null}
-              </p>
-            ) : null}
-            <p className="note">{step.general_guidance}</p>
+    <div className="plan" role="group" aria-labelledby={showHeading ? heading : undefined}>
+      {showHeading ? <h3 id={heading}>What could help</h3> : null}
+      <ol lang={langOf(language)}>
+        {steps.map((step) => (
+          <li key={step}>
+            <p>{step}</p>
           </li>
         ))}
       </ol>
-      <p className="note">
-        Targets are arithmetic on the synthetic thresholds, re-checked by the decision engine as a what-if. Not a
-        guarantee: a lender decides on a new application.
-      </p>
-    </section>
+      <p className="note">General guidance, not a promise. A person decides on a new application.</p>
+    </div>
   );
 }
 
@@ -257,12 +231,16 @@ export function MissingInformationBlock({ items }: { items: MissingInformationIt
   return (
     <section className="missing" aria-labelledby="missing-heading">
       <h3 id="missing-heading">Information still needed</h3>
-      <ul>
+      <ul className="action-rows">
         {items.map((item) => (
-          <li key={item.field}>
-            <b>{item.label}</b>
-            <p className="note">{item.explanation}</p>
-            <a href={item.href}>{item.linkLabel}</a>
+          <li key={item.field} className="action-row">
+            <div className="action-row__text">
+              <b>{item.label}</b>
+              <p className="note">{item.explanation}</p>
+            </div>
+            <a className="action-row__action" href={item.href}>
+              {item.linkLabel}
+            </a>
           </li>
         ))}
       </ul>
@@ -273,29 +251,27 @@ export function MissingInformationBlock({ items }: { items: MissingInformationIt
 export function HumanAssistanceBlock({ handoffRef }: { handoffRef: string }) {
   return (
     <section className="handoff" aria-labelledby="handoff-heading">
-      <h3 id="handoff-heading">Human help requested</h3>
-      <p>
-        A handoff reference was saved: <span className="mono">{handoffRef}</span>.
-      </p>
-      <p className="note">
-        This records your request in this site's queue. No message has been sent to a person yet, no advisor has been
-        assigned, and no external ticket has been created.
-      </p>
-      <p className="note">
-        For a response, use the <a href="/borrower/help">help page</a> to see how to reach the lender.
-      </p>
+      <div className="handoff__head">
+        <img className="handoff__art" src="/assets/loan_advisory_portal/illustrations/handoff.svg" alt="" width={96} height={72} />
+        <h3 id="handoff-heading">Human help requested</h3>
+      </div>
+      <ul className="action-rows">
+        <li className="action-row">
+          <div className="action-row__text">
+            <b>
+              Reference <span className="mono">{handoffRef}</span>
+            </b>
+            <p className="note">
+              This records your request in this site's queue. No message has been sent to a person yet, no advisor has
+              been assigned, and no external ticket has been created.
+            </p>
+          </div>
+          <a className="action-row__action" href="/borrower/help">
+            See how to reach the lender
+          </a>
+        </li>
+      </ul>
     </section>
-  );
-}
-
-export function ProgressBlock({ stage }: { stage: string }) {
-  const label = progressLabel(stage);
-  if (!label) return null;
-  return (
-    <div className="progress" role="status" aria-live="polite">
-      <span className="progress__dot" aria-hidden="true" />
-      <span>{label}</span>
-    </div>
   );
 }
 

@@ -30,12 +30,17 @@ PII = {
 }
 
 RETENTION = {
-    "LMS_SNAPSHOT": "Kept immutable with the decision record for the life of the application plus the owner's retention period "
-                    "(PROPOSED 8 years after closure or decline; UNVERIFIED: the G1 corpus states no period, and Bajaj's privacy "
-                    "policy says 'Storage of data as per company's policy in addition to regulatory and legal requirements', "
-                    "BFL-PRIVACY#003).",
+    "LMS_SNAPSHOT": "Kept immutable with the decision record (ADR-0010 #3, owner 2026-11-03 23:58 IST). Disbursed loan: at least 5 "
+                    "years after the business relationship ends (loan closure). Basis: RBI (NBFC – Know Your Customer) Directions, 2025 "
+                    "para 47(2), identification records 'for at least five years after the business relationship has ended', and para "
+                    "47(1), transaction records 'for at least five years from the date of transaction' (rbi.org.in id=12943). Declined "
+                    "or withdrawn application: 5 years from the decision date, which is SARAL'S CHOICE (no RBI period was found for "
+                    "applications that never became a relationship). The earlier 8-year proposal is withdrawn; it had no RBI basis.",
     "SOURCE_REFERENCE": "Raw payload stays at the synthetic API / object store (PROPOSED 180-day TTL for synthetic data); the LMS "
-                        "keeps reference id, sha256 and fetch time as LMS_SNAPSHOT.",
+                        "keeps reference id, sha256 and fetch time as LMS_SNAPSHOT. For digital lending RBI sets no period: the NBFC "
+                        "must define and publish 'the length of time for which data can be stored' and a 'data destruction protocol' "
+                        "(RBI (NBFC – Credit Facilities) Directions, 2025 para 14(2), rbi.org.in id=12957); data stays on servers "
+                        "in India (para 14(4)).",
     "NEVER_STORE": "Held in memory for the request only; never written to the LMS, logs or traces.",
 }
 
@@ -136,7 +141,7 @@ employment_gap_months|int|months|DERIVED|DERIVED|MISSING|PERSONAL|LMS|employment
 employment_history|list||APPLICATION|NONE|MISSING|PERSONAL|LMS||Not collected in the lean MVP form
 employment_months|int|months|DERIVED|DERIVED|BP.employment_months; LA.custom_employment_months (declared integer)|PERSONAL|LMS|employment_start_date,assessment_date|PRE-EMP: months from joining date; employment letter OCR as fallback
 employment_start_date|date||APPLICATION|FRONTEND:joining_date|MISSING (months only)|PERSONAL|LMS||
-employment_status|enum|PERMANENT/PROBATION/CONTRACT|APPLICATION|NONE|MISSING|PERSONAL|LMS||Not in the MVP step-4 list (PL-016 deferred)
+employment_status|enum|PERMANENT/PROBATION/CONTRACT|APPLICATION|NONE|MISSING|PERSONAL|LMS||Not in the MVP step-4 list; the KYC/AA data points supply it on the synthetic test bed (PL-016, D-12)
 employment_type|enum|SALARIED|APPLICATION|FRONTEND:employment_type|BP.employment_type (Salaried/Self-employed/Business/Student/Retired/Unemployed)|NONE|LMS||Fixed SALARIED in the MVP
 enquiries_last_30_days|int|count|DERIVED|DERIVED|MISSING|CREDIT|LMS|bureau_enquiries,assessment_date|PRE-BUREAU
 enquiries_last_6_months|int|count|DERIVED|DERIVED|MISSING|CREDIT|LMS|bureau_enquiries,assessment_date|PRE-BUREAU
@@ -228,6 +233,7 @@ required_documents|list||POLICY_PARAMETER|POLICY|LA.documents link Loan Document
 required_fields|list||POLICY_PARAMETER|POLICY|MISSING|NONE|LMS||PL-096
 required_identity_fields|list||POLICY_PARAMETER|POLICY|MISSING|NONE|LMS||PL-006
 residual_income|float|INR/month|DERIVED|DERIVED|MISSING|FINANCIAL|LMS|monthly_net_income,total_monthly_obligations|PL-065
+residency_status|enum|RESIDENT/NRI|APPLICATION|NONE|MISSING|PERSONAL|LMS||Declared residency; not in the MVP form; the KYC/AA data points supply it on the synthetic test bed (PL-130, D-13)
 restructured_account_count|int|count|SYNTHETIC_BUREAU_V2|B2:accounts[].restructured|MISSING|CREDIT|REF||Not in bureau-report/1
 return_count|int|count|DERIVED|DERIVED|MISSING|FINANCIAL|LMS|K:transactions[].category|PRE-BANK: NACH_RETURN + CHEQUE_RETURN in 3 months
 review_flags|list|codes|SYSTEM|SYSTEM|MISSING|INTERNAL_RISK|LMS||Rule results with REVIEW

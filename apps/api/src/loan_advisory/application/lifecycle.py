@@ -19,6 +19,7 @@ Bureau-backed runs add one step: a data-quality hold becomes outcome=REVIEW whil
 failure becomes outcome=ERROR. The resolved score is what ZEN evaluates.
 """
 import json
+import os
 from dataclasses import dataclass, field
 
 from decision_engine.paths import repo_root
@@ -69,10 +70,18 @@ class Outcome:
     flags: list[str] = field(default_factory=list)
 
 
+def _score_origin(doc: dict):
+    return doc.get("custom_credit_score_origin", doc.get("credit_score_origin"))
+
+
 def _scored_inputs(doc: dict) -> dict:
     out = {}
     for k, (custom, plain) in FIELD_ALIASES.items():
         out[k] = doc.get(custom, doc.get(plain))
+    # Q-17: Frappe stores an Int it never fetched as 0. That is a missing score (fetch it from the
+    # bureau), not an invalid local score.
+    if _score_origin(doc) == "NOT_FETCHED" and not out.get("credit_score"):
+        out["credit_score"] = None
     return out
 
 
@@ -90,7 +99,7 @@ def _bureau_application(doc: dict, inputs: dict, applicant: str | None) -> dict:
         "applicant_id": applicant,
         "loan_amount": doc.get("loan_amount"),
         "loan_tenure_months": doc.get("repayment_periods", doc.get("loan_tenure_months")),
-        "credit_score_origin": doc.get("credit_score_origin"),
+        "credit_score_origin": _score_origin(doc),
     }
 
 
@@ -101,6 +110,61 @@ def _active_policy():
     if pv.policy_path != decision_orchestrator.POLICY_PATH.resolve():
         raise PolicyIntegrityError(f"active policy {pv.version} is not the one wired into decide()")
     return pv
+
+
+V2_VERSION = "synthetic-v2"
+
+
+def configured_policy_version() -> str | None:
+    """`SARAL_POLICY_VERSION` selects the policy for bureau-backed runs (e.g. synthetic-v2 = catalogue v2).
+    Unset keeps the registry's active version (v1), which stays the fallback."""
+    return (os.environ.get("SARAL_POLICY_VERSION") or "").strip() or None
+
+
+def _v2_data_points(doc: dict, inputs: dict, score, kyc_points: dict | None, *, bureau_unavailable: bool = False) -> dict:
+    """ZEN v2 input: the KYC/AA consumer's preprocessed data points, then the application's own request values,
+    then the bureau-resolved score. An off-product purpose is passed through so PL-076 declines it."""
+    dp = dict(kyc_points or {})
+    purpose = doc.get("custom_purpose_code") or "_".join((doc.get("custom_loan_purpose") or "").lower().split()) or None
+    dp.update({
+        "requested_amount": doc.get("loan_amount"),
+        "tenure_months": doc.get("repayment_periods", doc.get("loan_tenure_months")),
+        "loan_purpose": purpose,
+        "declared_income": inputs.get("monthly_income"),
+        "declared_obligations": inputs.get("monthly_obligations"),
+        "bureau_score": score,
+    })
+    if bureau_unavailable:  # D-11: no report this time; PL-019 decides (catalogue: retry once, then manual review)
+        dp.update({"bureau_report_status": "UNAVAILABLE", "bureau_score": None})
+    if kyc_points is None:  # no verified figures: the declared ones are all ZEN gets
+        dp.update({"monthly_net_income": inputs.get("monthly_income"),
+                   "existing_monthly_obligations": inputs.get("monthly_obligations"),
+                   "employment_months": inputs.get("employment_months")})
+    return dp
+
+
+def _decide_v2(application_ref, doc, inputs, applicant, gate_score, kyc_client, pv, sink, current_state,
+               blocks, flags, now, *, bureau_unavailable=False):
+    from decision_engine.catalogue_v2.engine import LIFECYCLE_FOR, build_record_v2, decide_v2
+    from loan_advisory.infrastructure.kyc_aa_client import KycAaClient
+
+    kyc = (kyc_client or KycAaClient()).data_points(applicant)
+    if kyc.data_points is None:
+        flags.append(kyc.error or "KYC_AA_UNAVAILABLE")
+    dp = _v2_data_points(doc, inputs, gate_score, kyc.data_points, bureau_unavailable=bureau_unavailable)
+    result = decide_v2(dp)
+    to = LIFECYCLE_FOR[result["decision"]]
+    if to in ("APPROVED", "REJECTED") and _contradictory_obligations(inputs):
+        flags.append("CONTRADICTION_OBLIGATIONS_EXCEED_INCOME")
+        to = "MANUAL_REVIEW"
+    check_transition("UNDER_REVIEW", to)
+    rec = build_record_v2(result, pv, dp, application_ref=application_ref, applicant_ref=applicant, lifecycle_state=to,
+                          missing_fields=[e["rule_id"] for e in result["rule_evaluations"] if e["result"] == "INSUFFICIENT_DATA"
+                                          and e["effect"] == "MORE_INFORMATION_REQUIRED"],
+                          flags=flags, now=now, bureau=blocks["bureau"], review=blocks["review"])
+    sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=result.get("zen_trace") or {},
+                 expected_application=application_ref)
+    return Outcome(application_ref, current_state, to, rec, rec["inputs"]["missing_fields"], flags)
 
 
 def process_application(application_ref: str, store, sink, current_state: str | None = None, now=None) -> Outcome:
@@ -143,7 +207,7 @@ def process_application(application_ref: str, store, sink, current_state: str | 
 
 def process_bureau_application(application_ref: str, store, sink, bureau_client, *,
                                scenario: str | None = None, current_state: str | None = None,
-                               now=None) -> Outcome:
+                               now=None, kyc_client=None) -> Outcome:
     """Run one application through the synthetic bureau gate, then ZEN.
 
     Data-quality holds become outcome=REVIEW while `decision` stays the legacy
@@ -157,7 +221,8 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
     check_transition(current_state, "UNDER_REVIEW")
     inputs = _scored_inputs(doc)
     applicant = doc.get("applicant") or doc.get("applicant_id")
-    missing = [k for k, v in inputs.items() if v is None or v == ""]
+    # The bureau supplies the score on this path, so a not-yet-fetched score is not missing information.
+    missing = [k for k, v in inputs.items() if (v is None or v == "") and k != "credit_score"]
     flags = []
     fetch_error = None
     report = None
@@ -186,6 +251,13 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
 
     blocks = bureau_outcome(gate, report, fetch_error=fetch_error)
     evidence_inputs = inputs
+    if gate.category == "PROVIDER_FAILURE" and configured_policy_version() == V2_VERSION:
+        # D-11: under catalogue v2 a provider failure is a v2 decision (PL-019 -> MANUAL_REVIEW), never ERROR with
+        # the synthetic-v1 rule ids. The fetch error stays in the bureau block for the officer.
+        flags.append("BUREAU_PROVIDER_ERROR")
+        return _decide_v2(application_ref, doc, inputs, applicant, None, kyc_client,
+                          load_policy("PERSONAL_LOAN", V2_VERSION), sink, current_state, blocks, flags, now,
+                          bureau_unavailable=True)
     if gate.category == "PROVIDER_FAILURE":
         ev = {"decision": "ERROR", "rule_evaluations": [], "zen_trace": {},
               "error": f"{fetch_error['code']}: {fetch_error['message']}"}
@@ -196,6 +268,9 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
               "error": f"BUREAU_REVIEW: {', '.join(gate.reason_codes)}"}
         to = "INFO_REQUESTED" if gate.info_requested else "MANUAL_REVIEW"
         flags.append("BUREAU_REVIEW")
+    elif configured_policy_version() == V2_VERSION:
+        return _decide_v2(application_ref, doc, inputs, applicant, gate.score.value, kyc_client,
+                          load_policy("PERSONAL_LOAN", V2_VERSION), sink, current_state, blocks, flags, now)
     else:
         evidence_inputs = {**inputs, "credit_score": gate.score.value}
         ev = decide(application_ref, store=store,
@@ -215,6 +290,13 @@ def process_bureau_application(application_ref: str, store, sink, bureau_client,
                        now=now, outcome=blocks["outcome"], review=blocks["review"],
                        bureau=blocks["bureau"])
     rec["flags"] = flags
+    if gate.review_required and gate.category != "PROVIDER_FAILURE" and configured_policy_version() == V2_VERSION:
+        # Catalogue v2 vocabulary: a bureau no-hit / thin-file / data-quality gate is a referral (or an info
+        # request), not an engine error. The DQ codes stay in rec["review"] for the officer; the borrower gets a
+        # plain reason category only.
+        rec["decision"] = rec["outcome"] = "MORE_INFORMATION_REQUIRED" if to == "INFO_REQUESTED" else "MANUAL_REVIEW"
+        rec["reason_categories"] = ["DETAILS_NOT_VERIFIED"]
+        rec["error"] = None
     sink.persist(rec, native_status=NATIVE_STATUS.get(to, "Open"), trace=ev.get("zen_trace") or {},
                  expected_application=application_ref)
     return Outcome(application_ref, current_state, to, rec, missing, flags)
@@ -236,6 +318,104 @@ def simulate(application_ref: str, store, overrides: dict, now=None, *, base: di
     return rec
 
 
+# ------------------------------------------------------------------ catalogue-v2 what-if (agent eval fix 5)
+# Borrower what-if fields -> the v2 data points they stand for. An income change is modelled as a verified income of
+# that amount (every income figure that is present moves together, so the hypothetical never trips a mismatch rule).
+V2_WHAT_IF_POINTS = {
+    "monthly_income": ("monthly_net_income", "declared_income", "verified_income", "ocr_extracted_income",
+                       "declared_salary", "bank_salary_credit_avg", "average_monthly_income"),
+    "monthly_obligations": ("existing_monthly_obligations", "declared_obligations"),
+    "loan_amount": ("requested_amount",),
+    "tenure_months": ("tenure_months",),
+}
+# Reason categories the four editable fields can change through the PL-129 sizing alone.
+_SIZING_CATEGORIES = {"REPAYMENTS_TOO_HIGH", "REQUEST_OUTSIDE_OFFER"}
+_STORED_BASE = ("requested_amount", "tenure_months", "loan_purpose", "monthly_net_income",
+                "existing_monthly_obligations", "employment_months", "bureau_score")
+
+
+def _apply_v2_overrides(dp: dict, overrides: dict) -> dict:
+    out = dict(dp)
+    for name, value in overrides.items():
+        keys = V2_WHAT_IF_POINTS.get(name)
+        if keys is None:
+            raise ValueError(f"not editable in a what-if: {name}")
+        first = True
+        for k in keys:
+            if first or k in out:  # the primary point always; the others only when the record has them
+                out[k] = value
+            first = False
+    return out
+
+
+def _sizing_estimate(record: dict, dp: dict) -> dict:
+    """Estimate from ZEN's own PL-129 sizing when the full data points are not at hand. Only valid when the stored
+    decision depended on sizing alone; anything else is an ERROR (the borrower hears it couldn't be estimated)."""
+    from decision_engine.catalogue_v2.engine import size_offer
+
+    stored = record.get("decision") or record.get("outcome")
+    cats = list(record.get("reason_categories") or [])
+    blocking = [c for c in cats if c not in _SIZING_CATEGORIES]
+    if stored in ("MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED") or "INCOME_NOT_VERIFIED_OR_INSUFFICIENT" in blocking \
+            or "OTHER" in blocking or "DETAILS_NOT_VERIFIED" in blocking or "DOCUMENTS_INCOMPLETE_OR_UNCLEAR" in blocking:
+        return {"decision": "ERROR", "reason_categories": [], "offer": None, "basis": "not_estimable"}
+    if stored == "DECLINE" and blocking:  # e.g. credit history: none of the editable fields changes it
+        return {"decision": "DECLINE", "reason_categories": blocking[:1], "offer": None, "basis": "unchanged_reason"}
+    try:
+        s = size_offer(float(dp["requested_amount"]), int(dp["tenure_months"]), dp["loan_purpose"],
+                       float(dp["monthly_net_income"]), float(dp.get("existing_monthly_obligations") or 0),
+                       score=dp.get("bureau_score"), employment_months=dp.get("employment_months"))
+    except (KeyError, TypeError, ValueError):
+        return {"decision": "ERROR", "reason_categories": [], "offer": None, "basis": "not_estimable"}
+    decision = {"APPROVED": "ELIGIBILITY_CONDITIONS_MET"}.get(s["offer_outcome"], s["offer_outcome"])
+    offer = None
+    if s["amount"]:
+        offer = {"amount": s["amount"], "emi": s["emi"], "tenure_months": s["tenure_months"],
+                 "counter_offer": decision == "COUNTER_OFFER", "request_outside_mvp_range": s["request_outside_mvp_range"]}
+    cats = [] if decision == "ELIGIBILITY_CONDITIONS_MET" else ["REPAYMENTS_TOO_HIGH"]
+    return {"decision": decision, "reason_categories": cats, "offer": offer, "basis": "sizing_only"}
+
+
+def simulate_v2(application_ref: str, store, record: dict, overrides: dict, *, kyc_client=None, now=None) -> dict:
+    """What-if under the ACTIVE catalogue-v2 policy (synthetic-v2), in memory, never persisted.
+
+    Starts from the values the stored evaluation used, applies the borrower's hypothetical change and runs the same
+    `decide_v2` path. Without the applicant's full KYC/AA data points the full engine cannot run, so the estimate
+    falls back to ZEN's own PL-129 sizing when the stored decision depended on sizing alone; otherwise the result is
+    ERROR, which the agent says it couldn't estimate (never "would not meet")."""
+    from decision_engine.catalogue_v2.engine import build_record_v2, decide_v2
+    from loan_advisory.infrastructure.kyc_aa_client import KycAaClient
+
+    pv = load_policy("PERSONAL_LOAN", V2_VERSION)
+    doc = store.get(application_ref)
+    inputs = _scored_inputs(doc)
+    applicant = doc.get("applicant") or doc.get("applicant_id")
+    used = (record.get("inputs") or {}).get("values") or {}
+    client = kyc_client or KycAaClient()
+    kyc = client.data_points(applicant) if client.configured else None
+    points = kyc.data_points if kyc is not None else None
+    dp = _v2_data_points(doc, inputs, used.get("bureau_score"), points)
+    for k in _STORED_BASE:
+        if used.get(k) is not None:
+            dp[k] = used[k]
+    dp = _apply_v2_overrides(dp, overrides)
+    if points is not None:
+        result = decide_v2(dp)
+        basis = "full"
+    else:
+        result = _sizing_estimate(record, dp)
+        basis = result["basis"]
+    result.setdefault("rule_evaluations", [])
+    result.setdefault("zen_trace", {})
+    rec = build_record_v2(result, pv, dp, application_ref=application_ref, applicant_ref=applicant,
+                          lifecycle_state="SIMULATION", now=now)
+    rec["is_simulation"] = True
+    rec["hypothetical_changes"] = dict(overrides)
+    rec["estimate_basis"] = basis
+    return rec
+
+
 __all__ = ["STATES", "TRANSITIONS", "AUTOMATED_TRANSITIONS", "NATIVE_STATUS", "IllegalTransition",
            "check_transition", "process_application",
-           "process_bureau_application", "simulate", "Outcome", "UnknownApplication", "FrappeUnavailable"]
+           "process_bureau_application", "simulate", "simulate_v2", "Outcome", "UnknownApplication",
+           "FrappeUnavailable"]

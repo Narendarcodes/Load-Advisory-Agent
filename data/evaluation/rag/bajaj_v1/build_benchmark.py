@@ -23,6 +23,7 @@ from pathlib import Path
 H = Path(__file__).parent
 ROOT = H.parents[3]
 sys.path.insert(0, str(ROOT))
+from rag.corpus import register  # noqa: E402
 from rag.retrieve import load_profile, profile_filter  # noqa: E402
 
 POLICY = Path(os.environ.get("LOAN_POLICY_DIR", "/root/hx/loan/policy"))
@@ -130,7 +131,7 @@ def drafts():
     trivia (reviewer names, partner addresses/phones), out of personal-loan scope (gold/locker/microfinance/FD/project
     finance), duplicates, calculator examples, and answers whose context was ambiguous (e.g. #99 gold-loan compensation)."""
     out = []
-    for i, l in enumerate((H / "llm_drafts_raw.jsonl").open()):
+    for i, l in enumerate((H / "llm_drafts_raw.jsonl").open(encoding="utf-8")):
         if i in DRAFT_DROP:
             continue
         d = json.loads(l)
@@ -142,7 +143,7 @@ def drafts():
 
 
 def main():
-    chunks = [json.loads(l) for l in (POLICY / "chunks.jsonl").open()]
+    chunks = [json.loads(l) for l in (POLICY / "chunks.jsonl").open(encoding="utf-8")]
     profiles = {}
     rows = drafts() + HUMAN
     bad = []
@@ -165,6 +166,33 @@ def main():
         for b in bad:
             print("GOLD CHECK FAILED", b)
         sys.exit(1)
+    # Scoreability is a property of the PRODUCTION profile, not the anchor-search profile.
+    # Gold above is expanded with include_education=True so education pages can count as evidence, but
+    # config/lender_profiles/*.yaml never admits lender_education at runtime (agent/runtime.py passes no exemption).
+    # A row is still scoreable if ANY gold document is reachable; a row whose gold set contains an unreachable
+    # document is *polluted*: it scores, but achievable citation precision is capped below 1.0. Record both facts
+    # instead of leaving them to be discovered as an unexplained metric ceiling.
+    reg = {d["document_id"]: d for d in register()}
+    for r in rows:
+        blocked, reachable = [], []
+        if not r["expect_abstain"]:
+            prod = profile_filter(profiles[r["profile"]], r["mode"])
+            for d in r["gold_docs"]:
+                doc = reg[d]
+                (reachable if prod.allows({**doc, "approval_status": doc["approval_status"]}) else blocked).append(d)
+        r["scoreable"] = bool(reachable) or r["expect_abstain"]
+        r["gold_unreachable_docs"] = blocked
+        if blocked and not r["scoreable"]:
+            r["scoreability_note"] = ("no gold document is reachable under the question's own active profile; the "
+                                      "row cannot be scored as written. " + "; ".join(blocked))
+        elif blocked:
+            r["scoreability_note"] = (f"gold is reachable ({len(reachable)} of {len(r['gold_docs'])} documents) but "
+                                      "includes " + "; ".join(blocked) + ", which config/lender_profiles/" +
+                                      r["profile"] + ".yaml can never serve, because gold was expanded with "
+                                      "include_education=True while production passes the default. The row scores "
+                                      "normally; achievable citation precision on it is capped below 1.0.")
+        else:
+            r["scoreability_note"] = None
     # stratified dev/test split
     rng = random.Random(20261014)
     by = defaultdict(list)
@@ -176,13 +204,15 @@ def main():
         for j, r in enumerate(rs):
             r["split"] = "dev" if j < n_dev else "test"
     rows.sort(key=lambda r: r["qid"])
-    (H / "benchmark.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
+    (H / "benchmark.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     stats = {"total": len(rows), "human": sum(r["origin"] == "human" for r in rows),
              "llm_draft_reviewed": sum(r["origin"] != "human" for r in rows),
              "abstain": sum(r["expect_abstain"] for r in rows),
+             "unscoreable": sum(not r["scoreable"] for r in rows),
+             "gold_unreachable_rows": sum(bool(r["gold_unreachable_docs"]) for r in rows),
              "dev": sum(r["split"] == "dev" for r in rows), "test": sum(r["split"] == "test" for r in rows),
              "by_category": {c: {"dev": sum(r["split"] == "dev" for r in rs), "test": sum(r["split"] == "test" for r in rs)} for c, rs in sorted(by.items())}}
-    (H / "stats.json").write_text(json.dumps(stats, indent=1) + "\n")
+    (H / "stats.json").write_text(json.dumps(stats, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(stats, indent=1))
 
 

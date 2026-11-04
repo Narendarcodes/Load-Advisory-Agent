@@ -40,7 +40,8 @@ def _capture(monkeypatch, resp):
 
 
 def _clear(monkeypatch):
-    for name in ("LLM_API_KEY", "GROQ_API_KEY", "OMNIROUTE_API_KEY", "LLM_PROVIDER"):
+    for name in ("LLM_API_KEY", "GROQ_API_KEY", "OMNIROUTE_API_KEY", "RIVER_API_KEY", "LLM_PROVIDER", "SARAL_LLM_PROVIDER",
+                 "SARAL_LLM_MODEL", "SARAL_LLM_BASE_URL", "SARAL_LLM_FALLBACK_MODEL"):
         monkeypatch.delenv(name, raising=False)
 
 
@@ -67,6 +68,7 @@ def test_provider_key_is_the_fallback(monkeypatch):
 def test_omniroute_key_is_used_for_the_local_gateway(monkeypatch):
     _clear(monkeypatch)
     monkeypatch.setenv("OMNIROUTE_API_KEY", SECRET)
+    monkeypatch.setenv("LLM_PROVIDER", "omniroute")
     seen = _capture(monkeypatch, _Resp(_sse("ok")))
     L.ChatLLM().chat("s", "u")
     assert seen["headers"] == {"Authorization": f"Bearer {SECRET}"}

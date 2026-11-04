@@ -32,6 +32,25 @@ DEFAULT_PRODUCT = "SYN-PERSONAL-001"
 LIST_FIELDS = ("name", "loan_amount", "repayment_periods", "custom_lifecycle_state", "status",
                "creation", "modified", "custom_loan_purpose")
 
+# Everything the conversational agent reads, and nothing else. A full Loan Application also carries the
+# applicant's name, contact details and document links: the agent has no use for them, so it never receives
+# them. Used by `ReadOnlyFrappeApplication.get` only — the pipeline's `FrappeClient.get` reads the whole
+# document, because its field set is its own business (see `read_full_application`).
+#
+# Every name here must be a field Frappe actually has on Loan Application, because a `fields` list naming a
+# missing field is an error, not a null. The plain `monthly_income`-style fallbacks in `from_frappe_doc` and the
+# synthetic-only `credit_score_origin` are therefore deliberately absent: on a live document they were already
+# missing, and on a synthetic one no projection is applied.
+READ_FIELDS = ("name", "applicant", "loan_product", "loan_amount", "repayment_periods", "status",
+               "custom_lifecycle_state", "custom_latest_evidence",
+               "custom_monthly_income", "custom_monthly_obligations", "custom_credit_score",
+               "custom_employment_months")
+
+# Real Frappe Lending fields; tests/test_agent_read_boundary.py checks the custom_* half against the portal install.
+STANDARD_LOAN_FIELDS = {"name", "applicant", "loan_product", "loan_amount", "repayment_periods", "status"}
+
+RESOLVE_FIELDS = ("name", "applicant", "custom_external_ref", "custom_lifecycle_state")
+
 
 class FrappeUnavailable(Exception):
     pass
@@ -39,6 +58,130 @@ class FrappeUnavailable(Exception):
 
 class UnknownApplication(Exception):
     pass
+
+
+def _credentials(base_url, api_key, api_secret):
+    """Resolve and check one Frappe identity from arguments or environment; never a silent fallback."""
+    base_url = (base_url or os.environ.get("FRAPPE_URL", "")).rstrip("/")
+    api_key = api_key or os.environ.get("FRAPPE_API_KEY", "")
+    api_secret = api_secret or os.environ.get("FRAPPE_API_SECRET", "")
+    if not (base_url and api_key and api_secret):
+        raise FrappeUnavailable("FRAPPE_URL / FRAPPE_API_KEY / FRAPPE_API_SECRET not set")
+    return base_url, api_key, api_secret
+
+
+def read_application(base_url: str, headers: dict, application_id: str) -> dict:
+    """Read one Loan Application, projected to READ_FIELDS. This is the agent's read.
+
+    This is a list read filtered on `name`, not `GET /api/resource/<doctype>/<name>`, and that is not
+    a style choice: measured against Frappe 16.51 on 2026-11-03, the single-document endpoint ignores a
+    `fields` parameter and returns all 41 columns — including `applicant_name`, `applicant_email_address`,
+    `applicant_phone_number` and `zip_code`. The list endpoint honours `fields` and returned exactly the
+    twelve decision fields with no PII. Projecting the request without checking the response is how the
+    first attempt at this boundary passed every offline test and failed live.
+    """
+    try:
+        r = requests.get(f"{base_url}/api/resource/{DOCTYPE}", headers=headers, timeout=15,
+                         params={"filters": json.dumps([["name", "=", application_id]]),
+                                 "fields": json.dumps(list(READ_FIELDS)),
+                                 "limit_page_length": "1"})
+    except requests.RequestException as e:
+        raise FrappeUnavailable(f"frappe unreachable: {e}")
+    if r.status_code == 404:
+        raise UnknownApplication(f"unknown application: {application_id}")
+    if not r.ok:
+        raise FrappeUnavailable(f"frappe HTTP {r.status_code}: {r.text[:200]}")
+    rows = r.json().get("data") or []
+    if not rows:
+        raise UnknownApplication(f"unknown application: {application_id}")
+    return rows[0]
+
+
+def read_full_application(base_url: str, headers: dict, application_id: str) -> dict:
+    """Read one whole Loan Application, for the underwriting pipeline.
+
+    Deliberately *not* projected, unlike `read_application`. The pipeline reads fields that are not
+    decision inputs — `credit_score_origin`, which `resolve_credit_score` uses to tell a placeholder
+    score from a recorded one — so narrowing this list would change underwriting behaviour rather than
+    shrink a view. The agent cannot reach this function through its object graph: it is a method of
+    `FrappeClient`, which also exposes `create` and `call_method` and so fails `assert_reader`.
+    """
+    try:
+        r = requests.get(f"{base_url}/api/resource/{DOCTYPE}/{application_id}", headers=headers, timeout=15)
+    except requests.RequestException as e:
+        raise FrappeUnavailable(f"frappe unreachable: {e}")
+    if r.status_code == 404:
+        raise UnknownApplication(f"unknown application: {application_id}")
+    if not r.ok:
+        raise FrappeUnavailable(f"frappe HTTP {r.status_code}: {r.text[:200]}")
+    return r.json().get("data", {})
+
+
+def resolve_application(base_url: str, headers: dict, external_ref: str) -> dict | None:
+    """Map the borrower-visible reference to a Loan Application, or None. Server-side filter, never a body field."""
+    try:
+        r = requests.get(f"{base_url}/api/resource/{DOCTYPE}", headers=headers, timeout=15,
+                         params={"filters": json.dumps([["custom_external_ref", "=", external_ref]]),
+                                 "fields": json.dumps(list(RESOLVE_FIELDS))})
+    except requests.RequestException as e:
+        raise FrappeUnavailable(f"frappe unreachable: {e}")
+    rows = r.json().get("data", []) if r.ok else []
+    return rows[0] if rows else None
+
+
+class ReadOnlyFrappeApplication:
+    """The agent's entire view of the system of record: one projected GET per application.
+
+    Built from configuration strings, not from a `FrappeClient`, so there is no create/set_status/call_method
+    behind it to reach. `application/ports.assert_reader` refuses anything that has one.
+    """
+
+    def __init__(self, base_url=None, api_key=None, api_secret=None):
+        self.base_url, self._api_key, self._api_secret = _credentials(base_url, api_key, api_secret)
+
+    def _headers(self) -> dict:
+        return {"Authorization": f"token {self._api_key}:{self._api_secret}"}
+
+    def get(self, application_id: str) -> dict:
+        return read_application(self.base_url, self._headers(), application_id)
+
+
+class ReadOnlyDocumentStore:
+    """The agent's view of an in-memory store: read one document, never add or change one.
+
+    Holds the document mapping itself, not the store object, so the synthetic store's write helpers
+    (`MockStore.create`, `set_status`) are not reachable from the agent graph at all.
+    """
+
+    def __init__(self, docs: dict):
+        self._docs = docs
+
+    def get(self, application_id: str) -> dict:
+        try:
+            return dict(self._docs[application_id])
+        except KeyError:
+            raise UnknownApplication(f"unknown application: {application_id}")
+
+
+class ReadOnlyFetchStore:
+    """Read-only view over a store that ships no reader of its own: one bound `get`, nothing else named.
+
+    The bound method still points at its store, so this is the weaker of the two views — the same
+    caveat `application/ports.py` documents for `assert_reader`. Stores that can hand over their
+    document mapping (`MockStore`, `PersonaStore`) use `ReadOnlyDocumentStore` instead.
+    """
+
+    def __init__(self, fetch):
+        self._fetch = fetch
+
+    def get(self, application_id: str) -> dict:
+        return self._fetch(application_id)
+
+
+def read_only_view(store) -> ReadOnlyDocumentStore | ReadOnlyFetchStore:
+    """The narrowest view of `store` the agent may hold."""
+    reader = getattr(store, "reader", None)
+    return reader() if reader else ReadOnlyFetchStore(store.get)
 
 
 class MockStore:
@@ -69,6 +212,10 @@ class MockStore:
             return dict(self._apps[application_id])
         except KeyError:
             raise UnknownApplication(f"unknown application: {application_id}")
+
+    def reader(self) -> ReadOnlyDocumentStore:
+        """The read-only view the agent is built against; this object keeps the write helpers."""
+        return ReadOnlyDocumentStore(self._apps)
 
     def create(self, fields: dict) -> dict:
         """Offline/test write path. Never reachable unless `AGENT_STORE=mock` or --offline."""
@@ -115,29 +262,14 @@ class FrappeClient:
     """
 
     def __init__(self, base_url=None, api_key=None, api_secret=None):
-        self.base_url = (base_url or os.environ.get("FRAPPE_URL", "")).rstrip("/")
-        self.api_key = api_key or os.environ.get("FRAPPE_API_KEY", "")
-        self.api_secret = api_secret or os.environ.get("FRAPPE_API_SECRET", "")
-        if not (self.base_url and self.api_key and self.api_secret):
-            raise FrappeUnavailable("FRAPPE_URL / FRAPPE_API_KEY / FRAPPE_API_SECRET not set")
+        self.base_url, self.api_key, self.api_secret = _credentials(base_url, api_key, api_secret)
 
     def _headers(self):
         return {"Authorization": f"token {self.api_key}:{self.api_secret}"}
 
     def get(self, application_id: str) -> dict:
-        try:
-            r = requests.get(
-                f"{self.base_url}/api/resource/{DOCTYPE}/{application_id}",
-                headers=self._headers(),
-                timeout=15,
-            )
-        except requests.RequestException as e:
-            raise FrappeUnavailable(f"frappe unreachable: {e}")
-        if r.status_code == 404:
-            raise UnknownApplication(f"unknown application: {application_id}")
-        if not r.ok:
-            raise FrappeUnavailable(f"frappe HTTP {r.status_code}: {r.text[:200]}")
-        return r.json().get("data", {})
+        """The pipeline's read: the whole document. The agent's read is `ReadOnlyFrappeApplication.get`."""
+        return read_full_application(self.base_url, self._headers(), application_id)
 
     def create(self, fields: dict) -> dict:
         """Create a Loan Application. Raises on any failure: the caller must not report success."""

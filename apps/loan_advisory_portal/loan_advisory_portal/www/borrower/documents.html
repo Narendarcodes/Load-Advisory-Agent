@@ -1,18 +1,21 @@
 {% extends "templates/portal/base.html" %}
 {% block title %}Documents{% endblock %}
 {% block page_content %}
-<div class="page-head">
+<div class="page-head page-head--art">
 	<div>
-		<p class="eyebrow">Documents</p>
 		<h1>Add the documents for your application</h1>
 		<p>Upload private copies of the documents you are asked for. We can read some details from a document for you to check; a person reviews the submitted documents. Keep any originals until your application is complete.</p>
+		<p><a class="small" href="/borrower">Back to applications</a></p>
 	</div>
-	<div class="page-head__actions">
-		<a class="btn btn--quiet" href="/borrower">Back to applications</a>
-	</div>
+	<img class="page-head__art" src="/assets/loan_advisory_portal/illustrations/documents-header.svg" alt="" width="160" height="120">
 </div>
 
 {% if created %}
+<ol class="stage-stepper" aria-label="Application stages">
+	<li data-state="done"><span class="stage-stepper__num" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14" focusable="false"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="stage-stepper__label">About you<span class="sr-only"> (done)</span></span></li>
+	<li data-state="done"><span class="stage-stepper__num" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14" focusable="false"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="stage-stepper__label">Loan details<span class="sr-only"> (done)</span></span></li>
+	<li data-state="current" aria-current="step"><span class="stage-stepper__num" aria-hidden="true">3</span><span class="stage-stepper__label">Documents</span></li>
+</ol>
 <div class="alert alert--success" role="status">
 	<strong>Draft application created</strong>
 	<span>Add at least one document here, then open the application page to submit it for review.</span>
@@ -21,6 +24,13 @@
 
 <div class="doc-workspace mt">
 	<div class="doc-main">
+		<div class="doc-loading" id="workspace-loading" aria-hidden="true">
+			<span class="skeleton skeleton--line skeleton--w40"></span>
+			<span class="skeleton skeleton--line skeleton--w70"></span>
+			<span class="skeleton skeleton--row"></span>
+			<span class="skeleton skeleton--row"></span>
+			<span class="skeleton skeleton--row"></span>
+		</div>
 		<div class="alert alert--error hidden" id="workspace-error" role="alert">
 			<strong>We could not load this application</strong>
 			<span id="workspace-error-text"></span>
@@ -29,9 +39,8 @@
 		<div class="card hidden" id="application-head">
 			<div class="card__head">
 				<div>
-					<p class="eyebrow">Application</p>
 					<h2 id="app-title">Loan application</h2>
-					<p class="small muted" id="app-meta">Loading</p>
+					<p class="small muted" id="app-meta"><span class="skeleton skeleton--line skeleton--w60" aria-hidden="true"></span></p>
 				</div>
 				<span id="app-status"></span>
 			</div>
@@ -39,7 +48,7 @@
 
 		<div class="card hidden" id="no-application">
 			<div class="empty">
-				<span class="empty__mark" aria-hidden="true">DO</span>
+				<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-documents.svg" alt="" width="180" height="135">
 				<h2 id="no-app-title">Choose an application</h2>
 				<p id="no-app-text">Documents belong to a single application. Open one to add or review its documents.</p>
 				<div class="stack mt" id="application-choices"></div>
@@ -67,7 +76,7 @@
 					<input id="doc-file" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
 				</label>
 				<p class="upload-status" id="upload-status" role="status" aria-live="polite">No file chosen</p>
-				<p class="small muted">Up to 12 documents per application. Files are stored privately and are not used to train any model.</p>
+				<p class="small muted">Up to 12 documents per application. Files are stored privately and are never used to train AI.</p>
 				<p class="small muted" id="ocr-privacy-note">Read fields runs on our own server. Check every suggestion before confirming; it will not update your application automatically, and your document is not sent to any AI chat service.</p>
 			</form>
 		</section>
@@ -81,7 +90,8 @@
 				<strong>Documents are locked</strong>
 				<span>This application has been submitted, so documents cannot be added or removed now.</span>
 			</div>
-			<div class="empty hidden" id="doc-empty">
+			<div class="empty empty--compact hidden" id="doc-empty">
+				<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-documents.svg" alt="" width="180" height="135">
 				<p class="muted">No documents attached yet. Choose a document type and upload a file above.</p>
 			</div>
 			<ul class="doc-list" id="doc-list"></ul>
@@ -104,19 +114,19 @@
 				<h2>Your application</h2>
 			</div>
 			<dl class="detail detail--rows">
-				<div><dt>Amount</dt><dd id="sum-amount">Loading</dd></div>
-				<div><dt>Tenure</dt><dd id="sum-tenure">Loading</dd></div>
-				<div><dt>Purpose</dt><dd id="sum-purpose">Loading</dd></div>
-				<div><dt>Status</dt><dd id="sum-status">Loading</dd></div>
+				<div><dt>Amount</dt><dd id="sum-amount"><span class="skeleton skeleton--line skeleton--w50" aria-hidden="true"></span></dd></div>
+				<div><dt>Tenure</dt><dd id="sum-tenure"><span class="skeleton skeleton--line skeleton--w50" aria-hidden="true"></span></dd></div>
+				<div><dt>Purpose</dt><dd id="sum-purpose"><span class="skeleton skeleton--line skeleton--w50" aria-hidden="true"></span></dd></div>
+				<div><dt>Status</dt><dd id="sum-status"><span class="skeleton skeleton--line skeleton--w50" aria-hidden="true"></span></dd></div>
 			</dl>
 		</div>
 
 		<div class="card card--tight">
 			<h2>Before you submit</h2>
-			<ul class="checklist mt">
-				<li><span class="checklist__mark" aria-hidden="true">1</span><span>At least one document attached</span></li>
-				<li><span class="checklist__mark" aria-hidden="true">2</span><span>PDF, JPEG or PNG files, up to 10 MB</span></li>
-				<li><span class="checklist__mark" aria-hidden="true">3</span><span>Submit from the application page</span></li>
+			<ul class="plain-list mt">
+				<li>At least one document attached</li>
+				<li>PDF, JPEG or PNG files, up to 10 MB</li>
+				<li>Submit from the application page</li>
 			</ul>
 			<p class="small muted mt">Documents cannot be added or removed after you submit.</p>
 		</div>
@@ -148,5 +158,6 @@
 <iframe name="doc-download" title="Document download" hidden></iframe>
 
 <script id="documents-data" type="application/json">{{ {"application": requested_application, "demo": boot.get("demo", False)} | tojson }}</script>
+<script src="/assets/loan_advisory_portal/js/status.js" defer></script>
 <script src="/assets/loan_advisory_portal/js/pages/documents.js" defer></script>
 {% endblock %}

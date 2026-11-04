@@ -31,7 +31,7 @@ Repository: legacy worktree `Load-advisory-agent`. `API` = `apps/api/src/loan_ad
 | POST `/api/chat` | `API/routes_legacy.py:125` | voice worker | bearer → assertion | **stays** |
 | POST `/api/chat/stream` | `API/routes_legacy.py:131` | voice worker | bearer → assertion | **stays** |
 | GET `/api/decision` | `API/routes_legacy.py:114` | legacy UI | bearer | removed (portal reads `get_decision`) |
-| POST `/api/bureau/run` | `API/routes_legacy.py:139` | tests / operator | bearer → assertion | **stays** |
+| POST `/api/bureau/run` | `API/routes_legacy.py:139` | tests / operator | bearer → assertion | removed 2026-11-03 (Phase 1 boundary A: the agent must not trigger bureau execution) |
 | POST `/api/livekit-token` | `API/routes_legacy.py:144` | voice page | bearer | removed (Frappe mints the room token) |
 | GET `/healthz` | `API/routes_legacy.py:100` | external | none | **stays** |
 
@@ -50,13 +50,14 @@ CopilotKit Node runtime ──(Authorization: Bearer <assertion>)──► FastA
                                                                        │
                                                     LangGraph + RAG + ZEN + Langfuse
                                                                        │
-                                                                       └─► evidence sink
-                                                                            (Frappe `Loan Decision Evidence`)
+                                                                       └─► read-only views
+                                                                            (Loan Application GET + one evidence
+                                                                             read method; no sink, no write path)
 ```
 
 - **One credential in the browser**: the Frappe session. Nothing else is stored in page memory.
 - **One credential to FastAPI**: the short-lived Frappe assertion from `services/assertion.py` (`iss = frappe:loan_advisory_portal`, `aud = loan-advisory-agent`, 60 s TTL, 30 s clock skew, `jti`).
-- **One writer for borrower data**: Frappe. FastAPI reads applications through the evidence/doctypes it is granted and writes only evidence rows.
+- **One writer for borrower data**: Frappe. The agent reads applications and stored evidence through the doctypes it is granted and writes nothing at all: since 2026-11-03 (Phase 1 security boundary B) `DecisionTools` refuses a store or evidence object that exposes `create`, `set_status`, `persist` or `call_method`, the live graph is wired to `ReadOnlyFrappeApplication` plus `FrappeEvidenceReader` instead of `FrappeClient` + `FrappeEvidenceSink`, and an application read is projected to the twelve decision fields rather than fetched whole. See `application/ports.py`.
 - **Evidence is written, not recomputed, by the portal**: the portal renders `Loan Decision Evidence.record_json` through a strict projection (`api/applications.py:_borrower_detail`) containing only `customer_visible` failing reason codes, missing fields, provider-error flag and outcome.
 
 ### Assertion contract (implemented on both sides)
@@ -82,8 +83,9 @@ and the new `api/` package: `app.py` (factory, security headers, admission, JSON
 (assertion claims), `assertion.py` (verifier + shared replay guard), `agui.py`, `events.py`,
 `routes_agent.py` and `admission.py`.
 
-Serving surface: `GET /healthz`, `POST /api/agui`, `POST /api/chat`, `POST /api/chat/stream`,
-`POST /api/bureau/run`. Removed: `/api/session`, `/api/demo-accounts`, `/api/decision`,
+Serving surface: `GET /healthz`, `POST /api/agui`, `POST /api/chat`, `POST /api/chat/stream`.
+Removed: `/api/bureau/run` (2026-11-03, Phase 1 boundary A), `/api/session`, `/api/demo-accounts`,
+`/api/decision`,
 `/api/livekit-token`, `/api/accounts/*`, `/api/applications/*`, `/api/session/select` and the static
 UI/`/advisory` routes. A test asserts each removed path is a JSON 404.
 
@@ -102,7 +104,7 @@ room token cannot be replayed after expiry or on another application.
 | Scope | An assertion may name one application; the agent must treat the thread's application as fixed for the run. |
 | Replay | `jti` is single-use for 60 s across every API worker through Redis `SET NX EX`; a store error is a 503, never an accepted credential. See [assertion-security-and-scaling.md](assertion-security-and-scaling.md). |
 | PII | Trace/log allowlists stay as they are (`agent/observability.py:46-47,162-180`); no free text in Langfuse attributes. |
-| Evidence | Only FastAPI/`decision_engine` writes `Loan Decision Evidence`; the portal and the browser are read-only. Writes go through one trusted whitelisted method (`loan_advisory_portal.api.evidence.ingest`) called by a dedicated `Evidence Service` account that holds **no DocType grants** and is not System Manager. The method enforces `record.application_ref == expected_application`, refuses rebinding a record id, rejects simulations and values outside the allowlists, writes only `allow_on_submit` lifecycle fields (native `status` only while `docstatus == 0`), and inserts an `Evidence Ingestion Log` row naming the actor. The sink requires `EVIDENCE_FRAPPE_*` and never falls back to the read credential. See `evidence.py:57-159` and `test_evidence_api.py`. |
+| Evidence | Only the **decision pipeline** writes `Loan Decision Evidence` — since Phase 1 boundaries A and B (2026-11-03) the advisory agent holds neither the ingest credential nor an ingest code path, and reads the stored record with its own read-only identity (`Agent Integration`: read=1/write=0, verified live). The portal and the browser remain read-only. Writes go through one trusted whitelisted method (`loan_advisory_portal.api.evidence.ingest`) called by a dedicated `Evidence Service` account that holds **no DocType grants** and is not System Manager. The method enforces `record.application_ref == expected_application`, refuses rebinding a record id, rejects simulations and values outside the allowlists, writes only `allow_on_submit` lifecycle fields (native `status` only while `docstatus == 0`), and inserts an `Evidence Ingestion Log` row naming the actor. The sink requires `EVIDENCE_FRAPPE_*` and never falls back to the read credential; the agent never reads those variables. See `evidence.py:57-159` and `test_evidence_api.py`. |
 | Secrets | `agent_assertion_secret`, `livekit_api_secret` and LLM keys live in site/bench config, never in the browser or in docs. |
 
 ## Unresolved

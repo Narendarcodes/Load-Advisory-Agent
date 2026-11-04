@@ -155,7 +155,7 @@ def _resolve(location: str) -> bool:
 
 def test_every_storable_field_has_a_frappe_location():
     storable = [f for f in DICTIONARY["fields"] if f["storage"] != "NEVER_STORE"]
-    assert len(storable) == 229
+    assert len(storable) == 230  # + residency_status (PL-130, catalogue 2.1)
     missing = [f["name"] for f in storable if f["name"] not in FIELD_MAP["fields"] or not FIELD_MAP["fields"][f["name"]]["location"]]
     assert missing == [], f"fields without a Frappe location: {missing}"
     assert FIELD_MAP["deferred"] == []
@@ -466,3 +466,11 @@ def test_purpose_codes_from_portal_text():
     assert custom_fields.purpose_code_for("Medical costs") == "medical_emergency"
     assert custom_fields.purpose_code_for("higher_education") == "higher_education"
     assert custom_fields.purpose_code_for("a new bike") is None
+
+
+def test_snapshot_outcome_options_match_loan_application_outcomes_d04():
+    """Guard for E2E D-04 (2026-11-04): the runner now snapshots every decision, DECLINE included."""
+    field = next(f for f in DOCTYPES["Decision Snapshot"][1]["fields"] if f["fieldname"] == "outcome")
+    snap = {o for o in field["options"].split("\n") if o}
+    la = {o for o in custom_fields.DECISION_OUTCOMES.split("\n") if o}
+    assert snap == la and "DECLINE" in snap

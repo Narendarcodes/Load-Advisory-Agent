@@ -1,0 +1,26 @@
+{
+  "_generated_by": "python -m contracts.catalogue_v2.build (from contracts/catalogue_v2/what_if.py)",
+  "per_session_cap": 3,
+  "config_key": "SARAL_WHAT_IF_SESSION_CAP",
+  "editable_fields": [
+    "loan_amount",
+    "tenure_months",
+    "existing_emis",
+    "monthly_income"
+  ],
+  "forbidden_fields": [
+    "credit_score",
+    "bureau_score",
+    "employment_months",
+    "employment_start_date",
+    "risk_grade",
+    "employment_category",
+    "loan_purpose"
+  ],
+  "result_vocabulary": {
+    "WOULD_LIKELY_MEET": "would likely meet",
+    "WOULD_NOT_MEET": "wouldn't meet"
+  },
+  "ui_label": "Estimate only, your application is unchanged",
+  "in_memory_only": true
+}

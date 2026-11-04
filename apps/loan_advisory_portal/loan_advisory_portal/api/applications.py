@@ -5,6 +5,7 @@ application id is indistinguishable from a missing one (404).
 """
 
 import json
+import re
 import uuid
 
 import frappe
@@ -45,7 +46,10 @@ LIST_FIELDS = (
 	"custom_loan_purpose",
 )
 
-MIN_TENURE, MAX_TENURE = 1, 360
+# Copy of decision_engine.schemas.underwriting MIN/MAX_TENURE_MONTHS (Q-01); pinned by a repo test.
+MIN_TENURE, MAX_TENURE = 12, 108
+# Copy of the catalogue-v2 PL-070 maximum (decision_engine/policies/personal_loan_synthetic_v2.json); pinned by a repo test.
+MAX_REQUEST_AMOUNT = 7_500_000
 MIN_CREDIT_SCORE, MAX_CREDIT_SCORE = 300, 900
 MAX_EMPLOYMENT_MONTHS = 720
 MAX_PURPOSE = 200
@@ -267,7 +271,14 @@ def _borrower_detail(record, application_state: str) -> dict:
 		if entry.get("customer_visible") and entry.get("result") == "FAIL"
 	]
 	review = detail.get("review") or {}
-	missing = (detail.get("inputs") or {}).get("missing_fields") or []
+	missing = _plain_missing((detail.get("inputs") or {}).get("missing_fields") or [])
+	if not reasons:
+		# A referral or info request carries no failed customer-visible rule; give the plain category instead.
+		reasons = [
+			{"code": key, "category": key, "text": REASON_TEXT[key]}
+			for key in detail.get("reason_categories") or []
+			if key in REASON_TEXT
+		]
 	return {
 		"outcome": detail.get("outcome") or record.decision,
 		"reasons": reasons,
@@ -277,7 +288,50 @@ def _borrower_detail(record, application_state: str) -> dict:
 		"information_needed": bool(review or missing) and application_state == "INFO_REQUESTED",
 		"provider_error": bool(review.get("provider_error")),
 		"flags": detail.get("flags") or [],
+		# D-06: the borrower's own offer (amount, EMI, tenure, whether it is a counter-offer) and nothing else.
+		"offer": _borrower_offer(detail.get("offer")),
 	}
+
+
+# D-07: catalogue-v2 rule ids must never reach the borrower; each maps to the plain thing they can supply.
+RULE_FIELD = {
+	"PL-001": "date_of_birth", "PL-002": "date_of_birth", "PL-073": "date_of_birth", "PL-003": "nationality",
+	"PL-004": "employment_type", "PL-005": "employment_type", "PL-006": "identity_verification",
+	"PL-008": "monthly_income", "PL-012": "salary_credits", "PL-078": "salary_credits",
+	"PL-014": "employment_months", "PL-019": "credit_history_details", "PL-020": "credit_history_details",
+	"PL-024": "credit_history_details", "PL-028": "credit_history_details", "PL-069": "loan_amount",
+	"PL-070": "loan_amount", "PL-071": "tenure", "PL-072": "tenure", "PL-076": "loan_purpose",
+	"PL-088": "documents", "PL-094": "identity_documents", "PL-095": "consents", "PL-102": "pan",
+	"PL-111": "purpose_documents", "PL-112": "loan_purpose", "PL-121": "income_documents",
+}
+REASON_TEXT = {  # catalogue-v2 borrower reason categories (keys only; never a value or a cut-off)
+	"EMPLOYMENT_STABILITY": "Your time in your current job doesn't meet our requirements yet.",
+	"INCOME_NOT_VERIFIED_OR_INSUFFICIENT": "Your income couldn't be verified or doesn't support this loan right now.",
+	"REPAYMENTS_TOO_HIGH": "The new EMI would take too much of your monthly income.",
+	"CREDIT_HISTORY": "Your credit history doesn't meet our requirements right now.",
+	"RECENT_CREDIT_APPLICATIONS": "There have been several recent credit applications on your profile.",
+	"DETAILS_NOT_VERIFIED": "We couldn't verify some details.",
+	"DOCUMENTS_INCOMPLETE_OR_UNCLEAR": "Some documents are missing or unclear.",
+	"REQUEST_OUTSIDE_OFFER": "The amount or repayment period you asked for is outside what we offer.",
+}
+
+
+def _plain_missing(fields) -> list[str]:
+	out = []
+	for field in fields:
+		name = str(field)
+		if re.match(r"^[A-Z]{2,}-\d+$", name):
+			name = RULE_FIELD.get(name, "other_details")
+		if name not in out:
+			out.append(name)
+	return out
+
+
+def _borrower_offer(offer) -> dict | None:
+	if not isinstance(offer, dict) or not offer.get("amount"):
+		return None
+	keys = ("amount", "emi", "tenure_months", "counter_offer", "request_outside_mvp_range")
+	return {k: offer.get(k) for k in keys if offer.get(k) is not None}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -298,8 +352,10 @@ def create_application(
 	amount = _number(loan_amount, "loan amount", minimum=1)
 	if not amount:
 		raise Forbidden(_("Enter the amount you need."))
-	if product.maximum_loan_amount and amount > product.maximum_loan_amount:
-		raise Forbidden(_("The amount exceeds this product's maximum of {0}.").format(product.maximum_loan_amount))
+	# Q-15 / ADR-0007 #2: above the product cap (Rs. 25 lakh) ZEN counter-offers at the largest passing amount,
+	# so the portal accepts the request; only amounts above the outer limit (PL-070) are outside what we offer.
+	if amount > MAX_REQUEST_AMOUNT:
+		raise Forbidden(_("This amount is outside what we offer. The most you can request is {0}.").format(MAX_REQUEST_AMOUNT))
 	tenure = _number(tenure_months, "tenure", minimum=MIN_TENURE, maximum=MAX_TENURE)
 	if not tenure:
 		raise Forbidden(_("Choose a repayment tenure."))

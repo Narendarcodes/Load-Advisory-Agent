@@ -22,6 +22,9 @@ Nothing below is a statement about VaaniLabs, any lender or real applicants.
 - **Can the agent initiate a correction request?** Yes, in the sense above: it files a handoff record (category `data_dispute`,
   application ref, request id, message hash and length, timestamp; never the message text) to a queue (`AGENT_HANDOFF_LOG`, default
   `agent_out/handoffs.jsonl`). It does not change data or promise an outcome.
+  Since 2026-11-03 (Phase 1 boundary D) it is classified as an operational log with a size cap
+  (`AGENT_LOG_MAX_BYTES`, rotate-don't-delete) and a write failure returns no reference at all, so the answer
+  says the handoff is pending instead of quoting a row that was never stored.
 - **Should the agent collect evidence for a correction request?** Not built. The handoff keeps only a SHA-256 and the length of the
   applicant's message, so a reviewer can check a quoted message without the log holding it. It does not ask for documents. Who must
   confirm what evidence a reviewer needs: a partner lender.

@@ -68,6 +68,7 @@ Reproducibility note: the final cycle exposed and fixed two fixture defects — 
 
 9. FASTAPI STATUS
 Agent endpoints retained: GET /healthz, POST /api/agui, POST /api/chat, POST /api/chat/stream, POST /api/bureau/run.
+(Superseded 2026-11-03: POST /api/bureau/run was removed by Phase 1 security boundary A; the retained set is now /healthz, /api/agui, /api/chat, /api/chat/stream.)
 Borrower endpoints removed: /api/session, /api/demo-accounts, /api/decision, /api/livekit-token, /api/accounts/*, /api/applications/*, /api/session/select, the static UI and /advisory routes.
 Internal APIs retained: decision_engine/ and rag/ (unmodified), the evidence sink, the Frappe read adapter, bureau execution, tracing and admission control.
 Duplicate responsibilities remaining: none identified. /api/chat and /api/chat/stream serve turn and streaming callers respectively, both under the same assertion verifier.
