@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-pythonpath = [".", "apps/api/src", "apps/bureau/src"]
+pythonpath = [".", "apps/api/src", "apps/bureau/src", "apps/loan_advisory_portal"]
 # Keep collection inside tests/: scripts/voice/voice_loop_test.py matches the
 # default *_test.py pattern but is a manual harness that needs livekit.
 testpaths = ["tests"]
