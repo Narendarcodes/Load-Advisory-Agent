@@ -1,4 +1,39 @@
-# Saral: a plain-language loan advisor
+<p align="center">
+  <img src="apps/loan_advisory_portal/loan_advisory_portal/public/brand/saral-logo.svg" alt="Saral" width="220">
+</p>
+
+<h3 align="center">Explains, never decides.</h3>
+
+<p align="center">
+  A plain-language loan advisor for personal-loan applicants, in English, Hindi and Telugu.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Narendarcodes/Load-Advisory-Agent/actions/workflows/ci.yml"><img src="https://github.com/Narendarcodes/Load-Advisory-Agent/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <img src="https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white" alt="Python 3.14">
+  <img src="https://img.shields.io/badge/Frappe-16%20%2B%20Lending-0089FF" alt="Frappe 16 + Lending">
+  <img src="https://img.shields.io/badge/data-synthetic%20only-E8743B" alt="Synthetic data only">
+</p>
+
+<p align="center">
+  <a href="docs/DEMO_GUIDE.md"><b>Demo</b></a> ·
+  <a href="#run-it-locally"><b>Quickstart</b></a> ·
+  <a href="#architecture"><b>Architecture</b></a> ·
+  <a href="#evaluation-setup-and-results"><b>Evals</b></a> ·
+  <a href="#where-things-are"><b>Docs</b></a>
+</p>
+
+## Demo video
+
+<!-- VIDEO: unlisted link added after film -->
+_Coming after the demo film is cut._ Until then, follow the 5-minute script in [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).
+
+<!-- SCREENSHOTS: strip to be filled from evidence/recordings_20261104 (portal decision card, chat in EN/HI/TE, officer desk) -->
+| Decision card | Assistant chat | Loan Officer desk |
+|---|---|---|
+| _screenshot to be added_ | _screenshot to be added_ | _screenshot to be added_ |
+
+## About
 
 Saral helps people who applied for a personal loan understand the answer they got. It explains a decision in plain
 English, Hindi or Telugu, says what the borrower can do next, and answers general policy questions with sources.
@@ -23,12 +58,12 @@ Built by Team Loan Rangers for the VaaniLabs.AI capstone (CBIT, AI/ML). The repo
 ## Contents
 
 - [What Saral does](#what-saral-does)
+- [Run it locally](#run-it-locally)
+- [Deployment options](#deployment-options)
 - [Architecture](#architecture)
 - [The four products](#the-four-products)
 - [ZEN decides, RAG explains](#zen-decides-rag-explains)
 - [Languages](#languages)
-- [Run it locally](#run-it-locally)
-- [Deployment options](#deployment-options)
 - [How to run (components)](#how-to-run-components)
 - [Evaluation setup and results](#evaluation-setup-and-results)
 - [Disclosures](#disclosures)
@@ -47,6 +82,122 @@ Built by Team Loan Rangers for the VaaniLabs.AI capstone (CBIT, AI/ML). The repo
 Possible outcomes: approved, counter-offer (a smaller amount that passes, for example the ₹25 lakh cap), declined,
 more information needed, and manual review. Fraud or list hits are never declined automatically; they go to a
 person, and the borrower sees only "we couldn't verify some details".
+
+## Run it locally
+
+This is the path for a laptop: a fresh clone, one `.env`, then start the pieces in order. Everything uses synthetic
+data. **Never commit `.env`, secrets, `storage.sqlite`, trace exports or seeded login files.** The step-by-step Frappe
+install (with the Windows pitfalls) is in [docs/development/setup.md](docs/development/setup.md); every variable is in
+[docs/development/environment-variables.md](docs/development/environment-variables.md).
+
+### Credentials and setup helper
+
+Copy `.env.example` to `.env` and fill only these keys (names only; no value is ever committed):
+
+| Key | Needed for | Required |
+|---|---|---|
+| `OMNIROUTE_BASE_URL`, `OMNIROUTE_API_KEY` (or `SARAL_LLM_BASE_URL` + `LLM_API_KEY` for any other OpenAI-compatible endpoint) | answer model | yes |
+| `GROQ_API_KEY` | fast intent classifier | optional (falls back to the gateway, then rules) |
+| `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | agent's read-only Frappe identity, created by the seeder | yes for the full stack |
+| `AGENT_ASSERTION_SECRET`, `AGENT_SESSION_SECRET` | signed assertions and sessions (generate locally) | yes |
+| `LANGFUSE_ENABLED`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | tracing | optional |
+
+Demo logins (generated at run time, never committed), test applicants for each decision path and a presenter
+script: [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).
+
+### Prerequisites
+
+| Tool | Version | Needed for |
+|---|---|---|
+| Git | any recent | clone |
+| Python | 3.14 (CI and `pyproject.toml` target 3.14) | agent, decision core, synthetic services, tests |
+| Node.js / npm | 24.x / 11.x | assistant runtime and the chat island build |
+| Docker Desktop (Linux containers) with Compose v2 | recent | Frappe stack (MariaDB 11.8, Redis 8.6); optional Langfuse |
+| RAM | 16 GB recommended | Frappe (about 4 GB), PaddleOCR (about 3 GB per worker), embeddings |
+| An OpenAI-compatible LLM endpoint | — | answers. Default: an OmniRoute gateway serving `antigravity/gemini-3.8-flash` |
+| Groq API key | optional | fast intent classifier; without it the classifier falls back to the gateway, then to rules |
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/Narendarcodes/Load-Advisory-Agent.git
+cd Load-Advisory-Agent
+python -m venv .venv
+# Windows (PowerShell):  .venv\Scripts\Activate.ps1      Linux / macOS:  source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt -r requirements-test.txt
+python -m ruff check . && python -m pytest -q        # sanity check; live-service tests skip
+```
+
+### 2. Configure `.env`
+
+```bash
+cp .env.example .env        # Windows: copy .env.example .env
+```
+
+Fill these (names only here; values never go in git):
+
+| Variable | Value |
+|---|---|
+| `AGENT_ASSERTION_SECRET` | 32+ random characters (`openssl rand -hex 32`). Must equal the Frappe site's `agent_assertion_secret` |
+| `AGENT_SESSION_SECRET` | another `openssl rand -hex 32` |
+| `SARAL_LLM_PROVIDER`, `SARAL_LLM_MODEL`, `SARAL_LLM_FALLBACK_MODEL` | defaults: `omniroute`, `antigravity/gemini-3.8-flash`, `antigravity/claude-sonnet-4-6@omniroute` |
+| `OMNIROUTE_BASE_URL`, `OMNIROUTE_API_KEY` | your gateway, e.g. `http://127.0.0.1:20128/v1`. For any other OpenAI-compatible endpoint set `SARAL_LLM_BASE_URL` (or `LLM_BASE`) and `LLM_API_KEY` |
+| `GROQ_API_KEY` | optional (intent classifier) |
+| `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | after step 4: the read-only agent identity the seeder creates |
+| `LANGFUSE_*` | optional; leave `LANGFUSE_ENABLED=0` for no telemetry |
+
+Load it into the shell before starting each Python process: `set -a; . ./.env; set +a` (bash), or in PowerShell
+`Get-Content .env | ? { $_ -match '^[A-Z_]+=' } | % { $k,$v = $_ -split '=',2; Set-Item "env:$k" ($v -replace '\s+#.*$','') }`.
+
+### 3. Fastest check: the agent alone (no Docker, no Frappe)
+
+```bash
+PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --offline --no-rag --port 8095
+curl http://127.0.0.1:8095/healthz
+```
+
+`--offline` uses built-in synthetic records and in-memory evidence; `--no-rag` skips the retriever, so policy
+questions abstain. This proves the LLM endpoint and the graph work before you bring up the rest.
+
+### 4. Full stack
+
+Start in this order (ports are the defaults; all bind to 127.0.0.1):
+
+| # | Service | Command | Port |
+|---|---|---|---:|
+| 1 | Frappe Lending + Saral portal (Docker) | `docker compose -f infra/frappe/loanrangers.yml up -d --pull missing`, then create the site and install the portal app as in [setup.md](docs/development/setup.md) (`bash infra/frappe/bootstrap/install_portal_app.sh`) | 8080 |
+| 2 | Synthetic applicants (once) | `python -m synthetic_data.saral_kyc_bank --count 200 --seed 20261103 --out ../saral-data/full200` | — |
+| 3 | Seed borrowers and applications (once) | `python -m ops.saral_seed.plan ../saral-data/full200 ../saral-data/plan.json`, then copy `plan.json` and `ops/saral_seed/frappe_seed.py` into the backend container and run it there (exact `docker cp` / `docker exec` lines at the top of `frappe_seed.py`). It writes logins and service keys to a 0600 `creds.json` and a `mapping.json`; copy both out, and put the reader key in `FRAPPE_API_KEY` / `FRAPPE_API_SECRET` | — |
+| 4 | Synthetic KYC + AA bank API | `SARAL_SYNTH_DIR=../saral-data/full200 python -m ops.synthetic_kyc_bank.app --port 8012` | 8012 |
+| 5 | Synthetic bureau | re-key the generated cases once: `python -c "from ops.saral_seed.plan import rekey_cli; rekey_cli('../saral-data/full200/bureau_cases.json', '../saral-data/mapping.json', '../saral-data/bureau_rekeyed.json')"`, then `python -m ops.bureau_fixture_server --fixture ../saral-data/bureau_rekeyed.json --port 8011` | 8011 |
+| 6 | Policy index (once, optional) | `python scripts/policy/fetch_sources.py`, `python scripts/policy/build_corpus_v3.py --src ... --out ...`, `python scripts/policy/index_corpus_v3.py --chunks ... --qdrant-dir ...` (copyrighted texts stay outside git) | embedded Qdrant |
+| 7 | Decision runner | `SARAL_POLICY_VERSION=synthetic-v2 SARAL_BUREAU_URL=http://127.0.0.1:8011 SARAL_KYC_AA_URL=http://127.0.0.1:8012 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m ops.decision_runner` | — |
+| 8 | Saral agent | `PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095` (add `--no-rag` if you skipped step 6) | 8095 |
+| 9 | Assistant runtime | `cd apps/runtime && npm ci && npm run build && AGENT_AGUI_URL=http://127.0.0.1:8095/api/agui AGENT_RUNTIME_PORT=4200 FRAPPE_BASE_URL=http://127.0.0.1:8080 npm start` | 4200 |
+| 10 | Chat island (once per change) | `cd apps/web/assistant && npm ci && npm run build` (writes into the portal app) | — |
+| 11 | Demo Loan Officer (once) | `bench --site <site> set-config allow_demo_users 1`, then `bench --site <site> execute loan_advisory_portal.setup_demo.create_demo_officer` inside the backend container; the password is printed once | — |
+
+Then open **http://127.0.0.1:8080**, sign in with a seeded borrower from the 0600 logins file, and open the Saral
+portal. Demo logins, the synthetic applicants to use for each decision path and a 5-minute presenter script:
+**[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md)**. The Loan Officer desk is at `/app` with the officer login. Health checks: `/healthz` on 8011, 8012 and 8095.
+
+### Windows notes
+
+- Use Docker Desktop with Linux containers and Compose v2 (`docker compose`).
+- Set `git config core.autocrlf false` before cloning `frappe_docker` if you build the Frappe image yourself; CRLF in
+  its shell scripts makes the containers restart-loop (see setup.md).
+- Run the bootstrap scripts with `bash` (Git Bash or WSL); they are not executable in git.
+- In PowerShell, set variables with `$env:NAME="value"` and use `;` instead of `&&` on older shells. `PYTHONPATH`
+  uses `;` as separator on Windows: `$env:PYTHONPATH=".;apps/api/src"`.
+
+## Deployment options
+
+| Option | Status | Notes |
+|---|---|---|
+| Laptop + tunnel | **used for the submission** | The stack above on the owner's laptop, exposed through a temporary Cloudflare quick tunnel. The tunnel URL changes on every start and is never committed |
+| Test bed (InstaBox + sandbox) | used for the live end-to-end test | [docs/saral/INTEGRATION_DEPLOY.md](docs/saral/INTEGRATION_DEPLOY.md) |
+| Azure VM | future | One VM with Docker for Frappe, Qdrant and the services, a managed TLS front door, and the LLM gateway as a hosted endpoint with health checks |
 
 ## Architecture
 
@@ -142,107 +293,6 @@ capped at 3 per session (ADR-0010), and is labelled "Estimate only, your applica
 - **Chat:** English, Hindi and Telugu, in native script or romanised. Replies come in the borrower's language.
 - **Style:** answer first, at most three points, no internal terms, no cut-offs (ADR-0006). The segment from the
   borrower's bureau record only picks the explanation style; it is never shown to the borrower.
-
-## Run it locally
-
-This is the path for a laptop: a fresh clone, one `.env`, then start the pieces in order. Everything uses synthetic
-data. **Never commit `.env`, secrets, `storage.sqlite`, trace exports or seeded login files.** The step-by-step Frappe
-install (with the Windows pitfalls) is in [docs/development/setup.md](docs/development/setup.md); every variable is in
-[docs/development/environment-variables.md](docs/development/environment-variables.md).
-
-### Prerequisites
-
-| Tool | Version | Needed for |
-|---|---|---|
-| Git | any recent | clone |
-| Python | 3.14 (CI and `pyproject.toml` target 3.14) | agent, decision core, synthetic services, tests |
-| Node.js / npm | 24.x / 11.x | assistant runtime and the chat island build |
-| Docker Desktop (Linux containers) with Compose v2 | recent | Frappe stack (MariaDB 11.8, Redis 8.6); optional Langfuse |
-| RAM | 16 GB recommended | Frappe (about 4 GB), PaddleOCR (about 3 GB per worker), embeddings |
-| An OpenAI-compatible LLM endpoint | — | answers. Default: an OmniRoute gateway serving `antigravity/gemini-3.8-flash` |
-| Groq API key | optional | fast intent classifier; without it the classifier falls back to the gateway, then to rules |
-
-### 1. Clone and install
-
-```bash
-git clone https://github.com/Narendarcodes/Load-Advisory-Agent.git
-cd Load-Advisory-Agent
-python -m venv .venv
-# Windows (PowerShell):  .venv\Scripts\Activate.ps1      Linux / macOS:  source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt -r requirements-test.txt
-python -m ruff check . && python -m pytest -q        # sanity check; live-service tests skip
-```
-
-### 2. Configure `.env`
-
-```bash
-cp .env.example .env        # Windows: copy .env.example .env
-```
-
-Fill these (names only here; values never go in git):
-
-| Variable | Value |
-|---|---|
-| `AGENT_ASSERTION_SECRET` | 32+ random characters (`openssl rand -hex 32`). Must equal the Frappe site's `agent_assertion_secret` |
-| `AGENT_SESSION_SECRET` | another `openssl rand -hex 32` |
-| `SARAL_LLM_PROVIDER`, `SARAL_LLM_MODEL`, `SARAL_LLM_FALLBACK_MODEL` | defaults: `omniroute`, `antigravity/gemini-3.8-flash`, `antigravity/claude-sonnet-4-6@omniroute` |
-| `OMNIROUTE_BASE_URL`, `OMNIROUTE_API_KEY` | your gateway, e.g. `http://127.0.0.1:20128/v1`. For any other OpenAI-compatible endpoint set `SARAL_LLM_BASE_URL` (or `LLM_BASE`) and `LLM_API_KEY` |
-| `GROQ_API_KEY` | optional (intent classifier) |
-| `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | after step 4: the read-only agent identity the seeder creates |
-| `LANGFUSE_*` | optional; leave `LANGFUSE_ENABLED=0` for no telemetry |
-
-Load it into the shell before starting each Python process: `set -a; . ./.env; set +a` (bash), or in PowerShell
-`Get-Content .env | ? { $_ -match '^[A-Z_]+=' } | % { $k,$v = $_ -split '=',2; Set-Item "env:$k" ($v -replace '\s+#.*$','') }`.
-
-### 3. Fastest check: the agent alone (no Docker, no Frappe)
-
-```bash
-PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --offline --no-rag --port 8095
-curl http://127.0.0.1:8095/healthz
-```
-
-`--offline` uses built-in synthetic records and in-memory evidence; `--no-rag` skips the retriever, so policy
-questions abstain. This proves the LLM endpoint and the graph work before you bring up the rest.
-
-### 4. Full stack
-
-Start in this order (ports are the defaults; all bind to 127.0.0.1):
-
-| # | Service | Command | Port |
-|---|---|---|---:|
-| 1 | Frappe Lending + Saral portal (Docker) | `docker compose -f infra/frappe/loanrangers.yml up -d --pull missing`, then create the site and install the portal app as in [setup.md](docs/development/setup.md) (`bash infra/frappe/bootstrap/install_portal_app.sh`) | 8080 |
-| 2 | Synthetic applicants (once) | `python -m synthetic_data.saral_kyc_bank --count 200 --seed 20261103 --out ../saral-data/full200` | — |
-| 3 | Seed borrowers and applications (once) | `python -m ops.saral_seed.plan ../saral-data/full200 ../saral-data/plan.json`, then copy `plan.json` and `ops/saral_seed/frappe_seed.py` into the backend container and run it there (exact `docker cp` / `docker exec` lines at the top of `frappe_seed.py`). It writes logins and service keys to a 0600 `creds.json` and a `mapping.json`; copy both out, and put the reader key in `FRAPPE_API_KEY` / `FRAPPE_API_SECRET` | — |
-| 4 | Synthetic KYC + AA bank API | `SARAL_SYNTH_DIR=../saral-data/full200 python -m ops.synthetic_kyc_bank.app --port 8012` | 8012 |
-| 5 | Synthetic bureau | re-key the generated cases once: `python -c "from ops.saral_seed.plan import rekey_cli; rekey_cli('../saral-data/full200/bureau_cases.json', '../saral-data/mapping.json', '../saral-data/bureau_rekeyed.json')"`, then `python -m ops.bureau_fixture_server --fixture ../saral-data/bureau_rekeyed.json --port 8011` | 8011 |
-| 6 | Policy index (once, optional) | `python scripts/policy/fetch_sources.py`, `python scripts/policy/build_corpus_v3.py --src ... --out ...`, `python scripts/policy/index_corpus_v3.py --chunks ... --qdrant-dir ...` (copyrighted texts stay outside git) | embedded Qdrant |
-| 7 | Decision runner | `SARAL_POLICY_VERSION=synthetic-v2 SARAL_BUREAU_URL=http://127.0.0.1:8011 SARAL_KYC_AA_URL=http://127.0.0.1:8012 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m ops.decision_runner` | — |
-| 8 | Saral agent | `PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095` (add `--no-rag` if you skipped step 6) | 8095 |
-| 9 | Assistant runtime | `cd apps/runtime && npm ci && npm run build && AGENT_AGUI_URL=http://127.0.0.1:8095/api/agui AGENT_RUNTIME_PORT=4200 FRAPPE_BASE_URL=http://127.0.0.1:8080 npm start` | 4200 |
-| 10 | Chat island (once per change) | `cd apps/web/assistant && npm ci && npm run build` (writes into the portal app) | — |
-| 11 | Demo Loan Officer (once) | `bench --site <site> set-config allow_demo_users 1`, then `bench --site <site> execute loan_advisory_portal.setup_demo.create_demo_officer` inside the backend container; the password is printed once | — |
-
-Then open **http://127.0.0.1:8080**, sign in with a seeded borrower from the 0600 logins file, and open the Saral
-portal. Demo logins, the synthetic applicants to use for each decision path and a 5-minute presenter script:
-**[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md)**. The Loan Officer desk is at `/app` with the officer login. Health checks: `/healthz` on 8011, 8012 and 8095.
-
-### Windows notes
-
-- Use Docker Desktop with Linux containers and Compose v2 (`docker compose`).
-- Set `git config core.autocrlf false` before cloning `frappe_docker` if you build the Frappe image yourself; CRLF in
-  its shell scripts makes the containers restart-loop (see setup.md).
-- Run the bootstrap scripts with `bash` (Git Bash or WSL); they are not executable in git.
-- In PowerShell, set variables with `$env:NAME="value"` and use `;` instead of `&&` on older shells. `PYTHONPATH`
-  uses `;` as separator on Windows: `$env:PYTHONPATH=".;apps/api/src"`.
-
-## Deployment options
-
-| Option | Status | Notes |
-|---|---|---|
-| Laptop + tunnel | **used for the submission** | The stack above on the owner's laptop, exposed through a temporary Cloudflare quick tunnel. The tunnel URL changes on every start and is never committed |
-| Test bed (InstaBox + sandbox) | used for the live end-to-end test | [docs/saral/INTEGRATION_DEPLOY.md](docs/saral/INTEGRATION_DEPLOY.md) |
-| Azure VM | future | One VM with Docker for Frappe, Qdrant and the services, a managed TLS front door, and the LLM gateway as a hosted endpoint with health checks |
 
 ## How to run (components)
 
