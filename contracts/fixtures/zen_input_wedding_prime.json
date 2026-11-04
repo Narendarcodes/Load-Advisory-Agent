@@ -1,0 +1,254 @@
+{
+  "schema_version": "saral-zen-input/1",
+  "application_id": "SYN-APL-000101",
+  "applicant_id": "SYN-APP-000101",
+  "product_id": "PL_WEDDING",
+  "policy_version": "saral-pl-draft-0.1",
+  "bureau_report_id": "SYN-BUR-000101",
+  "extraction_ids": [
+    "SYN-EXT-SLIP0101",
+    "SYN-EXT-BANK0101",
+    "SYN-EXT-PAN0101",
+    "SYN-EXT-AAD0101",
+    "SYN-EXT-EMP0101",
+    "SYN-EXT-SIG0101"
+  ],
+  "segments": {
+    "applicant_id": "SYN-APP-000101",
+    "segments": [
+      "SALARIED_METRO",
+      "PRIME"
+    ],
+    "basis": {
+      "SALARIED_METRO": "salaried, lives in Pune",
+      "PRIME": "synthetic score 772 >= 750"
+    }
+  },
+  "data_points": {
+    "loan_amount": {
+      "value": 600000,
+      "source": "APPLICATION",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "tenure_months": {
+      "value": 48,
+      "source": "APPLICATION",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "purpose": {
+      "value": "wedding",
+      "source": "APPLICATION",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "age_at_application": {
+      "value": 31,
+      "source": "APPLICANT_RECORD",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "age_at_maturity": {
+      "value": 35,
+      "source": "COMPUTED",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "nationality": {
+      "value": "IN",
+      "source": "APPLICANT_RECORD",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "employer_category": {
+      "value": "MNC",
+      "source": "APPLICANT_RECORD",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "employment_months": {
+      "value": 40,
+      "source": "OCR_EMPLOYMENT_LETTER",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": [
+        "SYN-DOC-EMP0101"
+      ]
+    },
+    "payslip_net_avg": {
+      "value": 92000.0,
+      "source": "OCR_SALARY_SLIP",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": [
+        "SYN-DOC-SLIP0101"
+      ]
+    },
+    "bank_salary_credit_avg": {
+      "value": 91500.0,
+      "source": "OCR_BANK_STATEMENT",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": [
+        "SYN-DOC-BANK0101"
+      ]
+    },
+    "net_monthly_income": {
+      "value": 91500.0,
+      "source": "COMPUTED",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "income_variance_ratio": {
+      "value": 0.0054,
+      "source": "COMPUTED",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "existing_emi_total": {
+      "value": 14000,
+      "source": "BUREAU",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "proposed_emi": {
+      "value": 18258.22,
+      "source": "COMPUTED",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "foir": {
+      "value": 0.3525,
+      "source": "COMPUTED",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "credit_score": {
+      "value": 772,
+      "source": "BUREAU",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "max_dpd_12m": {
+      "value": 0,
+      "source": "BUREAU",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "max_dpd_24m": {
+      "value": 0,
+      "source": "BUREAU",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "enquiries_6m": {
+      "value": 1,
+      "source": "BUREAU",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "writeoff_settlement_24m": {
+      "value": false,
+      "source": "BUREAU",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "writeoff_settlement_older": {
+      "value": false,
+      "source": "BUREAU",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "salary_credit_months": {
+      "value": 3,
+      "source": "OCR_BANK_STATEMENT",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": [
+        "SYN-DOC-BANK0101"
+      ]
+    },
+    "debit_credit_ratio": {
+      "value": 0.82,
+      "source": "OCR_BANK_STATEMENT",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": [
+        "SYN-DOC-BANK0101"
+      ]
+    },
+    "kyc_name_match_score": {
+      "value": 0.97,
+      "source": "OCR_MULTI",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": [
+        "SYN-DOC-PAN0101",
+        "SYN-DOC-AAD0101",
+        "SYN-DOC-SLIP0101",
+        "SYN-DOC-BANK0101"
+      ]
+    },
+    "kyc_dob_match": {
+      "value": true,
+      "source": "OCR_MULTI",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": [
+        "SYN-DOC-PAN0101",
+        "SYN-DOC-AAD0101"
+      ]
+    },
+    "kyc_id_last4_match": {
+      "value": true,
+      "source": "OCR_MULTI",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": [
+        "SYN-DOC-PAN0101",
+        "SYN-DOC-AAD0101"
+      ]
+    },
+    "required_docs_present": {
+      "value": true,
+      "source": "COMPUTED",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "min_ocr_confidence": {
+      "value": 88.4,
+      "source": "COMPUTED",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    },
+    "signature_similarity": {
+      "value": 0.91,
+      "source": "SIGNATURE_CHECK",
+      "fallback_used": false,
+      "low_confidence": false,
+      "source_document_ids": []
+    }
+  },
+  "prepared_at": "2026-11-03T16:09:30Z"
+}

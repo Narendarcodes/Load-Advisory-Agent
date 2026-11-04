@@ -73,7 +73,7 @@ def _isolated(monkeypatch):
 @pytest.fixture(scope="module")
 def service():
     agent, store, _ = build_offline_agent(llm=ScriptedLLM(intent="explain"), policy_tools=FakePolicy())
-    return srv.App(agent, store.get)
+    return srv.App(agent)
 
 
 @pytest.fixture
@@ -84,8 +84,14 @@ def client(service):
 def test_forged_identity_headers_without_an_assertion_are_401(client):
     assert client.post("/api/chat", json={"message": "why?"}, headers=FORGED).status_code == 401
     assert client.post("/api/agui", json=_input(), headers=FORGED).status_code == 401
-    assert client.post("/api/bureau/run", json={}, headers=FORGED).status_code == 401
     assert client.post("/api/chat/stream", json={"message": "why?"}, headers=FORGED).status_code == 401
+
+
+def test_the_bureau_execution_route_is_not_part_of_the_agent_surface(client):
+    """Phase 1 boundary A: no credential, forged or valid, can reach a bureau run from the agent."""
+    assert client.post("/api/bureau/run", json={}, headers=FORGED).status_code == 404
+    assert client.post("/api/bureau/run", json={}, headers=auth(mint())).status_code == 404
+    assert not [r for r in client.app.routes if getattr(r, "path", "").startswith("/api/bureau")]
 
 
 def test_forged_headers_cannot_override_verified_claims(client, service, monkeypatch):
@@ -127,11 +133,16 @@ def test_chat_budget_is_per_borrower(client, monkeypatch):
     ).status_code == 200
 
 
-def test_bureau_budget_refuses_before_provider_work(client, monkeypatch):
-    monkeypatch.setattr(routes_agent, "BUREAU_LIMIT", 0)
-    response = client.post("/api/bureau/run", json={}, headers=auth(mint()))
-    assert response.status_code == 429
-    assert response.headers["retry-after"]
+def test_no_bureau_scope_is_budgeted_on_the_agent_surface(client):
+    """The provider-call allowance existed only to cap a borrower-triggered bureau run."""
+    assert not hasattr(routes_agent, "BUREAU_LIMIT")
+    assert not hasattr(routes_agent, "BUREAU_WINDOW")
+
+    assert client.post("/api/chat", json={"message": "why?"}, headers=auth(mint())).status_code == 200
+
+    spent = list(limits.budget._store._counts)
+    assert any(scope.startswith("agent-turn:") for scope in spent), spent
+    assert not [scope for scope in spent if "bureau" in scope], spent
 
 
 def test_budget_store_failure_fails_closed(client, monkeypatch):

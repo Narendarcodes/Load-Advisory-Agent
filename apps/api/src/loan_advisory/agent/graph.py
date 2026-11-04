@@ -29,6 +29,7 @@ from loan_advisory.agent import observability as obs
 from loan_advisory.agent import guards as G
 from loan_advisory.agent import prompts as P
 from loan_advisory.agent.intent_router import build_routers, first_route
+from loan_advisory.agent.segmentation import bureau_report_from_record, get_customer_segmentation, with_tone
 from loan_advisory.agent.settings import AgentSettings
 from loan_advisory.agent.streaming import JSONFieldStreamer, SentenceGate, remainder, split_sentences
 from loan_advisory.agent.citations import labels_of as _labels_of, verify_citations
@@ -36,7 +37,7 @@ from loan_advisory.agent.contracts import AgentRequest, AgentResponse, Session
 from loan_advisory.agent.llm import LLMError
 from loan_advisory.agent.progress import PUBLIC_STAGES
 from loan_advisory.agent.tools import (FrappeUnavailable, InvalidWhatIf, NotAuthorized, UnknownApplication)
-from loan_advisory.state_paths import AUDIT_LOG, append_private, resolve
+from loan_advisory.state_paths import AUDIT_LOG, append_line, resolve
 
 
 _COUNTER_FALLBACK = "We can offer {amount}, with an EMI of {emi} a month for {tenure} months."  # prompts.FALLBACK_EXPLAIN localises it (PR #46)
@@ -193,6 +194,7 @@ class AgentState(TypedDict, total=False):
     deadline: float
     prefetched: dict | None
     voice_lead: str | None
+    customer_segmentation: dict | None
     decision_cache: dict | None   # {"application_ref", "stamp", "record"}: kept across turns of the conversation
     what_if_count: int            # simulations run in this conversation (per-session cap, ADR-0005)
     route: dict | None            # {"intent", "source", "flags"} from the pre-router
@@ -365,8 +367,8 @@ class AdvisoryAgent:
                 allowed |= set(G.numbers_in(p["text"] + " " + p["citation"]["title"] + " " + str(p["citation"].get("section"))))
         return allowed
 
-    def _style(self, req: AgentRequest):
-        return (P.LITERACY_STYLE.get(req.literacy, P.LITERACY_STYLE["medium"]), P.LANG.get(req.locale, "English"),
+    def _style(self, req: AgentRequest, segmentation: dict | None = None):
+        return (with_tone(P.LITERACY_STYLE.get(req.literacy, P.LITERACY_STYLE["medium"]), segmentation), P.LANG.get(req.locale, "English"),
                 P.VOICE if req.channel == "voice" else "")
 
     # ------------------------------------------------------------------ nodes
@@ -378,7 +380,8 @@ class AdvisoryAgent:
                 "retrieval": None, "draft": None, "abstained": False, "cited": [], "guard_flags": [], "attempts": 0,
                 "fallback_used": False, "action": None, "handoff_ref": None, "response": None,
                 "route": None, "clarify": False, "decision_cache": s.get("decision_cache"),
-                "what_if_count": int(s.get("what_if_count") or 0)}
+                "what_if_count": int(s.get("what_if_count") or 0),
+                "customer_segmentation": None}
 
     def authenticate(self, s):
         req, sess = self._req(s), self._session(s)
@@ -510,7 +513,8 @@ class AdvisoryAgent:
         obs.set_attrs(obs.current_span(), **{"decision.cache": cache_status},
                       **obs.lf_meta(decision_cache=cache_status,
                                     reason_categories=[c["key"] for c in F.reason_categories(rec)] if rec else None))
-        return {"record": rec, "status": st, "trace": s["trace"], "decision_cache": new_cache}
+        seg = get_customer_segmentation(bureau_report_from_record(rec))  # tone only: HOW to explain, never WHAT
+        return {"record": rec, "status": st, "trace": s["trace"], "decision_cache": new_cache, "customer_segmentation": seg}
 
     def _decision(self, req, sess, cache):
         """(record, stamp, hit|miss|none). The tool re-checks ownership every call and re-reads the evidence only when
@@ -574,7 +578,7 @@ class AdvisoryAgent:
 
     def compose(self, s):
         req, intent = self._req(s), s["intent"]
-        style, lang, voice = self._style(req)
+        style, lang, voice = self._style(req, s.get("customer_segmentation"))
         retry = P.RETRY.format(flags=", ".join(s["guard_flags"])) if s.get("attempts") else ""
         attempts = s.get("attempts", 0) + 1
         if intent == "policy" and not s["passages"]:
@@ -1020,8 +1024,7 @@ class AdvisoryAgent:
                "citations": [c.document_id for c in resp.citations], "evidence_refs": resp.evidence_refs,
                "guard_flags": resp.guard_flags, "handoff_ref": resp.handoff_ref, "events": s.get("trace"), "timings": resp.timings}
         try:
-            with append_private(self.audit_path) as f:
-                f.write(json.dumps(row, default=str) + "\n")
+            append_line(self.audit_path, json.dumps(row, default=str) + "\n")
         except OSError:
             pass
 

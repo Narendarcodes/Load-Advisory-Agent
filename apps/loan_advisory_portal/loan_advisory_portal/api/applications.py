@@ -12,6 +12,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt, now_datetime, nowdate, validate_phone_number_with_country_code
 
+from loan_advisory_portal.custom_fields import purpose_code_for
 from loan_advisory_portal.portal import guidance, lifecycle, limits
 from loan_advisory_portal.portal.errors import Conflict, Forbidden, ServiceUnavailable
 from loan_advisory_portal.portal.identity import (
@@ -362,7 +363,9 @@ def create_application(
 	if not purpose or len(purpose) > MAX_PURPOSE:
 		raise Forbidden(_("Describe what the loan is for."))
 
-	score = _number(credit_score, "credit score", minimum=MIN_CREDIT_SCORE, maximum=MAX_CREDIT_SCORE)
+	# The credit score comes from the bureau only (data dictionary gap G09). A score the
+	# client still sends is accepted for API compatibility and ignored, never stored.
+	del credit_score
 	months = _number(employment_months, "employment months", minimum=0, maximum=MAX_EMPLOYMENT_MONTHS)
 
 	profile = frappe.get_doc("Borrower Profile", ctx.profile)
@@ -390,13 +393,14 @@ def create_application(
 			"repayment_method": "Repay Over Number of Periods",
 			"repayment_periods": int(tenure),
 			"custom_loan_purpose": purpose,
+			"custom_purpose_code": purpose_code_for(purpose),
 			"custom_monthly_income": _number(monthly_income, "monthly income")
 			if monthly_income not in (None, "")
 			else profile.monthly_income,
 			"custom_monthly_obligations": _number(monthly_obligations, "monthly obligations")
 			if monthly_obligations not in (None, "")
 			else profile.monthly_obligations,
-			"custom_credit_score": int(score) if score is not None else None,
+			"custom_credit_score_origin": "NOT_FETCHED",
 			"custom_employment_months": int(months) if months is not None else profile.employment_months,
 			"custom_external_ref": f"POR-{uuid.uuid4().hex}",
 		}
@@ -442,8 +446,9 @@ def resubmit_application(application: str, monthly_income=None, monthly_obligati
 	"""Correct scored inputs on an information-requested application and resubmit it.
 
 	The document stays submitted (`docstatus = 1`) and Lending's `status` is untouched;
-	only the four scored inputs and the portal lifecycle marker change. Documents remain
-	frozen, so a submission cannot be altered while it is being re-reviewed.
+	only the borrower's own scored inputs and the portal lifecycle marker change. The credit
+	score is bureau-only and is never taken from the borrower. Documents remain frozen, so a
+	submission cannot be altered while it is being re-reviewed.
 	"""
 	ctx = borrower_context()
 	limits.enforce("application-transition", 30, 3600)
@@ -460,14 +465,13 @@ def resubmit_application(application: str, monthly_income=None, monthly_obligati
 
 	income = _number(monthly_income, "monthly income")
 	obligations = _number(monthly_obligations, "monthly obligations")
-	score = _number(credit_score, "credit score", minimum=MIN_CREDIT_SCORE, maximum=MAX_CREDIT_SCORE)
+	del credit_score  # bureau-only; accepted for API compatibility and ignored
 	months = _number(employment_months, "employment months", minimum=0, maximum=MAX_EMPLOYMENT_MONTHS)
 
 	# The scored fields stay non-allow_on_submit on purpose; this endpoint is their only
 	# post-submit writer, so no role can edit a submitted application through document save.
 	doc.db_set("custom_monthly_income", income, update_modified=False)
 	doc.db_set("custom_monthly_obligations", obligations, update_modified=False)
-	doc.db_set("custom_credit_score", int(score) if score is not None else None, update_modified=False)
 	doc.db_set("custom_employment_months", int(months) if months is not None else None,
 	           update_modified=False)
 	doc.db_set("custom_lifecycle_state", "SUBMITTED", update_modified=False)

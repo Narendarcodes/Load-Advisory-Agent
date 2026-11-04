@@ -88,6 +88,37 @@ single-file docs change. Nothing in this erratum rests on an unverifiable claim:
 607-character FAQ output and the five stale-anchor failures were each re-measured and are reproducible with the
 commands in §0.4 and in `reports/bajaj-alignment-status-and-blockers.md`.
 
+### 0.6 Phase 1 boundary A (implemented 2026-11-03): the agent-triggered bureau run is gone
+
+§1 finding 9 and §11.3 ("the one write path reachable inside the agent object graph", P0.1) described
+`POST /api/bureau/run` writing evidence through `sink=self.agent.tools.evidence.sink`. That route, `App.bureau_run`,
+the `bureau_client` wiring, `--bureau-url` and `BUREAU_BASE_URL` are **removed** on
+`feat/agent-boundary-corpus-reset`: the agent surface is now `/healthz`, `/api/chat`, `/api/chat/stream` and
+`/api/agui`, and `loan_advisory/agent/server.py` contains no bureau reference at all. The pipeline itself is
+unchanged and still reachable as `application/bureau_intake.py:run_bureau_evaluation()` for the separate upstream
+process, and the agent still *reads* and explains stored bureau evidence.
+
+> **Verified, then corrected, by live integration on 2026-11-03 (Phase 1.5, commit `b663df2`).** Run against
+> a real Frappe 16.51 site, two parts of boundary B did not do what the offline tests said: the
+> single-document endpoint ignores a `fields` parameter, so the "projected" application read actually
+> returned all 41 columns including `applicant_name`, `applicant_email_address`, `applicant_phone_number`
+> and `zip_code`; and `evidence.get_record` requires the `Evidence Service` role, so reading through it
+> left an ingest-capable credential inside the conversational process. Both reads were moved to the
+> list endpoint filtered on `name` (which does project — 12 fields, verified), and the evidence read now
+> runs on the agent's own read-only identity via the stored document, with `EVIDENCE_FRAPPE_*` never
+> consulted in this process. The claim above is true only after that correction; see
+> `reports/phase1-live-integration-results.md`.
+
+**P0.1 is closed for the agent, with the same date.** Boundary B (implemented 2026-11-03, same branch) removed
+the sink from the agent object graph rather than leaving it injected-but-unused: `DecisionTools` now refuses any
+store or evidence object that exposes `create`, `set_status`, `persist` or `call_method` (`application/ports.py`),
+the live graph is wired to `ReadOnlyFrappeApplication` + `FrappeEvidenceReader` instead of `FrappeClient` +
+`FrappeEvidenceSink`, an application read is projected to the twelve decision fields the mapping actually uses, and
+the unused `App.resolve` handle — which closed over the full Frappe client — is gone. Proofs:
+`tests/test_agent_read_boundary.py`. The residual, stated plainly: a bound method keeps its owner reachable via
+`method.__self__`, so the guard is a structural test of the shipped wiring and a startup refusal of accidental
+re-wiring, not a sandbox against code already running in this process.
+
 ---
 
 ## 1. Executive summary

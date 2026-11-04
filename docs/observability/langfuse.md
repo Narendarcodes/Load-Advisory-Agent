@@ -132,8 +132,9 @@ curl -s -X POST http://127.0.0.1:8095/api/chat -H 'Content-Type: application/jso
 Open the UI, choose project `loan-advisory-local`, then **Tracing**. The turn appears as `advisor.turn` with nested
 `node.*`, `tool.*`, retrieval and `llm.*` observations. Expand a node to see intent, action, guard flags, citation
 labels and retrieval counts; expand `tool.search_approved_policy` for document/chunk IDs and latency; expand
-`llm.classify`/`llm.compose_*` for model, token usage and TTFT. A bureau run (`POST /api/bureau/run`) appears as
-its own `bureau.evaluation` trace with the outcome and data-quality fields, and a hashed application reference.
+`llm.classify`/`llm.compose_*` for model, token usage and TTFT. A bureau run started by the bureau pipeline
+appears as its own `bureau.evaluation` trace with the outcome and data-quality fields, and a hashed application
+reference. Since 2026-11-03 (Phase 1 boundary A) no trace of that kind can originate from an agent request.
 
 Automated read-back for scripts (v4 `events_only` mode):
 
