@@ -667,7 +667,10 @@ class AdvisoryAgent:
                 self._ev(s, "verify_citations", kept=cited, dropped=dropped)
         if not ab and mode == "llm_verify" and cited and self._left(s) >= self.settings.verify_min_left_s:
             cited = self._llm_verify_citations(s, req, ans, cited)
-        return {"draft": ans, "abstained": ab, "cited": cited, "attempts": attempts, "action": "answer"}
+        # Q-16: a clarifying question is surfaced as a question (action clarify), not as an abstention
+        clar = bool(j.get("clarify")) and ab and ans.rstrip().endswith(("?", "？", "।?")) and len(ans.split()) <= 40
+        return {"draft": ans, "abstained": ab, "cited": cited, "attempts": attempts,
+                "action": "clarify" if clar else "answer", "clarify": clar}
 
     def _llm_verify_citations(self, s, req, ans, cited):
         """Post-hoc citation verification by a focused LLM call: of the passages the answer cites, keep those the

@@ -409,3 +409,12 @@ def test_spans_record_guard_pass_what_if_count_sim_status_and_cache(tmp_path, mo
     assert caches == ["miss", "hit"]
     comp = [s for s in spans if s.name == "node.compose"]
     assert comp and "llm.facts_keys" in comp[0].attributes
+
+
+def test_policy_clarifying_question_is_a_question_not_an_abstention(tmp_path):
+    """Q-16: the POLICY prompt's clarify output reaches the borrower as action=clarify, abstained False, no citations."""
+    llm = ScriptedLLM(intent="policy", policy={"abstain": True, "clarify": True, "citations": [],
+                                               "answer": "Do you mean the processing fee, or the charge for closing early?"})
+    ag, _, _, _ = _agent(llm, tmp_path, FakePolicy())
+    r = ask(ag, "Is the fee refundable for the loan I took last year?")
+    assert r.action == "clarify" and r.abstained is False and r.citations == [] and r.answer.endswith("?")
