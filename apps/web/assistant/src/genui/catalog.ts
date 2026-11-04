@@ -10,11 +10,21 @@ const OUTCOMES: Record<string, OutcomeLabel> = {
   REJECTED: { label: "Not approved", tone: "bad" },
   REVIEW: { label: "Needs review", tone: "warn" },
   ERROR: { label: "Check could not be completed", tone: "warn" },
+  // v2 outcomes (E2E D-16): the badge never shows a raw code. The agent maps v2 codes onto the words above
+  // (facts.decision_card_borrower); these entries cover a card that still carries the stored code.
+  COUNTER: { label: "Smaller offer", tone: "warn" },
+  INFO_REQUESTED: { label: "Details needed", tone: "warn" },
+  MANUAL_REVIEW: { label: "Needs review", tone: "warn" },
+  ELIGIBILITY_CONDITIONS_MET: { label: "Approved", tone: "ok" },
+  COUNTER_OFFER: { label: "Smaller offer", tone: "warn" },
+  MORE_INFORMATION_REQUIRED: { label: "Details needed", tone: "warn" },
+  DECLINE: { label: "Not approved", tone: "bad" },
 };
 
 export function outcomeLabel(value: string | null | undefined): OutcomeLabel {
   if (!value) return { label: "Not recorded", tone: "neutral" };
-  return OUTCOMES[value] ?? { label: value, tone: "neutral" };
+  // An unknown code is never shown as-is (E2E D-16).
+  return OUTCOMES[value.toUpperCase()] ?? { label: "Decision recorded", tone: "neutral" };
 }
 
 const RULE_RESULTS: Record<string, string> = {

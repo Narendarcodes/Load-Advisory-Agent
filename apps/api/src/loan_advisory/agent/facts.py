@@ -240,12 +240,62 @@ def _finite(v):
     return v if v == v and v not in (float("inf"), float("-inf")) else None
 
 
+# E2E D-16: the borrower never sees a recorded outcome code. The card speaks the assistant UI's vocabulary (genui
+# catalog / plain.ts) and the explain facts carry plain words in the borrower's language.
+BORROWER_OUTCOME = {"ELIGIBILITY_CONDITIONS_MET": "APPROVED", "COUNTER_OFFER": "COUNTER", "MANUAL_REVIEW": "REVIEW",
+                    "MORE_INFORMATION_REQUIRED": "INFO_REQUESTED", "DECLINE": "REJECTED"}
+OUTCOME_PLAIN = {
+    "APPROVED": {"en": "your application met our conditions in this demo check (not a final loan sanction)",
+                 "hi": "इस डेमो जाँच में आपका आवेदन हमारी शर्तें पूरी करता है (यह अंतिम लोन मंज़ूरी नहीं है)",
+                 "te": "ఈ డెమో తనిఖీలో మీ దరఖాస్తు మా షరతులను నెరవేర్చింది (ఇది తుది లోన్ మంజూరు కాదు)"},
+    "COUNTER": {"en": "we can't offer the full amount you asked for, but we can offer a smaller loan",
+                "hi": "हम आपकी माँगी गई पूरी राशि नहीं दे सकते, पर कम राशि का लोन दे सकते हैं",
+                "te": "మీరు అడిగిన పూర్తి మొత్తం ఇవ్వలేము, కానీ తక్కువ మొత్తంలో లోన్ ఇవ్వగలము"},
+    "REVIEW": {"en": "a person on our team will look at your application",
+               "hi": "हमारी टीम का एक व्यक्ति आपका आवेदन देखेगा",
+               "te": "మా బృందంలోని ఒక వ్యక్తి మీ దరఖాస్తును చూస్తారు"},
+    "INFO_REQUESTED": {"en": "we need a few more details from you before we can finish",
+                       "hi": "जाँच पूरी करने से पहले हमें आपसे कुछ और जानकारी चाहिए",
+                       "te": "తనిఖీ పూర్తి చేయడానికి ముందు మాకు మీ నుండి మరికొన్ని వివరాలు కావాలి"},
+    "REJECTED": {"en": "we can't approve this application right now",
+                 "hi": "हम अभी यह आवेदन स्वीकृत नहीं कर सकते",
+                 "te": "ప్రస్తుతం ఈ దరఖాస్తును మేము ఆమోదించలేము"},
+    "ERROR": {"en": "we couldn't finish checking your application yet",
+              "hi": "हम अभी आपके आवेदन की जाँच पूरी नहीं कर सके",
+              "te": "మేము ఇంకా మీ దరఖాస్తు తనిఖీ పూర్తి చేయలేకపోయాము"},
+}
+
+
+def borrower_outcome(code: str | None) -> str | None:
+    """A recorded outcome in the borrower UI's vocabulary (v2 codes mapped; v1 values unchanged)."""
+    if not code:
+        return code
+    return BORROWER_OUTCOME.get(code, code)
+
+
+def outcome_plain(record: dict, locale: str = "en") -> str:
+    """The recorded outcome in plain words for the borrower, never the code."""
+    key = borrower_outcome(record.get("outcome") or record.get("decision")) or ""
+    words = OUTCOME_PLAIN.get(key) or OUTCOME_PLAIN["REVIEW" if key in ("MANUAL_REVIEW", "REFER") else "ERROR"]
+    return words.get(locale) or words["en"]
+
+
+def offer_plain(record: dict) -> dict | None:
+    """The stored offer as display strings (₹ amounts, months) for the explain facts and fallback."""
+    o = borrower_offer(record)
+    if not o:
+        return None
+    return {"amount": inr(o["amount"]) if o.get("amount") else None, "emi": inr(o["emi"]) if o.get("emi") else None,
+            "loan_period_months": int(o["tenure_months"]) if o.get("tenure_months") else None,
+            "is_counter_offer": bool(o.get("counter_offer"))}
+
+
 def decision_card_borrower(record: dict) -> dict:
     """What the borrower API sends (ADR-0004/0006): outcome, offer, reason categories. No rule rows, cut-offs,
     gaps, reason codes or bureau data-quality codes; the full card stays behind the Loan Officer role."""
     pol = record.get("policy") or {}
-    card = {"application_ref": record.get("application_ref"), "decision": record.get("decision"),
-            "recorded_outcome": record.get("outcome") or record.get("decision"),
+    card = {"application_ref": record.get("application_ref"), "decision": borrower_outcome(record.get("decision")),
+            "recorded_outcome": borrower_outcome(record.get("outcome") or record.get("decision")),
             "lifecycle_state": record.get("lifecycle_state"), "record_id": record.get("record_id"),
             "policy_version": pol.get("version"), "policy_synthetic": bool(pol.get("synthetic")),
             "policy_label": BORROWER_LABEL, "evaluated_at": record.get("evaluated_at"),
@@ -367,6 +417,9 @@ def grounded_numbers(record: dict | None, extra: list | None = None) -> set[str]
             add(v)
         for e in record.get("rule_evaluations", []):
             add(e.get("actual_value")); add(e.get("threshold"))
+        o = record.get("offer") or {}
+        for k in ("amount", "emi", "tenure_months"):
+            add(o.get(k))
         for t in counterfactual_targets(record):
             add(t["target"]); add(t["gap"])
             if t.get("alt"):

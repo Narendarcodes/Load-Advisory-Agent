@@ -37,6 +37,20 @@ from loan_advisory.agent.progress import PUBLIC_STAGES
 from loan_advisory.agent.tools import (FrappeUnavailable, InvalidWhatIf, NotAuthorized, UnknownApplication)
 from loan_advisory.state_paths import AUDIT_LOG, append_private, resolve
 
+
+_COUNTER_FALLBACK = "We can offer {amount}, with an EMI of {emi} a month for {tenure} months."  # prompts.FALLBACK_EXPLAIN localises it (PR #46)
+
+
+def _sanitize(text: str, locale: str = "en") -> str:
+    """guards.sanitize_answer (PR #46) when it is available; a no-op on a base without it."""
+    fn = getattr(G, "sanitize_answer", None)
+    if fn is None:
+        return text
+    try:
+        return fn(text, locale)
+    except TypeError:  # an older sanitize_answer(text) without the locale argument
+        return fn(text)
+
 INTENTS = ("explain", "improve", "what_if", "policy", "greeting", "other")
 DISPUTE = re.compile(r"\b(wrong|incorrect|mistake|error in|not correct|not mine|is false|dispute|outdated|old (data|salary|income))\b|"
                      r"గలత్|తప్పు|ग़लत|गलत", re.I)
@@ -224,6 +238,7 @@ class AdvisoryAgent:
         st = self._stream(s)
         if st is None or not text.strip():
             return
+        text = _sanitize(text, self._req(s).locale)
         st["spoken"].append(text)
         if st["first_ms"] is None:
             st["first_ms"] = round((time.perf_counter() - st["t0"]) * 1000, 1)
@@ -244,7 +259,9 @@ class AdvisoryAgent:
         names = [r["name"] for r in reasons]
         joined = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
         if intent == "explain":
-            return (f"Your application's recorded decision is {s['record']['decision']} under a synthetic prototype policy, "
+            dec = s["record"]["decision"]
+            dec = dec if dec in ("REJECTED", "APPROVED", "REVIEW", "ERROR") else F.outcome_plain(s["record"], "en")
+            return (f"Your application's recorded decision is {dec} under a synthetic prototype policy, "
                     f"because of {len(names)} check{'s' if len(names) > 1 else ''}: {joined}.")
         return f"Under the synthetic prototype policy, {len(names)} check{'s' if len(names) > 1 else ''} would need to change: {joined}."
 
@@ -612,6 +629,11 @@ class AdvisoryAgent:
             draft, fallback = self._fallback(s), True
             if intent == "policy":
                 s["abstained"], s["cited"] = True, []
+        if draft:  # Q-15 / D-16: passage labels, retrieval words and outcome codes never reach the borrower
+            clean = _sanitize(draft, req.locale)
+            if clean != draft:
+                gflags.append("sanitised")
+                draft = clean
         if draft and intent in ("explain", "improve", "what_if") and s.get("status") in (None, "ok") \
                 and not re.search(P.SYNTHETIC_MARK, draft, re.I):
             draft = draft.rstrip() + "\n\n" + P.SYNTHETIC_NOTE.get(req.locale, P.SYNTHETIC_NOTE["en"])
@@ -664,6 +686,14 @@ class AdvisoryAgent:
         bf = F.bureau_facts(rec)
         if bf:
             base["bureau"] = bf
+        if s["intent"] == "explain":  # E2E D-16: plain outcome words, the offer and plain reasons; never a code
+            base["outcome_plain"] = F.outcome_plain(rec, self._req(s).locale)
+            offer = F.offer_plain(rec)
+            if offer:
+                base["offer"] = offer
+            cats = [c["label"] for c in F.reason_categories(rec)]
+            if cats:
+                base["reason_categories"] = cats
         if s["intent"] == "improve":
             p = s["plan"]
             base["tasks"] = [{k: v for k, v in t.items() if k in ("name", "rule_id", "task", "target_display", "gap_display", "general_guidance", "alt")}
@@ -690,7 +720,15 @@ class AdvisoryAgent:
         lines = []
         if intent == "explain":
             fx = P.FALLBACK_EXPLAIN.get(req.locale, P.FALLBACK_EXPLAIN["en"])
-            lines.append(fx["head"].format(decision=rec["decision"], label=F.SYNTHETIC_LABEL))
+            if rec["decision"] in F.BORROWER_OUTCOME:  # v2 code: plain words, never the code (E2E D-16)
+                plain = F.outcome_plain(rec, req.locale)
+                lines.append(plain[0].upper() + plain[1:] + ("।" if req.locale == "hi" else "."))
+            else:
+                lines.append(fx["head"].format(decision=rec["decision"], label=F.SYNTHETIC_LABEL))
+            offer = F.offer_plain(rec)
+            if offer and offer["is_counter_offer"] and offer["amount"]:
+                frame = fx.get("counter") or _COUNTER_FALLBACK
+                lines.append(frame.format(amount=offer["amount"], emi=offer["emi"] or "", tenure=offer["loan_period_months"] or ""))
             for r in F.reason_facts(rec):
                 lines.append(fx["rule"].format(name=r["name"], your_value=r["your_value"], required=r["required"]))
             if F.passed_facts(rec):
