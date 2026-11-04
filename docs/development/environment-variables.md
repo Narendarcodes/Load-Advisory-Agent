@@ -25,7 +25,12 @@ into the process environment does not exist for it.
 | `EVIDENCE_FRAPPE_URL` | evidence sink | falls back to `FRAPPE_URL` | the sink refuses to start without its own credentials |
 | `EVIDENCE_FRAPPE_API_KEY` / `_SECRET` | evidence ingestion | none | the sink never falls back to the read credential; it exits |
 | `FRAPPE_LOAN_COMPANY`, `FRAPPE_LOAN_PRODUCT` | application creation | `Loan Rangers Test NBFC` / `SYN-PERSONAL-001` | silently reads nothing, because the seeded fixtures use `LAP Test NBFC` / `LAP-TEST-001`. Set both whenever you seed with `e2e_seed` |
-| `LLM_PROVIDER` | `agent/llm.py` | `omniroute` | must be `groq` or `omniroute`; anything else is a config error and the service must not start |
+| `SARAL_LLM_PROVIDER` / `LLM_PROVIDER` | `agent/llm.py` | `omniroute` (since 2026-11-04 13:42 IST; River returned 402) | must be `omniroute`, `river` or `groq`; anything else is a config error and the service must not start |
+| `SARAL_LLM_MODEL` | `agent/llm.py` | `antigravity/gemini-3.8-flash` on OmniRoute, `deepseek-ai/DeepSeek-V4.1-Flash` on River | wins over `LLM_MODEL`; required for groq |
+| `SARAL_LLM_BASE_URL` | `agent/llm.py` | provider default | wins over `RIVER_BASE_URL` / `OMNIROUTE_BASE_URL` / `LLM_BASE` |
+| `SARAL_LLM_FALLBACK_MODEL` | `agent/llm.py` | omniroute: `antigravity/claude-sonnet-4-6`; river: `GLM-5.3@river,antigravity/claude-sonnet-4-6@omniroute` | comma list of `model[@river\|omniroute\|groq\|URL]`, tried in order on an error before any text streamed; empty = none |
+| `SARAL_LLM_REASONING_EFFORT` | `agent/llm.py` | omitted for DeepSeek on River, `low` otherwise | wins over `LLM_REASONING_EFFORT`; empty omits it |
+| `RIVER_API_KEY` | `agent/llm.py` | none | River AI bearer key, sent only to River |
 | `LLM_MODEL` | `agent/llm.py` | none | `LLM_MODEL is not set; configure the model ID exposed by the <provider> provider` |
 | `GROQ_API_KEY` / `OMNIROUTE_API_KEY` / `LLM_API_KEY` | provider auth | none | the provider call fails; the turn falls back to a no-answer path rather than inventing text |
 | `LLM_BASE` | any OpenAI-compatible endpoint | provider default | use this, plus `LLM_PROVIDER=groq` or `omniroute`, for a local server such as Ollama's `/v1` |

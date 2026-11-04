@@ -22,13 +22,15 @@ def test_explain_fallback_is_in_the_applicants_language(loc, tmp_path):
     head = r.answer.splitlines()[0]
     assert len(SCRIPT[loc].findall(head)) > 10, head
     assert "Your application's recorded decision" not in r.answer
-    for name in ("Existing EMIs vs income", "Credit score", "Time in current job"):
-        assert name in r.answer  # the same three recorded reasons, nothing invented
-    assert "Monthly income:" not in r.answer
+    # agent eval fix 2: ONE plain reason in the applicant's language, never English rule names
+    from loan_advisory.agent import facts as F
+    assert F.reason_plain("REPAYMENTS_TOO_HIGH", loc) in r.answer
+    for name in ("Existing EMIs vs income", "Credit score", "Time in current job", "Monthly income"):
+        assert name not in r.answer
 
 
-def test_english_explain_fallback_is_unchanged(tmp_path):
+def test_english_explain_fallback_is_plain(tmp_path):
     ag, _, _ = agent_for(ScriptedLLM(fail=True), tmp_path=tmp_path)
     r = ask(ag, "Why was my application rejected?")
-    assert r.answer.startswith("Your application's recorded decision is REJECTED under a ")
-    assert "; the policy needs " in r.answer and "I can show what would need to change, or answer questions." in r.answer
+    assert r.answer.startswith("We can't approve this application right now.")
+    assert "Your existing EMIs are high for this loan amount." in r.answer and "REJECTED" not in r.answer

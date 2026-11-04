@@ -38,8 +38,9 @@ class ScriptedLLM:
         if self.compose_txt is not None:
             return self.compose_txt
         facts = json.loads(system[system.index("FACTS (JSON):") + 13: system.rindex("}") + 1])
-        lines = [f"{r['name']}: yours {r['your_value']}, needed {r['required']}." for r in facts["failed_rules_the_only_reasons"]]
-        return "This uses a synthetic prototype policy. " + " ".join(lines)
+        # agent eval fix 2: the facts carry plain outcome words and ONE plain reason, never rule names or limits
+        lines = [facts.get("outcome_plain", "")] + ([f"Mainly because {facts['main_reason']}."] if facts.get("main_reason") else [])
+        return "This uses a synthetic prototype policy. " + " ".join(x for x in lines if x)
 
     def chat_json(self, system, user, max_tokens=900, tag=""):
         return json.loads(self.chat(system, user, max_tokens, tag=tag))
@@ -104,10 +105,12 @@ def test_explain_states_exactly_the_zen_failed_reasons(tmp_path):
     assert r.intent == "explain" and r.action == "answer" and r.guard_flags == []
     card = r.decision_card
     assert card["decision"] == "REJECTED" and card["policy_synthetic"] is True
-    assert set(card["failed_reason_codes"]) == {"ERR_FOIR_EXCEEDED", "ERR_CREDIT_SCORE_BELOW_MINIMUM", "ERR_EMPLOYMENT_TENURE_SHORT"}
+    # Q-07: the borrower card carries reason categories, never reason codes or cut-offs
+    assert {c["key"] for c in card["reason_categories"]} == {"REPAYMENTS_TOO_HIGH", "CREDIT_HISTORY", "EMPLOYMENT_STABILITY"}
     facts = json.loads(llm.prompts[-1][1].split("FACTS (JSON):")[1].rsplit("Return only", 1)[0])
-    assert [f["rule_id"] for f in facts["failed_rules_the_only_reasons"]] == ["FOIR_MAX_45", "MIN_CREDIT_SCORE", "MIN_EMPLOYMENT_TENURE"]
-    assert [f["rule_id"] for f in facts["passed_rules_not_reasons"]] == ["MIN_MONTHLY_INCOME"]
+    # agent eval fix 2: ONE plain reason (the first failed check's category), never the rule list, ids or limits
+    assert facts["main_reason"] == F.reason_plain("REPAYMENTS_TOO_HIGH", "en")
+    assert "failed_rules_the_only_reasons" not in facts and "passed_rules_not_reasons" not in facts
     assert r.evidence_refs == [card["record_id"]]
 
 
@@ -133,7 +136,7 @@ def test_guarantee_draft_is_retried_then_replaced_by_template(tmp_path):
     r = ask(ag, "Why was I rejected?")
     assert sum(1 for p in llm.prompts if p[0] == "compose_explain") == 2  # one retry
     assert "fallback_template" in r.guard_flags and "guarantee_language" in r.guard_flags
-    assert "definitely" not in r.answer and "Credit score" in r.answer and "synthetic" in r.answer
+    assert "definitely" not in r.answer and "existing EMIs are high" in r.answer and "synthetic" in r.answer
 
 
 def test_invented_number_is_caught(tmp_path):
@@ -147,9 +150,9 @@ def test_llm_outage_falls_back_to_deterministic_explanation(tmp_path):
     ag, _, _ = agent_for(ScriptedLLM(fail=True), tmp_path=tmp_path)
     r = ask(ag, "Why was my application rejected?")  # classifier falls back to rules, compose to template
     assert r.intent == "explain" and "fallback_template" in r.guard_flags
-    for name in ("Existing EMIs vs income", "Credit score", "Time in current job"):
-        assert name in r.answer
-    assert "Monthly income:" not in r.answer  # a passed rule is never listed as a reason
+    assert "existing EMIs are high" in r.answer  # one plain reason category (agent eval fix 2)
+    for name in ("Existing EMIs vs income", "Credit score", "Time in current job", "Monthly income"):
+        assert name not in r.answer  # never rule names
 
 
 # ------------------------------------------------------------------ improve / what-if
@@ -157,44 +160,47 @@ def test_improvement_plan_targets_are_zen_checked(tmp_path):
     ag, store, _ = agent_for(ScriptedLLM(intent="improve", compose="1. Reduce EMIs. Synthetic policy; not a guarantee."), tmp_path=tmp_path)
     r = ask(ag, "What can I do to get approved next time?")
     assert r.intent == "improve" and len(r.improvement_plan) == 3
-    assert all(s["rule_passes_after_change"] for s in r.improvement_plan)
-    foir = next(s for s in r.improvement_plan if s["rule_id"] == "FOIR_MAX_45")
-    assert foir["target_display"] == "₹14,400" and foir["gap_display"] == "₹4,100"  # 0.45 * 32,000 ; 18,500 - 14,400
+    # Q-07: targets stay ZEN-checked server-side; the borrower gets general guidance only (no target, gap, rule id)
+    who = Session(applicant_ref="CUS-TEST-005")
+    plan = ag.tools.improvement_plan("APP-TEST-005", who, ag.tools.get_decision_evidence("APP-TEST-005", who))
+    assert all(s["rule_passes_after_change"] for s in plan["steps"])
+    assert all("target_display" not in s and "rule_id" not in s and s["general_guidance"] for s in r.improvement_plan)
     assert all(s["guidance_source"] == "general financial guidance, not lender policy" for s in r.improvement_plan)
     assert store.get("APP-TEST-005")["custom_monthly_obligations"] == 18500
 
 
 def test_what_if_delta_is_simulated_and_original_untouched(tmp_path):
-    llm = ScriptedLLM(intent="what_if", changes={"credit_score": {"set": 720}, "monthly_obligations": {"delta": -5000}},
+    llm = ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"delta": -5000}},
                       compose="Simulation only under the synthetic policy.")
     ag, store, sink = agent_for(llm, tmp_path=tmp_path)
     n_records = len(sink.records)
-    r = ask(ag, "What if my score was 720 and I closed an EMI of 5000?")
-    assert r.action == "simulate" and r.what_if["changes"] == {"credit_score": 720, "monthly_obligations": 13500.0}
-    assert r.what_if["rule_results"]["MIN_CREDIT_SCORE"] == "PASS" and r.what_if["rule_results"]["FOIR_MAX_45"] == "PASS"
-    assert r.what_if["rule_results"]["MIN_EMPLOYMENT_TENURE"] == "FAIL" and r.what_if["simulated_decision"] == "REJECTED"
+    r = ask(ag, "What if I closed an EMI of 5000?")
+    assert r.action == "simulate" and r.what_if["changes"] == {"monthly_obligations": 13500.0}
+    assert r.what_if["result"] == "WOULD_NOT_MEET" and "rule_results" not in r.what_if  # Q-07 / Q-03 shape
     assert r.what_if["original_record_unchanged"] is True and len(sink.records) == n_records
     assert r.decision_card["decision"] == "REJECTED"  # recorded outcome unchanged
 
 
 def test_what_if_audit_marks_simulation_and_keeps_no_financial_values(tmp_path):
-    llm = ScriptedLLM(intent="what_if", changes={"credit_score": {"set": 720}},
+    llm = ScriptedLLM(intent="what_if", changes={"monthly_income": {"set": 72345}},
                       compose="Simulation only under the synthetic policy.")
     ag, _, _ = agent_for(llm, tmp_path=tmp_path)
-    r = ask(ag, "What if my score was 720?")
+    r = ask(ag, "What if my income was 72345?")
     assert r.action == "simulate"
 
     row = json.loads(ag.audit_path.read_text(encoding="utf-8").strip().splitlines()[-1])
     events = [e for e in row["events"] if e["node"] == "run_what_if"]
     assert events and events[-1]["simulated"] is True
-    assert "changes" not in events[-1] and events[-1]["fields"] == ["credit_score"]
-    assert "720" not in json.dumps(events[-1])
+    assert "changes" not in events[-1] and events[-1]["fields"] == ["monthly_income"]
+    assert "72345" not in json.dumps(events[-1])
 
 
 def test_out_of_range_what_if_is_clarified_not_simulated(tmp_path):
-    ag, _, _ = agent_for(ScriptedLLM(intent="what_if", changes={"credit_score": {"set": 1200}}), tmp_path=tmp_path)
-    r = ask(ag, "what if my score were 1200")
-    assert r.action == "clarify" and "outside the allowed range" in r.answer
+    ag, _, _ = agent_for(ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": -5}}), tmp_path=tmp_path)
+    r = ask(ag, "what if my EMIs were -5")
+    # plain words, never the allowed range itself (smoke-run fix): still a clarify, still not simulated
+    assert r.action == "clarify" and "monthly EMIs is outside what I can estimate" in r.answer
+    assert "allowed range" not in r.answer and "100000000" not in r.answer
     with pytest.raises(InvalidWhatIf):
         ag.tools.run_what_if("APP-TEST-005", Session(applicant_ref="CUS-TEST-005"), {"loan_amount": 1})
 
@@ -242,8 +248,8 @@ def test_boundary_requests_never_reach_the_llm(msg, kind, action, tmp_path):
     assert G.answer_flags(r.answer) == []
     if kind == "dispute":
         assert r.handoff_ref and (tmp_path / "handoffs.jsonl").exists()
-    if kind == "guarantee":
-        assert r.improvement_plan  # still gets the deterministic, labelled plan
+    if kind == "guarantee":  # fixed tool plan (Golden B): a guarantee request never reads the decision
+        assert r.improvement_plan == [] and r.decision_card is None
 
 
 def test_deletion_request_is_handed_off_and_never_claims_deletion(tmp_path):
@@ -387,9 +393,9 @@ def test_tracing_emits_turn_node_tool_and_llm_spans(tmp_path, monkeypatch):
     prov.add_span_processor(SimpleSpanProcessor(exp))
     monkeypatch.setenv("AGENT_TRACING", "1")
     monkeypatch.setattr(obs, "_TRACER", prov.get_tracer("test"))
-    llm = ScriptedLLM(intent="what_if", changes={"credit_score": {"set": 720}}, compose="Simulation under the synthetic policy.")
+    llm = ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": 10000}}, compose="Simulation under the synthetic policy.")
     ag, _, _ = agent_for(llm, tmp_path=tmp_path)
-    r = ask(ag, "what if my score was 720")
+    r = ask(ag, "what if my EMIs were 10000")
     spans = exp.get_finished_spans()
     names = {s.name for s in spans}
     assert {"advisor.turn", "node.classify", "node.load_evidence", "node.what_if", "node.compose", "node.validate",
