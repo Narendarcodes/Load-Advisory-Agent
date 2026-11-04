@@ -114,3 +114,14 @@ def test_cached_reranker_scores_each_pair_once():
     a = cr.score("q", [{"chunk_id": "x", "text": "ab"}, {"chunk_id": "y", "text": "abc"}])
     b = cr.score("q", [{"chunk_id": "y", "text": "abc"}, {"chunk_id": "z", "text": "a"}])
     assert a == [2, 3] and b == [3, 1] and R.calls == 3
+
+
+def test_agent_judge_and_summary_use_only_generated_conversations(tmp_path):
+    """A `--limit` generate run writes fewer conversations than the dev gold; judge/summarise must not KeyError."""
+    from types import SimpleNamespace
+    m = _load("eval_saral_agent")
+    gold = tmp_path / "gold.jsonl"
+    _write(gold, [{"conv_id": c, "split": "dev"} for c in ("C1", "C2", "C3")] + [{"conv_id": "H1", "split": "heldout"}])
+    _write(tmp_path / "agent_turns.jsonl", [{"conv_id": "C2", "turns": []}])
+    g, r = m.gold_and_runs(SimpleNamespace(golden=str(gold), manifest=None), tmp_path)
+    assert list(g) == ["C2"] and list(r) == ["C2"]

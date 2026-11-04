@@ -57,6 +57,14 @@ def load_dev(a):
     return dev
 
 
+def gold_and_runs(a, out):
+    """Dev gold and generated runs, restricted to the conversations that were generated: a `--limit N` generate
+    run writes only N conversations, so judge and summarise must not index a conversation that has no turns."""
+    runs = {r["conv_id"]: r for r in jl(Path(out) / "agent_turns.jsonl")}
+    gold = {c["conv_id"]: c for c in load_dev(a) if c["conv_id"] in runs}
+    return gold, runs
+
+
 # ---------------------------------------------------------------------------------------------- generate
 def build_agent_for(conv, llm, policy_tools, profile):
     from langgraph.checkpoint.memory import MemorySaver
@@ -320,8 +328,7 @@ def judge(a):
     from eval_saral_deepeval import OpenAICompatJudge  # same judge client (OmniRoute, fallback logged per call)
 
     out = Path(a.out)
-    gold = {c["conv_id"]: c for c in load_dev(a)}
-    runs = {r["conv_id"]: r for r in jl(out / "agent_turns.jsonl")}
+    gold, runs = gold_and_runs(a, out)
     jm = OpenAICompatJudge(a.judge_base, a.judge_model, [m for m in (a.judge_fallback or "").split(",") if m])
     part = out / "agent_scores.partial.jsonl"
     done = {(r["conv_id"], r["metric"], r.get("turn")) for r in jl(part) if r.get("error") is None} if part.exists() else set()
@@ -435,8 +442,7 @@ BARS = {"leaks": 0, "RoleAdherence": 0.90, "ToolCorrectness": 0.95}
 def summarise(a):
     from statistics import mean
     out = Path(a.out)
-    gold = {c["conv_id"]: c for c in load_dev(a)}
-    runs = {r["conv_id"]: r for r in jl(out / "agent_turns.jsonl")}
+    gold, runs = gold_and_runs(a, out)
     det = jl(out / "agent_deterministic.jsonl")
     sc = jl(out / "agent_scores.jsonl")
     fb = jl(out / "agent_fallback_log.jsonl") if (out / "agent_fallback_log.jsonl").exists() else []
