@@ -1,0 +1,30 @@
+sequenceDiagram
+  autonumber
+  participant B as Borrower
+  participant P as Saral portal (Frappe)
+  participant R as Assistant runtime
+  participant A as Saral agent (LangGraph)
+  participant L as LLM
+  participant Q as Policy RAG (Qdrant)
+  participant F as Frappe records
+
+  B->>P: message (EN / HI / TE)
+  P->>R: mint a 60 s signed assertion (borrower, application, locale)
+  R->>A: AG-UI request + assertion
+  A->>A: verify assertion, check ownership
+  A->>A: request guards (injection, edit record, other applicant, guarantee ...)
+  A->>L: classify intent
+  alt explain / improve / what-if / status
+    A->>F: read the stored decision (read-only)
+    opt what-if (max 3 per session)
+      A->>A: run ZEN in memory, nothing saved
+    end
+  else policy question
+    A->>Q: hybrid search over both collections
+  else needs a person
+    A->>F: create a human handoff
+  end
+  A->>L: compose the answer in the borrower's language
+  A->>A: answer guards + sanitiser (no labels, enums, cut-offs)
+  A-->>R: streamed answer + minimal card
+  R-->>B: reply

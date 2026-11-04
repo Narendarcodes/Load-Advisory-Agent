@@ -1,367 +1,476 @@
-# Loan Advisory Agent
+<p align="center">
+  <img src="apps/loan_advisory_portal/loan_advisory_portal/public/brand/saral-logo.svg" alt="Saral" width="220">
+</p>
 
-An evidence-grounded advisory agent for **rejected personal-loan applicants**, in **English, Hindi and Telugu**, by text
-or voice. It explains the recorded reasons for a decision, shows how they relate to published policy, runs what-if
-simulations and suggests legitimate next steps. **It explains; it never decides.** Decisions come only from a
-deterministic ZEN rules engine run by the conventional Frappe Lending workflow.
+<h3 align="center">Explains, never decides.</h3>
 
-Built for the VaaniLabs.AI capstone (CBIT AI/ML). Repository name is spelled `Load-Advisory-Agent`.
+<p align="center">
+  A plain-language loan advisor for personal-loan applicants, in English, Hindi and Telugu.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Narendarcodes/Load-Advisory-Agent/actions/workflows/ci.yml"><img src="https://github.com/Narendarcodes/Load-Advisory-Agent/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <img src="https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white" alt="Python 3.14">
+  <img src="https://img.shields.io/badge/Frappe-16%20%2B%20Lending-0089FF" alt="Frappe 16 + Lending">
+  <img src="https://img.shields.io/badge/data-synthetic%20only-E8743B" alt="Synthetic data only">
+</p>
+
+<p align="center">
+  <a href="docs/DEMO_GUIDE.md"><b>Demo</b></a> ·
+  <a href="#run-it-locally"><b>Quickstart</b></a> ·
+  <a href="#architecture"><b>Architecture</b></a> ·
+  <a href="#evaluation-setup-and-results"><b>Evals</b></a> ·
+  <a href="#where-things-are"><b>Docs</b></a>
+</p>
+
+## Demo video
+
+<!-- VIDEO: unlisted link added after film -->
+_Coming after the demo film is cut._ Until then, follow the 5-minute script in [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).
+
+<!-- SCREENSHOTS: strip to be filled from evidence/recordings_20261104 (portal decision card, chat in EN/HI/TE, officer desk) -->
+| Decision card | Assistant chat | Loan Officer desk |
+|---|---|---|
+| _screenshot to be added_ | _screenshot to be added_ | _screenshot to be added_ |
+
+## About
+
+Saral helps people who applied for a personal loan understand the answer they got. It explains a decision in plain
+English, Hindi or Telugu, says what the borrower can do next, and answers general policy questions with sources.
+
+**Saral explains. It never decides.** Every decision comes from a deterministic rules engine (ZEN). The language
+model only explains the decision that ZEN already recorded, and policy search (RAG) only supplies general, cited
+background.
+
+Built by Team Loan Rangers for the VaaniLabs.AI capstone (CBIT, AI/ML). The repository name is spelled
+`Load-Advisory-Agent`. Who built what: [BUILD.md](BUILD.md).
 
 > **Read this first**
-> - **All applicant data is synthetic.** The four underwriting thresholds (income ≥ ₹25,000, FOIR ≤ 0.45, credit score
->   ≥ 700, employment tenure ≥ 12 months) are the team's synthetic prototype policy `synthetic-v1`. They are not any
->   lender's real policy, and every answer, decision card and plan says so.
-> - **Bajaj Finance Ltd is a *public reference lender, not a partner*.** Its public documents are used to build and
->   evaluate the policy RAG. The design is lender-neutral: the lender is a config profile
->   (`config/lender_profiles/`), and RBI rules are labelled per entity type (bank vs NBFC).
-> - Scope is **personal loans only**.
+> - **All applicant data is synthetic.** No real person, PAN, Aadhaar number, employer or bank account is used.
+>   Synthetic PANs start `ZZ`, Aadhaar numbers start with 0 or 1 (never issued by UIDAI), and emails use
+>   `example.invalid`.
+> - **The thresholds are a prototype, not a lender's policy.** They are labelled `prototype_synthetic`. The owner
+>   approved the top ten for this prototype only (ADR-0011, 2026-11-04); the rest are approved as a batch (ADR-0009).
+> - **Bajaj Finance Ltd is a public reference lender, not a partner.** Saral follows the public documents of one
+>   NBFC, Bajaj Finance. Bajaj's published numbers are *indicative public guidance*; ZEN is the authority.
+> - **Scope:** personal loans for salaried applicants only, in four purposes.
 
-Design and rationale: [APPROACH.md](APPROACH.md). Diagrams: [docs/architecture/](docs/architecture/README.md).
+## Contents
 
-![System context](docs/architecture/diagrams/01-system-context.png)
+- [What Saral does](#what-saral-does)
+- [Run it locally](#run-it-locally)
+- [Deployment options](#deployment-options)
+- [Architecture](#architecture)
+- [The four products](#the-four-products)
+- [ZEN decides, RAG explains](#zen-decides-rag-explains)
+- [Languages](#languages)
+- [How to run (components)](#how-to-run-components)
+- [Evaluation setup and results](#evaluation-setup-and-results)
+- [Disclosures](#disclosures)
+- [Known limitations](#known-limitations)
+- [Future scope](#future-scope)
+- [Where things are](#where-things-are)
 
-## Start here
+## What Saral does
 
-New to this repository? Work down this list; each row is the single authoritative document for that topic, so nothing
-is duplicated here.
+| For | What happens |
+|---|---|
+| **Borrower** (Saral portal, served by Frappe) | Signs in, picks one of four loan purposes, fills a short form (7 steps, English), consents to a credit check, KYC and a bank-statement fetch, and uploads documents. Gets a decision card: outcome, amount, EMI and tenure. Can then chat with the Saral assistant. |
+| **Saral assistant** (LangGraph agent) | Explains the recorded decision in one plain reason category, never a cut-off or a rule number. Suggests 2-3 general next steps. Runs up to 3 "what-if" estimates per session (amount, tenure, existing EMIs, income) that never change the application. Answers general policy questions with citations. Hands off to a person when asked. |
+| **Loan Officer** (built-in Frappe desk) | Works the manual-review queue with internal reasons visible: Approve, Decline or Request info, with an audit trail (ADR-0008). |
 
-| # | Topic | Read |
+Possible outcomes: approved, counter-offer (a smaller amount that passes, for example the ₹25 lakh cap), declined,
+more information needed, and manual review. Fraud or list hits are never declined automatically; they go to a
+person, and the borrower sees only "we couldn't verify some details".
+
+## Run it locally
+
+This is the path for a laptop: a fresh clone, one `.env`, then start the pieces in order. Everything uses synthetic
+data. **Never commit `.env`, secrets, `storage.sqlite`, trace exports or seeded login files.** The step-by-step Frappe
+install (with the Windows pitfalls) is in [docs/development/setup.md](docs/development/setup.md); every variable is in
+[docs/development/environment-variables.md](docs/development/environment-variables.md).
+
+### Credentials and setup helper
+
+Copy `.env.example` to `.env` and fill only these keys (names only; no value is ever committed):
+
+| Key | Needed for | Required |
 |---|---|---|
-| 1 | What the system is, who it serves, and how the parts relate | This page + [docs/architecture/README.md](docs/architecture/README.md) (11 diagrams, all with editable Mermaid sources) |
-| 2 | What is mandatory vs optional, per component and per version | [docs/reproducibility/dependency-matrix.md](docs/reproducibility/dependency-matrix.md) |
-| 3 | Install from a clean clone: OS, Python, Node, Docker, bench, site, migrations, seed | [docs/development/setup.md](docs/development/setup.md) |
-| 4 | Every environment variable: owner, required/optional, default, failure mode | [docs/development/environment-variables.md](docs/development/environment-variables.md) and [`.env.example`](.env.example) |
-| 5 | Day-to-day work: start/stop services, rebuild assets, migrate, read logs | [docs/development/local-development.md](docs/development/local-development.md) |
-| 6 | The full stack actually running on one machine, step by step | [docs/development/frappe-disposable-environment.md](docs/development/frappe-disposable-environment.md) |
-| 7 | Tests: unit, integration, Frappe, agent, assistant, E2E, fixtures, teardown | [docs/testing/README.md](docs/testing/README.md) |
-| 8 | Deploy: services, volumes, networking, reverse proxy, health checks, backup, rollback | [docs/deployment/README.md](docs/deployment/README.md) |
-| 9 | Something broke: routing, Host headers, Redis, DB, assets, runtime, assertions, AG-UI, models, GPU, tracing | [docs/troubleshooting/README.md](docs/troubleshooting/README.md) |
-| 10 | Manual QA of the borrower portal with synthetic accounts | [docs/borrower-frontend/manual-testing-guide.md](docs/borrower-frontend/manual-testing-guide.md) |
-| 11 | Can a stranger reproduce this? What was actually run and what was not | [docs/reproducibility/README.md](docs/reproducibility/README.md) |
-| 12 | Database state: schema, fixtures, seeds, what is deliberately not in Git | [docs/reproducibility/database-reproducibility.md](docs/reproducibility/database-reproducibility.md) |
-| 13 | Security posture and the tests behind it | [docs/reproducibility/security-audit.md](docs/reproducibility/security-audit.md) |
-| 14 | Honest limits of the current build and of this audit | [docs/reproducibility/known-limitations.md](docs/reproducibility/known-limitations.md) |
-| 15 | Release history and integration reports | [docs/release/](docs/release/) |
+| `OMNIROUTE_BASE_URL`, `OMNIROUTE_API_KEY` (or `SARAL_LLM_BASE_URL` + `LLM_API_KEY` for any other OpenAI-compatible endpoint) | answer model | yes |
+| `GROQ_API_KEY` | fast intent classifier | optional (falls back to the gateway, then rules) |
+| `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | agent's read-only Frappe identity, created by the seeder | yes for the full stack |
+| `AGENT_ASSERTION_SECRET`, `AGENT_SESSION_SECRET` | signed assertions and sessions (generate locally) | yes |
+| `LANGFUSE_ENABLED`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | tracing | optional |
 
-The rest of this file is the developer reference: feature map, quick starts per subsystem, the configuration table,
-test inventory and known gaps.
+Demo logins (generated at run time, never committed), test applicants for each decision path and a presenter
+script: [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).
 
-## Features
+### Prerequisites
 
-| Area | What it does | Where |
+| Tool | Version | Needed for |
 |---|---|---|
-| Decision core | Canonical pydantic schema → ZEN Engine 2.1.2 → rule-level PASS/FAIL evidence; sha256-pinned policy registry that fails closed | `decision_engine/`, `apps/api/src/loan_advisory/application/` |
-| Conventional workflow | Frappe Lending 16 lifecycle (SUBMITTED → UNDER_REVIEW → APPROVED / REJECTED / INFO_REQUESTED / MANUAL_REVIEW, plus dispute/resubmit/withdraw); stores a `Loan Decision Evidence` record | `lifecycle.py`, `infra/frappe/` |
-| Synthetic bureau (development only) | Local-only FastAPI stand-in for a credit bureau, a deterministic 120-case fixture, a loopback-only client and data-quality gates; the resolved score still goes through unchanged ZEN. The advisory agent cannot start it: it is called by the separate bureau pipeline process | `apps/bureau/`, `decision_engine/bureau/`, `application/bureau_intake.py` |
-| Advisory agent | One LangGraph `StateGraph`: explain, improve (ZEN-verified plan), what-if (in-memory ZEN, never persisted), policy Q&A with citations, boundary refusals, human handoff. It reads Frappe through read-only views that `DecisionTools` verifies at construction, so it holds no write path and no bureau trigger | `apps/api/src/loan_advisory/agent/`, `application/ports.py` |
-| Guards | Deterministic request guards before the LLM (guarantee, override, record edit, other applicant, injection, auto-submit, dispute, misrepresentation, not-available), in English, Hindi and Telugu; answer guards after it (guarantee/decision language, NBFC written-reason claims, ungrounded numbers, citation labels); one rewrite, then a template. The model names an intent from six fixed values and never selects a tool | `guards.py`, `graph.py` |
-| Policy RAG | 38-source register with approval status and supersedes links; BM25 + EmbeddingGemma 2 in Qdrant, weighted RRF, `bge-reranker-v2-m3`; lender-profile filter applied before ranking | `data/sources/`, `rag/`, `config/rag.yaml` |
-| Personalisation | Literacy level (low / medium / high) and locale (en / hi / te) shape the wording | `prompts.py` |
-| Voice | Self-hosted LiveKit 1.13 + LiveKit Agents 1.8, Silero VAD, IndicConformer-600M (hi/te) and Whisper large-v3-turbo (en) STT, svara-tts-v1 TTS; sentence-streamed answers behind the same guards | `apps/voice/`, `infra/voice/` |
-| Observability | OpenTelemetry → self-hosted Arize Phoenix; optional self-hosted Langfuse on the same span tree; message text is not exported unless `AGENT_TRACE_CONTENT=1` (Phoenix) or `LANGFUSE_CAPTURE_CONTENT=1` (Langfuse) | `observability.py`, `langfuse_config.py`, `docs/observability/langfuse.md` |
-| Tooling | Ruff + pytest in GitHub Actions on pushes and PRs to `main`; optional pre-commit hook with staged ruff fixes and the test suite | `.github/workflows/ci.yml`, `.githooks/pre-commit` |
+| Git | any recent | clone |
+| Python | 3.14 (CI and `pyproject.toml` target 3.14) | agent, decision core, synthetic services, tests |
+| Node.js / npm | 24.x / 11.x | assistant runtime and the chat island build |
+| Docker Desktop (Linux containers) with Compose v2 | recent | Frappe stack (MariaDB 11.8, Redis 8.6); optional Langfuse |
+| RAM | 16 GB recommended | Frappe (about 4 GB), PaddleOCR (about 3 GB per worker), embeddings |
+| An OpenAI-compatible LLM endpoint | — | answers. Default: an OmniRoute gateway serving `antigravity/gemini-3.8-flash` |
+| Groq API key | optional | fast intent classifier; without it the classifier falls back to the gateway, then to rules |
+| Hugging Face account | — | one-time `huggingface-cli login` for the gated EmbeddingGemma-2 model (policy search) |
+| Git Bash (Windows) | Git for Windows 2.x | running the Frappe bootstrap scripts |
+| cloudflared | optional | a temporary public URL for a demo (Deployment options) |
 
-The advisory server is FastAPI served with uvicorn (`apps/api/src/loan_advisory/api/app.py`); its AG-UI endpoint,
-assertion verification and request admission live there. It is reached only through the CopilotKit runtime, never
-from the browser. The synthetic bureau (PR #17) is a separate, local-only **FastAPI** service under `apps/bureau/`;
-it is not part of the advisory server and never decides credit. Since Phase 1 boundary A the advisory server exposes no
-route that runs a bureau evaluation, so being reachable from the agent is not enough to trigger one.
-
-## Quick start
-
-### 1. Decision core only (no Frappe, no GPU)
+### 1. Clone and install
 
 ```bash
-pip install -r requirements.txt
-python -m pytest tests/test_zen_smoke.py tests/test_p0_integration.py -q
-python scripts/development/run_p0.py             # all fixtures + what-if demo
-python scripts/development/inspect_zen_trace.py  # decision + result + trace dump
+git clone https://github.com/Narendarcodes/Load-Advisory-Agent.git
+cd Load-Advisory-Agent
+python -m venv .venv
+# Windows (PowerShell):  .venv\Scripts\Activate.ps1      Linux / macOS:  source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt -r requirements-test.txt
+pip install -r requirements-rag.txt                   # policy search with citations: CPU torch is fine on a laptop
+python -m ruff check . && python -m pytest -q        # sanity check; live-service tests skip
 ```
 
-### 2. Live Frappe Lending (P1/P3)
+Policy search embeds with EmbeddingGemma-2 (`google/embeddinggemma-2`), a gated Hugging Face model: run
+`huggingface-cli login` and accept its licence once before the first run. Set `AGENT_RETRIEVER_DEVICE=cpu` on a
+machine without a GPU. Ignore the "GPU container only" comment in `requirements-rag.txt`; the CPU wheel works.
 
-Start the stack (frappe_docker clone, outside this repo):
-`docker compose --project-name loanrangers -f loanrangers.yml up -d --pull missing`
-(site `p1loan.local` → `http://127.0.0.1:8080`). The droplet variant is `infra/frappe/loanrangers.droplet.yml`
-(127.0.0.1-only, secrets from env), seeded by `infra/frappe/bootstrap/{create_site,seed}.sh`.
+### 2. Configure `.env`
 
 ```bash
-export FRAPPE_URL=http://127.0.0.1:8080 FRAPPE_API_KEY=<key> FRAPPE_API_SECRET=<secret>
-python -m pytest tests/ -q
+cp .env.example .env        # Windows: copy .env.example .env
 ```
 
-### 3. Advisory agent (text)
+Fill these (names only here; values never go in git):
 
-Needs an OpenAI-compatible endpoint serving gpt-oss-120b (vLLM in this project), plus the policy corpus and Qdrant
-index on disk for policy questions. `requirements.txt` covers the decision core, advisory server, agent graph and
-Langfuse SDK (exact pins for `zen-engine` and `langfuse`; `langgraph` is constrained to `>=1.0,<2`; the rest are
-floors). The RAG extras are in `requirements-rag.txt`/`requirements-data.txt`. LiveKit Agents, OpenTelemetry and the
-STT/TTS stack are still installed outside a requirements file; see [Known gaps](#known-gaps).
+| Variable | Value |
+|---|---|
+| `AGENT_ASSERTION_SECRET` | 32+ random characters (`openssl rand -hex 32`). Must equal the Frappe site's `agent_assertion_secret` |
+| `AGENT_SESSION_SECRET` | another `openssl rand -hex 32` |
+| `SARAL_LLM_PROVIDER`, `SARAL_LLM_MODEL`, `SARAL_LLM_FALLBACK_MODEL` | defaults: `omniroute`, `antigravity/gemini-3.8-flash`, `antigravity/claude-sonnet-4-6@omniroute` |
+| `OMNIROUTE_BASE_URL`, `OMNIROUTE_API_KEY` | your gateway, e.g. `http://127.0.0.1:20128/v1`. For any other OpenAI-compatible endpoint set `SARAL_LLM_BASE_URL` (or `LLM_BASE`) and `LLM_API_KEY` |
+| `GROQ_API_KEY` | optional (intent classifier) |
+| `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | after step 4: the read-only agent identity the seeder creates |
+| `LOAN_POLICY_DIR`, `AGENT_RETRIEVER_DEVICE` | folder of the built policy index (step 6), and `cpu` without a GPU |
+| `LANGFUSE_*` | optional; leave `LANGFUSE_ENABLED=0` for no telemetry |
+
+**No service reads `.env` by itself.** Export the variables into the shell of each process you start (agent, decision
+runner, runtime, synthetic services), in every new terminal: `set -a; . ./.env; set +a` (bash), or in PowerShell
+`Get-Content .env | ? { $_ -match '^[A-Z_]+=' } | % { $k,$v = $_ -split '=',2; Set-Item "env:$k" ($v -replace '\s+#.*$','') }`.
+
+### 3. Fastest check: the agent alone (no Docker, no Frappe)
 
 ```bash
-# decide the seeded demo applications first: the agent only explains stored decisions
-PYTHONPATH=.:apps/api/src python scripts/agent/prepare_demo.py
-
-# chat server on http://127.0.0.1:8095
-#   AGENT_ASSERTION_SECRET   the site's agent_assertion_secret (>=32 chars); startup fails without it
-#   --max-inflight 8         concurrent requests admitted; extra requests get 503 + Retry-After
-AGENT_ASSERTION_SECRET=<same value as the site> \
-  PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095
-#   --offline   MockStore + in-memory evidence instead of live Frappe
-#   --no-rag    do not load the GPU retriever (policy questions abstain)
+PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --offline --no-rag --port 8095
+curl http://127.0.0.1:8095/healthz
 ```
 
-Endpoints: `GET /healthz`, `POST /api/agui` (SSE for the CopilotKit runtime), `POST /api/chat` and
-`POST /api/chat/stream` (NDJSON sentences, then the final response). There is no browser surface:
-Frappe renders every page and its Node runtime calls these on the borrower's behalf.
+`--offline` uses built-in synthetic records and in-memory evidence; `--no-rag` skips the retriever, so policy
+questions abstain. This proves the LLM endpoint and the graph work before you bring up the rest.
 
-The agent never starts a bureau enquiry or a decision run. `POST /api/bureau/run` was removed on
-2026-11-03 (Phase 1 security boundary A): the bureau pipeline is a separate upstream process with its
-own credential, and the agent only reads the evidence that process leaves behind. To run the synthetic
-bureau for tests, start the service and call `run_bureau_evaluation()` directly:
+### 4. Full stack
 
-```bash
-PYTHONPATH=.:apps/api/src:apps/bureau/src python -m synthetic_bureau.app --port 8011
-```
+Start in this order (ports are the defaults; all bind to 127.0.0.1):
 
-The bureau is **not CIBIL/FICO and not a real bureau**; every field is synthetic. Flow, `REVIEW` vs `ERROR` and score
-precedence: [docs/architecture/synthetic-bureau.md](docs/architecture/synthetic-bureau.md).
+| # | Service | Command | Port |
+|---|---|---|---:|
+| 1 | Frappe Lending + Saral portal (Docker) | `docker compose -f infra/frappe/loanrangers.yml up -d --pull missing` (build the `loanrangers-frappe:16` image first if you have never built it, see [setup.md](docs/development/setup.md)); create the site: `docker exec loanrangers-backend-1 bash -lc 'cd /home/frappe/frappe-bench && bench new-site saral.local --mariadb-user-host-login-scope=% --db-root-password "$MYSQL_ROOT_PASSWORD" --admin-password "$ADMINPW" --install-app erpnext && bench --site saral.local install-app lending'` (about 6 min; pass both variables with `-e`; the root password is the db container's `MYSQL_ROOT_PASSWORD`); then `FRAPPE_SITE=saral.local FRAPPE_BACKEND=loanrangers-backend-1 bash infra/frappe/bootstrap/install_portal_app.sh`. The script copies the app into the backend container only: restart (or copy into) the queue and scheduler containers too. Put `agent_assertion_secret`, `allow_tests` and `allow_demo_users` into `sites/saral.local/site_config.json` by editing the file inside the container (exact command in [setup.md](docs/development/setup.md) §4), not with `bench set-config`, so the secret stays out of `logs/bench.log` (the `new-site` passwords are logged there too: treat that log as sensitive). For document-upload OCR use the `loanrangers-frappe:16-ocr` image (`infra/frappe/Dockerfile.ocr`, `infra/frappe/loanrangers.ocr.yml`); the seeded applicants do not need it | 8080 |
+| 2 | Synthetic applicants (once) | `python -m synthetic_data.saral_kyc_bank --count 200 --seed 20261103 --out ../saral-data/full200` | — |
+| 3 | Seed borrowers and applications (once) | `python -m ops.saral_seed.plan ../saral-data/full200 ../saral-data/plan.json`, then copy `plan.json` and `ops/saral_seed/frappe_seed.py` into the backend container and run it there (exact `docker cp` / `docker exec` lines at the top of `frappe_seed.py`). It writes logins and service keys to a 0600 `creds.json` and a `mapping.json`; copy both out, and put the reader key in `FRAPPE_API_KEY` / `FRAPPE_API_SECRET` | — |
+| 4 | Synthetic KYC + AA bank API | `SARAL_SYNTH_DIR=../saral-data/full200 python -m ops.synthetic_kyc_bank.app --port 8012` | 8012 |
+| 5 | Synthetic bureau | re-key the generated cases once: `python -c "from ops.saral_seed.plan import rekey_cli; rekey_cli('../saral-data/full200/bureau_cases.json', '../saral-data/mapping.json', '../saral-data/bureau_rekeyed.json')"`, then `python -m ops.bureau_fixture_server --fixture ../saral-data/bureau_rekeyed.json --port 8011` | 8011 |
+| 6 | Policy index (once; needed for cited policy answers) | `python scripts/policy/fetch_sources.py` → `python scripts/policy/build_corpus_v3.py --src <src> --out <chunks>` → `python scripts/policy/index_corpus_v3.py --chunks <chunks> --qdrant-dir <qdrant>`. Then lay it out the way the agent reads it: for each collection (`saral_nbfc_policy`, `rbi_regulatory`) put `chunks.jsonl` in `$LOAN_POLICY_DIR/<collection>/` and move `<qdrant>/<collection>` to `$LOAN_POLICY_DIR/<collection>/qdrant_v2/`, and set `LOAN_POLICY_DIR` in `.env`. Keep it outside the repo (copyrighted texts are never committed). Some RBI PDFs must be downloaded in a browser into `$LOAN_POLICY_DIR/manual/` (see the script header) | embedded Qdrant |
+| 7 | Decision runner | `SARAL_POLICY_VERSION=synthetic-v2 SARAL_BUREAU_URL=http://127.0.0.1:8011 SARAL_KYC_AA_URL=http://127.0.0.1:8012 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m ops.decision_runner` | — |
+| 8 | Saral agent | `PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095` (add `--no-rag` if you skipped step 6) | 8095 |
+| 9 | Assistant runtime | `cd apps/runtime && npm ci && npm run build && AGENT_AGUI_URL=http://127.0.0.1:8095/api/agui AGENT_RUNTIME_PORT=4200 FRAPPE_BASE_URL=http://127.0.0.1:8080 npm start` | 4200 |
+| 10 | Chat island (once per change) | `cd apps/web/assistant && npm ci && npm run build` (writes into the portal app) | — |
+| 11 | Demo Loan Officer (once) | with `allow_demo_users` in the site config (step 1), run `bench --site <site> execute loan_advisory_portal.setup_demo.create_demo_officer` inside the backend container; the password is printed once | — |
 
-The only credential this service accepts is a 60-second assertion minted by Frappe (`services/assertion.py`):
-HMAC-SHA256 over compact sorted JSON with `iss = frappe:loan_advisory_portal`, `aud = loan-advisory-agent`,
-`iat`, `exp`, a single-use `jti`, and the borrower/application/literacy/locale claims. The verifier key is
-`AGENT_ASSERTION_SECRET`, which must equal the site's `agent_assertion_secret`; without it the server exits with an
-actionable error. Application, applicant, literacy and locale come from the assertion, never from the chat body.
-There is no demo sign-in: the borrower authenticates to Frappe, never to this service.
+Then open **http://127.0.0.1:8080**, sign in with a seeded borrower from the 0600 logins file, and open the Saral
+portal. Demo logins, the synthetic applicants to use for each decision path and a 5-minute presenter script:
+**[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md)**. The Loan Officer desk is at `/app` with the officer login. Health checks: `/healthz` on 8011, 8012 and 8095.
 
-### 4. Voice
+### Windows notes
 
-`infra/voice/up.sh` brings up LiveKit, the STT container, the TTS vLLM + SNAC sidecar and the worker on the GPU droplet,
-all bound to 127.0.0.1. The worker on its own:
+- Use Docker Desktop with Linux containers and Compose v2 (`docker compose`).
+- Set `git config core.autocrlf false` before cloning `frappe_docker` if you build the Frappe image yourself; CRLF in
+  its shell scripts makes the containers restart-loop (see setup.md).
+- Run the bootstrap scripts with **Git Bash explicitly** (`"C:\Program Files\Git\bin\bash.exe" -lc "..."`). The `bash`
+  on PATH is often WSL's `C:\Windows\system32\bash.exe`, which has no docker CLI. The scripts are not executable in
+  git, so always call them through `bash`.
+- In PowerShell, set variables with `$env:NAME="value"` and use `;` instead of `&&` on older shells. `PYTHONPATH`
+  uses `;` as separator on Windows: `$env:PYTHONPATH=".;apps/api/src"`.
 
-```bash
-LIVEKIT_URL=ws://127.0.0.1:7880 LIVEKIT_API_KEY=... LIVEKIT_API_SECRET=... \
-AGENT_HTTP=http://127.0.0.1:8095 STT_HTTP=http://127.0.0.1:8791 TTS_HTTP=http://127.0.0.1:8793 \
-FRAPPE_URL=http://127.0.0.1:8080 FRAPPE_API_KEY=<service key> FRAPPE_API_SECRET=<service secret> \
-  python apps/voice/agent_worker.py start
-```
+## Deployment options
 
-The worker exchanges the participant's `session_id` (plus room and identity) for a 60-second assertion through
-`loan_advisory_portal.api.voice.voice_assertion`, authenticating to Frappe with an `Agent Integration` API key; it
-never receives a credential from the browser and cannot start a turn without a live `Voice Session` row.
-
-`infra/voice/side_stack.sh` starts an isolated second stack (own server, LiveKit and worker) for side-by-side tests.
-
-## Configuration
-
-Copy `.env.example` to `.env`. Never commit real secrets.
-
-| Variable | Default | Purpose |
+| Option | Status | Notes |
 |---|---|---|
-| `FRAPPE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | – | Frappe Lending REST access (token auth). For the agent this is a **read-only** identity (`Agent Integration` + `Loan Reporter`): projected application reads and stored-evidence reads, nothing else |
-| `LLM_BASE`, `LLM_MODEL` | `http://127.0.0.1:8001/v1`, `llm` | OpenAI-compatible LLM endpoint (gpt-oss-120b on vLLM) |
-| `LLM_API_KEY`, `GROQ_API_KEY` | – | Bearer token for a remote OpenAI-compatible endpoint; `LLM_API_KEY` wins |
-| `LLM_TIMEOUT_S`, `LLM_RETRIES` | `120`, `3` | Per-call limits; the per-turn deadline below still applies |
-| `LOAN_POLICY_DIR` | `/root/hx/loan/policy` | Policy text, `chunks.jsonl`, Qdrant dir (text stays off git) |
-| `AGENT_QDRANT_DIR` | `$LOAN_POLICY_DIR/qdrant_v2` | Local Qdrant collection `policy_chunks_v2` |
-| `AGENT_QDRANT_URL` (+ `AGENT_QDRANT_API_KEY`, `AGENT_QDRANT_COLLECTION`) | unset | Serve dense retrieval from a Qdrant Server. Unset keeps the embedded collection; both set at once is refused, and the serving handle is query-only (create/upsert/delete are refused at startup) |
-| `EMBED_MODEL` | `google/embeddinggemma-2` | Dense embedder |
-| `LENDER_PROFILE` | `bajaj_finance` (from `config/rag.yaml`) | Lender profile for retrieval filters |
-| `AGENT_RETRIEVER_DEVICE`, `AGENT_GPU_FRACTION` | auto, unset | Retriever device; VRAM cap on the shared GPU (e.g. `0.016` ≈ 3 GB on MI300X) |
-| `AGENT_ASSERTION_SECRET` | **required** | HMAC key that verifies the Frappe assertion; must equal the site's `agent_assertion_secret`, startup fails if missing or <32 chars |
-| `AGENT_VOICE_DEADLINE_S`, `AGENT_TEXT_DEADLINE_S` | `25`, `75` | Per-turn deadline; a template answers when time runs out |
-| `AGENT_CLASSIFY_BUDGET_S`, `AGENT_MIN_COMPOSE_S` | `6`, `4` | Classifier budget; minimum time left to start or retry a compose |
-| `AGENT_FAST_CLASSIFY` | `voice` | `off` / `voice` / `all`: high-precision regex intents skip the LLM classifier |
-| **`AGENT_CITATION_MODE`** | **`labels`** | How policy citations are kept (below) |
-| `AGENT_VERIFY_MIN_LEFT_S` | `3` | `llm_verify` only: minimum time left in the turn to run the verifier call |
-| `AGENT_CITE_MIN_SUPPORT`, `AGENT_CITE_REL_SUPPORT`, `AGENT_CITE_SPAN_COVER` | `0.25`, `0.6`, `0.85` | Citation support floor, relative-to-best floor and span token coverage |
-| `AGENT_STREAM_BRIDGE` | `To be precise:` | Phrase spoken before a corrected answer when a streamed draft was replaced |
-| `AGENT_TRACING`, `AGENT_TRACE_CONTENT`, `AGENT_TRACE_PROJECT` | off, off, `loan-advisory-agent` | Phoenix export; include message text only when `=1`; Phoenix project name |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://127.0.0.1:6006` | Phoenix OTLP endpoint |
-| `LANGFUSE_ENABLED` | `0` | Optional self-hosted Langfuse exporter; off keeps tracing a no-op |
-| `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` | – | Langfuse project keys; incomplete config disables the exporter |
-| `LANGFUSE_BASE_URL`, `LANGFUSE_ENVIRONMENT` | `http://127.0.0.1:3000`, `local` | Self-hosted endpoint (Cloud refused) and environment label |
-| `LANGFUSE_CAPTURE_CONTENT`, `LANGFUSE_ALLOW_REMOTE` | off, off | Include prompt/answer text; allow a non-loopback self-hosted endpoint |
-| `LANGFUSE_SAMPLE_RATE`, `LANGFUSE_TIMEOUT`, `LANGFUSE_RELEASE` | `1.0`, `5`, – | Sampling, HTTP timeout (s), optional release label |
-| `AGENT_AUDIT_LOG`, `AGENT_HANDOFF_LOG` | – | Audit rows (ids, intent, flags, timings; no message text or money values) and the handoff JSONL queue |
-| `AGENT_LOG_MAX_BYTES` | `52428800` | Size cap for each active JSONL log. At the cap the file is renamed to a dated archive and a fresh one starts, so rotation never drops a row; `0` disables rotation |
-| `AGENT_STATE_DIR` | – | Root for `turns.jsonl`, `handoffs.jsonl` and `traces/`; a per-artifact env var or an explicit argument wins. New directories are 0700 and new files 0600 on POSIX; existing files are never moved or chmodded |
-| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | – | Voice; Frappe mints the room token (`api/livekit.py`) and returns 503 without them |
-| `AGENT_HTTP`, `STT_HTTP`, `TTS_HTTP` | `:8095`, `:8791`, `:8793` | Voice worker targets |
-| `VOICE_STREAM`, `VOICE_HTTP_TIMEOUT_S`, `VOICE_FILLER_AFTER_S` | `1`, `40`, `4` | Sentence streaming; worker timeout (must exceed the graph deadline); "one moment" filler |
-| `VOICE_TURN_LOG`, `VOICE_WORKER_PORT` | `/root/hx/loan/voice/turns.jsonl`, `8081` | Per-turn JSONL log (timings, locale, engine, audio duration; no transcript); worker HTTP port |
-| `VOICE_MIN_ENDPOINTING_S`, `VOICE_VAD_MIN_SILENCE_S`, `VOICE_TTS_GENDER` | `0.5`, `0.55`, `Female` | End-of-turn delay, Silero silence, TTS voice |
+| Laptop + tunnel | **used for the submission** | The stack above on the owner's laptop, exposed through a temporary Cloudflare quick tunnel. The tunnel URL changes on every start and is never committed |
+| Test bed (InstaBox + sandbox) | used for the live end-to-end test | [docs/saral/INTEGRATION_DEPLOY.md](docs/saral/INTEGRATION_DEPLOY.md) |
+| Azure VM | future | One VM with Docker for Frappe, Qdrant and the services, a managed TLS front door, and the LLM gateway as a hosted endpoint with health checks |
 
-### `AGENT_CITATION_MODE`
+## Architecture
 
-| Mode | Behaviour | TEST split, PR #10-era run (80 answerable, 3 runs) |
+```mermaid
+flowchart LR
+  B["Borrower<br/>(browser)"] --> FD["Front door<br/>(one origin)"]
+  O["Loan Officer"] --> DESK["Frappe desk<br/>review queue"]
+  FD --> P["Saral portal<br/>(Frappe app)"]
+  FD --> RT["Assistant runtime<br/>(CopilotKit, Node)"]
+  RT -- "60 s signed assertion" --> AG["Saral agent<br/>(FastAPI + LangGraph)"]
+
+  subgraph FR["Frappe Lending (system of record)"]
+    P
+    DESK
+    LMS[("Applications, documents,<br/>decision evidence,<br/>audit log")]
+  end
+  P --> LMS
+  DESK --> LMS
+
+  subgraph DEC["Decision pipeline (no LLM)"]
+    RUN["Decision runner"] --> KYC["Synthetic KYC + AA bank API"]
+    RUN --> BUR["Synthetic bureau"]
+    RUN --> OCR["OCR<br/>(PaddleOCR default,<br/>Tesseract fallback)"]
+    RUN --> ZEN["ZEN rules engine<br/>(catalogue v2)"]
+  end
+  LMS -- "SUBMITTED" --> RUN
+  ZEN -- "decision + evidence" --> LMS
+
+  AG -- "read-only tools" --> LMS
+  AG -- "what-if (in memory)" --> ZEN
+  AG --> RAG["Policy RAG<br/>Qdrant: saral_nbfc_policy +<br/>rbi_regulatory"]
+  AG --> LLM["Answer: Gemini 3.8 Flash via OmniRoute<br/>(Sonnet 4.6 fallback);<br/>intent: Groq gpt-oss-120b chain"]
+  AG -.-> LF["Langfuse traces<br/>(optional)"]
+```
+
+Editable drawing (opens in draw.io): [docs/architecture.drawio.svg](docs/architecture.drawio.svg). Detailed
+diagrams (system, decision flow, agent turn, deployment): [docs/saral/ARCHITECTURE.md](docs/saral/ARCHITECTURE.md).
+Why it is built this way and what was reused: [APPROACH.md](APPROACH.md). Phases and dates:
+[docs/build-plan.md](docs/build-plan.md). Older component diagrams:
+[docs/architecture/](docs/architecture/README.md).
+
+Main parts:
+
+| Part | What it is | Where |
 |---|---|---|
-| `labels` (**default**) | Keep the passage labels the model cited | strict 0.592, support 0.838, judged faithful 0.904, p50 7.3 s |
-| `primary_source` (**recommended opt-in**) | Keep the cited passages from one source document (support, then currency, then retrieval rank); retain a second document when sources conflict unacknowledged, the answer contrasts versions, or it uniquely supports part of a sentence; no extra LLM call | strict 0.800, support 0.800, judged faithful 0.819, p50 7.1 s |
-| `llm_verify` (opt-in, PR #8) | Extra LLM call prunes unsupported citations | strict 0.671, support 0.763, judged faithful 0.870, p50 9.1–11.6 s |
+| Borrower portal | Frappe app `loan_advisory_portal`: Saral design, 3-stage apply flow, decision card, documents, assistant panel | `apps/loan_advisory_portal/` |
+| Records | Frappe Lending doctypes for all 229 data-dictionary fields, a Decision Snapshot, an application state log | `apps/loan_advisory_portal/`, [docs/saral/LMS_DOCTYPES.md](docs/saral/LMS_DOCTYPES.md) |
+| Decisions | ZEN Engine with the rule catalogue v2 (one JSON is the single source of truth) | `decision_engine/`, `contracts/catalogue_v2/`, [docs/saral/RULE_CATALOGUE_V2.md](docs/saral/RULE_CATALOGUE_V2.md) |
+| Synthetic data services | KYC (PAN, Aadhaar), account-aggregator bank fetch, credit bureau. None of them is real | `ops/synthetic_kyc_bank/`, `apps/bureau/`, `synthetic_data/` |
+| Documents | OCR for PAN, Aadhaar, salary slip, bank statement, employment letter: PaddleOCR PP-OCRv5 mobile by default, Tesseract as automatic fallback; signature screening is a refer-only signal, never a verification | `apps/loan_advisory_portal/.../ocr/`, [docs/saral/OCR_BAKEOFF.md](docs/saral/OCR_BAKEOFF.md) |
+| Agent | One LangGraph graph: classify (Groq gpt-oss-120b → gpt-oss-20b → OmniRoute gemini-3.5-flash-lite → rules), guard, fetch the recorded decision only when the turn needs it, explain / improve / what-if / policy / clarify / hand off, validate, sanitise. Answers: Gemini 3.8 Flash via OmniRoute, Claude Sonnet 4.6 fallback | `apps/api/src/loan_advisory/agent/` |
+| Explanation tone | Customer segmentation picks *how* to explain (Guided, Simple, Standard, Detailed), never *what* | `decision_engine/segmentation/` |
+| Policy RAG | Two Qdrant collections: Bajaj documents (15 docs, 329 chunks) and RBI regulations (6 docs, 317 chunks); BM25 + EmbeddingGemma dense search, weighted RRF, optional reranker | `rag/`, `config/rag.yaml` |
+| Observability | Self-hosted Langfuse (optional); message text is not exported unless switched on | `infra/langfuse/`, `docs/observability/` |
 
-Also accepted, explored on dev only: `verify`, `spans`, `spans_verify`, `one_source`, `one_source_soft`.
+## The four products
 
-**Trade-off.** `primary_source` raises strict citation accuracy by about 21 points at no latency cost, but an answer
-that combines two documents usually keeps one citation, so support drops about 4 points and same-model-judged
-faithfulness about 8 points. The default stays `labels`; switching is a product decision. The live-run figures above
-were not re-run for this revision.
+All four are personal loans, grouped by purpose (ADR-0003). They share one flat prototype rate (20% a year, used for
+sizing only) and a ₹25 lakh cap. A request above the cap gets a counter-offer at the largest amount that passes.
+Bajaj Finance's personal-loan variants (Flexi Dropline, Flexi Hybrid) are not offered as products.
 
-**Independent audit (2026-10-25).** A hand-authored, deterministic set (`data/evaluation/agent/citation_audit_v1/`,
-68 fixed cases, no LLM judge) measures the citation and guard layers on fixed composer outputs. `primary_source` moves
-from labels' 0.7069 to 0.95 precision (41/58 → 38/40), with material coverage 1.0, 29/29 case pass, 0 forbidden
-citations and 0 per-case regressions. Source: `docs/agent/citation_accuracy.md`.
-
-## Tests
-
-```bash
-python -m pytest tests/ -q                      # live-env suites skip without FRAPPE_* / GPU / LLM
-BASE=http://127.0.0.1:8095 node tests/e2e/chat_smoke.mjs     # Playwright chat smoke (needs playwright + Chromium)
-BASE=http://127.0.0.1:8095 node tests/e2e/voice_contrast.mjs # /voice caption contrast check (WCAG AA)
-```
-
-**Collection and results are different numbers.** On 2026-10-27 this tree collects **527 tests**; one local run (Windows,
-no live Frappe/GPU/LLM) gave **516 passed, 11 skipped, 0 failed** in 43.9 s. Skips are the suites that need those
-services. CI (Python 3.14, no GPU) runs `python -m ruff check .` and `python -m pytest tests/ -q`.
-
-Historical, not current: **205 passed, 0 failed** on the droplet with live Frappe on PR #10; chat Playwright smoke
-**16/16** with 0 console errors (PR #9, both citation modes).
-
-### Pre-commit hook
-
-```bash
-git config core.hooksPath .githooks
-```
-
-The hook checks staged whitespace/conflicts, lints staged Python with ruff (safe fixes are re-staged; unstaged work is
-never pulled in), then runs the test suite. Details: `.githooks/pre-commit`.
-
-Evaluation harnesses:
-
-```bash
-PYTHONPATH=.:apps/api/src python scripts/agent/eval_policy_split.py run --split test --mode labels --cache retrieval.json --out runs/x --judge
-PYTHONPATH=.:apps/api/src python scripts/agent/eval_policy_split.py run --bench data/evaluation/rag/bajaj_v1/abstain_v2.jsonl --split abstain_v2 --mode labels --cache retrieval_ab.json --out runs/ab
-PYTHONPATH=.:apps/api/src python scripts/agent/eval_agent.py --out <dir>        # A1-A5 personas, B policy, C boundary
-python scripts/voice/voice_loop_test.py --out <dir>                             # synthetic utterances end to end through LiveKit
-```
-
-## Repository layout
-
-```
-apps/api/src/loan_advisory/
-  agent/            LangGraph graph, guards, citations, streaming, tools, prompts, settings, FastAPI serving,
-                    observability, langfuse_config
-  application/      decision_orchestrator.py, lifecycle.py (process_application, process_bureau_application, simulate),
-                    bureau_intake.py
-  infrastructure/   frappe_adapter.py (mock store + REST client), evidence_store.py, bureau_client.py
-  api/              FastAPI factory, assertion verifier, AG-UI + chat routes, admission middleware
-apps/bureau/src/synthetic_bureau/  local-only FastAPI bureau (app.py, generator.py, fixtures.py, scoring.py)
-apps/voice/         agent_worker.py (LiveKit Agents), voice_assertion_exchange.py, tts_sidecar.py (svara + SNAC)
-apps/web/assistant/ React island (CopilotKit) built into the Frappe app's public/js/assistant/
-apps/web/chat/      legacy static pages; nothing serves them any more
-config/             rag.yaml, bureau_dq_policy.json,
-                    lender_profiles/{bajaj_finance,generic_bank,generic_nbfc,synthetic_prototype}.yaml
-data/sources/       datasets.yaml, policy_register.yaml, policy_manifest_v2.json (metadata only)
-data/synthetic/     applicants.json (8 fixtures), personas/ (2,560 synthetic personas),
-                    bureau/cases_120.json (120 deterministic bureau cases)
-data/evaluation/    rag/benchmark_v1.jsonl, rag/bajaj_v1/ (benchmark, abstain_v2, results),
-                    rag/synthetic_v1/, agent/boundary_v1.jsonl, agent/citation_audit_v1/
-decision_engine/    policies/, decisions/ (ZEN JDM), schemas/ (incl. bureau.py), evidence/, bureau/ (gates, policy)
-rag/                corpus.py (fetch, hash, chunk), retrieve.py (BM25, Qdrant, RRF, reranker, profile filters)
-scripts/            data/, policy/, agent/, voice/, development/
-infra/              frappe/ (compose, bootstrap), voice/ (up.sh, side_stack.sh), langfuse/ (compose, runbook)
-tests/              pytest suites + e2e/ Playwright scripts
-docs/               architecture/, agent/, policy/, data/, observability/, research/, prototypes/ (P0/P1 history)
-.github/workflows/  ci.yml (ruff + pytest)
-.githooks/          pre-commit (staged ruff + pytest)
-```
-
-## Evaluation results (summary)
-
-All on synthetic applicants. The LLM judge is the same gpt-oss-120b that generates answers, so judge figures are
-indicative only; `strict` and `support` citation scores are deterministic gold-document / gold-anchor checks. These are
-the last recorded runs (PRs #5–#10, October 2026) and were not re-run for this revision; the live-service rows are
-historical.
-
-| What | Result | Source |
-|---|---|---|
-| Retrieval, bajaj_v1 TEST (80 answerable) | Hybrid + rerank R@5 **0.950**, MRR@10 **0.843** (BM25 0.738 / 0.526; dense 0.838 / 0.666; weighted RRF 0.825 / 0.664). MRR vs dense +0.177, 95% CI [0.101, 0.253] | PR #5 |
-| Governance | 0 non-permitted chunks in any top-10 with filters; without filters the injection page reaches the top-10 for 30/149 questions | PR #5 |
-| Explain (EN, n=300) | Reason-value coverage 100%, ungrounded numbers 0, guard flags 0 | PR #6 (eval_v3) |
-| Improve / what-if (n=150 each) | Plan targets pass in ZEN 100%; what-if extraction 100%, simulation = direct ZEN 100%, original unchanged 100% | PR #6 |
-| Boundary (n=40) | 40/40; deterministic guarantee or decision language in final answers: 0 | PR #6, re-run PR #10 |
-| Policy answers, TEST, `labels` | answered 0.95, correct 0.875, support 0.8375, strict 0.6125, unanswerable 11/11 | PR #10 |
-| abstain_v2 (41, agent-authored) | `labels` 39/41 and 40/41; `primary_source` 40/41 | PR #10 |
-| Voice, #8+ code (side stack, LLM idle) | 11/11 turns with audio, 11/11 intents, first audio p50 **3.44 s** (en 2.00 / hi 3.73 / te 3.81 s), max 6.63 s; STT CER 0.008 / 0.000 / 0.014 | PR #10 run |
-| Voice, recorded production :8095 run (then PR #6/#7 code, LLM idle) | 11/11 audio, 10/11 intents, p50 5.20 s | PR #10 run |
-
-Details: `docs/policy/bajaj_reference_lender.md`, `docs/agent/README.md`, `docs/agent/citation_accuracy.md`.
-
-## Known gaps
-
-- **`scripts/agent/eval_agent.py` set B (policy) answered only about 30%** on PR #10-era code (0.29 on PR #10, 0.31 on
-  the PR #9 base), while `eval_policy_split.py` answers 95% on the same TEST split. Probes ruled out the retriever and
-  the policy path, so this is treated as a harness issue. Sets A1-A4 and C are unaffected. Not re-run for this revision
-  and not yet fixed.
-- **The production `:8095` deployment state is not recorded in this repo.** The last recorded deployed evidence is
-  PR #10-era and was not re-checked for this revision; the post-#10 work was verified locally/CI, not against the
-  droplet. Confirm before citing what production runs. Deploying is the owner's call.
-- **`abstain_v2` is agent-authored and not human-reviewed**, and the PR #9 guard fix was written after seeing its misses,
-  so after-fix numbers are not held-out. Remaining misses: AB2-018 (co-applicant "confirm it will be sanctioned") goes to
-  the what-if clarify path; AB2-042 (another bank's prepayment) is sometimes answered from RBI bank rules.
-- Strict citation accuracy is about 0.6 in the default mode (see the trade-off above); the independent audit measures
-  the deterministic citation layer, not end-to-end answer quality.
-- The synthetic bureau is a development device: `synthetic-score-v1` has no predictive validation, minimum history is
-  assumed to be six months, and the staleness / income-obligation variance gates are disabled pending a reviewed
-  `config/bureau_dq_policy.json` change.
-- No public dataset validates Indian lender decisions; LendingClub is a US public proxy only. Real validation needs an
-  authorised partner dataset.
-- Register v2 needs human sign-off (two repeals are inferred), and more unanswerable questions are needed to calibrate
-  abstention.
-- Demo sign-in only, and the human handoff is a local JSONL queue with no real escalation channel.
-- In voice, only English explain/improve turns get the deterministic lead sentence; Hindi and Telugu wait for the first
-  guarded LLM sentence. PR #8 also recorded the explain/improve/what-if deadline template as English-only.
-- Voice VRAM: 10.4 GB right after restart, about 11.9 GB after use, against a 12 GB budget.
-- Most dependency versions are floors and there is no lockfile. `requirements.txt` covers the decision core, advisory
-  server, agent graph and Langfuse SDK; LiveKit Agents, OpenTelemetry, `sentence-transformers`, `qdrant-client` (a floor
-  in `requirements-rag.txt`) and the STT/TTS stack are not all pinned or listed.
-
-## PR history
-
-PRs #1–#4, #6–#10 and #12–#21 are merged to `main`. PR #5 was **closed**, not merged, but its commits are already on
-`main`. Only #11 (this documentation revision) remains open.
-Older PRs were stacked on the branch before them; the merged work is now on `main`.
-
-| PR | Branch | Content | State |
+| Product | Amount | Tenure | Purpose document |
 |---|---|---|---|
-| #1 | `data/dataset-audit` | Dataset acquisition and audit | merged |
-| #2 | `data/synthetic-personas` | 2,560 synthetic personas labelled by the decision pipeline | merged |
-| #3 | `feat/frappe-zen-workflow` | Conventional Frappe + ZEN workflow, versioned policy, stored evidence | merged |
-| #4 | `feat/policy-register-rag` | Policy register + hybrid RAG, 96-question eval | merged |
-| #5 | `feat/bajaj-policy-rag` | Bajaj Finance reference lender, register v2, weighted RRF + rerank, bajaj_v1 | closed |
-| #6 | `feat/langgraph-agent` | LangGraph advisory agent | merged |
-| #7 | `feat/livekit-voice` | Self-hosted LiveKit voice | merged |
-| #8 | `feat/agent-upgrades` | Sentence streaming, per-turn deadline, opt-in citation verification | merged |
-| #9 | `feat/citation-accuracy` | `primary_source` mode, abstain_v2, record-tampering guards | merged |
-| #10 | `feat/abstain-unavailable` | "Not available to me" abstention + misrepresentation guard | merged |
-| #13 | `fix/hardening-pr10` | Guard, streaming and concurrency hardening | merged |
-| #14 | `feat/groq-auth` | Groq bearer auth and UTF-8 SSE decoding | merged |
-| #15 | `feat/rag-index-provenance` | Fail-closed vector-index provenance, UTF-8 reads | merged |
-| #16 | `eval/synthetic-rejection-rag` | Synthetic rejection/reapplication retrieval set | merged |
-| #17 | `feat/bureau-integration` | Synthetic bureau, data-quality gates, bureau-aware evidence/agent | merged |
-| #18 | `feat/langfuse-observability` | Self-hosted Langfuse tracing, privacy boundary, eval publishing | merged |
-| #19 | `qa/gui-overnight-2026-10-26` | GUI QA fixes (setup, bureau port, outcome labels, routing, voice UI) | merged |
-| #20 | `chore/pre-commit-ruff-hook` | Ruff pre-commit checks | merged |
-| #21 | `ci/github-actions-tests` | Ruff + pytest on pushes and PRs to `main` | merged |
-| #11 | `docs/project-docs` | README, APPROACH and architecture diagrams (this PR) | open |
-| #12 | `docs/investigation-question-bank` | Investigation question bank assessment + research notes | merged |
+| Wedding (`PL_WEDDING`) | ₹40,000 to ₹25 lakh | 12 to 60 months | none required (invite or vendor quote optional) |
+| Higher education (`PL_HIGHER_EDUCATION`) | ₹40,000 to ₹25 lakh | 12 to 84 months | admission letter or fee schedule |
+| Home renovation (`PL_HOME_RENOVATION`) | ₹40,000 to ₹25 lakh | 12 to 84 months | contractor quote or property proof |
+| Medical emergency (`PL_MEDICAL_EMERGENCY`) | ₹40,000 to ₹25 lakh | 12 to 60 months | hospital estimate or bill (priority review) |
 
-## Earlier milestones (P0 / P1)
+Caps, tenures and the sizing rate are owner-approved for `prototype_synthetic` (ADR-0011). Purpose documents and
+purpose fields are assumptions. Full matrix: [docs/saral/PRODUCT_MATRIX.md](docs/saral/PRODUCT_MATRIX.md).
 
-P0: mock Frappe → canonical schema → ZEN → decision + evidence + trace. P1: live Frappe Lending 16.6.1 through the same
-adapter and schema (live `ACC-LOAP-2026-00001` ≡ mock `APP-TEST-005`: REJECTED, identical rules). Details in
-`docs/prototypes/p0-*.md` and `p1-*.md` (footprint: +7.28 GB images, +301 MB volumes, ≈845 MB idle RAM).
+Main prototype checks (ADR-0011): credit score floor 700; FOIR including the new EMI at most 0.50 (manual review above
+0.45 for loans over ₹10 lakh); net income at least ₹25,001; at least ₹15,000 left each month after EMIs; 90+ days past
+due in 24 months or a settlement / write-off in 24 months declines; 60+ days past due in 12 months goes to review.
+**The borrower never sees these numbers.**
 
-- Live DocTypes use Frappe autonames (`ACC-LOAP-…`); `APP-TEST-00x` IDs exist only in the mock store.
-- ZEN 2.x nodes see only the previous node's output, so the model is one self-contained expression node
-  (`docs/prototypes/p0-zen.md`).
+## ZEN decides, RAG explains
+
+| | ZEN (decisions) | RAG (explanations) |
+|---|---|---|
+| Job | Decide approve / counter-offer / decline / more info / review, and size the offer | Give general, cited policy background |
+| Source | `rule_catalogue.v2.json`, compiled to a ZEN decision model | Bajaj public documents and RBI directions, in two separate collections |
+| Authority | The only authority (ADR-0001) | Indicative only; never tied to the applicant's own case |
+| What the agent reads | The stored decision and its reason category, through a read-only tool (exact lookup, no search) | Retrieved passages, cited by source |
+| Never | Uses an LLM | Indexes ZEN rules, or compares the applicant's values with a published number |
+
+The agent has no write path. A what-if runs ZEN in memory, says only "would likely meet" or "wouldn't meet", is
+capped at 3 per session (ADR-0010), and is labelled "Estimate only, your application is unchanged" (ADR-0005).
+
+## Languages
+
+- **Form:** English (ADR-0007).
+- **Chat:** English, Hindi and Telugu, in native script or romanised. Replies come in the borrower's language.
+- **Style:** answer first, at most three points, no internal terms, no cut-offs (ADR-0006). The segment from the
+  borrower's bureau record only picks the explanation style; it is never shown to the borrower.
+
+## How to run (components)
+
+Everything below uses synthetic data. **Never commit `.env`, secrets, `storage.sqlite` or trace files.**
+
+### Decision core only (no Frappe, no network)
+
+```bash
+pip install -r requirements.txt -r requirements-test.txt
+python -m contracts.catalogue_v2.build        # regenerate the catalogue docs from the contracts
+python -m pytest contracts/tests tests -q     # unit tests (some suites need Frappe and skip without it)
+```
+
+### Synthetic data and services
+
+```bash
+# 200 synthetic applicants (deterministic seed)
+python -m synthetic_data.saral_kyc_bank --count 200 --seed 20261103 --out /path/to/full200
+
+# synthetic KYC + account-aggregator bank API, and the synthetic bureau (loopback only)
+SARAL_SYNTH_DIR=/path/to/full200 python -m ops.synthetic_kyc_bank.app --port 8012
+python -m ops.bureau_fixture_server --fixture /path/to/bureau_cases.json --port 8011
+```
+
+### Full integration stack
+
+Frappe Lending, the Saral portal, Qdrant, the embedding service, the decision runner, the agent, the assistant
+runtime and the front door. Hosts, ports, start order and health checks:
+[docs/saral/INTEGRATION_DEPLOY.md](docs/saral/INTEGRATION_DEPLOY.md). Clean-clone install of Frappe and the portal:
+[docs/development/setup.md](docs/development/setup.md). Every environment variable:
+[docs/development/environment-variables.md](docs/development/environment-variables.md) and `.env.example`.
+
+```bash
+# decision runner: polls Frappe for SUBMITTED applications -> KYC/AA -> bureau -> ZEN -> evidence
+SARAL_POLICY_VERSION=synthetic-v2 PYTHONPATH=.:apps/api/src:apps/bureau/src python -m ops.decision_runner
+
+# agent (FastAPI + LangGraph); needs AGENT_ASSERTION_SECRET equal to the Frappe site's value
+PYTHONPATH=.:apps/api/src python -m loan_advisory.agent.server --port 8095
+```
+
+The agent accepts only a 60-second signed assertion minted by Frappe. It cannot start a bureau enquiry or a decision.
+
+The configuration and test tables from the previous README are kept in
+[docs/development/developer-reference.md](docs/development/developer-reference.md).
+
+## Evaluation setup and results
+
+### Setup
+
+| Item | Value |
+|---|---|
+| RAG golden set | Golden A v2: 227 questions (178 dev, 49 held out), EN/HI/TE, with refuse / abstain / clarify / conflict items. Drafted with an LLM, **human review pending** (PR #44) |
+| Agent golden set | Golden B v1: 60 conversations (49 dev, 11 held out), salaried applicants plus 1-2 "outside what we offer" cases (PR #44) |
+| Retrieval runs | Kaggle (2x T4), retrieval only: embedding, indexing, retrieval, reranking. No LLM runs on Kaggle |
+| Generator and judge | Final agent runs: generator `antigravity/gemini-3.8-flash` via OmniRoute (the shipped answer model; Sonnet 4.6 fallback, never used in the runs) and judge **the same model**, with `codex/gpt-6-luna` as judge fallback. RAG numbers are from the earlier run with generator `claude-sonnet-4-6` and judge `gpt-6-luna`. Intent classifier: the production Groq chain. See [Disclosures](#disclosures) |
+| Framework | DeepEval 4.3.2: Faithfulness, AnswerRelevancy, ContextualRecall/Precision, RoleAdherence, ToolCorrectness, GEval rubrics; plus deterministic leak regexes |
+| Live end to end | Real Chromium, recorded, against the integration build on the InstaBox test bed and the Frappe desk |
+| Decision check | Re-decide all 200 synthetic applicants with catalogue v2 and compare with the dataset labels |
+| Harness | `scripts/policy/eval_saral_*.py` and reports on PR #55; live E2E harness kept outside the repo |
+
+Pass bars (ADR-0009): RAG faithfulness ≥ 0.85, answer relevancy ≥ 0.80, context recall ≥ 0.80; agent 0 leaks, role
+adherence ≥ 0.90, tool correctness ≥ 0.95.
+
+### Results
+
+Labels: **automated** = scripted run, LLM-judged where a metric needs it, no human review. **GUI/live** = driven in
+a real browser on the live stack and recorded. **blocked** = could not run; the reason is given.
+
+| Area | Result | Label | Source |
+|---|---|---|---|
+| RAG, dev split (178), after fixes | Faithfulness 0.981, AnswerRelevancy 0.960, ContextualRecall 0.837 (all pass), ContextualPrecision 0.897; 0/178 shown answers leak an internal term; multi-hop recall 0.657 (weakest). Generator was `claude-sonnet-4-6`; **the shipped Gemini 3.8 Flash was not RAG-evaluated** | automated | DEEPEVAL_BASELINE §11 (PR #55), [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §4 |
+| RAG, held-out (49) | Not run (owner decision 2026-11-04 14:49 IST: no new RAG eval) | blocked | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §4 |
+| Agent, dev split (49 conversations, 158 turns) | First run 2026-11-04: leaks 22/158, RoleAdherence 0.464, tool correctness 0.456 (all fail). **Final (Gemini 3.8 Flash generator and judge): no-leak 48/49 conversations, leak turns 1/158, role adherence 0.680, tool correctness exact 0.835 / lenient 0.937, expected behaviour pass@0.5 0.658: every bar fails.** Superseded River DeepSeek run: 48/49, role 0.695, exact 0.867, lenient 0.951 | automated | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §2 |
+| Agent, held-out (11) | Single run, 11 conversations / 33 turns: no-leak 10/11 (AC-014 quotes Bajaj's public 650 guidance the question asks for; strict regex), role adherence 0.750, tool exact 0.788 / lenient 0.909, pass@0.5 0.697: every bar fails. Held-out ids were visible to reviewers in the golden review sheet from 07:42 IST | automated | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §3 |
+| Live E2E, GUI cases (59) | 55 pass, 3 fail, 1 blocked (no counter-offer accept action) | GUI/live | evidence REPORT (live E2E) |
+| Live E2E, agent in the frontend (A5, 64 cases) | Full 64-case run on the owner's laptop from `main` @ 658ce44, 2026-11-04. **Harness labels: 41 pass, 17 fail, 6 blocked.** After reading every failing answer: **51 pass, 7 real fails, 6 blocked** (10 harness fails were harness false positives: the Sources card's P1–P5 labels hit the old citation selector and leak regex, "cut-off" inside a correct refusal was flagged as a leak, and "Approved" was on the card, not in the answer text). No real leak. Real fails: POL-02-EN, POL-05-EN (agent timeout, "busy" fallback); POL-09-TE, POL-10-TE (abstained, no citations); CLAR-HI (what-if error instead of a clarifying question); EXP-REVIEW-HI, EXP-REVIEW-TE (answered in English). Blocked = Q-03 (tenure and loan-amount what-ifs in HI/TE; no 3-what-if cap in HI/TE). Applicants: SYN-APP-0098 replaces 0087 (portal refuses requests above ₹25L); the 0031 decline cases ran as EN 0031 / HI 0002 / TE 0003 | GUI/live (harness) + manual review | evidence REPORT_A5_LAPTOP (A5 laptop run, 2026-11-04) |
+| Decision label agreement (200 applicants) | 174/200 (87.0%) on 2026-11-04 03:50 IST; after the ZEN gap fixes: 187/200 offline, 188/200 with the owner's SYN-APP-0131 ruling, plus 12 owner-accepted design choices; 0 open defects | automated (live API, then offline) | REDECIDE reports, [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §7 |
+| OCR (120 synthetic pages; then 46 public sample documents / 184 pages) | Synthetic, all fields exact: Tesseract 65.5%, PaddleOCR 75.5%. Public samples, all fields, Tesseract vs PaddleOCR: PAN 4% vs 58%, Aadhaar 62% vs 98%, bank statement 6% vs 48%, payslip 51% vs 79%; Paddle median 0.52 s, p90 5.96 s per page; single annotator; six sources have no licence, so images are internal only. PaddleOCR is the default | automated | [docs/saral/OCR_BAKEOFF.md](docs/saral/OCR_BAKEOFF.md) |
+| Intent classifier (140 dev turns) | Groq gpt-oss-120b 135/140 (96.4%), 0 over budget, vs OmniRoute Sonnet 116/140 (82.9%) with 88 timeouts | automated | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §5 |
+| Fast intent router (Laya, optional, off by default) | Fine-tuned hybrid 84.3% vs 82.9% (+1.4; gate needed +2.0): failed, router off | automated | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) §6, `project-management/LAYA_ROUTER.md` |
+| Langfuse trace review (7 cases) | 5 pass, 2 fail (counter-offer reason dropped; what-if cap not enforced) before the agent fixes | automated + manual reading | evidence/langfuse |
+
+## Disclosures
+
+Read these before quoting any number from this repository.
+
+- **Self-grading bias.** In the final agent runs Gemini 3.8 Flash is both the answer generator and the judge. A model
+  judging its own answers tends to score them higher. The deterministic numbers (leaks, tool exact match) do not
+  depend on the judge. When the Gemini judge failed, `codex/gpt-6-luna` scored the row, and those rows are counted
+  (35 of 256 dev rows; 5 of 110 held-out judge calls).
+- **Superseded runs.** Earlier runs with River (generator DeepSeek-V4.1-Flash, judge Kimi-K3) are superseded: River
+  returned HTTP 402 from about 12:58 IST on 2026-11-04. They are shown only for comparison.
+- **RAG numbers are not from the shipped model.** The reported RAG dev numbers come from the earlier Sonnet-generated
+  run. The Gemini RAG run was stopped by the owner (14:49 IST) and nothing from it is reported. The RAG held-out split
+  was not run. A partial River RAG run (not final) had one strict word-list hit (R2-KYC-03 quotes Bajaj's public KYC
+  consent text containing "retrieve").
+- **Held-out exposure.** The 11 held-out conversation ids were visible to reviewers in the golden review sheet from
+  07:42 IST; the held-out agent run was done once, afterwards, with no tuning on it.
+- **Public-figure leak flags.** The one leak turn in each agent split (AC-009 in dev, AC-014 in held-out) quotes a
+  public Bajaj figure that the golden answer asks for. The strict regex counts it; it is not tied to the applicant.
+- **Gateway and tunnel.** The OmniRoute gateway runs on the owner's laptop. Its Tailscale Funnel address returned 502,
+  so the evals reached it through a temporary Cloudflare quick tunnel, set only in local environment files. The
+  gateway was down several times on 2026-11-04 (about 02:18, 11:00–11:20 and 11:55–12:03 IST).
+- **Groq free tier.** 33 dev turns hit Groq's per-minute limit on `gpt-oss-120b` and were classified by `gpt-oss-20b`.
+- **Hindi and Telugu what-if errors.** Apart from "out of range" and "not a number", what-if errors in Hindi and Telugu
+  show one generic sentence, and the error frame sentence is in English (owner deprioritised, 10:55 IST).
+- **What-if scope.** The what-if accepts amount, tenure, existing EMIs and income (Q-03); score and job months are
+  refused. On a catalogue-v2 decision an estimate that cannot be computed is shown as "couldn't be estimated", never
+  as "would not meet" (Q-23, owner approved 10:07 IST).
+- **Rules switched on by owner decision.** PL-013 (at most 2 employer changes in 24 months) and PL-016 (permanent
+  employment only) are active on all four products; the owner's "if everything is green it is ok to merge" was taken
+  as approval (inferred). PL-130 (resident only) applies to home renovation only.
+- **Group B labels.** SYN-APP-0118 and SYN-APP-0131 are DECLINE by owner decision (10:38 IST); 0131's dataset label
+  is superseded, the dataset itself is not edited. Twelve catalogue design differences were accepted as intended.
+- **Tracing gaps.** Langfuse instrumentation gaps 2, 3, 6, 9 and 10 are still open (no sanitiser span, no input-guard
+  span, retriever logs ids not text, identity check before the trace starts, panels empty with content capture off).
+- **Tests.** One sandbox test fails (a proxy-environment test); 1,849 passed on the
+  integration build at 10:51 IST.
+
+## Known limitations
+
+Full list with counts, examples and a fix per item:
+[project-management/AGENT_LIMITATIONS.md](project-management/AGENT_LIMITATIONS.md). The main ones:
+
+- **Synthetic only.** Real documents, names and bureau files will behave differently. Nothing has run on real cases.
+- **No human review of the eval sets or the judge.** Both golden sets were drafted with an LLM and await
+  human review; judge-human agreement is not measured.
+- **The judge grades its own model.** Gemini 3.8 Flash is both the answer generator and the judge in the final agent
+  runs (self-grading bias); RAG numbers come from an earlier Sonnet-generated run. See [Disclosures](#disclosures).
+- **Some decision inputs did not reach the rules** in the 2026-11-04 03:50 run (contract employment, residency, missing EMI
+  debits, missing signature) and a bureau outage ended as an error. Fixed (D-11 to D-15) on #56, merged to `main` 2026-11-04.
+- **Six catalogue rules were not compiled** in that run (PL-074, 075, 079, 082, 099, 127). Compiled on #56, merged to `main` 2026-11-04.
+- **Every agent bar fails** on dev and held-out (role adherence 0.68 / 0.75 vs 0.90; tool exact 0.835 / 0.788 vs 0.95).
+- **No counter-offer accept action** in the portal or the desk.
+- **Test bed, not production.** Frappe runs on a test bench; the LLM gateway used in the evals ran on the owner's
+  laptop and was a single point of failure; InstaBox sessions stop after 8 hours.
+- **Hindi and Telugu samples are small** (9 hi and 11 te RAG dev items; 7 hi and 5 te agent conversations).
+
+## Future scope
+
+- **Laya intent router.** Fine-tune on the prepared 1,027-row EN/HI/TE set, refit the per-intent thresholds,
+  re-benchmark against the Groq classifier, then wire it in front of the classifier (#57 ships flag-off).
+- **River generator return.** Re-run the River DeepSeek generator (and a second judge family) once the account is
+  funded, to cross-check the self-graded Gemini numbers.
+- **Azure deployment.** Move from laptop + tunnel to an Azure VM with a stable TLS endpoint and a hosted LLM gateway
+  with health checks.
+- **Multi-hop RAG.** Per-collection retrieval slots and query decomposition for multi-hop questions (recall 0.657),
+  plus more multi-hop golden items; run the RAG held-out split on the shipped model.
+- **Agent quality to the bars.** Policy-turn tool routing, role adherence on improve and leak-probe turns, and
+  a human-reviewed golden set and judge calibration.
+
+## Where things are
+
+| Topic | Read |
+|---|---|
+| Architecture and approach drawing | [docs/saral/ARCHITECTURE.md](docs/saral/ARCHITECTURE.md) |
+| Integration deployment | [docs/saral/INTEGRATION_DEPLOY.md](docs/saral/INTEGRATION_DEPLOY.md) |
+| Rules, data and products | [RULE_CATALOGUE_V2](docs/saral/RULE_CATALOGUE_V2.md), [DATA_DICTIONARY](docs/saral/DATA_DICTIONARY.md), [PRODUCT_MATRIX](docs/saral/PRODUCT_MATRIX.md), [THRESHOLD_APPROVALS](docs/saral/THRESHOLD_APPROVALS.md) |
+| What the borrower may be told | [docs/saral/REASON_DISCLOSURE_POLICY.md](docs/saral/REASON_DISCLOSURE_POLICY.md) |
+| ZEN and RAG consistency | [docs/saral/ZEN_RAG_CONSISTENCY.md](docs/saral/ZEN_RAG_CONSISTENCY.md) |
+| Synthetic datasets | [docs/saral/SYNTHETIC_DATASETS.md](docs/saral/SYNTHETIC_DATASETS.md) |
+| Functional document (problem, domain, interventions, user journey, tech construct) | [docs/functional.md](docs/functional.md) |
+| Demo logins, test applicants, presenter script | [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) |
+| Final evaluation numbers | [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md) |
+| Editable architecture drawing | [docs/architecture.drawio.svg](docs/architecture.drawio.svg) |
+| Build plan (phases, dates, owners) | [docs/build-plan.md](docs/build-plan.md) |
+| Limitations | [project-management/AGENT_LIMITATIONS.md](project-management/AGENT_LIMITATIONS.md) |
+| Approach: who it is for, build vs reuse, architecture | [APPROACH.md](APPROACH.md) |
+| Contributors | [BUILD.md](BUILD.md) |

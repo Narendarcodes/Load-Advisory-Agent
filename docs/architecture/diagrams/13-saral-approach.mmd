@@ -1,0 +1,39 @@
+flowchart TB
+  subgraph APPLY["1. Apply (English form)"]
+    A1["Pick a purpose:<br/>wedding / higher education /<br/>home renovation / medical emergency"]
+    A2["7-step form<br/>(salaried only)"]
+    A3["Consents: credit check,<br/>KYC, bank fetch, data use"]
+    A4["Documents: PAN, Aadhaar,<br/>salary slips, bank statement,<br/>employment letter"]
+    A1 --> A2 --> A3 --> A4
+  end
+
+  subgraph CHECK["2. Check (synthetic services, no LLM)"]
+    C1["KYC: PAN + Aadhaar"]
+    C2["Bank: account-aggregator fetch<br/>(PDF + OCR as fallback)"]
+    C3["Credit bureau report"]
+    C4["OCR fields + signature screening<br/>(screening only, refer never decline)"]
+  end
+
+  subgraph DECIDE["3. Decide (ZEN only)"]
+    D1["Rule catalogue v2<br/>(single source of truth)"]
+    D2["Outcome: approve / counter-offer /<br/>decline / more info / manual review"]
+    D3["Offer sized per applicant<br/>(largest passing amount, cap ₹25L)"]
+    D1 --> D2 --> D3
+  end
+
+  subgraph RECORD["4. Record (Frappe Lending)"]
+    R1["Decision evidence +<br/>plain reason category"]
+    R2["Decision card:<br/>outcome, amount, EMI, tenure"]
+    R3["Loan Officer desk<br/>for manual review"]
+  end
+
+  subgraph EXPLAIN["5. Explain (Saral assistant, EN / HI / TE)"]
+    E1["Read the stored decision<br/>(exact, read-only)"]
+    E2["One plain reason,<br/>2-3 general next steps"]
+    E3["What-if: in memory,<br/>max 3, 'estimate only'"]
+    E4["Policy questions:<br/>RAG with citations,<br/>indicative only"]
+    E5["Hand off to a person"]
+  end
+
+  APPLY --> CHECK --> DECIDE --> RECORD --> EXPLAIN
+  E3 -. "same rules, nothing saved" .-> D1

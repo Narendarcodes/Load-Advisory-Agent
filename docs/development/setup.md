@@ -40,7 +40,8 @@ git config core.hooksPath .githooks
 
 ## 1. Python dependencies
 
-Two manifests, chosen by what you are going to run. Neither pulls torch.
+Three manifests, chosen by what you are going to run. The first two do not pull torch;
+`requirements-rag.txt` (policy search with citations) does.
 
 ```bash
 python -m venv .venv
@@ -49,7 +50,22 @@ python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt -r requirements-test.txt
 # Linux / macOS
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requirements-test.txt
+# Policy search (agent answers with citations): torch, transformers, sentence-transformers, qdrant-client
+.venv\Scripts\python -m pip install -r requirements-rag.txt      # Windows
+.venv/bin/pip install -r requirements-rag.txt                     # Linux / macOS
 ```
+
+The comment in `requirements-rag.txt` that says "GPU container only" is out of date: on a laptop pip installs the
+CPU torch wheel and the agent runs retrieval on CPU with `AGENT_RETRIEVER_DEVICE=cpu` (verified on Windows 11,
+2026-11-04). The embedding model, EmbeddingGemma-2 (`google/embeddinggemma-2`), is gated on Hugging Face: run
+`huggingface-cli login` and accept the model licence once before the first run. The built policy index is not in
+git; how to build it and where the agent expects it: README, "Run it locally", step 6.
+
+`requirements-rag.txt` does not list `torchvision`, but transformers 5.19 needs it to load the EmbeddingGemma-2
+processor: without it the agent dies at start with `Could not import module 'EmbeddingGemma2Processor'` (root cause
+`No module named 'torchvision'`). Install it next to the torch you have, for example
+`.venv\Scripts\python -m pip install torchvision "torch==2.15.0"` (CPU wheels; verified 2026-11-04). The GPU image has it
+in its base, which is why the gap was not seen there.
 
 `requirements.txt` is the application set (agent, FastAPI surface, ZEN, LangGraph, AG-UI,
 OpenTelemetry). `requirements-test.txt` is what the test suite additionally imports; without it
@@ -158,19 +174,32 @@ docker exec loanrangers-backend-1 bash -lc \
    --install-app erpnext && bench --site loanportal.local install-app lending'
 
 # then the portal, from your checkout
+# (Windows: run this through Git Bash explicitly, "C:\Program Files\Git\bin\bash.exe" -lc "...";
+#  the bash on PATH is often WSL's, which has no docker CLI)
 FRAPPE_SITE=loanportal.local FRAPPE_BACKEND=loanrangers-backend-1 \
-  ./infra/frappe/bootstrap/install_portal_app.sh
+  bash infra/frappe/bootstrap/install_portal_app.sh
 
-# site configuration the app expects
-docker exec loanrangers-backend-1 bash -lc "cd /home/frappe/frappe-bench && \
-  bench --site loanportal.local set-config allow_tests true && \
-  bench --site loanportal.local set-config agent_assertion_secret <32+ random chars>"
+# the script copies the app into the backend container only; restart the background workers
+# so they import the same code (or docker cp the app into them as well)
+docker restart loanrangers-queue-short-1 loanrangers-queue-long-1 loanrangers-scheduler-1
+
+# site configuration the app expects, written straight into site_config.json so the secret never
+# appears on a bench command line (and so never in logs/bench.log). AGENT_ASSERTION_SECRET must be
+# exported in your shell first; `-e NAME` passes it by name, not on the command line.
+docker exec -e AGENT_ASSERTION_SECRET loanrangers-backend-1 python3 -c "import json,os; \
+p='/home/frappe/frappe-bench/sites/loanportal.local/site_config.json'; c=json.load(open(p)); \
+c.update(allow_tests=1, allow_demo_users=1, agent_assertion_secret=os.environ['AGENT_ASSERTION_SECRET']); \
+json.dump(c, open(p, 'w'), indent=1)"
 ```
+
+Container names depend on your compose project; check them with `docker ps`. Document-upload OCR needs the
+`loanrangers-frappe:16-ocr` image (`infra/frappe/Dockerfile.ocr`, `infra/frappe/loanrangers.ocr.yml`); the base
+image has neither Tesseract nor PaddleOCR. The seeded synthetic applicants do not need OCR.
 
 **Anything passed on a `bench` command line is also written to `logs/bench.log`.** The wrapper logs the
 full argv, so the database root password, the admin password and the assertion secret all appear there
 in plaintext. Treat that log as sensitive: do not paste, attach or commit it, and on a host you do not
-own exclusively set `agent_assertion_secret` by editing `site_config.json` instead. The property the
+own exclusively set `agent_assertion_secret` by editing `site_config.json` instead (the command above does). The property the
 browser suites rely on is unaffected — the secret still never enters the repository.
 
 You do **not** need LiveKit credentials to run the portal or its test suite. The voice tests configure a
@@ -251,6 +280,34 @@ Then open `http://127.0.0.1:8081/borrower`.
 Point the agent and the runtime at **8081**, never at `:8080`. The permanent frontend hard-pins
 `X-Frappe-Site-Name: p1loan.local`, so `:8080` is a different site: agent reads would come from the
 wrong database and the borrower portal would never appear.
+
+## Gaps found on the fresh laptop run (2026-11-04)
+
+A second end-to-end run from `main` @ 658ce44 on a Windows 11 laptop (new site, fresh seed, full A5 suite) needed
+these steps on top of the ones above:
+
+1. **torchvision** is missing from `requirements-rag.txt`; install it with torch (section 1). Blocking for RAG.
+2. **Start the KYC / account-aggregator mock as `ops.synthetic_kyc_bank.zen_points`**, not `ops.synthetic_kyc_bank.app`
+   (`ops/README` lists only `app.py`): `python -m ops.synthetic_kyc_bank.zen_points --port 8012`. With `app` the decision
+   runner's `POST /v1/zen/data-points` gets 404, it flags `KYC_AA_HTTP_404`, and every application ends
+   MORE_INFORMATION_REQUIRED or DECLINE. Applications decided that way must be reset to SUBMITTED and re-decided.
+3. **Frappe's hourly user-creation limit.** Seeding creates 200 users; right after it, `setup_demo.create_demo_officer`
+   fails with `ValidationError: Throttled`. Wait for the hour to pass, or create the officer from a bench-side script with
+   `frappe.flags.in_import = True` (set any demo flag in-process only, not in `site_config.json`), and write the officer
+   password straight to an owner-only file rather than printing it.
+4. **Requests above the ₹25 lakh cap are refused at create time** on `main`, so the seeder reports `refused: 16`
+   (184 applications for 200 applicants). SYN-APP-0087 has no application on a fresh seed; the counter-offer demo uses
+   SYN-APP-0098 ([DEMO_GUIDE](../DEMO_GUIDE.md) updated).
+5. **Mark the ERPNext setup wizard complete on a new site.** `bench new-site ... --install-app erpnext` never completes the
+   wizard, so every desk page for the Loan Officer redirects to `/desk/setup-wizard` and shows "Not permitted". Either run
+   the wizard once as Administrator, or from a bench-side script set `is_setup_complete=1` on the `Installed Application`
+   rows and `System Settings.setup_complete=1`, then clear the cache (`frappe.is_setup_complete()` should return True).
+6. **The decision runner retries failing applications forever.** Four applications hit `evidence.ingest` HTTP 417
+   `ValidationError` on every poll (the bureau-unavailable → ERROR case, D-11). Harmless for the demo, but there is no
+   give-up or backoff; expect the same log lines every poll.
+7. **Redis on 6380 may not be reachable.** `.env.example` sets `ASSERTION_REPLAY_REDIS_URL=redis://127.0.0.1:6380/0`, but
+   the Frappe compose stack does not necessarily publish that port. For a single-worker local run use
+   `ASSERTION_REPLAY_BACKEND=memory` and `AGENT_CHECKPOINT_BACKEND=memory`; use Redis for anything with more than one worker.
 
 ## Optional: policy retrieval
 
