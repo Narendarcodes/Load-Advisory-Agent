@@ -80,16 +80,27 @@ English, Hindi, Telugu or a mix. Labels:
 - explain: about THEIR OWN recorded loan decision: why it was rejected/approved, what a reason or term in it means, their status,
   or one of their own recorded values ("what is my credit score", "what income do you have for me").
 - improve: what they can do / change / work on before reapplying, next steps, how to become eligible (without asking for a promise).
-- what_if: a hypothetical change to their own numbers and whether the four checks would then be met ("what if my
-  score was 720", "if I close one EMI of 5000"). Questions about what rate, fee or amount a lender would offer
-  (even "if I earn X") are policy, not what_if.
+- what_if: a hypothetical change to their own monthly income, monthly EMIs, loan amount or loan period, and whether
+  the checks would then be met ("if I close one EMI of 5000", "what if I ask for 3 lakh"). Questions about what rate,
+  fee or amount a lender would offer (even "if I earn X") are policy, not what_if.
+- status: the current status of their own application ("what's my application status?").
+- human_review: asks for a person, a human review, a recheck, an escalation or a call back.
+- distress: upset, frightened, angry or in a personal crisis (illness, hospital, feeling accused), even if they also ask
+  about their decision.
+- misrepresentation: asks to enter false details, change the stated purpose, job type, employer or dates, or use fake
+  papers so the application passes.
+- vague: too short or unclear to answer without asking which thing they mean ("and the charges?", "what about it").
 - policy: a general question about rules, regulations, lender policies, charges, documents, complaints/grievances,
   KFS, rights, RBI directions, or a specific lender's terms — including HOW or WHETHER a lender communicates
   rejection reasons, and market or cross-lender comparisons.
 - greeting: greeting, thanks, small talk.
 - other: anything else (off-topic).
+"What score / income / months do I need", "what is the cut-off", "which detail didn't match" or "is it fraud" about
+THEIR application is explain (never policy). "Do I qualify / am I eligible / will I get the loan" about THEIR
+application is explain.
 For what_if, also extract the hypothetical changes for these fields only: monthly_income, monthly_obligations
-(total monthly EMIs/fixed payments), credit_score, employment_months. Use {{"set": number}} for an absolute value and
+(total monthly EMIs/fixed payments), loan_amount, tenure_months. The credit score and months in the job can't be
+changed in an estimate: leave them out. Use {{"set": number}} for an absolute value and
 {{"delta": number}} for a relative change (negative = decrease). Convert "lakh" = 100000, "k" = 1000, years to months.
 Never invent an amount: if the message gives no numeric amount for the change, leave what_if_changes empty.
 Applicant's current recorded values (for context only): {values}
@@ -104,12 +115,13 @@ Task: explain the recorded decision in plain language, in this order: what happe
 - NEVER write an outcome code: no words in capitals joined by underscores and no bare status codes (for example
   ELIGIBILITY_CONDITIONS_MET, COUNTER_OFFER, MANUAL_REVIEW, MORE_INFORMATION_REQUIRED, DECLINE, APPROVED, REJECTED).
   Do not translate a code word for word either (not "eligibility conditions met"); say what it means for the applicant.
-- Why: if the decision is REJECTED or a decline, give the main reason as a plain category (see the disclosure rules).
-  You may add other failed checks as plain categories, within 3 points in total. Only FAILED checks are reasons; never
-  present a passed check as a reason, and do not say how many checks were met.
+- Why: if the decision is a decline, a review or an information request, give ONLY the one reason in "main_reason",
+  in plain words. Never add a second reason, never name a rule or a check, and never say how many checks there are.
+- If "applicant_asked_for_a_limit_or_hidden_detail" is true, say kindly that you can't share exact limits or
+  internal checks, give the plain reason, and offer a human review.
 - If the decision is a counter-offer: say plainly that we can't offer the full amount they asked for, then state the
   offer from "offer" in the facts exactly: the loan amount, the monthly EMI and the loan period in months. Then say why
-  in plain words from "reason_categories" (for example "your existing EMIs are high for the amount you asked for" or
+  in plain words from "main_reason" (for example "your existing EMIs are high for the amount you asked for" or
   "the amount you asked for is more than we can offer"), never with a limit or a number to reach. Next step: they can
   accept the offer, ask about a smaller amount, or ask for a human review.
 - If the decision is approved or a counter-offer and "offer" is in the facts, you may state its amount, EMI and loan
@@ -117,6 +129,7 @@ Task: explain the recorded decision in plain language, in this order: what happe
 - When nothing failed (approved or counter-offer), do not write "no failed check" or "no failed reason was recorded";
   just explain the decision.
 - What you can do next: one short, general, honest step, and offer a human review or to answer questions.
+- Tone: warm, calm and respectful, like a helpful bank officer. Never blame the applicant.
 Style: {style}
 Language: write in {lang}. Keep numbers as digits.
 {voice}
@@ -144,8 +157,10 @@ WHAT_IF = CORE_RULES + DISCLOSURE + """
 Task: explain a HYPOTHETICAL what-if result. Answer first, in plain words.
 - Say clearly it is only a practice check under the synthetic prototype policy, that the real application and decision
   are unchanged, and that it is not a guarantee or a new decision.
-- Say in plain words whether the changed numbers would meet the example rules overall. If some area would still not
-  meet them, name it only as a plain category. Never state the cut-off, the gap or how many checks there are.
+- Use "estimate_result" exactly: "would likely meet", "wouldn't meet" or "couldn't be estimated". If it is
+  "couldn't be estimated", say you couldn't estimate it and don't guess. If "area_still_not_met" is given, name only
+  that one plain area. If "smaller_amount_possible" is given, you may say a smaller amount might fit. Never state the
+  cut-off, the gap or how many checks there are.
 - If everything would be met, say only that the changed numbers would meet the example rules — not that the loan
   would be approved.
 Style: {style}
@@ -264,6 +279,19 @@ VOICE_LEAD_CONTINUE = ("\nFor speech: the applicant has ALREADY HEARD this first
                        "restate the decision; continue directly with the details, in at most 60 words.")
 STREAM_BRIDGE = {"en": "To be precise:", "hi": "सही जानकारी यह है:", "te": "సరైన సమాచారం ఇది:"}
 
+DISTRESS_ADDON = ("\nThe applicant is upset or worried. Start with ONE short, calm, kind sentence that acknowledges how "
+                  "they feel, with no blame. If they feel accused, say plainly that this is not an accusation and only "
+                  "that some details could not be checked. Then answer their question as above. End by offering a human "
+                  "review of their application.")
+
+CLARIFY = """The applicant's latest message to a personal-loan assistant is too vague to answer. Write ONE short
+clarifying question in {lang} that offers the 2 or 3 most likely meanings as options (for example: "Do you mean the
+processing fee, or the charge for closing the loan early?"). Use simple everyday words. Do not answer the question, do
+not mention internal systems, and do not use any number.
+Recent conversation: {history}
+Latest message: {message}
+Return JSON only: {{"question": "..."}}"""
+
 RETRY = ("\n\nYour previous draft was rejected by an automatic check for: {flags}. Rewrite it so it fully follows the "
          "rules (no guarantees, no decisions, only numbers from the facts). If the draft was a clarifying question, "
          "return just that question with \"abstain\": true and \"clarify\": true and no citations.")
@@ -338,7 +366,29 @@ TEMPLATES = {
                            "ask the lender directly or raise it through its grievance channel."),
         "policy_busy": ("The advisory service is busy right now, so I couldn't check the policy sources in time and I "
                         "won't guess. Please ask again in a moment."),
-        "bad_what_if": "I couldn't run that what-if: {why}. You can give a new monthly income, total EMIs, credit score or months in your job.",
+        "bad_what_if": ("I couldn't run that estimate: {why}. You can give a new monthly income, total monthly EMIs, loan "
+                        "amount or loan period."),
+        "human_review": ("I've asked a person on our team to review your application (reference {ref}). They will look "
+                         "at it and get back to you. I can't predict what they will decide."),
+        "human_review_distress": ("I'm sorry this has been so hard. I've asked a person on our team to review your "
+                                  "application (reference {ref}). They will look at it and get back to you."),
+        "bureau_request": ("I can't start a credit check or a new assessment. A person reviewing your application, or a "
+                           "new application, handles that. I can ask a person to review your case if you like."),
+        "what_if_cap": ("You've reached the limit of estimates for this session, so I can't run another one. Your "
+                        "application is unchanged. I can explain your decision or ask a person to review it."),
+        "what_if_error": ("I couldn't estimate that change, so I won't guess. Your application is unchanged. I can "
+                          "explain your decision or ask a person to review it."),
+        "what_if_line": "Estimate only, your application is unchanged: with these numbers you {result} our checks.",
+        "what_if_area": "The area that would still not meet them: {area}.",
+        "clarify_charges": ("Do you mean all the charges on the loan, or one charge, like the processing fee, a late "
+                            "payment or closing the loan early?"),
+        "clarify_documents": ("Do you mean the documents needed to apply, or the documents we still need from you for "
+                              "this application?"),
+        "clarify_rates": "Do you mean the interest rate on the loan, or another charge, like the processing fee?",
+        "clarify_generic": ("Could you tell me a little more? Is this about your own application, or a general question "
+                            "about loan rules or charges?"),
+        "distress_kind": "I understand this is worrying, and I'm sorry you're going through this.",
+        "distress_review_offer": "If you'd like, I can ask a person on our team to review your application.",
     },
     "hi": {
         "info_requested": ("आपके आवेदन की जाँच अभी पूरी नहीं हो सकी, क्योंकि कुछ जानकारी बाकी है: {missing}। "
@@ -378,6 +428,25 @@ TEMPLATES = {
                                    "समीक्षक को इसे देखना होगा।"),
         "policy_abstain": "मुझे यह उन स्वीकृत नीति स्रोतों में नहीं मिला जिनका मैं हवाला दे सकता हूँ, इसलिए मैं अनुमान नहीं लगाऊँगा।",
         "policy_busy": "सेवा अभी व्यस्त है, इसलिए मैं समय पर नीति स्रोत नहीं देख पाया और अनुमान नहीं लगाऊँगा। कृपया एक पल बाद फिर पूछें।",
+        "bad_what_if": "मैं यह अनुमान नहीं लगा सका: {why}। आप नई मासिक आय, कुल मासिक EMI, लोन राशि या लोन की अवधि बता सकते हैं।",
+        "human_review": ("मैंने हमारी टीम के एक व्यक्ति से आपका आवेदन देखने को कहा है (संदर्भ {ref})। वे इसे देखकर आपसे संपर्क "
+                         "करेंगे। उनका फ़ैसला मैं पहले से नहीं बता सकता।"),
+        "human_review_distress": ("मुझे अफ़सोस है कि यह इतना मुश्किल रहा। मैंने हमारी टीम के एक व्यक्ति से आपका आवेदन देखने "
+                                  "को कहा है (संदर्भ {ref})। वे इसे देखकर आपसे संपर्क करेंगे।"),
+        "bureau_request": ("मैं नई क्रेडिट जाँच या नया आकलन शुरू नहीं कर सकता। यह काम आपका आवेदन देखने वाला व्यक्ति या नया "
+                           "आवेदन करता है। आप चाहें तो मैं किसी व्यक्ति से आपका मामला देखने को कह सकता हूँ।"),
+        "what_if_cap": ("इस बातचीत में अनुमानों की सीमा पूरी हो गई है, इसलिए मैं एक और अनुमान नहीं लगा सकता। आपका आवेदन "
+                        "नहीं बदला है। मैं आपका फ़ैसला समझा सकता हूँ या किसी व्यक्ति से समीक्षा करवा सकता हूँ।"),
+        "what_if_error": ("मैं इस बदलाव का अनुमान नहीं लगा सका, इसलिए अंदाज़ा नहीं दूँगा। आपका आवेदन नहीं बदला है। मैं आपका "
+                          "फ़ैसला समझा सकता हूँ या किसी व्यक्ति से समीक्षा करवा सकता हूँ।"),
+        "what_if_line": "सिर्फ़ अनुमान, आपका आवेदन नहीं बदला: इन आँकड़ों के साथ हमारी शर्तें {result}।",
+        "what_if_area": "जो हिस्सा तब भी पूरा नहीं होगा: {area}।",
+        "clarify_charges": "क्या आप लोन के सभी शुल्क पूछ रहे हैं, या कोई एक, जैसे प्रोसेसिंग फ़ीस, देर से भुगतान या लोन जल्दी बंद करने का शुल्क?",
+        "clarify_documents": "क्या आप आवेदन के लिए ज़रूरी दस्तावेज़ पूछ रहे हैं, या वे दस्तावेज़ जो हमें इस आवेदन के लिए अभी आपसे चाहिए?",
+        "clarify_rates": "क्या आप लोन की ब्याज दर पूछ रहे हैं, या कोई और शुल्क, जैसे प्रोसेसिंग फ़ीस?",
+        "clarify_generic": "क्या आप थोड़ा और बता सकते हैं? यह आपके अपने आवेदन के बारे में है, या लोन के नियमों या शुल्क का सामान्य सवाल?",
+        "distress_kind": "मैं समझता हूँ कि यह चिंता की बात है, और मुझे अफ़सोस है कि आप इससे गुज़र रहे हैं।",
+        "distress_review_offer": "आप चाहें तो मैं हमारी टीम के एक व्यक्ति से आपका आवेदन देखने को कह सकता हूँ।",
     },
     "te": {
         "info_requested": ("కొన్ని వివరాలు ఇంకా రాలేదు, అందుకే మీ దరఖాస్తు తనిఖీ ఇంకా పూర్తి కాలేదు: {missing}. "
@@ -417,6 +486,25 @@ TEMPLATES = {
                                    "సమీక్షకుడు దీన్ని చూడాలి."),
         "policy_abstain": "నేను ఉదహరించగల ఆమోదిత నియమ పత్రాలలో ఇది కనిపించలేదు, కాబట్టి ఊహించి చెప్పను.",
         "policy_busy": "సేవ ఇప్పుడు బిజీగా ఉంది, అందుకే సమయానికి నియమ పత్రాలు చూడలేకపోయాను; ఊహించి చెప్పను. దయచేసి ఒక్క క్షణం తర్వాత మళ్ళీ అడగండి.",
+        "bad_what_if": "ఆ అంచనా వేయలేకపోయాను: {why}. కొత్త నెలవారీ ఆదాయం, మొత్తం నెలవారీ EMIలు, లోన్ మొత్తం లేదా లోన్ వ్యవధి చెప్పవచ్చు.",
+        "human_review": ("మీ దరఖాస్తును చూడమని మా బృందంలోని ఒక వ్యక్తిని కోరాను (రిఫరెన్స్ {ref}). వారు పరిశీలించి మిమ్మల్ని "
+                         "సంప్రదిస్తారు. వారి నిర్ణయాన్ని నేను ముందుగా చెప్పలేను."),
+        "human_review_distress": ("ఇది ఇంత కష్టంగా ఉన్నందుకు బాధగా ఉంది. మీ దరఖాస్తును చూడమని మా బృందంలోని ఒక వ్యక్తిని కోరాను "
+                                  "(రిఫరెన్స్ {ref}). వారు పరిశీలించి మిమ్మల్ని సంప్రదిస్తారు."),
+        "bureau_request": ("కొత్త క్రెడిట్ తనిఖీ లేదా కొత్త అంచనాను నేను ప్రారంభించలేను. మీ దరఖాస్తును చూసే వ్యక్తి లేదా కొత్త "
+                           "దరఖాస్తు దాన్ని చూసుకుంటుంది. మీకు కావాలంటే మీ కేసును ఒక వ్యక్తి చూసేలా అడగగలను."),
+        "what_if_cap": ("ఈ సంభాషణలో అంచనాల పరిమితి పూర్తయింది, కాబట్టి మరొకటి వేయలేను. మీ దరఖాస్తు మారలేదు. మీ నిర్ణయాన్ని "
+                        "వివరించగలను లేదా ఒక వ్యక్తి సమీక్షించేలా అడగగలను."),
+        "what_if_error": ("ఈ మార్పును అంచనా వేయలేకపోయాను, కాబట్టి ఊహించి చెప్పను. మీ దరఖాస్తు మారలేదు. మీ నిర్ణయాన్ని "
+                          "వివరించగలను లేదా ఒక వ్యక్తి సమీక్షించేలా అడగగలను."),
+        "what_if_line": "ఇది అంచనా మాత్రమే, మీ దరఖాస్తు మారలేదు: ఈ అంకెలతో మా షరతులు {result}.",
+        "what_if_area": "అప్పటికీ నెరవేరని భాగం: {area}.",
+        "clarify_charges": "మీరు లోన్‌పై అన్ని ఛార్జీల గురించి అడుగుతున్నారా, లేక ఒకటి, ఉదా. ప్రాసెసింగ్ ఫీజు, ఆలస్య చెల్లింపు లేదా లోన్ ముందుగా మూసివేసే ఛార్జీ?",
+        "clarify_documents": "దరఖాస్తుకు కావాల్సిన పత్రాల గురించి అడుగుతున్నారా, లేక ఈ దరఖాస్తుకు మాకు ఇంకా మీ నుండి కావాల్సిన పత్రాల గురించా?",
+        "clarify_rates": "మీరు లోన్ వడ్డీ రేటు గురించి అడుగుతున్నారా, లేక ప్రాసెసింగ్ ఫీజు వంటి వేరే ఛార్జీ గురించా?",
+        "clarify_generic": "కొంచెం ఎక్కువ చెప్పగలరా? ఇది మీ దరఖాస్తు గురించా, లేక లోన్ నియమాలు లేదా ఛార్జీల గురించి సాధారణ ప్రశ్నా?",
+        "distress_kind": "ఇది ఆందోళన కలిగించే విషయమని అర్థం చేసుకుంటాను, మీరు ఇలాంటి పరిస్థితిలో ఉన్నందుకు బాధగా ఉంది.",
+        "distress_review_offer": "మీకు కావాలంటే, మీ దరఖాస్తును చూడమని మా బృందంలోని ఒక వ్యక్తిని అడగగలను.",
     },
 }
 
