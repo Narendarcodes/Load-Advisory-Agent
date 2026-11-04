@@ -1,0 +1,9 @@
+{
+ "kind": "retrieval-only (no LLM on Kaggle)",
+ "phases": {
+  "install_s": 44,
+  "retrieve_s": 1448,
+  "total_s": 1495
+ },
+ "completed": true
+}

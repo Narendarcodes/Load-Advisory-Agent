@@ -1,0 +1,40 @@
+{
+ "date": "2026-11-03/04 (IST)",
+ "kernel": "nothinguser/saral-rag-retrieval-v2",
+ "kernel_version": 1,
+ "dataset": "nothinguser/saral-eval-v2-rag",
+ "golden_source": "wt-golden (draft PR #44) data/evaluation/golden/rag_v2/golden.jsonl",
+ "golden_copied_at": "2026-11-03T18:10:16Z",
+ "golden_full_sha256": "338fb92b4e278ab223102c3dbed61689ca545b69251ed716729cb029a5b0d372",
+ "golden_version": "saral_golden_v2.0-rc1",
+ "golden_dev_sha256": "7236ed025d3179357d7ad76916b7ac2075077fddba1fd670ecd5ae29e465b39f",
+ "manifest_snapshot_sha256": "bdc6395b56c4ad77117b5420076a39f52ead68b64607992683dcefdf05d19707",
+ "caveats": [
+  "Kaggle ran RAG only (embedding, indexing, retrieval, reranking) and wrote per-item retrieved contexts with ids and scores (retrieved_contexts.jsonl, sha256 recorded in run_meta.json). No LLM ran on Kaggle (user directive, 2026-11-04 00:06 IST). An earlier kernel version that served vLLM models, and a leftover v1 judge kernel, were cancelled before producing results.",
+  "Generator antigravity/claude-sonnet-4-6 and judge codex/gpt-6-luna were called through OmniRoute from the Hark sandbox (≤4 concurrent, retries with backoff); fallback for either is gpt-5.6-terra, and every item or metric call that used it is listed. Production uses openai/gpt-oss-120b on Groq; Sonnet stands in for it here, so answer quality is not the production model's. No Groq call was made in this eval, so the Groq-to-OmniRoute fallback never fired.",
+  "Generation emulates the agent's policy path (deterministic request guards -> boundary templates; prompts.POLICY in the item's language, literacy medium, text channel; answer + citation guards with one rewrite; policy_abstain fallback). Not emulated: the LLM intent classifier (every item is treated as a policy question), the ungrounded-number guard, streaming and Langfuse. Clarify items therefore show what the policy path does, not the full LangGraph agent.",
+  "Retrieval rebuilds the index in the kernel from the same cleaned chunks (EmbeddingGemma-2 in float32 because T4 has no bf16; G1 indexed in bf16 on CPU), so vectors can differ slightly from the qdrant_v3 copy. Each question searches both collections; the union is cut to the top 5 by reranker score (the repo has no router yet).",
+  "Golden v2 is release candidate saral_golden_v2.0-rc1, frontier-authored, review_status pending_human. Only the 178 dev items were shipped and run. The 49 held-out items were never uploaded, and the eval script aborts if a held-out id appears.",
+  "The judge is an LLM (codex/gpt-6-luna). Judge-human agreement has not been measured; the 30 calibration items in PR #44 exist for that. Hindi and Telugu samples are small (9 hi, 11 te dev items), so per-language numbers are indicative only.",
+  "Each judge metric is tried at most twice; failures are recorded as unscored, never as a score.",
+  "The judge ran in resumable chunks (the sandbox suspends background work between steps), so judge_info.json 'seconds' covers only the last chunk; every metric was scored exactly once in the final file (636 jobs, 0 errors)."
+ ],
+ "retrieved_contexts_sha256": "6d935e31e3b0f676d5dc4c4a5b954186a632ccb7cb776b1d86fce36c70c6ef97",
+ "not_covered": [
+  "The full LangGraph agent: intent classification, explain / improve / what-if answers, ZEN decisions, tool calls and multi-turn memory (Golden B, agent_v1, is not run here).",
+  "The production generator (gpt-oss-120b on Groq), voice channel, low/high literacy styles, streaming and latency of the real API.",
+  "The 49 held-out RAG items and the 30-item human calibration (no judge-human agreement yet).",
+  "Retrieval against the deployed Qdrant/query encoder on InstaBox; the index here was rebuilt on Kaggle.",
+  "Citation quality beyond the deterministic checks (the citation and figure GEval rubrics were not run in this baseline), and the deterministic ungrounded-number guard.",
+  "PII handling, prompt-injection inside retrieved passages, and other applicants' data beyond the few behaviour items."
+ ],
+ "limitation_causes": {
+  "Retrieval misses": "Reranked top 5 favours sibling chunks or a neighbouring document: for R2-AMT-02 (minimum amount) the rates-and-fees page was outranked by overview/eligibility pages; for R2-DLR-05 (delete my data) Bajaj's privacy/app T&C outranked the RBI consumer-finance direction. No collection router, and both collections compete for 5 slots. Most misses still answered correctly from a sibling chunk (Faithfulness stayed 1.0).",
+  "Unfaithful or unsupported claims": "Over-strong paraphrase of qualified policy text: 'up to 36%' stated as exactly 36% (R2-LHR-05), exceptions dropped in the digital-lending disbursal rule (R2-DLR-01), 'dropline limit' turned into 'outstanding limit' (R2-PRE-05). No figure was invented outright in the 149 judged answers.",
+  "Wrong abstain or refuse": "Clarify items: the policy prompt has no instruction to ask a clarifying question, and the intent classifier/clarify logic of the full agent was not exercised, so 10 of 11 vague questions got a direct answer (e.g. R2-CLA-03, R2-CLA-08). Over-abstain: the deterministic request guards fire on benign policy questions: 'my friend and I took the same loan' -> other_applicant (R2-RAT-07) and 'credit guarantee scheme fee' -> guarantee (R2-FEE-08); R2-PUR-01 abstained because no passage states per-purpose limits. All 10 refuse and 8 abstain items were handled acceptably by the judge's rubric.",
+  "Hindi and Telugu failures": "No wrong-script answers (20/20 in the right script). The few hi/te failures are the same causes as English: a retrieval miss on the RBI-IOS FAQ (R2-LHI-06), a qualified '36%' stated flatly (R2-LHR-05), and conflict notes not made (R2-LHI-03). Samples are small (9 hi, 11 te).",
+  "Conflict-note handling": "The POLICY prompt asks to flag [historical] passages but not to surface disagreeing current sources, so the model gives one figure (e.g. ₹75 lakh in R2-AMT-01) without noting the ₹55 lakh conflict; 10 of 11 answer_note items were scored below 1.0.",
+  "Latency or rate-limit fallbacks": "No Groq call is made in this eval (OmniRoute stand-ins), so the Groq-to-OmniRoute fallback never fired. Judge stalls happened when in-flight OmniRoute calls hung after sandbox suspension; the judge was re-run in resumable chunks with a 60 s client timeout, and one metric call fell back to gpt-5.6-terra.",
+  "Internal labels shown to the borrower (also observed)": "The policy prompt asks for citations as P1..P5 labels, and the model also writes them (and the word 'passages') into the answer text; the agent's citation pipeline maps labels to sources but nothing strips them from the prose. Mostly 'passages'/'P1'; 4 answers say 'bureau'."
+ }
+}
