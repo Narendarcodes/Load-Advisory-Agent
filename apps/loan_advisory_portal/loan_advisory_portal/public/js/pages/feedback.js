@@ -14,7 +14,9 @@
 	function renderHistory(items) {
 		var host = document.getElementById("history");
 		if (!items.length) {
-			host.innerHTML = "<p class=\"muted small\">Nothing yet. Feedback you send appears here.</p>";
+			host.innerHTML =
+				'<div class="empty empty--compact"><img class="empty__art" src="/assets/loan_advisory_portal/illustrations/feedback-sent.svg" alt="" width="180" height="135">' +
+				'<p class="small muted">Nothing yet. Feedback you send appears here.</p></div>';
 			return;
 		}
 		host.innerHTML = items

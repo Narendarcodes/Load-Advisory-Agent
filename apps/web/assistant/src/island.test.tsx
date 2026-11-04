@@ -189,3 +189,27 @@ describe("assistant island transcript loading", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("assistant tools drawer", () => {
+  it("does not reuse the portal's global .drawer class, which pins a fixed full-height side panel", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    // Vitest runs from apps/web/assistant.
+    const portalCss = readFileSync(
+      resolve(process.cwd(), "../../loan_advisory_portal/loan_advisory_portal/public/css/portal.css"),
+      "utf8",
+    );
+    // The collision this guards against: portal.css styles any `.drawer` as position:fixed; inset:0 0 0 auto.
+    expect(portalCss).toMatch(/^\.drawer \{/m);
+
+    await mount();
+    const history = Array.from(container!.querySelectorAll<HTMLButtonElement>("button")).find(
+      (b) => b.textContent === "History",
+    );
+    await act(async () => history!.click());
+    const aside = container!.querySelector<HTMLElement>(".assistant__aside")!;
+    expect(aside.hidden).toBe(false);
+    expect(aside.classList.contains("drawer")).toBe(false);
+    expect(aside.classList.contains("tools-drawer")).toBe(true);
+  });
+});

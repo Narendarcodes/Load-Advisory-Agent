@@ -114,16 +114,32 @@ class IndexExistsError(RuntimeError):
     """An index already exists at the target; replacing it needs an explicit rebuild."""
 
 
+def qdrant_filter(models, flt: "RetrievalFilter"):
+    """The Qdrant form of a RetrievalFilter. Shared by the builder and the serving read path on purpose:
+    governance must not be able to drift between an embedded index and a server collection."""
+    m = models
+    must = [m.FieldCondition(key="approval_status", match=m.MatchAny(any=sorted(ALLOWED[flt.mode])))]
+    if flt.restrict_lenders:
+        must.append(m.FieldCondition(key="lender_id", match=m.MatchAny(any=[NO_LENDER] + ([flt.lender_id] if flt.lender_id else []))))
+    if flt.entity_type not in (None, "any"):
+        must.append(m.FieldCondition(key="applies_to_entity", match=m.MatchAny(any=["all", flt.entity_type])))
+    if flt.source_types is not None:
+        must.append(m.FieldCondition(key="source_type", match=m.MatchAny(any=sorted(flt.source_types))))
+    return m.Filter(must=must)
+
+
 class DenseIndex:
     """Qdrant collection (embedded/local mode by default; pass url= for a server).
 
     Opening an existing collection never replaces it: build a new index with ``rebuild_index``.
     """
 
-    def __init__(self, chunks, vectors, path=None, url=None, collection="policy_chunks_v2", meta=None):
+    def __init__(self, chunks, vectors, path=None, url=None, collection="policy_chunks_v2", meta=None,
+                 api_key=None):
         from qdrant_client import QdrantClient, models
         self.m = models
-        self.client = QdrantClient(url=url) if url else QdrantClient(path=path) if path else QdrantClient(":memory:")
+        self.client = (QdrantClient(url=url, api_key=api_key) if url
+                      else QdrantClient(path=path) if path else QdrantClient(":memory:"))
         self.col = collection
         try:
             if self.client.collection_exists(collection):
@@ -149,15 +165,7 @@ class DenseIndex:
             raise
 
     def qdrant_filter(self, flt: RetrievalFilter):
-        m = self.m
-        must = [m.FieldCondition(key="approval_status", match=m.MatchAny(any=sorted(ALLOWED[flt.mode])))]
-        if flt.restrict_lenders:
-            must.append(m.FieldCondition(key="lender_id", match=m.MatchAny(any=[NO_LENDER] + ([flt.lender_id] if flt.lender_id else []))))
-        if flt.entity_type not in (None, "any"):
-            must.append(m.FieldCondition(key="applies_to_entity", match=m.MatchAny(any=["all", flt.entity_type])))
-        if flt.source_types is not None:
-            must.append(m.FieldCondition(key="source_type", match=m.MatchAny(any=sorted(flt.source_types))))
-        return m.Filter(must=must)
+        return qdrant_filter(self.m, flt)
 
     def search(self, qvec, mode="current", k=50):
         flt = _as_filter(mode)

@@ -1,15 +1,15 @@
 {% extends "templates/portal/base.html" %}
 {% block title %}Identity check{% endblock %}
 {% block page_content %}
-<div class="page-head">
+<div class="page-head page-head--art">
 	<div>
-		<p class="eyebrow">Identity check</p>
 		<h1>Confirm who you are</h1>
 		<p>Identity checks protect you and meet lending rules. They are separate from the loan decision: a check that fails does not reject your application.</p>
 	</div>
 	<div class="page-head__actions">
 		<a class="btn btn--quiet" href="/borrower/help">How this works</a>
 	</div>
+	<img class="page-head__art" src="/assets/loan_advisory_portal/illustrations/kyc.svg" alt="" width="160" height="120">
 </div>
 
 {% if boot.get("demo") %}
@@ -37,19 +37,19 @@
 		<div class="card card--tight">
 			{% if boot.get("demo") %}
 			<h2>What the preview uses</h2>
-			<ul class="checklist mt">
-				<li><span class="checklist__mark" aria-hidden="true">1</span><span>A sample PAN, if you want to try one</span></li>
-				<li><span class="checklist__mark" aria-hidden="true">2</span><span>Sample last 4 digits of an Aadhaar</span></li>
-				<li><span class="checklist__mark" aria-hidden="true">3</span><span>A face check, shown but not connected</span></li>
+			<ul class="plain-list mt">
+				<li>A sample PAN, if you want to try one</li>
+				<li>Sample last 4 digits of an Aadhaar</li>
+				<li>A face check, shown but not connected</li>
 			</ul>
 			<p class="small muted mt">Use sample values only. This preview stores nothing, sends nothing and never asks for your full Aadhaar number or your password.</p>
 			{% else %}
 			<h2>What happens next</h2>
-			<ul class="checklist mt">
-				<li><span class="checklist__mark" aria-hidden="true">1</span><span>Your loan advisor tells you which documents are needed.</span></li>
-				<li><span class="checklist__mark" aria-hidden="true">2</span><span>You share them through a secure channel, not this page.</span></li>
-				<li><span class="checklist__mark" aria-hidden="true">3</span><span>A person reviews them, and a failed check is not a rejection by itself.</span></li>
-			</ul>
+			<ol class="plain-list mt">
+				<li>Your loan advisor tells you which documents are needed.</li>
+				<li>You share them through a secure channel, not this page.</li>
+				<li>A person reviews them, and a failed check is not a rejection by itself.</li>
+			</ol>
 			<p class="small muted mt">This portal does not ask for your PAN, your Aadhaar number or a face scan.</p>
 			{% endif %}
 		</div>
@@ -63,7 +63,6 @@
 		{% if not boot.get("demo") %}
 		<div class="card">
 			<div class="empty">
-				<span class="empty__mark" aria-hidden="true">ID</span>
 				<h2>Not available online</h2>
 				<p>Identity verification is handled by your loan advisor for now. Nothing is pending on this page.</p>
 				<a class="btn btn--ghost" href="/borrower/help">Read the help page</a>

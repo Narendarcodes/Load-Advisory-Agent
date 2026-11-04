@@ -1,5 +1,7 @@
 {% extends "templates/portal/base.html" %}
 
+{% block body_class %}app-shell workspace-shell{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="/assets/loan_advisory_portal/js/assistant/assistant.css">
 {% endblock %}
@@ -9,22 +11,21 @@
 {% include "templates/portal/_not_found.html" %}
 {% else %}
 {% if not application %}
-<div class="page-head">
+<div class="page-head page-head--art">
 	<div>
-		<p class="eyebrow">Advisory workspace</p>
-		<h1>Ask about your recorded decision</h1>
-		<p>The assistant explains the decision recorded for one application, cites the policy and runs what-ifs. It never approves, changes or promises anything.</p>
+		<h1>Ask about your decision</h1>
+		<p>Pick the application you want to talk about. Saral answers about one application at a time.</p>
 	</div>
 	<div class="page-head__actions">
 		<a class="btn btn--ghost" href="/borrower">Back to applications</a>
 	</div>
+	<img class="page-head__art" src="/assets/loan_advisory_portal/illustrations/assistant.svg" alt="" width="160" height="120">
 </div>
 
 <section class="card" aria-labelledby="choose-heading">
 	<div class="card__head">
 		<div>
 			<h2 id="choose-heading">Choose an application first</h2>
-			<p class="tiny muted">The assistant answers about one recorded application at a time, so it never mixes two files.</p>
 		</div>
 	</div>
 	{% if applications %}
@@ -43,6 +44,7 @@
 	</ul>
 	{% else %}
 	<div class="empty empty--compact">
+		<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-applications.svg" alt="" width="180" height="135">
 		<h2>No applications yet</h2>
 		<p>Start an application and the assistant can explain its decision here.</p>
 		<a class="btn" href="/borrower/apply">Start an application</a>
@@ -51,73 +53,38 @@
 </section>
 {% else %}
 {% set state = snapshot.lifecycle %}
-<div class="page-head">
-	<div>
-		<p class="eyebrow">Advisory workspace</p>
-		<h1>Ask about this decision</h1>
-		<p>Explains the decision recorded for {{ application.name }}, cites the policy passages behind an answer, and runs what-ifs without changing your application.</p>
-	</div>
-	<div class="page-head__actions">
-		<a class="btn btn--ghost" href="/borrower/application?name={{ application.name | urlencode }}">Open the decision</a>
-	</div>
-</div>
-
-<div class="assistant-layout mt">
-	<aside class="assistant-layout__aside" aria-label="Application context">
-		<div class="card card--tight">
-			<div class="card__head">
-				<h2>This application</h2>
-				<span class="badge {% if state == 'APPROVED' %}badge--ok{% elif state == 'REJECTED' %}badge--bad{% elif state == 'INFO_REQUESTED' or state == 'MANUAL_REVIEW' %}badge--warn{% elif state == 'SUBMITTED' or state == 'UNDER_REVIEW' %}badge--info{% else %}badge--neutral{% endif %}">{{ snapshot.title }}</span>
-			</div>
-			<dl class="detail detail--rows">
-				<div><dt>Reference</dt><dd class="mono">{{ application.name }}</dd></div>
-				<div><dt>Amount</dt><dd>₹{{ "{:,.0f}".format(application.loan_amount or 0) }}</dd></div>
-				<div><dt>Tenure</dt><dd>{{ application.repayment_periods }} months</dd></div>
-				<div><dt>Purpose</dt><dd>{{ application.get("custom_loan_purpose") or "Not recorded" }}</dd></div>
-				<div><dt>Recorded outcome</dt><dd>{{ snapshot.decision_label }}</dd></div>
+<div class="workspace">
+	<header class="workspace__head">
+		<div class="workspace__title">
+			<h1>Ask about this decision</h1>
+			<a class="small workspace__help" href="/borrower/help#assistant">How the assistant works</a>
+		</div>
+		<section class="appstrip" aria-label="This application">
+			<dl class="appstrip__facts">
+				<div><dt>Application</dt><dd>{{ application.name }}</dd></div>
+				<div class="appstrip__minor"><dt>Amount</dt><dd>₹{{ "{:,.0f}".format(application.loan_amount or 0) }}</dd></div>
+				<div class="appstrip__minor"><dt>Tenure</dt><dd>{{ application.repayment_periods }} months</dd></div>
+				<div class="appstrip__minor"><dt>Purpose</dt><dd>{{ application.get("custom_loan_purpose") or "Not recorded" }}</dd></div>
+				<div><dt>Recorded outcome</dt><dd><span class="badge {% if state == 'APPROVED' %}badge--ok{% elif state == 'REJECTED' %}badge--bad{% elif state == 'INFO_REQUESTED' or state == 'MANUAL_REVIEW' %}badge--warn{% elif state == 'SUBMITTED' or state == 'UNDER_REVIEW' %}badge--info{% else %}badge--neutral{% endif %}">{{ snapshot.title }}</span></dd></div>
 			</dl>
-			<p class="small muted mt">{{ snapshot.summary }}</p>
-		</div>
-
-		<div class="card card--tight">
-			<h2>What the assistant can do</h2>
-			<ul class="checklist mt">
-				<li><span class="checklist__mark" aria-hidden="true">✓</span><span>Explain the recorded decision and its reasons</span></li>
-				<li><span class="checklist__mark" aria-hidden="true">✓</span><span>Cite the policy passages behind an answer</span></li>
-				<li><span class="checklist__mark" aria-hidden="true">✓</span><span>Run what-if simulations without changing your application</span></li>
-				<li><span class="checklist__mark" aria-hidden="true">✓</span><span>Suggest what to check before reapplying</span></li>
-			</ul>
-			<p class="small muted mt">It cannot approve or reject an application, change your file, or see your identity documents or full ID numbers.</p>
-		</div>
-
-		<div class="card card--tight">
-			<h2>What it uses</h2>
-			<p class="small muted mt">Answers are grounded in the decision record for this application and the policy library. Raw identity numbers and document contents are not sent to the model.</p>
-			<p class="small muted mt">Conversations are kept per account and per application, so you can reopen an earlier question.</p>
-			<a class="small link-arrow mt" href="/borrower/profile">Manage language and familiarity</a>
-		</div>
-	</aside>
-
-	<div class="assistant-layout__main">
-		<section class="assistant" aria-labelledby="assistant-heading">
-			<div class="assistant__head">
-				<h2 id="assistant-heading">Advisory workspace</h2>
-				<span class="badge {% if state == 'APPROVED' %}badge--ok{% elif state == 'REJECTED' %}badge--bad{% elif state == 'INFO_REQUESTED' or state == 'MANUAL_REVIEW' %}badge--warn{% elif state == 'SUBMITTED' or state == 'UNDER_REVIEW' %}badge--info{% else %}badge--neutral{% endif %}">{{ snapshot.title }}</span>
-				<span class="spacer"></span>
-				<span class="tiny muted">Explains the recorded decision. A lender decides.</span>
-			</div>
-			<div class="assistant__body" id="assistant-root">
-				<p class="muted small">Loading the assistant…</p>
-			</div>
+			<p class="appstrip__links">
+				<a href="/borrower/application?name={{ application.name | urlencode }}">Open the decision</a>
+				<a href="/borrower/documents?name={{ application.name | urlencode }}">Documents</a>
+			</p>
 		</section>
+	</header>
+
+	<section class="assistant workspace__body" aria-label="Conversation">
+		<div class="assistant__body" id="assistant-root">
+			<p class="muted small">Loading…</p>
+		</div>
 		<noscript>
 			<div class="alert alert--warn" role="status">
 				<strong>JavaScript is off</strong>
 				<span>The assistant needs JavaScript. Your decision and its reasons are still available on the application page.</span>
 			</div>
 		</noscript>
-		<p class="tiny muted">The application page and its recorded decision remain the authoritative record. The assistant explains; it does not decide.</p>
-	</div>
+	</section>
 </div>
 
 <script id="assistant-context" type="application/json">{{ assistant | tojson }}</script>

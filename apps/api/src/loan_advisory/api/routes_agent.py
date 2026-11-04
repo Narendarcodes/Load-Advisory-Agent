@@ -1,8 +1,12 @@
-"""Agent routes: JSON chat, NDJSON streaming chat, the bureau pipeline and a health probe.
+"""Agent routes: JSON chat, NDJSON streaming chat and a health probe.
 
 Frappe renders every borrower page, so the legacy static UI, demo sign-in, account and
 application routes are gone. What remains is what the CopilotKit runtime and the voice worker
 actually call, with the same status codes and framing the legacy server used.
+
+The agent is an advisory layer over data that already exists. It never triggers a bureau
+enquiry or a decision run: the bureau pipeline is a separate upstream process with its own
+credential, so there is no route here that reaches it.
 """
 import asyncio
 import json
@@ -18,7 +22,6 @@ from loan_advisory.api.auth import claims_from_request, require_application, spe
 MAX_BODY = 64_000
 NDJSON_MEDIA = "application/x-ndjson; charset=utf-8"
 CHAT_LIMIT, CHAT_WINDOW = 60, 60
-BUREAU_LIMIT, BUREAU_WINDOW = 10, 3600
 
 
 def json_body(raw: bytes) -> dict:
@@ -71,14 +74,6 @@ def build_router(service: Any) -> APIRouter:
         spend_budget(claims, "agent-turn", CHAT_LIMIT, CHAT_WINDOW)
         return StreamingResponse(_ndjson(service, claims, body, request.headers),
                                  media_type=NDJSON_MEDIA)
-
-    @router.post("/api/bureau/run")
-    def bureau_run(request: Request, body: dict = Depends(body_of)):
-        claims = claims_from_request(request)
-        require_application(claims)
-        # Provider calls cost money: a borrower gets a small hourly allowance, not a loop.
-        spend_budget(claims, "bureau-run", BUREAU_LIMIT, BUREAU_WINDOW)
-        return service.bureau_run(claims, body)[1]
 
     return router
 

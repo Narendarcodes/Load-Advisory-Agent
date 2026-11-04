@@ -1,4 +1,4 @@
-/* Loan Advisory borrower portal.
+/* Saral borrower portal (brand sheet: docs/BRAND.md).
    Warm paper and coral, Sora for display, Manrope for everything you read and type.
 
    Colour rules that matter:
@@ -6,8 +6,6 @@
    - --deep on paper is 5.3:1, so it carries links and emphasis text.
    - --faint is decoration and disabled state only, never body copy.
    - Status always ships a label and an explanation, never colour alone. */
-
-/* impeccable-disable overused-font: the brief pins Space Grotesk to technical metadata only. */
 
 /* ---------- Fonts (OFL, self hosted) ---------- */
 
@@ -53,27 +51,6 @@
 		U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-@font-face {
-	font-family: "Space Grotesk";
-	font-style: normal;
-	font-weight: 400 700;
-	font-display: swap;
-	src: url("/assets/loan_advisory_portal/fonts/SpaceGrotesk-latin-ext.woff2") format("woff2");
-	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
-		U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113,
-		U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-	font-family: "Space Grotesk";
-	font-style: normal;
-	font-weight: 400 700;
-	font-display: swap;
-	src: url("/assets/loan_advisory_portal/fonts/SpaceGrotesk-latin.woff2") format("woff2");
-	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
-		U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
 /* ---------- Tokens ---------- */
 
 :root {
@@ -97,7 +74,7 @@
 	--coral-2: #fd736e;
 	--coral-3: #ff8f68;
 	--deep: #b23a2e;
-	--peach: #ffb59e;
+	--peach: #ff8f68;
 	--peach-soft: #fdece6;
 
 	/* Secondary tones */
@@ -116,11 +93,12 @@
 	--info-soft: #e8eef2;
 
 	/* Shape and depth */
-	--radius: 20px;
-	--radius-sm: 12px;
-	--radius-xs: 8px;
-	--shadow: 0 18px 44px rgba(60, 40, 32, 0.09);
-	--shadow-sm: 0 6px 18px rgba(60, 40, 32, 0.07);
+	/* v2: tight radii, no resting shadows. Structure comes from type, space and hairlines. */
+	--radius: 8px;
+	--radius-sm: 6px;
+	--radius-xs: 4px;
+	--shadow: 0 12px 28px rgba(36, 28, 27, 0.12); /* floating things only: menus, dialogs, sheets */
+	--active: #ebe4dc; /* neutral selected fill (nav), one step from --paper-2 */
 
 	/* Spacing */
 	--s1: 4px;
@@ -135,7 +113,9 @@
 	/* Type */
 	--font-display: "Sora", "Segoe UI", system-ui, sans-serif;
 	--font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
-	--font-mono: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+	/* Technical metadata (references, dates) uses Sora with tabular figures; Space Grotesk was dropped
+	   so the portal ships exactly two families. */
+	--font-mono: "Sora", "Segoe UI", system-ui, sans-serif;
 
 	/* Shell */
 	--rail: 240px;
@@ -295,7 +275,6 @@ textarea {
 	background: var(--card);
 	border: 1px solid var(--line-2);
 	border-radius: var(--radius-sm);
-	box-shadow: var(--shadow-sm);
 	font-weight: 700;
 }
 
@@ -463,6 +442,12 @@ textarea {
 	text-decoration: none;
 }
 
+img.brand__mark {
+	display: block;
+	object-fit: contain;
+	background: none;
+}
+
 .brand__mark {
 	display: grid;
 	place-items: center;
@@ -542,7 +527,6 @@ textarea {
 .rail__link[aria-current="page"] {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 .rail__link[aria-current="page"] .rail__abbr {
@@ -691,7 +675,6 @@ textarea {
 .topbar__nav a[aria-current="page"] {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 .nav-signout {
@@ -782,7 +765,6 @@ textarea {
 .site-nav a[aria-current="page"] {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 /* Footer */
@@ -990,7 +972,6 @@ textarea {
 	background: var(--card);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
-	box-shadow: var(--shadow-sm);
 	padding: 22px;
 }
 
@@ -1266,7 +1247,6 @@ textarea {
 .btn:hover {
 	background: var(--coral-2);
 	color: var(--ink);
-	box-shadow: 0 8px 20px rgba(178, 58, 46, 0.16);
 }
 
 .btn:active {
@@ -1532,10 +1512,10 @@ textarea {
 
 select {
 	appearance: none;
-	background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
-		linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-	background-position: calc(100% - 19px) 20px, calc(100% - 14px) 20px;
-	background-size: 5px 5px, 5px 5px;
+	/* Chevron as a drawn icon (stroke = --muted #71665f), not two clipped gradients. */
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%2371665f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-position: calc(100% - 14px) 50%;
+	background-size: 12px 8px;
 	background-repeat: no-repeat;
 	padding-right: 38px;
 }
@@ -2029,7 +2009,6 @@ dl.detail--rows dd {
 .wizard-steps li[data-state="current"] button {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 .wizard-steps li[data-state="locked"] button {
@@ -2081,7 +2060,6 @@ dl.detail--rows dd {
 	background: var(--card);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
-	box-shadow: var(--shadow-sm);
 	padding: 26px;
 }
 
@@ -2108,7 +2086,6 @@ dl.detail--rows dd {
 	background: var(--card);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
-	box-shadow: var(--shadow-sm);
 	overflow: hidden;
 }
 
@@ -2570,7 +2547,6 @@ dialog.dialog::backdrop {
 .tabs a[aria-current="page"] {
 	background: var(--card);
 	color: var(--ink);
-	box-shadow: var(--shadow-sm);
 }
 
 /* ---------- Upload ---------- */
@@ -2798,7 +2774,7 @@ dialog.dialog::backdrop {
 	aspect-ratio: 1;
 	right: -12%;
 	top: -18%;
-	background: radial-gradient(circle at 35% 35%, var(--coral), var(--coral-3) 70%);
+	background: var(--coral-3);
 	opacity: 0.9;
 }
 
@@ -2807,7 +2783,7 @@ dialog.dialog::backdrop {
 	aspect-ratio: 1;
 	left: -10%;
 	bottom: -22%;
-	background: radial-gradient(circle at 60% 40%, var(--sage-soft), var(--sage) 85%);
+	background: var(--sage);
 	opacity: 0.55;
 }
 
@@ -2820,7 +2796,6 @@ dialog.dialog::backdrop {
 	border-radius: 16px;
 	background: rgb(255 255 255 / 92%);
 	border: 1px solid var(--line);
-	box-shadow: var(--shadow);
 }
 
 .plate__line {
@@ -2866,21 +2841,21 @@ dialog.dialog::backdrop {
 }
 
 .plate--documents::before {
-	background: radial-gradient(circle at 40% 30%, var(--peach), var(--coral-2) 72%);
+	background: var(--coral-2);
 }
 
 .plate--documents::after {
-	background: radial-gradient(circle at 55% 45%, var(--warn-soft), var(--amber) 88%);
+	background: var(--amber);
 	opacity: 0.35;
 }
 
 .plate--approved::before {
-	background: radial-gradient(circle at 40% 35%, #d9ead9, var(--ok) 82%);
+	background: var(--ok);
 	opacity: 0.5;
 }
 
 .plate--support::before {
-	background: radial-gradient(circle at 40% 35%, var(--info-soft), var(--info) 85%);
+	background: var(--info);
 	opacity: 0.4;
 }
 
@@ -2978,7 +2953,6 @@ dialog.dialog::backdrop {
 	border-radius: 14px;
 	background: var(--card);
 	border: 1px solid var(--line);
-	box-shadow: var(--shadow-sm);
 }
 
 .hero__art-note strong {
@@ -3000,7 +2974,6 @@ dialog.dialog::backdrop {
 	border-radius: var(--radius);
 	border: 1px solid var(--line);
 	background: var(--card);
-	box-shadow: var(--shadow-sm);
 }
 
 .product-card__mark {
@@ -3283,7 +3256,6 @@ dialog.dialog::backdrop {
 	border-radius: var(--radius);
 	border: 1px solid var(--peach);
 	background: var(--card);
-	box-shadow: var(--shadow);
 }
 
 .result-card__amount {
@@ -3342,7 +3314,7 @@ dialog.dialog::backdrop {
 	position: absolute;
 	inset: 0;
 	transform: translateX(-100%);
-	background: linear-gradient(90deg, transparent, rgb(255 255 255 / 65%), transparent);
+	background: rgb(255 255 255 / 45%); /* flat band, no gradient */
 	animation: shimmer 1.2s infinite;
 }
 
@@ -3378,7 +3350,6 @@ dialog.dialog::backdrop {
 	   and axe and every colour checker report those nodes as indeterminate rather than as a pass. */
 	background: var(--ink);
 	color: #f7f3ee;
-	box-shadow: var(--shadow);
 }
 
 .identity-card__top {
@@ -3402,7 +3373,7 @@ dialog.dialog::backdrop {
 .identity-card__masked {
 	font-family: var(--font-mono);
 	font-size: 1rem;
-	letter-spacing: 0.14em;
+	letter-spacing: 0.04em;
 	color: #ffd9cf;
 }
 
@@ -3614,7 +3585,6 @@ body .assistant {
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
 	background: var(--card);
-	box-shadow: var(--shadow);
 	overflow: hidden;
 }
 
@@ -3964,8 +3934,10 @@ body .assistant__head h2 {
 		grid-column: auto;
 	}
 
+	/* v2: the form comes first in one column. With the summary first, a phone user scrolled past the
+	   request summary and the Stage 3 note before reaching the field they were asked to fill. */
 	.wizard__aside {
-		order: -1;
+		order: 1;
 	}
 
 	.hero {
@@ -4311,5 +4283,2458 @@ body .assistant__head h2 {
 	.page {
 		max-width: none;
 		padding: 0;
+	}
+}
+
+/* ======================================================================
+   Saral shell (2026-11 redesign)
+   Desktop: fixed sidebar with labels. 768-1100px: icon rail (labels become
+   tooltips). <=767px: top bar with Menu, bottom quick links, and the same
+   sidebar as an off-canvas drawer. Comes last on purpose.
+   ====================================================================== */
+
+.nav-icon {
+	display: block;
+	width: 20px;
+	height: 20px;
+}
+
+.rail__abbr .nav-icon,
+.tabbar__abbr .nav-icon {
+	width: 18px;
+	height: 18px;
+}
+
+.rail__abbr {
+	color: var(--ink-2);
+	background: transparent;
+}
+
+.rail__link:hover .rail__abbr {
+	background: var(--paper);
+}
+
+.rail__user {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 8px;
+	color: var(--ink);
+}
+
+.rail__link[data-action="logout"] {
+	width: 100%;
+}
+
+.tabbar a,
+.tabbar button {
+	display: grid;
+	justify-items: center;
+	gap: 3px;
+	min-height: 48px;
+	padding: 5px 2px;
+	border: 0;
+	border-radius: var(--radius-xs);
+	background: transparent;
+	color: var(--muted);
+	font: 700 0.66rem/1.2 var(--font-body);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.tabbar button[aria-expanded="true"] {
+	background: var(--peach-soft);
+	color: var(--deep);
+}
+
+.nav-menu {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 40px;
+	padding: 6px 12px;
+	border: 1px solid var(--line-2);
+	border-radius: 999px;
+	background: var(--card);
+	color: var(--ink);
+	font: 600 0.86rem/1 var(--font-body);
+	cursor: pointer;
+}
+
+.nav-scrim {
+	position: fixed;
+	inset: 0;
+	z-index: 70;
+	background: rgb(36 28 27 / 38%);
+}
+
+.nav-scrim[hidden] {
+	display: none;
+}
+
+/* Tablet keeps the icon rail instead of falling back to the top bar. */
+@media (min-width: 768px) and (max-width: 900px) {
+	.shell {
+		grid-template-columns: var(--rail) minmax(0, 1fr);
+	}
+
+	.rail {
+		display: flex;
+	}
+
+	.topbar {
+		display: none;
+	}
+}
+
+@media (max-width: 767px) {
+	.shell {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.topbar {
+		display: flex;
+	}
+
+	.rail {
+		display: none;
+	}
+
+	/* Off-canvas drawer: the full sidebar with its labels. */
+	body.nav-open .rail {
+		display: flex;
+		position: fixed;
+		inset: 0 auto 0 0;
+		z-index: 80;
+		width: min(300px, 86vw);
+		height: 100dvh;
+		align-items: stretch;
+		padding: 22px 16px calc(20px + env(safe-area-inset-bottom));
+		box-shadow: 0 0 48px rgb(36 28 27 / 28%);
+	}
+
+	body.nav-open .rail .rail__brand-text,
+	body.nav-open .rail .rail__label,
+	body.nav-open .rail .rail__text,
+	body.nav-open .rail .rail__user-text {
+		position: static;
+		width: auto;
+		height: auto;
+		overflow: visible;
+		clip: auto;
+		white-space: normal;
+	}
+
+	body.nav-open .rail .rail__link {
+		justify-content: flex-start;
+		width: auto;
+		padding-inline: 10px;
+	}
+
+	body.nav-open .rail .rail__brand,
+	body.nav-open .rail .rail__user {
+		justify-content: flex-start;
+		padding-inline: 8px;
+	}
+
+	/* The collapsed rail centres its footer; the open drawer lines it up with the links above. */
+	body.nav-open .rail .rail__foot {
+		justify-items: stretch;
+	}
+
+	body.nav-open {
+		overflow: hidden;
+	}
+}
+
+/* Page pattern: title, context, primary action, then cards. */
+.page-head p {
+	max-width: 62ch;
+}
+
+.page-art {
+	display: block;
+	width: 100%;
+	max-width: 220px;
+	height: auto;
+}
+
+.empty__art {
+	display: block;
+	width: 180px;
+	max-width: 70%;
+	height: auto;
+	margin: 0 auto var(--s3);
+}
+
+.site-footer__credit {
+	font-size: 0.78rem;
+}
+
+/* Three-stage application stepper */
+.stage-stepper {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 8px;
+	list-style: none;
+	margin: 0 0 var(--s5);
+	padding: 0;
+	counter-reset: none;
+}
+
+.stage-stepper li {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 12px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--card);
+	color: var(--muted);
+	font: 600 0.88rem/1.25 var(--font-body);
+}
+
+.stage-stepper li::before {
+	content: none;
+}
+
+.stage-stepper__num {
+	display: grid;
+	place-items: center;
+	flex: 0 0 28px;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background: var(--paper-2);
+	color: var(--ink-2);
+	font: 700 0.82rem/1 var(--font-display);
+}
+
+.stage-stepper li[data-state="current"] {
+	border-color: var(--coral);
+	color: var(--ink);
+	box-shadow: 0 0 0 3px var(--peach-soft);
+}
+
+.stage-stepper li[data-state="current"] .stage-stepper__num {
+	background: var(--coral);
+	color: var(--ink);
+}
+
+.stage-stepper li[data-state="done"] {
+	color: var(--ink-2);
+}
+
+.stage-stepper li[data-state="done"] .stage-stepper__num {
+	background: var(--ok-soft);
+	color: var(--ok);
+}
+
+.stage-art {
+	display: block;
+	width: 120px;
+	height: auto;
+	margin-bottom: var(--s2);
+}
+
+@media (max-width: 767px) {
+	.stage-stepper li {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 6px;
+		padding: 8px;
+		font-size: 0.78rem;
+	}
+
+	.stage-art {
+		width: 96px;
+	}
+}
+
+/* Decision page: outcome first */
+.decision-outcome {
+	display: flex;
+	align-items: center;
+	gap: var(--s4);
+}
+
+.decision-outcome__art {
+	width: 104px;
+	height: auto;
+	flex: 0 0 auto;
+}
+
+.decision-outcome__title {
+	margin: 0 0 6px;
+	font: 700 1.25rem/1.25 var(--font-display);
+	color: var(--ink);
+}
+
+.decision-next h3 {
+	margin-bottom: var(--s2);
+}
+
+.decision-pending h3 {
+	margin: 0 0 6px;
+	font-family: var(--font-display);
+}
+
+/* Dashboard */
+.next-step__art {
+	width: 140px;
+	margin: -4px 0 var(--s2) auto;
+}
+
+.mini-timeline {
+	display: grid;
+	gap: 10px;
+	list-style: none;
+	margin: var(--s3) 0 0;
+	padding: 0;
+}
+
+.mini-timeline li {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.mini-timeline li[data-state="current"] {
+	color: var(--ink);
+}
+
+.mini-timeline__dot {
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	flex: 0 0 22px;
+	border-radius: 50%;
+	border: 2px solid var(--line-2);
+	background: var(--card);
+	color: var(--ok);
+	font-size: 0.72rem;
+	font-weight: 800;
+}
+
+.mini-timeline li[data-state="done"] .mini-timeline__dot {
+	border-color: var(--ok);
+	background: var(--ok-soft);
+}
+
+.mini-timeline li[data-state="current"] .mini-timeline__dot {
+	border-color: var(--coral);
+	background: var(--coral);
+}
+
+@media (max-width: 767px) {
+	.decision-outcome {
+		align-items: flex-start;
+	}
+
+	.decision-outcome__art {
+		width: 80px;
+	}
+}
+
+/* Sign in: form first, illustration secondary. Two columns only where both fit; below that the
+   earlier single-column rule applies (an unconditional rule here squeezed the form to ~100px at 390px). */
+@media (min-width: 901px) {
+	.auth {
+		grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+	}
+}
+
+.auth__card h1 {
+	margin: 8px 0 4px;
+	font-size: clamp(1.6rem, 2.4vw, 2rem);
+}
+
+.auth__logo {
+	display: block;
+	width: 40px;
+	height: 40px;
+}
+
+.auth__art {
+	display: block;
+	width: 100%;
+	max-width: 340px;
+	height: auto;
+	margin-bottom: var(--s3);
+}
+
+.auth__title {
+	font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+	line-height: 1.2;
+	max-width: 20ch;
+}
+
+@media (max-width: 900px) {
+	.auth__art {
+		max-width: 240px;
+	}
+}
+
+/* Applications table: stack into labelled rows whenever its own box is too narrow for six columns,
+   not only below the 900px page breakpoint. Beside the dashboard's side column at 1280px the table
+   scrolled sideways and hid its Action column. */
+.table-wrap--stack {
+	container-type: inline-size;
+}
+
+@container (max-width: 760px) {
+	.table-wrap--stack thead {
+		display: none;
+	}
+
+	.table-wrap--stack table,
+	.table-wrap--stack tbody,
+	.table-wrap--stack tr,
+	.table-wrap--stack td {
+		display: block;
+		width: 100%;
+	}
+
+	.table-wrap--stack tr {
+		padding: 12px 16px;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.table-wrap--stack tr:last-child {
+		border-bottom: 0;
+	}
+
+	.table-wrap--stack td {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: baseline;
+		gap: 2px var(--s3);
+		padding: 5px 0;
+		border: 0;
+		text-align: right;
+	}
+
+	.table-wrap--stack td::before {
+		content: attr(data-label);
+		color: var(--muted);
+		font-size: 0.76rem;
+		font-weight: 600;
+		text-align: left;
+	}
+
+	.table-wrap--stack td .cell-title,
+	.table-wrap--stack td .sub {
+		grid-column: 2;
+	}
+
+	.table-wrap--stack td:first-child {
+		padding-top: 0;
+	}
+
+	.table-wrap--stack td[data-empty]::before {
+		content: none;
+	}
+
+	/* Badges and buttons keep their own width; as grid items they stretched across the row. */
+	.table-wrap--stack td > .badge,
+	.table-wrap--stack td > .btn {
+		justify-self: end;
+		width: auto;
+	}
+}
+
+/* Apply: the three stage pills follow the form column's width, not the page's. Beside the step
+   list and the summary at 1280px the column is ~340px, and "Documents" pushed its pill past the
+   card's edge; below 480px of column the number sits above the label, as on phones. */
+.stage-stepper {
+	container-type: inline-size;
+}
+
+@container (max-width: 480px) {
+	.stage-stepper li {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 6px;
+		padding: 8px;
+		font-size: 0.78rem;
+		min-width: 0;
+	}
+}
+
+/* ======================================================================
+   Saral v2: quiet structure (2026-11-02, second design pass)
+   Rules applied (docs/DESIGN_PRINCIPLES.md): sections are separated by space and
+   1px hairlines, not boxed cards; one radius family (8/6/4, pills only for status);
+   no shadows on things at rest; coral only on the primary action, data marks and
+   the illustrations; sentence-case labels; tabular figures; a neutral nav pill.
+   Comes last on purpose so it wins over the v1 component rules above.
+   ====================================================================== */
+
+/* Type scale: 28 / 18 / 16 / 15.5 / 13 / 12 */
+h1 {
+	font-size: clamp(1.5rem, 1.25rem + 0.8vw, 1.75rem);
+	font-weight: 650;
+	letter-spacing: -0.02em;
+}
+
+h2 {
+	font-size: 1.125rem;
+	font-weight: 600;
+}
+
+h3 {
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+::selection {
+	background: var(--peach-soft);
+	color: var(--ink);
+}
+
+:focus-visible {
+	outline: 2px solid var(--deep);
+	outline-offset: 2px;
+}
+
+.mono,
+.metric__value,
+td,
+dd {
+	font-variant-numeric: tabular-nums;
+}
+
+.mono {
+	font-family: var(--font-body);
+	letter-spacing: 0;
+}
+
+/* ---------- Page frame ---------- */
+
+.page {
+	padding-top: 28px;
+}
+
+.page-head {
+	align-items: flex-end;
+	margin-bottom: var(--s5);
+	padding-bottom: var(--s4);
+	border-bottom: 1px solid var(--line);
+}
+
+.page-head h1 {
+	margin-top: 0;
+}
+
+.page-head p {
+	font-size: 0.95rem;
+	margin-top: 4px;
+}
+
+.page-head--art {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: end;
+	gap: var(--s4);
+}
+
+.page-head__art {
+	display: block;
+	width: 160px;
+	height: auto;
+	margin-bottom: -17px; /* sits on the hairline */
+}
+
+@media (max-width: 640px) {
+	.page-head__art {
+		width: 112px;
+	}
+}
+
+/* ---------- Cards become sections ---------- */
+
+.card,
+.card--tight,
+.card--accent,
+.card--warm {
+	padding: var(--s5) 0 0;
+	border: 0;
+	border-top: 1px solid var(--line);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.card--flush {
+	padding: 0;
+}
+
+.stack > .card:first-child,
+.grid-2 > .card,
+.grid-3 > .card {
+	border-top-color: var(--line);
+}
+
+.card__head {
+	margin-bottom: var(--s3);
+}
+
+.card__head h2,
+.card__head h3 {
+	font-size: 1.05rem;
+}
+
+.card__foot {
+	border-top: 0;
+	padding-top: 0;
+}
+
+.plate__card,
+.result-card,
+.identity-card,
+body .assistant {
+	box-shadow: none;
+}
+
+/* A surface only where a person types into a form or a panel floats. */
+.surface {
+	padding: var(--s5);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--card);
+}
+
+/* ---------- Metrics: one divided strip, not tiles ---------- */
+
+.summary-strip {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	margin: 0 0 var(--s6);
+	padding: 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.summary-strip > div {
+	display: grid;
+	align-content: start;
+	gap: 4px;
+	padding: 0 var(--s5) var(--s4);
+	border-left: 1px solid var(--line);
+}
+
+.summary-strip > div:first-child {
+	padding-left: 0;
+	border-left: 0;
+}
+
+.summary-strip dt {
+	color: var(--muted);
+	font-size: 0.8rem;
+	font-weight: 600;
+}
+
+.summary-strip dd {
+	margin: 0;
+	font: 600 1.375rem/1.25 var(--font-display);
+	color: var(--ink);
+}
+
+.summary-strip dd .badge {
+	font-size: 0.78rem;
+}
+
+.summary-strip dd small {
+	display: block;
+	color: var(--muted);
+	font: 400 0.8rem/1.4 var(--font-body);
+}
+
+@media (max-width: 640px) {
+	.summary-strip {
+		grid-template-columns: 1fr;
+		border-bottom: 0;
+	}
+
+	.summary-strip > div,
+	.summary-strip > div:first-child {
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: baseline;
+		padding: 10px 0;
+		border-left: 0;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.summary-strip dd {
+		font-size: 1.05rem;
+		text-align: right;
+	}
+}
+
+.metric__label,
+.stat__label,
+.rail__label,
+thead th,
+.label-caps {
+	font-family: var(--font-body);
+	font-size: 0.78rem;
+	font-weight: 600;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--muted);
+}
+
+.metric__value,
+.stat__value {
+	font-size: 1.375rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+/* ---------- Buttons, chips, badges ---------- */
+
+.btn {
+	min-height: 40px;
+	padding: 0 16px;
+	border-radius: var(--radius-sm);
+	font-weight: 650;
+	transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.btn:hover {
+	box-shadow: none;
+}
+
+.btn--sm {
+	min-height: 34px;
+	padding: 0 12px;
+	border-radius: var(--radius-sm);
+}
+
+.btn--ghost {
+	border-color: var(--line-2);
+	background: transparent;
+}
+
+.btn--ghost:hover {
+	background: var(--paper-2);
+}
+
+.btn--quiet {
+	padding-inline: 0;
+	min-height: 32px;
+	border: 0;
+	background: transparent;
+	color: var(--deep);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	text-decoration-thickness: 1px;
+}
+
+.btn--quiet + .btn--quiet {
+	margin-left: var(--s4);
+}
+
+.btn--quiet:hover {
+	background: transparent;
+	color: var(--ink);
+}
+
+.input-group__toggle,
+input,
+select,
+textarea {
+	border-radius: var(--radius-sm);
+}
+
+.badge {
+	padding: 2px 8px;
+	font-size: 0.75rem;
+	font-weight: 650;
+	letter-spacing: 0;
+	border-color: transparent;
+}
+
+/* ---------- Sidebar: page ground, neutral active pill ---------- */
+
+.rail {
+	background: var(--paper);
+	border-right: 1px solid var(--line);
+	gap: var(--s4);
+}
+
+.rail__link {
+	min-height: 36px;
+	padding: 6px 10px;
+	border-radius: var(--radius-sm);
+	font-weight: 550;
+	font-size: 0.9rem;
+	color: var(--ink-2);
+}
+
+.rail__link:hover {
+	background: var(--paper-2);
+}
+
+.rail__link[aria-current="page"] {
+	background: var(--active);
+	color: var(--ink);
+	font-weight: 650;
+	box-shadow: none;
+}
+
+.rail__link[aria-current="page"] .rail__abbr,
+.rail__abbr,
+.rail__link:hover .rail__abbr {
+	background: transparent;
+	color: inherit;
+}
+
+.rail__label {
+	padding: 0 10px;
+	font-size: 0.75rem;
+}
+
+.rail__foot {
+	border-top: 1px solid var(--line);
+}
+
+.avatar {
+	border-radius: 50%;
+}
+
+/* ---------- Tables and definition lists ---------- */
+
+.table-wrap {
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+thead th {
+	background: transparent;
+	padding-top: 0;
+	border-bottom: 1px solid var(--line-2);
+}
+
+th,
+td {
+	padding: 12px 12px 12px 0;
+}
+
+th:last-child,
+td:last-child {
+	padding-right: 0;
+}
+
+tbody tr:hover {
+	background: transparent;
+}
+
+td.num,
+th.num {
+	text-align: right;
+}
+
+dl.detail--rows div {
+	padding-block: 9px;
+}
+
+/* ---------- Alerts and status blocks: tinted rows, no boxes in boxes ---------- */
+
+.alert,
+.status-block {
+	border-radius: var(--radius);
+	box-shadow: none;
+}
+
+.status-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 10px;
+	margin: 8px 0 0;
+	color: var(--ink-2);
+	font-size: 0.95rem;
+}
+
+.status-line .badge {
+	font-size: 0.78rem;
+}
+
+/* Dated history, current state marked */
+.history-list {
+	position: relative;
+	display: grid;
+	gap: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.history-list li {
+	position: relative;
+	display: grid;
+	grid-template-columns: 7.5rem minmax(0, 1fr);
+	gap: var(--s3);
+	padding: 10px 0 10px 20px;
+	border-bottom: 1px solid var(--line);
+	color: var(--ink-2);
+}
+
+.history-list li:last-child {
+	border-bottom: 0;
+}
+
+.history-list li::before {
+	content: "";
+	position: absolute;
+	left: 3px;
+	top: 18px;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--line-2);
+}
+
+.history-list li[aria-current="step"] {
+	color: var(--ink);
+	font-weight: 650;
+}
+
+.history-list li[aria-current="step"]::before {
+	left: 1px;
+	top: 16px;
+	width: 11px;
+	height: 11px;
+	background: var(--coral);
+	box-shadow: 0 0 0 3px var(--peach-soft);
+}
+
+.history-list time {
+	color: var(--muted);
+	font-weight: 500;
+	font-size: 0.88rem;
+}
+
+.history-list .history-list__now {
+	margin-left: 8px;
+	color: var(--deep);
+	font-size: 0.8rem;
+	font-weight: 650;
+}
+
+@media (max-width: 640px) {
+	.history-list li {
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
+}
+
+/* ---------- Empty states ---------- */
+
+.empty {
+	border: 0;
+	background: transparent;
+}
+
+.empty__art {
+	width: 180px;
+	max-width: 60%;
+}
+
+/* ---------- Sign in: form close under the header ---------- */
+
+.auth {
+	align-items: start;
+	padding-block: clamp(16px, 4vh, 40px) var(--s7);
+	gap: clamp(28px, 6vw, 88px);
+}
+
+.auth__card {
+	padding: clamp(22px, 3vw, 32px);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--card);
+}
+
+.auth__head {
+	margin-bottom: var(--s5);
+}
+
+.auth__head h1 {
+	margin: 0 0 4px;
+	font-size: 1.75rem;
+}
+
+.auth__intro {
+	padding-top: 4px;
+}
+
+.auth__art {
+	max-width: 320px;
+	margin: 0 0 var(--s4);
+}
+
+.auth__points {
+	gap: var(--s2);
+	margin: var(--s4) 0;
+	padding: 0;
+}
+
+.auth__points li {
+	display: block;
+	padding: 10px 0;
+	border-top: 1px solid var(--line);
+	font-size: 0.92rem;
+}
+
+.auth__points li:last-child {
+	border-bottom: 1px solid var(--line);
+}
+
+.auth__help {
+	border-top: 1px solid var(--line);
+}
+
+/* ---------- Dashboard ---------- */
+
+.dashboard {
+	align-items: start;
+	gap: var(--s7);
+}
+
+.dashboard__side {
+	display: grid;
+	gap: var(--s5);
+}
+
+.dashboard__side > section {
+	padding-top: var(--s4);
+}
+
+.next-step {
+	display: grid;
+	gap: var(--s2);
+}
+
+.next-step__art {
+	width: 160px;
+	margin: 0 0 var(--s2);
+}
+
+/* Applications table stays a table at desktop; stacks below 640px of its own width. */
+@container (max-width: 760px) {
+	.table-wrap--stack thead {
+		display: table-header-group;
+	}
+
+	.table-wrap--stack table {
+		display: table;
+	}
+
+	.table-wrap--stack tbody {
+		display: table-row-group;
+	}
+
+	.table-wrap--stack tr {
+		display: table-row;
+		padding: 0;
+	}
+
+	.table-wrap--stack td {
+		display: table-cell;
+		width: auto;
+		padding: 12px 12px 12px 0;
+		border-bottom: 1px solid var(--line);
+		text-align: left;
+	}
+
+	.table-wrap--stack td::before {
+		content: none;
+	}
+}
+
+@container (max-width: 540px) {
+	.table-wrap--stack thead {
+		display: none;
+	}
+
+	.table-wrap--stack table,
+	.table-wrap--stack tbody,
+	.table-wrap--stack tr {
+		display: block;
+		width: 100%;
+	}
+
+	.table-wrap--stack tr {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 2px var(--s3);
+		padding: 12px 0;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.table-wrap--stack td {
+		display: block;
+		width: auto;
+		padding: 0;
+		border: 0;
+	}
+
+	.table-wrap--stack td[data-label="Application"] {
+		grid-column: 1;
+	}
+
+	.table-wrap--stack td[data-label="Status"] {
+		grid-column: 2;
+		grid-row: 1;
+		justify-self: end;
+	}
+
+	.table-wrap--stack td[data-label="Amount"],
+	.table-wrap--stack td[data-label="Purpose"],
+	.table-wrap--stack td[data-label="Started"] {
+		grid-column: 1;
+		color: var(--muted);
+		font-size: 0.86rem;
+	}
+
+	.table-wrap--stack td[data-label="Amount"] .sub {
+		display: inline;
+		margin-left: 6px;
+	}
+
+	.table-wrap--stack td[data-label="Action"] {
+		grid-column: 2;
+		grid-row: 2 / span 3;
+		align-self: end;
+		justify-self: end;
+	}
+}
+
+/* ---------- Decision page ---------- */
+
+.application-grid {
+	align-items: start;
+	gap: var(--s7);
+}
+
+.application-side {
+	display: grid;
+	gap: var(--s5);
+}
+
+.decision-outcome {
+	align-items: center;
+}
+
+.decision-outcome__art {
+	width: 120px;
+}
+
+.decision-reasons li::marker {
+	color: var(--deep);
+}
+
+/* ---------- Apply wizard ---------- */
+
+.stage-stepper li {
+	border: 0;
+	border-bottom: 2px solid var(--line);
+	border-radius: 0;
+	background: transparent;
+	padding: 8px 0;
+	box-shadow: none;
+}
+
+.stage-stepper li[data-state="current"] {
+	border-bottom-color: var(--coral);
+	box-shadow: none;
+}
+
+.stage-stepper__num {
+	width: 24px;
+	height: 24px;
+	flex-basis: 24px;
+	font-size: 0.78rem;
+}
+
+.stage-art {
+	width: 120px;
+}
+
+/* ---------- Footer ---------- */
+
+.site-footer {
+	background: transparent;
+	border-top: 1px solid var(--line);
+}
+
+/* ---------- Motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0ms !important;
+		animation-duration: 0ms !important;
+	}
+}
+
+/* ---------- Assistant workspace page ---------- */
+
+body .assistant {
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	overflow: visible;
+}
+
+body .msg.user {
+	background: var(--paper-2);
+	border: 0;
+}
+
+body .msg.bot {
+	background: transparent;
+}
+
+.workspace {
+	max-width: 760px;
+	margin: 0 auto;
+}
+
+.workspace__head {
+	display: grid;
+	gap: var(--s3);
+	margin-bottom: var(--s4);
+}
+
+.workspace__title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--s2) var(--s4);
+}
+
+.appstrip {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s2) var(--s4);
+	padding: 10px 0;
+	border-top: 1px solid var(--line);
+	border-bottom: 1px solid var(--line);
+}
+
+.appstrip__facts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 20px;
+	margin: 0;
+}
+
+.appstrip__facts div {
+	display: grid;
+	gap: 0;
+}
+
+.appstrip__facts dt {
+	color: var(--muted);
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+.appstrip__facts dd {
+	margin: 0;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.appstrip__links {
+	display: flex;
+	gap: var(--s4);
+	margin: 0;
+	font-size: 0.88rem;
+}
+
+@media (max-width: 640px) {
+	.appstrip__minor {
+		display: none !important;
+	}
+}
+
+.workspace-shell .page {
+	padding-bottom: 24px;
+}
+
+.page-head--art {
+	grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.page-head--art .stat {
+	align-self: end;
+	padding-bottom: var(--s2);
+}
+
+/* The page head already draws the rule above the first section of each column. */
+.application-grid > .stack > .card:first-child,
+.application-side > .card:first-child,
+.dashboard > .stack > section:first-child,
+.dashboard__side > section:first-child {
+	border-top: 0;
+	padding-top: 0;
+}
+
+@media (min-width: 1101px) {
+	.dashboard {
+		grid-template-columns: minmax(0, 1fr) 300px;
+	}
+}
+
+.workspace {
+	display: flex;
+	flex-direction: column;
+	min-height: calc(100dvh - 52px);
+}
+
+.workspace__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+}
+
+@media (max-width: 767px) {
+	.workspace {
+		min-height: calc(100dvh - 64px - 62px - 40px);
+	}
+}
+
+@media (max-width: 640px) {
+	.workspace__help {
+		display: none;
+	}
+
+	.workspace__head {
+		gap: var(--s2);
+		margin-bottom: var(--s2);
+	}
+
+	.workspace__head h1 {
+		font-size: 1.35rem;
+	}
+
+	.appstrip {
+		padding: 8px 0;
+	}
+
+	.appstrip__facts {
+		gap: 4px 16px;
+	}
+}
+
+/* Quiet chrome on phones too: neutral active tab, square-ish menu button. */
+.tabbar a[aria-current="page"] {
+	background: var(--active);
+	color: var(--ink);
+}
+
+.tabbar {
+	background: var(--paper);
+	backdrop-filter: none;
+}
+
+.nav-menu {
+	border-radius: var(--radius-sm);
+	background: transparent;
+}
+
+.topbar {
+	backdrop-filter: none;
+}
+
+.topbar,
+.public-header {
+	background: var(--paper);
+	backdrop-filter: none;
+}
+
+/* v2: dates in the applications table stay on one line ("30 Oct" / "2026" split at 1280 px beside
+   the side column); the reference may still break after "ACC-LOAP-", which reads as two parts. */
+.table-wrap--stack td[data-label="Started"] {
+	white-space: nowrap;
+}
+
+/* v2 (impeccable side-tab, taste micro-label): alerts carry their tone in the tinted surface and
+   the text colour, not a 4px coloured stripe; wizard captions are sentence-case body type. */
+.alert {
+	border-left-width: 1px;
+}
+
+.alert--error { border-left-color: #e5c2bc; }
+.alert--success { border-left-color: #c8dccd; }
+.alert--warn { border-left-color: #e6d3ae; }
+.alert--info { border-left-color: #ccd9e2; }
+
+.wizard__rail-title,
+.wizard-progress {
+	font-family: var(--font-body);
+	font-size: 0.86rem;
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+/* v2 (impeccable straggler): no single-word last lines in body copy; balanced headings. */
+p,
+li,
+dd {
+	text-wrap: pretty;
+}
+
+h1,
+h2,
+h3 {
+	text-wrap: balance;
+}
+
+/* v2 (390 px): the page-head text had a ~130 px column beside the art and the profile meter.
+   On phones the text takes the full first row; the meter and the art share the row below. */
+@media (max-width: 640px) {
+	.page-head--art {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
+	.page-head--art > :first-child {
+		grid-column: 1 / -1;
+	}
+
+	.page-head--art .page-head__art {
+		justify-self: end;
+		width: 96px;
+	}
+}
+
+/* ---------- v3: result screens ---------- */
+/* One shape for every outcome (eligibility estimate, application result): illustration, status,
+   one headline, a lead sentence, then hairline-separated sections and a single primary action. */
+
+.result {
+	margin-bottom: var(--s6);
+}
+
+.result-card {
+	position: static;
+	gap: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+@media (min-width: 981px) {
+	.result-card {
+		position: sticky;
+		top: 88px;
+	}
+}
+
+.result-head {
+	display: grid;
+	grid-template-columns: 120px minmax(0, 1fr);
+	gap: var(--s4);
+	align-items: center;
+	padding-bottom: var(--s4);
+	border-bottom: 1px solid var(--line);
+}
+
+.result-head--lg {
+	grid-template-columns: 160px minmax(0, 1fr);
+	gap: var(--s5);
+	padding-bottom: var(--s5);
+}
+
+.result-head__art {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 4 / 3;
+}
+
+.result-head__text {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+}
+
+.result-head__status {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 10px;
+	margin: 0;
+}
+
+.result-head h2 {
+	margin: 0;
+	font: 700 1.35rem/1.25 var(--font-display);
+	letter-spacing: -0.01em;
+}
+
+.result-head--lg h2 {
+	font-size: clamp(1.4rem, 1.1rem + 1vw, 1.75rem);
+}
+
+.result-head h2 .result-card__amount {
+	display: block;
+	margin-top: 4px;
+	font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.1rem);
+}
+
+.result-head__lead {
+	margin: 0;
+	color: var(--ink-2);
+	max-width: 60ch;
+}
+
+.result-section {
+	display: grid;
+	gap: var(--s2);
+	padding: var(--s4) 0;
+	border-bottom: 1px solid var(--line);
+	margin: 0;
+}
+
+.result-section h3 {
+	margin: 0;
+	font: 600 0.95rem/1.35 var(--font-display);
+}
+
+.result-section.detail--rows {
+	gap: 0;
+}
+
+.result-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s3) var(--s5);
+	padding-top: var(--s4);
+}
+
+.link-quiet {
+	font-weight: 600;
+	color: var(--deep);
+	text-underline-offset: 3px;
+}
+
+.result-note {
+	margin: var(--s4) 0 0;
+	padding: var(--s3) var(--s4);
+	border-radius: var(--radius-sm);
+	background: var(--paper-2);
+	color: var(--ink-2);
+	font-size: 0.86rem;
+}
+
+.result-note--warn {
+	background: var(--warn-soft);
+	color: var(--warn);
+}
+
+.decision-reasons {
+	margin: 0;
+	padding-left: 1.1em;
+	display: grid;
+	gap: 6px;
+}
+
+.decision-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px var(--s4);
+	margin: var(--s4) 0 0;
+	color: var(--muted);
+	font-size: 0.8rem;
+}
+
+/* In-flight progress: what has happened and what is still to come. A quiet mark, no percentage. */
+.run-progress {
+	list-style: none;
+	margin: 0;
+	padding: var(--s4) 0;
+	display: grid;
+	gap: 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.run-progress li {
+	position: relative;
+	display: grid;
+	grid-template-columns: 20px minmax(0, 1fr);
+	gap: var(--s3);
+	padding: 0 0 var(--s4);
+}
+
+.run-progress li:last-child {
+	padding-bottom: 0;
+}
+
+.run-progress li::after {
+	content: "";
+	position: absolute;
+	left: 9px;
+	top: 22px;
+	bottom: 2px;
+	width: 2px;
+	background: var(--line);
+}
+
+.run-progress li:last-child::after {
+	display: none;
+}
+
+.run-progress li > span:last-child {
+	display: grid;
+	gap: 2px;
+}
+
+.run-progress strong {
+	font-weight: 600;
+}
+
+.run-progress__mark {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	border: 2px solid var(--line-2);
+	background: var(--card);
+}
+
+.run-progress li[data-state="done"] .run-progress__mark {
+	border-color: var(--ok);
+	background: var(--ok);
+	box-shadow: inset 0 0 0 4px var(--card);
+}
+
+.run-progress li[data-state="current"] .run-progress__mark {
+	border-color: var(--coral);
+	background: var(--peach-soft);
+	animation: calm-pulse 2.4s ease-in-out infinite;
+}
+
+.run-progress li[data-state="todo"] strong {
+	color: var(--muted);
+}
+
+@media (max-width: 640px) {
+	.result-head,
+	.result-head--lg {
+		grid-template-columns: 96px minmax(0, 1fr);
+		gap: var(--s3);
+		align-items: start;
+	}
+
+	.result-head h2 {
+		font-size: 1.2rem;
+	}
+
+	.result-actions .btn {
+		width: 100%;
+	}
+}
+
+/* ---------- v3: loading ---------- */
+/* Skeletons keep the final layout's shape in flat paper tone. They breathe slowly (opacity only);
+   no sliding band and no gradient. Reduced motion holds them still. */
+
+.skeleton {
+	display: block;
+	border-radius: var(--radius-xs);
+	background: var(--paper-2);
+	color: transparent !important;
+	animation: calm-pulse 1.8s ease-in-out infinite;
+}
+
+.skeleton::after {
+	content: none;
+	animation: none;
+}
+
+.skeleton--line {
+	height: 0.85em;
+	margin: 0.3em 0;
+}
+
+.skeleton--title {
+	height: 1.5rem;
+	width: 70%;
+}
+
+.skeleton--amount {
+	height: 2.2rem;
+	width: 65%;
+	margin: 4px 0;
+}
+
+.skeleton--badge {
+	height: 1.3rem;
+	width: 7rem;
+	border-radius: 999px;
+}
+
+.skeleton--row {
+	height: 1.1rem;
+	margin: 0.45rem 0;
+}
+
+.skeleton--art {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	border-radius: var(--radius);
+}
+
+.skeleton--w30 { width: 30%; }
+.skeleton--w40 { width: 40%; }
+.skeleton--w50 { width: 50%; }
+.skeleton--w60 { width: 60%; }
+.skeleton--w70 { width: 70%; }
+.skeleton--w80 { width: 80%; }
+
+@keyframes calm-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.55;
+	}
+}
+
+/* Pending buttons keep their width and say what is happening; the spinner stops under reduced motion. */
+.btn[aria-busy="true"] {
+	opacity: 0.85;
+	cursor: progress;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.skeleton,
+	.run-progress li[data-state="current"] .run-progress__mark {
+		animation: none;
+	}
+
+	.btn[aria-busy="true"]::before {
+		animation: none;
+		border-right-color: currentColor;
+		border-style: dotted;
+	}
+}
+
+/* ---------- v3: illustration slots ---------- */
+
+.empty__art,
+.state-art {
+	display: block;
+	width: 180px;
+	max-width: 60%;
+	height: auto;
+	margin: 0 auto var(--s3);
+}
+
+.page-head__art {
+	aspect-ratio: 4 / 3;
+}
+
+.hero__img {
+	display: block;
+	width: 100%;
+	max-width: 360px;
+	height: auto;
+	margin: 0 auto;
+	aspect-ratio: 4 / 3;
+}
+
+.skeleton-table {
+	display: grid;
+	gap: 2px;
+	padding: var(--s3) 0;
+}
+
+.result-head__amount {
+	grid-column: 1 / -1;
+	display: grid;
+	gap: 4px;
+}
+
+.result-head__amount .result-card__amount {
+	margin: 0;
+	font-size: clamp(1.6rem, 1.3rem + 1vw, 2.1rem);
+}
+
+/* v3 (390 px): one scene per screen. When an empty state with its own scene is showing, the
+   page-head and next-step scenes step aside on phones so two drawings never stack in one view. */
+@media (max-width: 640px) {
+	body:has(:not(.hidden) > .empty:not(.hidden) > .empty__art) .page-head__art,
+	body:has(:not(.hidden) > .empty:not(.hidden) > .empty__art) .next-step__art {
+		display: none;
+	}
+}
+
+/* v3 eligibility: the form reads as one column of hairline-separated sections, like the result
+   beside it. No boxed cards, no resting shadow, no step numbering; the coral Estimate button stays
+   the page's one primary action. */
+.eligibility__form {
+	gap: 0;
+}
+
+.form-section {
+	padding: var(--s5) 0;
+	border: 0;
+	border-top: 1px solid var(--line);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.form-section:first-child {
+	padding-top: 0;
+	border-top: 0;
+}
+
+.form-section__head {
+	display: block;
+	margin-bottom: var(--s3);
+}
+
+.form-section__head h2 {
+	margin: 0;
+	font: 600 1.05rem/1.35 var(--font-display);
+}
+
+.eligibility .form-actions {
+	margin-top: 0;
+	padding-top: var(--s4);
+	border-top: 1px solid var(--line);
+}
+
+.eligibility .choice {
+	border-color: var(--line);
+	background: transparent;
+}
+
+.eligibility .choice:has(input:checked) {
+	border-color: var(--deep);
+	background: var(--paper-2);
+}
+
+/* The demo disclosure stays, as one quiet line inside the flow: no tint, no box. */
+.demo-note {
+	margin: 0;
+	padding: var(--s3) 0;
+	border-bottom: 1px solid var(--line);
+	color: var(--muted);
+	font-size: 0.82rem;
+	line-height: 1.5;
+}
+
+.demo-note strong {
+	color: var(--ink-2);
+	font-weight: 600;
+}
+
+/* Documents: quiet skeleton rows while the workspace loads, instead of an empty column. It steps
+   aside as soon as the application, the no-application state or an error is showing. */
+.doc-loading {
+	display: grid;
+	gap: var(--s3);
+	padding: var(--s4) 0;
+}
+
+.doc-main:has(> #application-head:not(.hidden)) > .doc-loading,
+.doc-main:has(> #no-application:not(.hidden)) > .doc-loading,
+.doc-main:has(> #workspace-error:not(.hidden)) > .doc-loading {
+	display: none;
+}
+
+/* Help: status names sit above their meaning, so a half-width column never squeezes the
+   explanation into three-word lines. */
+dl.detail--stacked {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 2px;
+}
+
+dl.detail--stacked dt {
+	margin-top: var(--s3);
+	color: var(--ink);
+	font-weight: 600;
+}
+
+dl.detail--stacked dt:first-child {
+	margin-top: 0;
+}
+
+dl.detail--stacked dd {
+	font-weight: 400;
+	color: var(--ink-2);
+}
+
+/* Documents with no application: the one start action keeps its own width. */
+#application-choices > .btn:only-child {
+	justify-self: center;
+}
+
+/* v3 products page: hairline-separated sections, no boxed cards, no step numbers. Each product,
+   step and assurance is a definition row on the page paper; the hero keeps the page's one coral
+   action and the closing invitation repeats it as a ghost button. */
+.product-list {
+	display: grid;
+	border-top: 1px solid var(--line);
+}
+
+.product-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+	gap: var(--s3) var(--s6);
+	padding: var(--s4) 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.product-row h3 {
+	margin: 0 0 4px;
+	font-size: 1.05rem;
+}
+
+.product-row p {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+	max-width: 52ch;
+}
+
+.def-rows {
+	display: grid;
+	margin: 0;
+	font-size: 0.9rem;
+}
+
+.def-rows > div {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s3);
+	padding: 8px 0;
+	border-top: 1px solid var(--line);
+}
+
+.def-rows > div:first-child {
+	border-top: 0;
+	padding-top: 0;
+}
+
+.def-rows dt {
+	color: var(--muted);
+}
+
+.def-rows dd {
+	margin: 0;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.def-list {
+	display: grid;
+	margin: 0;
+	border-top: 1px solid var(--line);
+}
+
+.def-list > div {
+	display: grid;
+	grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+	gap: var(--s1) var(--s5);
+	padding: var(--s3) 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.def-list dt {
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.def-list dd {
+	margin: 0;
+	color: var(--ink-2);
+	max-width: 62ch;
+}
+
+.calculator {
+	align-items: start;
+	padding-top: var(--s4);
+	border-top: 1px solid var(--line);
+}
+
+.calculator__result {
+	padding: 0 0 0 var(--s5);
+	border: 0;
+	border-left: 1px solid var(--line);
+	border-radius: 0;
+	background: transparent;
+}
+
+.faq {
+	gap: 0;
+	border-top: 1px solid var(--line);
+	align-self: start;
+}
+
+.faq details {
+	padding: 0;
+	border: 0;
+	border-bottom: 1px solid var(--line);
+	border-radius: 0;
+	background: transparent;
+}
+
+.closing {
+	padding-top: var(--s5);
+	border-top: 1px solid var(--line);
+}
+
+@media (max-width: 900px) {
+	.product-row,
+	.def-list > div {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.calculator__result {
+		padding: var(--s4) 0 0;
+		border-left: 0;
+		border-top: 1px solid var(--line);
+	}
+
+	.calculator__rows {
+		max-width: 30rem;
+	}
+}
+
+/* The next section opens with its own hairline, so a list never closes with one (no double rules). */
+.product-row:last-child,
+.def-list > div:last-child,
+.faq details:last-child {
+	border-bottom: 0;
+}
+
+.landing .grid-2 > .card {
+	padding-top: var(--s3);
+}
+
+.landing .card h3 + ul {
+	margin-top: var(--s2);
+}
+
+/* ---------- v4: restrained depth ----------
+   Three levels, no more:
+   - page: cream --paper, flat. Most content sits here, split by hairlines.
+   - raised surface: white --surface with a 1px --line border, no shadow. Only the primary work areas:
+     sign-in form, apply and eligibility forms, the application result, the assistant panel.
+   - floating: --shadow (one soft, low shadow). Only things above the page: the composer, menus,
+     the mobile sheet and drawer, dialogs and toasts.
+   Motion: --dur (180ms) with --ease-out for hover, focus and fades. Reduced motion stops it. */
+:root {
+	--surface: #ffffff;
+	--shadow: 0 1px 2px rgb(36 28 27 / 5%), 0 10px 24px -10px rgb(36 28 27 / 16%);
+	--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--dur: 180ms;
+	--ring: 0 0 0 3px rgb(178 58 46 / 18%);
+}
+
+/* Raised surfaces (primary work areas only) */
+.auth__card,
+.wizard-panel,
+.eligibility__form,
+.result,
+#result-panel {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+}
+
+.eligibility__form {
+	padding: var(--s5) clamp(18px, 2.4vw, 28px);
+}
+
+.eligibility__form .form-section:first-child {
+	border-top: 0;
+}
+
+.result {
+	padding: clamp(18px, 2.4vw, 28px);
+}
+
+#result-panel {
+	padding: clamp(18px, 2.4vw, 24px);
+}
+
+/* Hover and focus: tone, not glow */
+.btn,
+.btn--ghost,
+.btn--quiet,
+.link-quiet,
+input,
+select,
+textarea {
+	transition:
+		background-color var(--dur) var(--ease-out),
+		border-color var(--dur) var(--ease-out),
+		color var(--dur) var(--ease-out),
+		box-shadow var(--dur) var(--ease-out);
+}
+
+.btn--ghost:hover {
+	border-color: var(--line-2);
+	background: var(--surface);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+	box-shadow: var(--ring);
+}
+
+.auth__visual {
+	max-width: 420px;
+	margin: 0 0 var(--s5);
+	padding: clamp(12px, 2vw, 24px);
+	border: 1px solid var(--line);
+}
+
+.auth__visual .auth__art {
+	max-width: 100%;
+	margin: 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.btn,
+	.btn--ghost,
+	.btn--quiet,
+	.link-quiet,
+	input,
+	select,
+	textarea {
+		transition: none;
+	}
+}
+
+/* v4 critique pass: no tiny uppercase tracked labels anywhere (demo flag, identity summary,
+   repayment month), and plain lists instead of numbered circles. */
+.demo-flag,
+.identity-card__top,
+.repayment-row__month,
+.plate__badge,
+.doc-row__mark {
+	letter-spacing: normal;
+	text-transform: none;
+}
+
+.demo-flag {
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+.identity-card__top {
+	font-size: 0.8rem;
+}
+
+.repayment-row__month {
+	font-size: 0.8rem;
+}
+
+.plain-list {
+	display: grid;
+	gap: 6px;
+	margin-bottom: 0;
+	padding-left: 1.25rem;
+	color: var(--ink-2);
+	font-size: 0.92rem;
+	line-height: 1.5;
+}
+
+.plain-list li::marker {
+	color: var(--muted);
+}
+
+/* ==========================================================================================
+   Final surfaces (DESIGN_PRINCIPLES §1). The cream page, white raised work surfaces with a hairline,
+   and the one soft shadow (--shadow) on floating layers only. No animated art: the few key cards
+   (sign-in, the dashboard next step, the decision, the eligibility estimate) are white with a hairline.
+   ========================================================================================== */
+.key-card {
+	position: relative;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background: var(--surface);
+}
+
+/* Status bar: a thin indeterminate bar for work in progress (checks running, page loading).
+   Decorative (aria-hidden); the sentence beside it says what is happening. Static under reduced motion. */
+.status-bar {
+	position: relative;
+	height: 4px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: var(--paper-2);
+}
+
+.status-bar::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 34%;
+	border-radius: inherit;
+	background: var(--coral-3);
+	animation: saral-indeterminate 1.8s var(--ease-out) infinite;
+}
+
+@keyframes saral-indeterminate {
+	from {
+		transform: translateX(-105%);
+	}
+
+	to {
+		transform: translateX(300%);
+	}
+}
+
+/* ---- Sign in: the card is the key card; the illustration sits on the plain page. ---- */
+.auth {
+	align-items: start;
+}
+
+.signin-card {
+	padding: clamp(22px, 3vw, 34px);
+}
+
+.auth__panel {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(12px, 2.4vh, 24px);
+	padding-top: 4px;
+}
+
+.auth__panel .auth__art {
+	width: min(300px, 80%);
+	max-width: none;
+	margin: 0;
+}
+
+.auth__plate .auth__title {
+	margin: 0 0 6px;
+}
+
+.auth__plate .auth__points {
+	margin: var(--s3) 0;
+}
+
+.auth__plate > p:last-child {
+	margin-bottom: 0;
+}
+
+/* ---- Dashboard: greeting, the next-step card, the illustration on the page beside it. ---- */
+.dash-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: end;
+	gap: clamp(16px, 3vw, 48px);
+	margin-bottom: var(--s5);
+}
+
+.dash-hero__main {
+	max-width: 680px;
+}
+
+.dash-hero h1 {
+	margin: 0;
+	font-size: clamp(1.7rem, 1.3rem + 1.4vw, 2.3rem);
+}
+
+.dash-hero__lede {
+	margin: 4px 0 var(--s4);
+	color: var(--ink-2);
+}
+
+.next-card {
+	gap: 6px;
+	padding: clamp(16px, 2vw, 24px);
+}
+
+.next-card h2 {
+	margin: 0;
+	font-size: 1.15rem;
+}
+
+.dash-hero__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: var(--s2);
+}
+
+.dash-hero__actions #next-step-action:empty {
+	display: none;
+}
+
+.dash-hero__art {
+	width: clamp(160px, 17vw, 230px);
+	height: auto;
+}
+
+/* ---- Application result: the decision is the key card; the scene sits beside it. ---- */
+.result-v6 {
+	border-bottom: 0;
+	margin-bottom: var(--s5);
+}
+
+.decision-card {
+	padding: clamp(16px, 2vw, 24px);
+}
+
+/* Checks running: a thin status bar inside the decision card is the processing cue. */
+.process-bar {
+	margin-top: var(--s2);
+}
+
+/* ---- Eligibility: the estimate is the key card. ---- */
+.estimate-card {
+	padding: clamp(14px, 1.8vw, 22px);
+}
+
+/* ---- Page loading: a status bar and one sentence; content areas keep their skeletons. ---- */
+/* A floating status (a layer above the page, so it carries the floating shadow) that never shifts the
+   content under it. */
+.page-loading {
+	position: fixed;
+	top: 18px;
+	right: clamp(16px, 3vw, 32px);
+	z-index: 40;
+	display: grid;
+	gap: 8px;
+	width: min(320px, calc(100vw - 32px));
+	padding: 12px 14px 11px;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background: var(--surface);
+	box-shadow: var(--shadow);
+}
+
+/* Phones: above the tab bar, so it never covers the page title. */
+@media (max-width: 767px) {
+	.page-loading {
+		top: auto;
+		bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+		right: 50%;
+		transform: translateX(50%);
+	}
+
+	.public-shell .page-loading {
+		bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+	}
+}
+
+.page-loading[hidden] {
+	display: none;
+}
+
+.page-loading__text {
+	margin: 0;
+	color: var(--ink-2);
+	font-size: 0.92rem;
+}
+
+@media (max-width: 640px) {
+	.dash-hero {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.dash-hero__art {
+		grid-row: 1;
+		justify-self: end;
+		width: 120px;
+		margin-bottom: -8px;
+	}
+
+	.result-v6.result-head--lg {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.result-v6 .result-head__art {
+		width: 120px;
+		justify-self: end;
+	}
+
+	.auth__panel .auth__art {
+		width: 200px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.status-bar::after {
+		width: 100%;
+		opacity: 0.45;
+		animation: none;
+	}
+}
+
+/* Plain decision cards (Nov 2026): the approved card shows the borrower's own offer only, as three calm
+   figures on a hairline; no meters, rule rows or limits anywhere on the decision. */
+.offer-facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+	gap: 0.75rem 1.25rem;
+	margin: 1rem 0 0;
+	padding-top: 0.9rem;
+	border-top: 1px solid var(--line);
+}
+
+.offer-facts div {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	min-width: 0;
+}
+
+.offer-facts dt {
+	color: var(--muted);
+	font-size: 0.82rem;
+}
+
+.offer-facts dd {
+	margin: 0;
+	color: var(--ink);
+	font-weight: 600;
+	font-size: 1.05rem;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+	.offer-facts {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.5rem;
+	}
+
+	.offer-facts div {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: baseline;
 	}
 }
