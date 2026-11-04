@@ -143,3 +143,115 @@ Built from this run's failures only; counts are dev items (an item can sit in mo
 - The judge is an LLM (codex/gpt-6-luna). Judge-human agreement has not been measured; the 30 calibration items in PR #44 exist for that. Hindi and Telugu samples are small (9 hi, 11 te dev items), so per-language numbers are indicative only.
 - Each judge metric is tried at most twice; failures are recorded as unscored, never as a score.
 - The judge ran in resumable chunks (the sandbox suspends background work between steps), so judge_info.json 'seconds' covers only the last chunk; every metric was scored exactly once in the final file (636 jobs, 0 errors).
+
+## 11. v2 run after the fixes (2026-11-04 IST)
+
+**Label: automated (LLM-judged, no human review).** Same dev split (178 items, sha256 `7236ed025d3179357d7ad76916b7ac2075077fddba1fd670ecd5ae29e465b39f`; the held-out items stay untouched), same generator `antigravity/claude-sonnet-4-6` and judge `codex/gpt-6-luna` through OmniRoute from the Hark sandbox, same DeepEval metrics and rubric. The baseline in §1-§10 is kept unchanged for comparison.
+
+**What changed** (code heads in the table at the end of this section):
+
+- #46 `df70794` (feat/saral-prompts): POLICY prompt asks a clarifying question for vague questions, states conflicting sources, never names passage labels; `guards.sanitize_answer` strips passage labels and the word 'passage(s)' from the shown answer; two guard false positives fixed (other-applicant and guarantee patterns).
+- #45 `e80fc27` (feat/saral-corpus-collections): multi-query helpers (decomposition prompt + parser, soft collection router, per-query merge).
+- #55 `f9144e9` (this branch): v2 harness - sandbox query decomposition (178 items, 469 queries, 0 LLM errors), multi-query candidates retrieved on Kaggle (RAG only), sandbox merge (depth 50, router off, sub-queries on, original query first), leak counts before/after the sanitiser.
+
+### 11.1 Headline before / after
+
+| Metric | Bar | Baseline | v2 | Change | v2 result |
+|---|---:|---:|---:|---:|---|
+| Faithfulness | 0.850 | 0.989 (149/149) | 0.981 (149/149) | -0.007 | PASS |
+| AnswerRelevancy | 0.800 | 0.954 (149/149) | 0.960 (149/149) | +0.006 | PASS |
+| ContextualRecall | 0.800 | 0.796 (149/149) | 0.837 (149/149) | +0.041 | PASS |
+| ContextualPrecision | — | 0.898 (149/149) | 0.897 (149/149) | -0.001 | no bar set |
+| Answers showing an internal term (leak regex) | 0 | 91/178 | 0/178 | | PASS |
+| Answers showing a passage label or 'passage(s)' | 0 | 91/178 (subset of the line above) | 0/178 shown; 2/178 in the raw model draft | | PASS |
+
+Shown = the text the borrower would see (after `guards.sanitize_answer`); raw = the model's draft before it. The raw count measures the prompt fix alone.
+
+### 11.2 Per language (baseline -> v2)
+
+| Group | Faithfulness | AnswerRelevancy | ContextualRecall | ContextualPrecision | ExpectedBehaviour |
+|---|---:|---:|---:|---:|---:|
+| en | 0.989 (n=130) -> 0.979 (n=130) | 0.947 (n=130) -> 0.958 (n=130) | 0.792 (n=130) -> 0.830 (n=130) | 0.902 (n=130) -> 0.896 (n=130) | 0.662 (n=37) -> 0.754 (n=37) |
+| hi | 0.978 (n=9) -> 1.000 (n=9) | 1.000 (n=9) -> 1.000 (n=9) | 0.944 (n=9) -> 0.944 (n=9) | 0.898 (n=9) -> 0.936 (n=9) | 0.600 (n=2) -> 0.700 (n=2) |
+| te | 1.000 (n=10) -> 1.000 (n=10) | 1.000 (n=10) -> 0.950 (n=10) | 0.717 (n=10) -> 0.833 (n=10) | 0.846 (n=10) -> 0.882 (n=10) | 0.800 (n=1) -> 0.800 (n=1) |
+
+### 11.3 Per variant (baseline -> v2)
+
+| Group | Faithfulness | AnswerRelevancy | ContextualRecall | ContextualPrecision | ExpectedBehaviour |
+|---|---:|---:|---:|---:|---:|
+| behaviour | — -> — | — -> — | — -> — | — -> — | 0.645 (n=29) -> 0.759 (n=29) |
+| direct | 0.990 (n=45) -> 0.967 (n=45) | 0.957 (n=45) -> 0.924 (n=45) | 0.839 (n=45) -> 0.868 (n=45) | 0.916 (n=45) -> 0.914 (n=45) | 0.683 (n=6) -> 0.750 (n=6) |
+| multi_hop | 0.990 (n=41) -> 0.988 (n=41) | 0.914 (n=41) -> 0.973 (n=41) | 0.593 (n=41) -> 0.657 (n=41) | 0.870 (n=41) -> 0.846 (n=41) | 0.750 (n=4) -> 0.725 (n=4) |
+| paraphrase | 0.987 (n=63) -> 0.988 (n=63) | 0.977 (n=63) -> 0.977 (n=63) | 0.898 (n=63) -> 0.933 (n=63) | 0.904 (n=63) -> 0.918 (n=63) | 0.700 (n=1) -> 0.700 (n=1) |
+
+### 11.4 Behaviour items (baseline -> v2)
+
+| Expected | Items | Judge mean | Judge pass @0.5 | Deterministic rate |
+|---|---:|---:|---:|---:|
+| refuse | 10 | 0.870 -> 0.830 | 1.000 -> 1.000 | 0.900 -> 0.900 |
+| abstain | 8 | 0.863 -> 0.900 | 1.000 -> 1.000 | 1.000 -> 1.000 |
+| clarify | 11 | 0.282 -> 0.591 | 0.091 -> 0.545 | 0.000 -> 0.545 |
+| answer_note | 11 | 0.709 -> 0.736 | 1.000 -> 1.000 | — -> — |
+
+Clarify: 6 of 11 vague questions got a clarifying question (baseline 1 of 11 by the judge, 0 by the question-mark check). Conflict notes: 2 of 11 answer_note items scored 1.0 (baseline 1 of 11).
+
+Generator paths: {'llm': 170, 'fallback_template': 3, 'boundary:injection': 2, 'boundary:edit_record': 2, 'boundary:misrepresentation': 1}. Guard false positives from the baseline: R2-RAT-07 path `llm`, R2-FEE-08 path `llm` (baseline: boundary:other_applicant, boundary:guarantee).
+
+### 11.5 Retrieval (no LLM) before / after
+
+| IR metric (answerable) | Baseline | v2 |
+|---|---:|---:|
+| chunk_recall@5 | 0.733 | 0.772 |
+| chunk_mrr@5 | 0.640 | 0.640 |
+| chunk_ndcg@5 | 0.629 | 0.644 |
+| doc_recall@5 | 0.875 | 0.926 |
+| doc_mrr@5 | 0.828 | 0.835 |
+| doc_ndcg@5 | 0.809 | 0.828 |
+| gold chunk in top5 | 0.839 | 0.866 |
+| gold doc in top5 | 0.933 | 0.973 |
+| cited gold chunk | 0.765 | 0.826 |
+| cited gold doc | 0.866 | 0.926 |
+
+Merge settings were chosen on dev without the LLM (run/results/merge_grid.json): a collection router and candidate depth 100 gave no recall gain, so neither is used. Choosing settings on the dev split means these dev numbers are slightly optimistic; the held-out split is the unbiased check.
+
+### 11.6 Failures by category (baseline -> v2)
+
+| Failure tag | Baseline | v2 |
+|---|---:|---:|
+| discrepancy_not_noted | 10 | 9 |
+| generator_error | 0 | 1 |
+| language_garble | 0 | 1 |
+| leaked_term | 91 | 0 |
+| no_clarifying_question | 10 | 5 |
+| over_abstain | 3 | 3 |
+| retrieval_miss | 10 | 4 |
+| retrieval_miss_chunk_only | 14 | 16 |
+
+### 11.7 Limitations of the v2 run (automated)
+
+| Group | Items | Examples | What counts | Likely cause |
+|---|---:|---|---|---|
+| Retrieval misses | 20 | R2-AMT-02, R2-DIS-04 | answerable item whose anchored chunk is not in the final top 5 (4 with no gold document at all) | 20 answerable items lack the anchored chunk in the final top 5 (4 lack the gold document: R2-AMT-02, R2-RAT-07, R2-DIS-04, R2-LTE-02). 8 of the 20 are multi-hop: decomposition adds sub-query candidates, but five slots shared by two collections still drop one of the hops (R2-WED-03, R2-PUR-01, R2-PEN-05, R2-DLR-06). Most misses were still answered faithfully from a sibling chunk (Faithfulness 1.0 on all 20). |
+| Unfaithful or unsupported claims | 7 | R2-DLR-11, R2-GRV-12 | Faithfulness < 0.85 (1 below 0.5) | 7 answers below 0.85, 1 below 0.5. Each is a qualifier dropped or widened when paraphrasing: R2-DLR-11 says biometric data needs separate permission under a specific law (source: not collected unless permitted by statutory guidelines, score 0.0); R2-GRV-12 says alerts go out whenever any lender accesses the report (source limits it to enquiries in the CIR); R2-PEN-02/-07, R2-PRE-03, R2-SAN-07, R2-GRV-16 at 0.67-0.80. No invented figures. |
+| Wrong abstain or refuse | 8 | R2-CLA-01, R2-CLA-03 | over-abstained on an answerable item (3), refuse/abstain item judged wrong (0), clarify item with no clarifying question (5) | Clarify: 5 of 11 vague questions still got a direct answer (R2-CLA-01, -03, -04, -05, -06), e.g. 'what fees will I pay?' answered for all fees instead of asking which fee; the new prompt rule fires on about half. Over-abstain (3): R2-DOC-02 and R2-LHI-04 drafts were rejected by the citation guard (answer_without_citation) and R2-GRV-04 by a JSON parse error, so the policy_abstain template was shown although the gold chunk was retrieved. The two baseline guard false positives (R2-RAT-07, R2-FEE-08) now go to the LLM path. All 10 refuse and 8 abstain items passed the judge. |
+| Hindi and Telugu failures | 10 | R2-LHI-03, R2-LHI-04 | hi/te item with a failure tag (other than leaked labels) or a metric below its bar (hi 5/9, te 5/11; wrong script: 1) | Right script in 19 of 20 hi/te answers; R2-LHR-02 (romanised Hindi) is tagged language_garble by the script check although the text is plain romanised Hindi (likely a checker false positive). Other hi/te failures share English causes: conflict note missing (R2-LHI-03, R2-LHR-05), citation-guard abstain (R2-LHI-04), gold doc missed (R2-LTE-02). Small samples (9 hi, 10 te answerable). |
+| Conflict-note handling | 9 | R2-AMT-01, R2-AMT-03 | answer_note (conflicting-source) item with ExpectedBehaviour < 1.0, of 11 such items | Only 2 of 11 answer_note items scored 1.0 (baseline 1). The prompt now asks to state conflicting sources, but the model usually gives one figure, or mentions the other source without saying they disagree (R2-AMT-01 gives Rs 75 lakh without the Rs 55 lakh table limit; R2-FEE-03, R2-RAT-03 at 0.5). All 11 still pass at 0.5. |
+| Latency or rate-limit fallbacks | 3 | R2-DOC-02, R2-GRV-04 | generator fell back to gpt-5.6-terra on 0 items []; generator gave no answer on 0; judge fell back on 0 metric calls (0 items); agent guard fallback template on 3 items; Groq calls: 0; generation latency per item p50 5.88 s, p95 10.54 s, max 18.59 s (OmniRoute, includes the agent's one rewrite when it happened) | No generator or judge fallback to gpt-5.6-terra (0 items, 0 metric calls). Guard fallback template on 3 items (see 'Wrong abstain or refuse'). The judge process was killed once (exit 137, likely sandbox memory pressure from the concurrent live E2E agent) after 448 of 636 jobs and resumed from its partial file; no job was scored twice. |
+| Internal labels shown to the borrower (also observed) | 0 |  | answer text contains an internal term or passage label (leak regex) | 0 shown. The model draft still contained a passage label or 'passage(s)' in 2 answers and some internal term in 6; guards.sanitize_answer removed all of them before display. |
+
+- Held-out count: MANIFEST.json `heldout_ids` lists 60 ids = 49 RAG items (R2-*, golden_a) + 11 agent conversations (AC-*, golden_b); the 49 in this report is the RAG part only. None of the 60 is in the 178-item dev input (checked).
+- Merge settings were selected on this dev split, so the dev numbers are slightly optimistic; the held-out RAG split (49) is still untouched and is the unbiased check.
+- Single judge vendor and the generator is a stand-in for the production model (Groq gpt-oss-120b), as in the baseline; no human calibration yet.
+
+### 11.8 What ran
+
+| Item | Value |
+|---|---|
+| Code under test | combo = #55 f9144e9 + #46 df70794 prompts/guards + #45 e80fc27 rag/multiquery |
+| Retrieval | Kaggle kernel nothinguser/saral-rag-retrieval-v3 v1 (2x T4, float16 reranker, 1448 s), dataset nothinguser/saral-eval-v3-rag, dev items only; no LLM on Kaggle |
+| Generator | antigravity/claude-sonnet-4-6 via OmniRoute from the Hark sandbox, 4 workers, temperature 0 |
+| Judge | codex/gpt-6-luna via OmniRoute from the Hark sandbox, 4 concurrent jobs, DeepEval 4.3.2 |
+| retrieved_contexts.jsonl sha256 | 145390e6b1ac69d6e71fdeadd62f34dbcc6aa0cf3e5bd583db456d338a8753fb |
+| Generator fallback | ['gpt-5.6-terra'] used on 0 items []; no answer on 0 |
+| Judge | codex/gpt-6-luna, DeepEval 4.3.2, 636 metric jobs, 0 errors, 0 skipped; fallback used on 0 metric calls |
+| Merge settings | {"depth": "50", "router": false, "demote": 0.7, "subqueries": true, "original_first": 1, "min_score": 0.0} |
