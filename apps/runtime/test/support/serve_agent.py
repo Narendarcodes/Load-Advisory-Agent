@@ -37,7 +37,7 @@ def main() -> None:
     intent = os.environ.get("AGENT_FIXTURE_INTENT", "explain")  # manual browser walks pick the scripted intent
     policy = FakePolicy() if os.environ.get("AGENT_FIXTURE_POLICY") else None
     agent, store, _ = build_offline_agent(llm=ScriptedLLM(intent=intent), policy_tools=policy)
-    service = srv.App(agent, store.get)
+    service = srv.App(agent)
 
     trace_path = os.environ.get("AGENT_FIXTURE_TRACE")  # manual walks: record the props that survived the Runtime hop
     if trace_path:

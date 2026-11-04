@@ -1,0 +1,59 @@
+{
+  "schema_version": "saral-document-extraction/1",
+  "extraction_id": "SYN-EXT-PAN0101",
+  "applicant_id": "SYN-APP-000101",
+  "document": {
+    "document_id": "SYN-DOC-PAN0101",
+    "kind": "pan_card",
+    "uploaded_at": "2026-11-03T16:00:00Z",
+    "pages": 1,
+    "sha256": "44c4f3b7051ebaf158e32246bedb48ca2d005caad517004929f67524e9bb484c"
+  },
+  "engine": {
+    "name": "synthetic-fixture",
+    "version": "1"
+  },
+  "extracted_at": "2026-11-03T16:02:00Z",
+  "fields": {
+    "pan_number": {
+      "key": "pan_number",
+      "value": "XXXXX4821X",
+      "status": "found",
+      "ocr_confidence": 95.0,
+      "source": {
+        "document_id": "SYN-DOC-PAN0101",
+        "kind": "pan_card",
+        "page": 1,
+        "line_index": 4
+      },
+      "note": "masked; the full number is not stored"
+    },
+    "name": {
+      "key": "name",
+      "value": "Ananya Synthetic Rao",
+      "status": "found",
+      "ocr_confidence": 93.1,
+      "source": {
+        "document_id": "SYN-DOC-PAN0101",
+        "kind": "pan_card",
+        "page": 1,
+        "line_index": 2
+      },
+      "note": null
+    },
+    "date_of_birth": {
+      "key": "date_of_birth",
+      "value": "1995-02-14",
+      "status": "found",
+      "ocr_confidence": 92.0,
+      "source": {
+        "document_id": "SYN-DOC-PAN0101",
+        "kind": "pan_card",
+        "page": 1,
+        "line_index": 3
+      },
+      "note": null
+    }
+  },
+  "warnings": []
+}

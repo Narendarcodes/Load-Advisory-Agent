@@ -1,0 +1,22 @@
+services:
+  backend:
+    image: loanrangers-frappe:16-ocr
+    pull_policy: never
+  configurator:
+    image: loanrangers-frappe:16-ocr
+    pull_policy: never
+  frontend:
+    image: loanrangers-frappe:16-ocr
+    pull_policy: never
+  queue-long:
+    image: loanrangers-frappe:16-ocr
+    pull_policy: never
+  queue-short:
+    image: loanrangers-frappe:16-ocr
+    pull_policy: never
+  scheduler:
+    image: loanrangers-frappe:16-ocr
+    pull_policy: never
+  websocket:
+    image: loanrangers-frappe:16-ocr
+    pull_policy: never

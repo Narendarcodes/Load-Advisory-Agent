@@ -14,20 +14,20 @@ from tests.test_agent_api import SECRET, auth, mint
 
 
 def test_non_string_message_is_rejected():
-    app = srv.App(None, None)
+    app = srv.App(None)
     with pytest.raises(srv.BadRequest):
         app._request({"application_ref": "APP-1"}, {"message": 123})
 
 
 @pytest.mark.parametrize("key", ["request_id", "conversation_id"])
 def test_non_string_ids_are_rejected(key):
-    app = srv.App(None, None)
+    app = srv.App(None)
     with pytest.raises(srv.BadRequest):
         app._request({"application_ref": "APP-1"}, {key: ["x"]})
 
 
 def test_valid_body_is_unchanged():
-    app = srv.App(None, None)
+    app = srv.App(None)
     req = app._request({"application_ref": "APP-1"},
                        {"message": "why?", "conversation_id": "c1", "request_id": "r1"})
     assert (req.message, req.conversation_id, req.request_id) == ("why?", "c1", "r1")
@@ -45,7 +45,7 @@ def _secret(monkeypatch):
 
 @pytest.fixture
 def client():
-    return TestClient(create_app(srv.App(None, None)))
+    return TestClient(create_app(srv.App(None)))
 
 
 def test_non_object_json_body_returns_400(client):

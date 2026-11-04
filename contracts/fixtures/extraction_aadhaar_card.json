@@ -1,0 +1,72 @@
+{
+  "schema_version": "saral-document-extraction/1",
+  "extraction_id": "SYN-EXT-AAD0101",
+  "applicant_id": "SYN-APP-000101",
+  "document": {
+    "document_id": "SYN-DOC-AAD0101",
+    "kind": "aadhaar_card",
+    "uploaded_at": "2026-11-03T16:00:00Z",
+    "pages": 1,
+    "sha256": "167393ae9526e1a561eb68c84347bc1b942e9c89fe8a7dcc4aada268c4214f3c"
+  },
+  "engine": {
+    "name": "synthetic-fixture",
+    "version": "1"
+  },
+  "extracted_at": "2026-11-03T16:02:00Z",
+  "fields": {
+    "aadhaar_number": {
+      "key": "aadhaar_number",
+      "value": "XXXX XXXX 7316",
+      "status": "found",
+      "ocr_confidence": 94.0,
+      "source": {
+        "document_id": "SYN-DOC-AAD0101",
+        "kind": "aadhaar_card",
+        "page": 1,
+        "line_index": 6
+      },
+      "note": "masked; the full number is not stored"
+    },
+    "name": {
+      "key": "name",
+      "value": "Ananya Synthetic Rao",
+      "status": "found",
+      "ocr_confidence": 90.5,
+      "source": {
+        "document_id": "SYN-DOC-AAD0101",
+        "kind": "aadhaar_card",
+        "page": 1,
+        "line_index": 2
+      },
+      "note": null
+    },
+    "date_of_birth": {
+      "key": "date_of_birth",
+      "value": "1995-02-14",
+      "status": "found",
+      "ocr_confidence": 91.0,
+      "source": {
+        "document_id": "SYN-DOC-AAD0101",
+        "kind": "aadhaar_card",
+        "page": 1,
+        "line_index": 3
+      },
+      "note": null
+    },
+    "address": {
+      "key": "address",
+      "value": null,
+      "status": "invalid",
+      "ocr_confidence": null,
+      "source": {
+        "document_id": "SYN-DOC-AAD0101",
+        "kind": "aadhaar_card",
+        "page": 1,
+        "line_index": null
+      },
+      "note": "address could not be read"
+    }
+  },
+  "warnings": []
+}

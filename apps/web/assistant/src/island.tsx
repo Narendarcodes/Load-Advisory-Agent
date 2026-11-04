@@ -9,6 +9,9 @@ import { PlanPanel } from "./plan-panel";
 import { VoicePanel } from "./voice-panel";
 import { conversationMessages, HistoryError, listConversations, recordTurn, type Conversation } from "./history";
 import { clearThreadPending, newThread, pendingThread, threadFor } from "./thread";
+import { turnsKey } from "./turns";
+
+type Drawer = "history" | "plan" | "voice" | null;
 
 const LOCALE_LABEL: Record<Locale, string> = { en: "English", hi: "हिन्दी", te: "తెలుగు" };
 const LITERACY_LABEL = { low: "new to loans", medium: "knows the basics", high: "very familiar" } as const;
@@ -33,6 +36,7 @@ export function Island({ context }: { context: AssistantContext }) {
   const [thread, setThread] = useState(() => threadFor(context.user, context.application));
   const [history, setHistory] = useState<Conversation[]>([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [drawer, setDrawer] = useState<Drawer>(null);
 
   const refreshHistory = useCallback(
     async (signal?: AbortSignal) => {
@@ -113,8 +117,31 @@ export function Island({ context }: { context: AssistantContext }) {
   const state = parsePublicState(agent.state);
   const visible = history.slice(0, VISIBLE_HISTORY);
 
+  const turnsStorage = turnsKey(context.user, context.application, thread);
+  const toggle = (panel: Drawer) => setDrawer((open) => (open === panel ? null : panel));
+  const tab = (panel: Drawer, label: string) => (
+    <button
+      type="button"
+      className={`drawer-tab${drawer === panel ? " drawer-tab--on" : ""}`}
+      aria-expanded={drawer === panel}
+      aria-controls={`drawer-${panel}`}
+      onClick={() => toggle(panel)}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div className="assistant__grid">
+    <div className={`assistant__grid${drawer ? " assistant__grid--drawer" : ""}`}>
+      <div className="assistant__toolbar" role="toolbar" aria-label="Conversation tools">
+        {tab("history", "History")}
+        {tab("plan", "Plan")}
+        {tab("voice", "Voice")}
+        <span className="assistant__toolbar-spacer" />
+        <button type="button" className="btn btn--quiet btn--sm" onClick={startNewThread} disabled={!isReady}>
+          New conversation
+        </button>
+      </div>
       <ChatPanel
         agent={agent}
         isReady={isReady}
@@ -123,18 +150,22 @@ export function Island({ context }: { context: AssistantContext }) {
         onSessionExpired={signInAgain}
         onAnswered={answered}
         onConversationReset={conversationConflict}
+        storageKey={turnsStorage}
+        csrfToken={context.csrfToken}
+        locale={context.locale}
       />
-      <aside className="assistant__aside" aria-label="Conversation controls">
-        <VoicePanel context={context} onSessionExpired={signInAgain} />
-        <button
-          type="button"
-          className="btn btn--quiet btn--sm"
-          onClick={startNewThread}
-          disabled={!isReady}
-        >
-          New conversation
-        </button>
-        <section className="history" aria-labelledby="history-heading">
+      <aside className="assistant__aside tools-drawer" aria-label="Conversation controls" hidden={!drawer}>
+        <div className="drawer__head">
+          <span className="drawer__grip" aria-hidden="true" />
+          <button type="button" className="btn btn--quiet btn--sm drawer__close" onClick={() => setDrawer(null)}>
+            Close
+          </button>
+        </div>
+        {/* Voice stays mounted while the drawer is closed so a live call is never cut by a click. */}
+        <div id="drawer-voice" hidden={drawer !== "voice"}>
+          <VoicePanel context={context} onSessionExpired={signInAgain} />
+        </div>
+        <section id="drawer-history" className="history" aria-labelledby="history-heading" hidden={drawer !== "history"}>
           <h3 id="history-heading" className="history__title">
             Recent conversations
           </h3>
@@ -154,7 +185,10 @@ export function Island({ context }: { context: AssistantContext }) {
                       type="button"
                       className={`history__item${current ? " history__item--current" : ""}`}
                       aria-current={current ? "true" : undefined}
-                      onClick={() => setThread(item.thread_id)}
+                      onClick={() => {
+                        setThread(item.thread_id);
+                        setDrawer(null);
+                      }}
                       disabled={!isReady}
                     >
                       <span className="history__label">{item.title || "Conversation"}</span>
@@ -167,12 +201,14 @@ export function Island({ context }: { context: AssistantContext }) {
               })}
             </ul>
           )}
+          <p className="note">
+            Answers use your profile settings — {LOCALE_LABEL[context.locale]}, {LITERACY_LABEL[context.literacy]}. Change
+            them in <a href="/borrower/profile">your profile</a>.
+          </p>
         </section>
-        <PlanPanel plan={state.improvement_plan ?? []} />
-        <p className="note">
-          Answers use your profile settings — {LOCALE_LABEL[context.locale]}, {LITERACY_LABEL[context.literacy]}. Change
-          them in <a href="/borrower/profile">your profile</a>.
-        </p>
+        <div id="drawer-plan" hidden={drawer !== "plan"}>
+          <PlanPanel plan={state.improvement_plan ?? []} locale={context.locale} />
+        </div>
       </aside>
     </div>
   );
