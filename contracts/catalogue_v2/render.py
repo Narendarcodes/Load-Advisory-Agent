@@ -97,24 +97,24 @@ def counts(rules):
 def rule_catalogue_md(cat):
     rules = cat["rules"]
     by_group, by_status, by_mvp, by_effect = counts(rules)
-    L = ["# Saral rule catalogue v2 (PL-001 to PL-128)", "", HDR,
+    L = [f"# Saral rule catalogue v2 (PL-001 to {rules[-1]['rule_id']})", "", HDR,
          f"Version `{cat['catalogue_version']}`. Machine-readable: [`rule_catalogue.v2.json`](rule_catalogue.v2.json). "
          "The user's PL-001..PL-099 ([source](source/USER_RULE_CATALOGUE_PL.yaml)) is canonical: ids, names, groups, implementation "
          "types, inputs and outcome vocabulary are copied from it. PL-100..PL-118 fold in Hark's v2 proposal and the ZEN design draft; "
-         "PL-119..PL-128 are the amount bands, risk grade, offer sizing and product specifics the user asked for at 22:53 IST.", "",
+         "PL-119..PL-128 are the amount bands, risk grade, offer sizing and product specifics the user asked for at 22:53 IST. "
+         "PL-129 is the MVP offer sizing at one flat rate per product (ADR-0007).", "",
+         "## Owner decisions applied", ""] + [f"- **{k}**: {v}" for k, v in cat["owner_decisions"].items()] + ["",
          "## Counts", "",
          md_table(["Group", "Rules"], [[GROUP_TITLES[g], n] for g, n in sorted(by_group.items())]), "",
          md_table(["Approval status", "Rules"], sorted(by_status.items())), "",
          md_table(["Effect on fail", "Rules"], sorted(by_effect.items())), "",
          md_table(["MVP status (salaried only)", "Rules"], sorted(by_mvp.items())), "",
          "## How to read the status", "",
-         "- **APPROVED_BAJAJ_SOURCE**: the value is stated in a Bajaj chunk of the G1 corpus (id cited). Per the user (23:07 IST) this is "
-         "*indicative public guidance*; the ZEN value is authoritative and still subject to his approval.",
-         "- **APPROVED_REGULATORY**: an RBI chunk states the requirement (id cited).",
-         "- **APPROVED_OWNER_DECISION**: an extension for the product list the user confirmed at 23:03 IST. He should accept or rename it.",
-         "- **PENDING_BUSINESS_APPROVAL**: the value is an `A-NN` row in [THRESHOLD_APPROVALS.md](THRESHOLD_APPROVALS.md).",
-         "- **PROTOTYPE_SYNTHETIC**: every other value (v2 proposal, new Hark proposal, or a band/grade value from the 22:53 directive). "
-         "Test profile only. **No invented value is Bajaj policy.**", "",
+         ] + [f"- **{k}**: {v}" for k, v in cat["approval_status_meanings"].items()] + [
+         "", "**No invented value is Bajaj policy.** PENDING and PROTOTYPE values are approved for `prototype_synthetic` as one batch "
+         "(ADR-0009 #1). The ten most decision-impacting ones and six runners-up (`project-management/TOP10_THRESHOLDS.md`) are "
+         "OWNER_APPROVED by ADR-0011 with `profile_scope = prototype_synthetic`: approved for that profile only, so a rule carrying one "
+         "never enters `bajaj_published`.", "",
          "A rule's status is the least-approved status among its parameters. A DECLINE on a rule that is not approved is active only in "
          "`prototype_synthetic`, with `not_for_live_use = true`.", "",
          "## Decision aggregation", "",
@@ -130,22 +130,46 @@ def rule_catalogue_md(cat):
                    [[d["rule_id"], d["input"], d["computed_by"], d["computed_by_status"]] for d in cat["profile_dependencies"]]), "",
           "## Conflicts kept explicit", ""]
     L += [f"- **{k}.** {v}" for k, v in cat["conflicts"].items()]
-    L += ["", "## Amount bands, risk grade and offer sizing (PL-119, PL-124, PL-125)", "",
-          "Bands (ASSUMPTION): " + ", ".join(f"{b} = Rs. {lo:,} to {hi:,}" for b, (lo, hi) in PR.BANDS.items())
-          + ". B4 cannot occur while every purpose cap is 25 lakh or less.", "",
+    L += ["", "## Amount bands and offer sizing (PL-119..PL-123, PL-129)", "",
+          "Bands (prototype_synthetic): " + ", ".join(f"{b} = Rs. {lo:,} to {hi:,}" for b, (lo, hi) in PR.BANDS.items())
+          + ". **B4 is outside the MVP**: every product is capped at Rs. 25 lakh (ADR-0007 #1), so a B4 request is sized into B1..B3 and "
+          "the borrower is told the amount is outside what we offer.", "",
           md_table(["Band", "Min score (PL-120)", "Payslips / statement months (PL-121)", "Min months with employer (PL-122)",
                     "Employer categories (PL-122)", "Manual-review trigger (PL-123)"],
-                   [["B1", 650, "3 / 3", 6, "PUBLIC, PRIVATE, MNC", "-"], ["B2", 680, "3 / 3", 6, "PUBLIC, PRIVATE, MNC", "-"],
-                    ["B3", 700, "3 / 6", 12, "PUBLIC, PRIVATE, MNC", "FOIR > 0.45 or any REVIEW signal"],
-                    ["B4", 725, "3 / 6", 24, "PUBLIC, MNC", "always"]]), "",
-          "Band rules are stricter checks *on top of* the public guidance. They are internal: they REVIEW or size the offer down, they are "
-          "never told to the borrower as a minimum, and PL-029 stays the only score decline.", "",
+                   [[b, PR.BAND_MIN_SCORE[b], "3 / 3" if b in ("B1", "B2") else "3 / 6", PR.BAND_MIN_EMPLOYMENT_MONTHS[b],
+                     ", ".join(PR.BAND_EMPLOYER_CATEGORIES[b]),
+                     {"B1": "-", "B2": "-", "B3": "FOIR > 0.45 or any REVIEW signal", "B4": "always (never reached in the MVP)"}[b]]
+                    for b in PR.BANDS]), "",
+          f"The ZEN score floor is {PR.ZEN_SCORE_FLOOR} (PL-029, ADR-0009 #2); Bajaj's {PR.BAJAJ_INDICATIVE_SCORE} is indicative only. "
+          "Band rules are internal: a breach sizes the offer down (COUNTER_OFFER), it is never told to the borrower as a minimum, and PL-029 "
+          "stays the only score decline.", "",
+          "**MVP offer formula (PL-129, flat rate per product, deterministic):**", "",
+          "```",
+          "rate           = flat_rate[product]            (one per product, no risk grade: ADR-0007 #3)",
+          "max_emi        = min(0.50 x income - obligations, income - obligations - 15,000)      (PL-064, PL-065)",
+          "                 above Rs. 10 lakh: FOIR held at 0.45 so the offer clears PL-123 (B3 review trigger)",
+          "caps           = requested, min(product cap, Rs. 25,00,000), 24 x income (PL-108), foir_principal(max_emi, rate, tenure),",
+          "                 new-to-credit 2,00,000 (PL-118) or top of the highest band allowed (PL-120/PL-122), 1.10 x purpose evidence (PL-126)",
+          "tenure         = min(requested tenure, product max tenure)   (PL-110: 60/84/84/60, ASSUMPTION <= 84)",
+          "eligible       = floor_1000(min(caps)); if below the request, retry at the product max tenure and keep the larger",
+          "APPROVED       if the full request passes at the requested tenure",
+          "COUNTER_OFFER  if a smaller amount (>= 40,000) or a different tenure passes  -- including every request above a product cap (ADR-0007 #2)",
+          "DECLINE        if nothing at or above 40,000 passes, or the request is above Rs. 75 lakh (PL-070, outside what we offer)",
+          "flag           request_outside_mvp_range = requested > Rs. 25,00,000",
+          "```", "",
+          md_table(["Case", "Requested", "Net income", "Existing EMIs", "Outcome", "Amount", "Tenure", "EMI", "Binding cap", "Outside MVP range"],
+                   [[e["name"], e["input"]["requested_amount"], e["input"]["monthly_net_income"], e["input"].get("existing_monthly_obligations", 0),
+                     e["result"]["offer_outcome"], e["result"]["eligible_amount"], e["result"]["offer_tenure_months"], e["result"]["offer_emi"],
+                     e["result"]["binding_cap"], e["result"]["request_outside_mvp_range"]] for e in cat["offer_sizing"]["worked_examples"]]), "",
+          "### Deferred: risk grade sizing (PL-124 / PL-125, ADR-0007 #3)", "",
+          "Kept for a later release; not evaluated in the MVP. The grade FOIR caps below are not the MVP FOIR: ADR-0011 sets one flat 0.50 "
+          "and drops the PRIME 0.55 and new-to-credit 0.40 variants from PL-064.", "",
           md_table(["Risk grade (PL-124)", "When", "Income multiple", "FOIR cap", "Grade amount cap"],
                    [["A", "score >= 750 and no DPD in 24 months", 24, 0.55, "product cap"],
                     ["B", "score >= 700 and no DPD in 12 months", 20, 0.50, "Rs. 25,00,000"],
                     ["C", "score >= 650 and max DPD <= 30 in 12 months", 15, 0.45, "Rs. 10,00,000"],
                     ["NTC", "no bureau hit", 8, 0.40, "Rs. 2,00,000 (A-22)"]]), "",
-          "**Offer formula (PL-125, deterministic):**", "",
+          "Deferred formula (PL-125):", "",
           "```",
           "max_emi        = grade_foir_cap x monthly_net_income - (existing_monthly_obligations + other_monthly_obligations)",
           "foir_principal = max_emi x ((1+r)^n - 1) / (r (1+r)^n),  r = 0.20/12 (A-05), n = requested tenure",
@@ -155,12 +179,19 @@ def rule_catalogue_md(cat):
           "COUNTER_OFFER  if eligible >= requested only at a longer tenure, or 40,000 <= eligible < requested",
           "DECLINE        if eligible < 40,000 (Bajaj minimum, BFL-PL-OVERVIEW#003)",
           "output: offer_outcome, eligible_amount, offer_emi, offer_tenure_months, binding_cap, internal_reason",
-          "```", "", "Worked examples (computed by `contracts/catalogue_v2/products.py`):", "",
+          "```", "", "Deferred worked examples (computed by `contracts/catalogue_v2/products.py`):", "",
           md_table(["Case", "Requested", "Grade", "Net income", "Existing EMIs", "Outcome", "Amount", "Tenure", "EMI", "Binding cap"],
                    [[e["name"], e["input"]["requested_amount"], e["input"]["risk_grade"], e["input"]["monthly_net_income"],
                      e["input"].get("existing_monthly_obligations", 0), e["result"]["offer_outcome"], e["result"]["eligible_amount"],
                      e["result"]["offer_tenure_months"], e["result"]["offer_emi"], e["result"]["binding_cap"]]
-                    for e in cat["offer_sizing"]["worked_examples"]]), "",
+                    for e in cat["deferred_grade_sizing"]["worked_examples"]]), "",
+          "## What-if contract (ADR-0005, ADR-0007 #4)", "",
+          "Editable: " + ", ".join(f"`{k}` ({v['label']})" for k, v in cat["what_if"]["editable_fields"].items())
+          + ". Never editable: " + ", ".join(f"`{f}`" for f in cat["what_if"]["forbidden_fields"]) + ".",
+          "Results: " + " / ".join(f"`{k}` = \"{v}\"" for k, v in cat["what_if"]["result_vocabulary"].items())
+          + f". Label: \"{cat['what_if']['result_shape']['label']}\". Per-session cap: {cat['what_if']['per_session_cap']['value']} "
+          "(prototype). In memory only; never returns a rule id, threshold, gap, target or offer. Machine-readable: "
+          "[`contracts/what_if_contract.json`](../../contracts/what_if_contract.json).", "",
           "## Rules", ""]
     for g in GROUP_TITLES:
         grs = [r for r in rules if r["rule_group"] == g]
@@ -262,10 +293,17 @@ def reason_policy_md(cat):
          "carry values and thresholds; it is role-restricted and never reaches the borrower or the borrower-facing agent.", "",
          "Example: say \"Your employment history did not meet our stability requirement for this loan.\" Never say \"you have 4 months and we need 6\".", "",
          "## Regulatory and lender basis", "",
-         "- **RBI fair practices: communicating the main reason(s) for rejecting a loan application. UNVERIFIED in the G1 corpus.** The "
-         "corpus copy of the RBI (NBFC – Responsible Business Conduct) Directions 2025 goes from para 12 (acknowledging applications, "
-         "RBI-RBC-NBFC-2025#021) straight to para 13 (sanction letter, RBI-RBC-NBFC-2025#022); no chunk states the rejection-reason duty. "
-         "This policy assumes the duty exists and should be confirmed against the full text.",
+         "- **RBI rejection-reason duty for NBFCs: NOT FOUND in the current NBFC directions (checked on rbi.org.in, 2026-11-03).** "
+         "The Reserve Bank of India (Non-Banking Financial Companies – Responsible Business Conduct) Directions, 2025 "
+         "(RBI/DOR/2025-26/362, November 28, 2025; checked both as issued and as updated on July 1, 2026) go from para 12 "
+         "(acknowledgement of loan applications) to para 13 (sanction letter); no paragraph obliges an NBFC to give, in writing or "
+         "otherwise, the reason for rejecting a loan application (https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12942). "
+         "By contrast, the All India Financial Institutions RBC Directions, 2025, para 13, say: \"An AIFI shall convey in writing, the "
+         "main reason / reasons which, have led to rejection of the loan applications within the stipulated time for all categories of "
+         "loans irrespective of any threshold limit\" (https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12968). Whether the "
+         "superseded Scale Based Regulation Directions, 2023 carried such a duty for NBFCs is UNVERIFIED (the PDF is behind a captcha). "
+         "**Written rejection reasons stay as Saral policy (ADR-0010 #4), not an RBI requirement for NBFCs.** Saral gives the main "
+         "reason area in writing in the decision notice, modelled on the AIFI/bank standard. See project-management/RBI_VERIFICATION.md.",
          "- RBI-RBC-NBFC-2025#019: \"All communications to the borrower shall be in the vernacular language or a language as understood by "
          "the borrower.\" Messages are written so they translate cleanly (the portal supports en, hi, te).",
          "- BFL-FAQ-REJECTION#000 (Bajaj): \"We will send you an SMS on your registered mobile number regarding your rejection.\"",
@@ -361,7 +399,9 @@ def product_md():
     ids = list(P)
     L = ["# Product matrix: four purpose-based personal loans", "", HDR,
          "Machine-readable: [`contracts/product_matrix.json`](../../contracts/product_matrix.json). **The four products are final** (owner, "
-         "2026-11-03 23:03 IST). Per-product thresholds are ASSUMPTION pending his approval and live in `prototype_synthetic`. Bajaj publishes "
+         "2026-11-03 23:03 IST). Every product is capped at Rs. 25 lakh in the MVP and priced at one flat prototype rate (ADR-0007 #1, #3). "
+         "The per-product caps (Rs. 25 lakh for all four), tenure caps (60/84/84/60) and the 20% sizing-only rate are OWNER_APPROVED by "
+         "ADR-0011 for `prototype_synthetic` only; other per-product values are ASSUMPTION (ADR-0009 batch). Bajaj publishes "
          "no per-purpose limits, documents or disbursal routes; every Bajaj fact below is quoted from the G1 corpus.", "",
          "## Shared Bajaj terms (indicative public guidance)", "",
          md_table(["Term", "Value", "Chunk", "Quote"], [[k, v.get("value", ""), v["chunk"], v["quote"]] for k, v in PR.BAJAJ_BASE.items()]), "",
@@ -369,7 +409,9 @@ def product_md():
          md_table(["", *ids],
                   [["Bajaj description (chunk)", *[f"{P[i]['bajaj_description']['chunk']}: \"{P[i]['bajaj_description']['quote']}\"" for i in ids]],
                    ["Amount (INR) [ASSUMPTION cap]", *[f"{P[i]['amount_range_inr']['value'][0]:,} to {P[i]['amount_range_inr']['value'][1]:,} ({P[i]['amount_range_inr']['assumption_id']})" for i in ids]],
-                   ["Tenure (months) [ASSUMPTION cap]", *[f"{P[i]['tenure_range_months']['value'][0]} to {P[i]['tenure_range_months']['value'][1]}" for i in ids]],
+                   ["Tenure (months) [ASSUMPTION prototype max, <= 84]", *[f"{P[i]['tenure_range_months']['value'][0]} to {P[i]['tenure_range_months']['value'][1]}" for i in ids]],
+                   ["Flat prototype rate (ADR-0007 #3, A-05)", *[f"{P[i]['rate_for_assessment']['value']:.0%} p.a." for i in ids]],
+                   ["Above the cap", *["COUNTER_OFFER at the largest passing amount (ADR-0007 #2)" for i in ids]],
                    ["Required purpose documents [ASSUMPTION]", *[", ".join(P[i]["required_documents"]["value"]) or "none" for i in ids]],
                    ["Optional documents [ASSUMPTION]", *[", ".join(P[i]["optional_documents"]["value"]) for i in ids]],
                    ["Purpose fields [ASSUMPTION]", *[", ".join(f["field"] + ("*" if f["required"] else "") for f in P[i]["purpose_fields"]) for i in ids]],
@@ -388,20 +430,20 @@ def product_md():
 
 # ---------------------------------------------------------------- ZEN_RAG_CONSISTENCY.md
 OVERLAPS = [
-    ("Credit score minimum", "BFL-PL-ELIG-DOCS#007", "CIBIL Score: 650 or higher.", "650 (PL-029)", "700 (personal_loan_synthetic_v1 MIN_CREDIT_SCORE)", "MISMATCH: live 700 vs guidance 650"),
-    ("Credit score (education article)", "BFL-INSIGHT-REJECTION#001", "A CIBIL score of 685 or higher is generally considered the minimum acceptable score for most lenders, but a score of 750 and above is the ideal range", "650 floor; 750 = grade A / PRIME edge (PL-124, A-20); band minimums 680/700/725 internal (PL-120)", "-", "CONFLICT C2 (article vs product pages)"),
-    ("Credit score bands", "BFL-PL-RATES-FEES#007", "Average 650 to 749 Meets the minimum score for a Bajaj Finance Personal Loan", "650 floor", "-", "consistent"),
-    ("Minimum monthly income (non-metro)", "BFL-PL-SALARIED#004", "Monthly salary: Starting Rs. 25,001, based on the city you live in.", "25,001 (PL-008)", "25,000 (MIN_MONTHLY_INCOME)", "MISMATCH: live 25,000 vs guidance 25,001"),
-    ("Minimum monthly income (metro)", "BFL-PL-SALARIED#012", "your minimum monthly salary should be Rs. 40,000 if you reside in Pune, Bangalore, Mumbai, or Delhi.", "40,000 for the four named cities (PL-008, A-03)", "not modelled", "MISMATCH: live has no metro floor"),
+    ("Credit score minimum", "BFL-PL-ELIG-DOCS#007", "CIBIL Score: 650 or higher.", "700 (PL-029, ADR-0009 #2)", "700 (personal_loan_synthetic_v1 MIN_CREDIT_SCORE)", "CONSISTENT with live; differs from indicative 650 by owner decision"),
+    ("Credit score (education article)", "BFL-INSIGHT-REJECTION#001", "A CIBIL score of 685 or higher is generally considered the minimum acceptable score for most lenders, but a score of 750 and above is the ideal range", "700 floor (ADR-0009); band minimum 725 for B4 only (outside the MVP); grade sizing deferred", "-", "CONFLICT C2 (article vs product pages)"),
+    ("Credit score bands", "BFL-PL-RATES-FEES#007", "Average 650 to 749 Meets the minimum score for a Bajaj Finance Personal Loan", "700 floor", "-", "differs by owner decision (ADR-0009 #2)"),
+    ("Minimum monthly income (non-metro)", "BFL-PL-SALARIED#004", "Monthly salary: Starting Rs. 25,001, based on the city you live in.", "25,001 for every city (PL-008, ADR-0011)", "25,000 (MIN_MONTHLY_INCOME)", "MISMATCH: live 25,000 vs 25,001"),
+    ("Minimum monthly income (metro)", "BFL-PL-SALARIED#012", "your minimum monthly salary should be Rs. 40,000 if you reside in Pune, Bangalore, Mumbai, or Delhi.", "dropped: no metro floor (ADR-0011)", "not modelled", "CONSISTENT with live; differs from indicative guidance by owner decision"),
     ("Age", "BFL-PL-ELIG-DOCS#007", "Age: 21 years to 80 years*.", "21 min (PL-001)", "not modelled", "live has no age rule"),
     ("Age at maturity", "BFL-PL-ELIG-DOCS#001", "*You must be 80 years * or younger, at the end of the loan tenure.", "80 (PL-002, PL-073)", "not modelled", "live has no age rule"),
-    ("Loan amount", "BFL-PL-OVERVIEW#003", "Borrow from Rs. 40,000 to Rs. 75 lakh to meet small or large expenses.", "40,000 to 75,00,000 (PL-069, PL-070); purpose caps 10-25 lakh internal (PL-109)", "Loan Product.maximum_loan_amount (UNVERIFIED value)", "CONFLICT C1 (55 lakh tables)"),
+    ("Loan amount", "BFL-PL-OVERVIEW#003", "Borrow from Rs. 40,000 to Rs. 75 lakh to meet small or large expenses.", "40,000 to 75,00,000 gate (PL-069, PL-070); MVP ceiling 25 lakh, purpose caps 25 lakh each (ADR-0011), above-cap = COUNTER_OFFER (PL-109, PL-129)", "Loan Product.maximum_loan_amount (UNVERIFIED value)", "CONFLICT C1 (55 lakh tables)"),
     ("Loan amount (rate tables)", "BFL-PL-RATES-FEES#011", "Rs. 55 lakh Rs. 2,27,150", "75 lakh chosen", "bajaj_v1 anchors say 55 lakh", "CONFLICT C1"),
-    ("Tenure", "BFL-PL-OVERVIEW#017", "Flexible tenures ranging from 12 months to 108 months", "12 to 108 (PL-071, PL-072); purpose caps 60/84 internal (PL-110)", "UnderwritingInput allows 360", "MISMATCH: validator 360 vs 108"),
+    ("Tenure", "BFL-PL-OVERVIEW#017", "Flexible tenures ranging from 12 months to 108 months", "12 to 108 gate (PL-071, PL-072); prototype max 60/84/84/60 (PL-110)", "UnderwritingInput, bureau gates and the portal allow 360", "MISMATCH: validators 360 vs 108 (Qoder handoff)"),
     ("Employer", "BFL-PL-ELIG-DOCS#007", "Employed with: Public, private, or MNC.", "PUBLIC/PRIVATE/MNC (PL-005); B4 internal PUBLIC/MNC (PL-122)", "not modelled", "-"),
-    ("Employment length", "BFL-PL-OVERVIEW#018", "Being on probation at a new job", "6 months (PL-014, A-07); band 12/24 internal (PL-122)", "12 months (MIN_EMPLOYMENT_TENURE)", "Bajaj gives no number; live 12 vs proposed 6"),
-    ("FOIR", "BFL-PL-OVERVIEW#018", "High FOIR (as per lender criteria)", "0.50 (PL-064, A-04); grade caps 0.40-0.55 internal (PL-125)", "0.45 (FOIR_MAX_45, excludes the new EMI)", "Bajaj gives no number; definitions differ"),
-    ("Interest rate", "BFL-PL-RATES-FEES#003", "Interest rate 10% to 30.5% p.a.", "range check (PL-075); assessment rate 20% (A-05)", "Loan Product.rate_of_interest", "-"),
+    ("Employment length", "BFL-PL-OVERVIEW#018", "Being on probation at a new job", "6 months (PL-014, ADR-0011); band 12/24 internal (PL-122)", "12 months (MIN_EMPLOYMENT_TENURE)", "Bajaj gives no number; live 12 vs proposed 6"),
+    ("FOIR", "BFL-PL-OVERVIEW#018", "High FOIR (as per lender criteria)", "0.50 flat (PL-064, ADR-0011); PRIME/NTC variants dropped; deferred grade caps (PL-125) unused", "0.45 (FOIR_MAX_45, excludes the new EMI)", "Bajaj gives no number; definitions differ"),
+    ("Interest rate", "BFL-PL-RATES-FEES#003", "Interest rate 10% to 30.5% p.a.", "range check (PL-075); assessment rate 20%, sizing-only (PL-107, ADR-0011)", "Loan Product.rate_of_interest", "-"),
     ("Documents", "BFL-PL-ELIG-DOCS#009", "PAN card Employee ID card Salary slips of the last 3 months Bank account statements of the previous 3 months", "PL-088; 6 months for B3/B4 internal (PL-121)", "not modelled", "-"),
 ]
 
@@ -441,7 +483,7 @@ def zen_rag_md(cat):
 def all_outputs(cat, ddj):
     pm = {"status": "DRAFT - design only", "products_status": cat["products_status"], "bajaj_base": PR.BAJAJ_BASE,
           "products": PR.PRODUCTS, "product_rule_differences": PR.PRODUCT_RULE_DIFFERENCES, "amount_bands": PR.BANDS,
-          "offer_sizing": cat["offer_sizing"]}
+          "offer_sizing": cat["offer_sizing"], "mvp_limits": cat["profiles"]["prototype_synthetic"]["mvp_limits"]}
     fe = {"status": "DRAFT - design only", "scope": "salaried only (2026-11-03 22:50 IST)", "steps": FE.STEPS, "fields": FE.FIELDS}
     return {
         "docs/saral/rule_catalogue.v2.json": dump(cat),
@@ -453,6 +495,15 @@ def all_outputs(cat, ddj):
         "docs/saral/FRONTEND_MVP_FIELD_SPEC.md": frontend_md(),
         "docs/saral/ZEN_INPUT_COVERAGE.md": coverage_md(cat, ddj),
         "contracts/product_matrix.json": dump(pm),
+        "contracts/what_if_contract.json": dump(cat["what_if"]),
+        "config/saral_what_if.json": dump({"_generated_by": "python -m contracts.catalogue_v2.build (from contracts/catalogue_v2/what_if.py)",
+                                           "per_session_cap": cat["what_if"]["per_session_cap"]["value"],
+                                           "config_key": cat["what_if"]["per_session_cap"]["config_key"],
+                                           "editable_fields": list(cat["what_if"]["editable_fields"]),
+                                           "forbidden_fields": cat["what_if"]["forbidden_fields"],
+                                           "result_vocabulary": cat["what_if"]["result_vocabulary"],
+                                           "ui_label": cat["what_if"]["result_shape"]["label"],
+                                           "in_memory_only": True}),
         "docs/saral/PRODUCT_MATRIX.md": product_md(),
         "docs/saral/ZEN_RAG_CONSISTENCY.md": zen_rag_md(cat),
         "contracts/synthetic_sources.json": dump({"status": "BUREAU v1 built; everything else PROPOSED", "sources": S.SOURCES,

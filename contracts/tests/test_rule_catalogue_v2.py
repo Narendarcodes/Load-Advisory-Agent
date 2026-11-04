@@ -15,7 +15,7 @@ CAT = json.loads((ROOT / "docs/saral/rule_catalogue.v2.json").read_text(encoding
 DD = json.loads((ROOT / "contracts/data_dictionary.json").read_text(encoding="utf-8"))
 FE = json.loads((ROOT / "contracts/frontend_fields.json").read_text(encoding="utf-8"))
 RULES = CAT["rules"]
-APPROVED = {"APPROVED_BAJAJ_SOURCE", "APPROVED_REGULATORY", "APPROVED_OWNER_DECISION"}
+APPROVED = {"APPROVED_BAJAJ_SOURCE", "APPROVED_REGULATORY", "OWNER_APPROVED"}
 OUTCOMES = {"PASS", "FAIL", "REVIEW", "INSUFFICIENT_DATA"}
 
 
@@ -63,7 +63,8 @@ def test_approved_values_cite_the_right_corpus():
 def test_profiles_are_separate():
     pub = set(CAT["profiles"]["bajaj_published"]["rule_ids"])
     for r in RULES:
-        assert (r["rule_id"] in pub) == (r["approval_status"] in APPROVED and r["enabled"]), r["rule_id"]
+        proto_only = any(p.get("profile_scope") == "prototype_synthetic" for p in r["parameters"])  # ADR-0011
+        assert (r["rule_id"] in pub) == (r["approval_status"] in APPROVED and r["enabled"] and not proto_only), r["rule_id"]
     assert CAT["profiles"]["prototype_synthetic"]["not_for_live_use"] and CAT["profiles"]["bajaj_published"]["not_for_live_use"]
 
 
@@ -143,11 +144,15 @@ def test_every_source_reference_exists_in_the_frontend_or_synthetic_schema():
 
 
 def test_active_rules_are_fully_supplied_in_the_mvp():
+    from contracts.catalogue_v2 import rules as rules_mod
+
     dd = build.dictionary()
     for r in RULES:
         missing = [i["name"] for i in r["input_schema"] if not build.supplied(i["name"], dd)[0]]
-        if r["mvp_status"] == "ACTIVE":
+        if r["mvp_status"] == "ACTIVE" and r["rule_id"] not in rules_mod.ACTIVE_FROM_KYC_AA:
             assert not missing, (r["rule_id"], missing)
+        elif r["mvp_status"] == "ACTIVE":  # test-bed source (KYC/AA data points), named in rules.ACTIVE_FROM_KYC_AA
+            assert missing, r["rule_id"]
         else:
             assert r["mvp_deferred_reason"], r["rule_id"]
 
