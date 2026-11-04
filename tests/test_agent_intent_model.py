@@ -121,3 +121,18 @@ def test_agent_builds_its_intent_client(monkeypatch):
     ag = object.__new__(AdvisoryAgent)
     ag.llm, ag.settings = _main(), S.AgentSettings()
     assert ag._make_intent_llm().model == DEFAULT_INTENT_FALLBACK_MODEL
+
+
+def test_river_answer_chain_keeps_the_groq_then_omniroute_flash_lite_classifier():
+    from loan_advisory.agent.llm import FallbackChatLLM
+    main = ChatLLM.from_env(env={"RIVER_API_KEY": "r"})
+    assert isinstance(main, FallbackChatLLM)
+    il = build_intent_llm(main, S.AgentSettings(), env={"GROQ_API_KEY": "g"})
+    assert il.fallback.provider == "omniroute" and il.fallback.model == DEFAULT_INTENT_FALLBACK_MODEL
+    assert il.primary.primary.model == "openai/gpt-oss-120b"
+
+
+def test_river_answer_without_groq_uses_the_omniroute_flash_lite_then_rules():
+    main = ChatLLM.from_env(env={"RIVER_API_KEY": "r"})
+    il = build_intent_llm(main, S.AgentSettings(), env={})
+    assert (il.provider, il.model) == ("omniroute", DEFAULT_INTENT_FALLBACK_MODEL)
