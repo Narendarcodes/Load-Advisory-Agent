@@ -300,6 +300,43 @@ def sanitize_answer(text: str, locale: str = "en") -> str:
     return out.strip()
 
 
+# ------------------------------------------------------------------ final output check (agent eval fix 2)
+# A deterministic last check on every generated borrower answer. Any hit forces a rewrite, then the template fallback.
+_OUT_CODE = re.compile(r"\b[A-Z]{2,}(?:_[A-Z0-9]{2,})+\b")                    # MIN_CREDIT_SCORE, DQ_BUREAU_NO_HIT, ...
+_OUT_RULE = re.compile(r"\b(?:PL|DQ|BFL|RBI)-[A-Z]*-?\d{2,3}\b|\bPL-\d{3}\b")  # PL-047, BFL-PL-OVERVIEW#017-style ids
+_OUT_MACHINE = re.compile(r"\b(?:ZEN|RAG|LLM|JDM|OCR)\b|\bsynthetic-v\d\b|\bpolicy[_ ]version\b", re.I)
+_OUT_HIDDEN = re.compile(
+    r"\b(settle(?:d|ment)s?|write-?offs?|written[- ]off|fraud\w*|black-?list\w*|negative[- ]list|duplicate\s+(?:application|pan|"
+    r"identity)|tamper\w*|forg(?:ed|ery)|signature\s+(?:mismatch|did\s+not\s+match|didn'?t\s+match|failed))\b|"
+    r"धोखाधड़ी|ब्लैकलिस्ट|सेटलमेंट|राइट-?ऑफ़?|जालसाज़ी|మోసం|బ్లాక్\s*లిస్ట్|సెటిల్మెంట్|రైట్-?ఆఫ్", re.I)
+_OUT_SCORE = re.compile(r"(?:score|cibil|स्कोर|సిబిల్|స్కోర్)\D{0,20}?(?<![\d,])([3-9]\d\d)(?![\d,])|"
+                        r"(?<![\d,])([3-9]\d\d)(?![\d,])\s*(?:\+\s*)?(?:credit\s+|cibil\s+)?(?:score|cibil)", re.I)
+
+
+def output_violations(text: str, *, decision_turn: bool = True, own_numbers=(), limit_numbers=()) -> list[str]:
+    """Kinds of internal detail in a borrower answer: outcome codes, rule ids / internal codes, passage labels and
+    machinery words (all turns); on decision turns also hidden-flag words, a credit-score number that is not the
+    applicant's own and any cut-off in `limit_numbers`. Empty list = clean."""
+    t = text or ""
+    out = [f"outcome_code:{m.group(0)}" for m in LEAK_OUTCOME.finditer(t)]
+    out += [f"internal_term:{m.group(0)}" for m in _OUT_CODE.finditer(t)]
+    out += [f"internal_term:{m.group(0)}" for m in _OUT_RULE.finditer(t)]
+    out += [f"internal_term:{m.group(0)}" for m in _OUT_MACHINE.finditer(t)]
+    out += [f"passage_label:{m.group(0)}" for m in re.finditer(rf"\b{_LBL}\b", t)]
+    out += [f"passage_label:{m.group(0)}" for m in re.finditer(r"\bpassages?\b|पैसेज\w*|పాసేజ్\w*", t, re.I)]
+    if decision_turn:
+        if _OUT_HIDDEN.search(_strip_negated(t)) or _OUT_HIDDEN.search(t):
+            out.append("hidden_flag")
+        own = {str(x) for x in own_numbers or ()}
+        for m in _OUT_SCORE.finditer(t):
+            n = m.group(1) or m.group(2)
+            if n not in own:
+                out.append(f"score_value:{n}")
+        lim = {str(x) for x in limit_numbers or ()}
+        out += [f"limit_value:{n}" for n in numbers_in(t) if n in lim and n not in own]
+    return sorted(set(out))
+
+
 def citation_flags(cited: list[str], available: list[str], abstained: bool) -> list[str]:
     flags = []
     if abstained and cited:

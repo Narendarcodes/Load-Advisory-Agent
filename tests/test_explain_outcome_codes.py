@@ -32,7 +32,7 @@ def test_explain_counter_offer_states_amount_emi_period_and_why():
     assert "counter-offer" in low
     for k in ("amount", "emi", "loan period"):
         assert k in low
-    assert '"offer"' in p and "reason_categories" in p
+    assert '"offer"' in p and "main_reason" in p
     assert "no failed check" in low  # told not to say "no failed check is recorded" on a non-decline
 
 
