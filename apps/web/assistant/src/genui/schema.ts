@@ -117,11 +117,27 @@ function parseOffer(raw: Obj): DecisionOffer | null {
  * The backend decision card. A card is only accepted when it names a recorded outcome and its
  * rule list (if present) is a list; a partial card would be misleading.
  */
+/**
+ * v2 outcome codes (E2E D-16) in the vocabulary this UI knows. The agent already sends these words; a card that
+ * still carries a stored code must never show it.
+ */
+const V2_OUTCOME: Record<string, string> = {
+  ELIGIBILITY_CONDITIONS_MET: "APPROVED",
+  COUNTER_OFFER: "COUNTER",
+  MANUAL_REVIEW: "REVIEW",
+  MORE_INFORMATION_REQUIRED: "INFO_REQUESTED",
+  DECLINE: "REJECTED",
+};
+
+function outcomeWord(value: string | null): string | null {
+  return value ? (V2_OUTCOME[value.toUpperCase()] ?? value) : value;
+}
+
 export function parseDecisionCard(value: unknown): DecisionCard | null {
   const raw = record(value);
   if (!raw) return null;
-  const decision = text(raw.decision);
-  const recorded = text(raw.recorded_outcome);
+  const decision = outcomeWord(text(raw.decision));
+  const recorded = outcomeWord(text(raw.recorded_outcome));
   const lifecycle = text(raw.lifecycle_state);
   if (!decision && !recorded && !lifecycle) return null;
   if (raw.rules !== undefined && raw.rules !== null && !Array.isArray(raw.rules)) return null;
@@ -146,7 +162,7 @@ export function parseDecisionCard(value: unknown): DecisionCard | null {
     lifecycle_state: lifecycle,
     evaluated_at: text(raw.evaluated_at),
     policy_synthetic: raw.policy_synthetic === true,
-    offer: outcome === "APPROVED" ? parseOffer(raw) : null,
+    offer: outcome === "APPROVED" || outcome === "COUNTER" ? parseOffer(raw) : null,
     themes,
     missing_fields: textList(raw.missing_fields),
   };

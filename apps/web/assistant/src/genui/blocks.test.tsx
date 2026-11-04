@@ -94,6 +94,30 @@ describe("DecisionCardBlock", () => {
     expect(markup).not.toContain("rule-");
   });
 
+  // E2E D-16: a stored v2 outcome code never reaches the card, and a counter-offer shows its offer.
+  it.each(["ELIGIBILITY_CONDITIONS_MET", "COUNTER_OFFER", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED", "DECLINE"])(
+    "never shows the raw outcome code %s",
+    (code) => {
+      const parsed = parseDecisionCard({ decision: code, recorded_outcome: code, policy_synthetic: true, rules: [],
+        offer: { amount: 2500000, emi: 55515, tenure_months: 84 }, reason_categories: ["REQUEST_OUTSIDE_OFFER"] })!;
+      const text = textOf(html({ type: "decision_card", card: parsed }));
+      expect(text).not.toContain(code);
+      expect(text).not.toMatch(/[A-Z]{3,}_[A-Z_]{3,}/);
+    },
+  );
+
+  it("shows a counter-offer's amount, EMI and tenure and never reads as approved", () => {
+    const parsed = parseDecisionCard({ decision: "COUNTER_OFFER", recorded_outcome: "COUNTER_OFFER", rules: [],
+      offer: { amount: 2500000, emi: 55515, tenure_months: 84, counter_offer: true } })!;
+    expect(parsed.recorded_outcome).toBe("COUNTER");
+    const text = textOf(html({ type: "decision_card", card: parsed }));
+    expect(text).toContain("₹25,00,000");
+    expect(text).toContain("₹55,515");
+    expect(text).toContain("84 months");
+    expect(text).toContain("can't offer the full amount");
+    expect(text).not.toMatch(/approved/i);
+  });
+
   it("explains a decline in one or two plain sentences and up to three themes, with no numbers", () => {
     const markup = html({ type: "decision_card", card: card("REJECTED") });
     const text = textOf(markup);

@@ -25,7 +25,6 @@ import {
 export const STARTERS = [
   "Why was this decision made?",
   "What can I do to improve before reapplying?",
-  "What if my credit score was 720?",
 ];
 
 export const TRUST_LINE = "Understand your loan decision. A person decides.";

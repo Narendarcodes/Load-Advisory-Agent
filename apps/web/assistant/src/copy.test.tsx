@@ -29,6 +29,11 @@ describe("borrower-visible copy in the assistant", () => {
     }
   });
 
+  // E2E D-16 / A5: the credit score is not a borrower lever, so no starter invites a score what-if.
+  it("offers no credit-score what-if starter", () => {
+    for (const text of STARTERS) expect(text).not.toMatch(/credit score|score|\d/i);
+  });
+
   it("uses no internal vocabulary in any answer card", () => {
     const state = parsePublicState({
       decision_card: {
