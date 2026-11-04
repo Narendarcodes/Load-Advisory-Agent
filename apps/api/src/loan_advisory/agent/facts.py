@@ -5,6 +5,7 @@ pinned (SYNTHETIC) policy's own values, and improvement targets are plain arithm
 thresholds, re-checked through the unchanged ZEN path by tools.run_what_if.
 """
 import math
+import re
 
 SYNTHETIC_LABEL = ("synthetic prototype policy (synthetic-v1) — the four thresholds are team assumptions, "
                    "not any real lender's policy")
@@ -300,6 +301,63 @@ def offer_plain(record: dict) -> dict | None:
             "is_counter_offer": bool(o.get("counter_offer"))}
 
 
+# E2E D-17: catalogue-v2 rule ids never reach the borrower as a missing item. Same map as the portal API (D-07,
+# loan_advisory_portal/api/applications.py RULE_FIELD); an unknown rule id becomes the generic "documents".
+RULE_FIELD = {
+    "PL-001": "date_of_birth", "PL-002": "date_of_birth", "PL-073": "date_of_birth", "PL-003": "nationality",
+    "PL-004": "employment_type", "PL-005": "employment_type", "PL-006": "identity_verification",
+    "PL-008": "monthly_income", "PL-012": "salary_credits", "PL-078": "salary_credits",
+    "PL-014": "employment_months", "PL-019": "credit_history_details", "PL-020": "credit_history_details",
+    "PL-024": "credit_history_details", "PL-028": "credit_history_details", "PL-069": "loan_amount",
+    "PL-070": "loan_amount", "PL-071": "tenure", "PL-072": "tenure", "PL-076": "loan_purpose",
+    "PL-088": "documents", "PL-094": "identity_documents", "PL-095": "consents", "PL-102": "pan",
+    "PL-111": "purpose_documents", "PL-112": "loan_purpose", "PL-121": "income_documents",
+}
+FIELD_WORDS = {
+    "date_of_birth": ("your date of birth", "आपकी जन्म तिथि", "మీ పుట్టిన తేదీ"),
+    "nationality": ("your nationality", "आपकी नागरिकता", "మీ పౌరసత్వం"),
+    "employment_type": ("your type of job", "आपकी नौकरी का प्रकार", "మీ ఉద్యోగ రకం"),
+    "identity_verification": ("a check of your identity", "आपकी पहचान की जाँच", "మీ గుర్తింపు తనిఖీ"),
+    "monthly_income": ("your monthly income", "आपकी मासिक आय", "మీ నెలవారీ ఆదాయం"),
+    "monthly_obligations": ("your current monthly EMIs", "आपकी अभी की मासिक EMI", "మీ ప్రస్తుత నెలవారీ EMIలు"),
+    "salary_credits": ("your salary credits in your bank statement", "बैंक स्टेटमेंट में आपकी सैलरी", "బ్యాంక్ స్టేట్‌మెంట్‌లో మీ జీతం జమలు"),
+    "employment_months": ("how long you have been in your current job", "मौजूदा नौकरी में आपका समय", "ప్రస్తుత ఉద్యోగంలో మీరు ఉన్న కాలం"),
+    "credit_history_details": ("your credit history details", "आपके क्रेडिट इतिहास की जानकारी", "మీ క్రెడిట్ చరిత్ర వివరాలు"),
+    "credit_score": ("your credit history details", "आपके क्रेडिट इतिहास की जानकारी", "మీ క్రెడిట్ చరిత్ర వివరాలు"),
+    "loan_amount": ("the loan amount", "लोन राशि", "లోన్ మొత్తం"),
+    "tenure": ("the loan period", "लोन की अवधि", "లోన్ వ్యవధి"),
+    "loan_purpose": ("the purpose of the loan", "लोन का उद्देश्य", "లోన్ ఉద్దేశ్యం"),
+    "documents": ("some documents", "कुछ दस्तावेज़", "కొన్ని పత్రాలు"),
+    "identity_documents": ("your identity documents", "आपके पहचान दस्तावेज़", "మీ గుర్తింపు పత్రాలు"),
+    "consents": ("your consent to the loan terms and privacy notice", "लोन शर्तों और गोपनीयता सूचना पर आपकी सहमति",
+                 "లోన్ నిబంధనలు, గోప్యతా నోటీసుకు మీ అంగీకారం"),
+    "pan": ("your PAN", "आपका PAN", "మీ PAN"),
+    "purpose_documents": ("documents for the loan purpose", "लोन के उद्देश्य से जुड़े दस्तावेज़", "లోన్ ఉద్దేశ్యానికి సంబంధించిన పత్రాలు"),
+    "income_documents": ("your income documents, such as salary slips", "आपके आय दस्तावेज़, जैसे सैलरी स्लिप",
+                         "మీ ఆదాయ పత్రాలు, ఉదా. జీతం స్లిప్‌లు"),
+    "applicant_id": ("an identity detail", "पहचान की एक जानकारी", "ఒక గుర్తింపు వివరం"),
+}
+_RULE_ID = re.compile(r"^[A-Z]{2,4}-\d{3}$")
+
+
+def borrower_missing_fields(record: dict) -> list[str]:
+    """Missing items as plain field keys: rule ids mapped (unknown ones to "documents"), duplicates dropped."""
+    out: list[str] = []
+    for m in (record.get("inputs") or {}).get("missing_fields") or []:
+        m = str(m)
+        key = RULE_FIELD.get(m, "documents") if _RULE_ID.match(m) else m
+        if key not in out:
+            out.append(key)
+    return out
+
+
+def missing_field_words(fields: list[str], locale: str = "en") -> str:
+    """The missing items in plain words in the borrower's language."""
+    i = {"en": 0, "hi": 1, "te": 2}.get(locale, 0)
+    words = [FIELD_WORDS[f][i] if f in FIELD_WORDS else f.replace("_", " ") for f in fields]
+    return ", ".join(words)
+
+
 def decision_card_borrower(record: dict) -> dict:
     """What the borrower API sends (ADR-0004/0006): outcome, offer, reason categories. No rule rows, cut-offs,
     gaps, reason codes or bureau data-quality codes; the full card stays behind the Loan Officer role."""
@@ -310,7 +368,7 @@ def decision_card_borrower(record: dict) -> dict:
             "policy_version": pol.get("version"), "policy_synthetic": bool(pol.get("synthetic")),
             "policy_label": BORROWER_LABEL, "evaluated_at": record.get("evaluated_at"),
             "reason_categories": reason_categories(record), "offer": borrower_offer(record),
-            "missing_fields": (record.get("inputs") or {}).get("missing_fields", [])}
+            "missing_fields": borrower_missing_fields(record)}
     bf = bureau_facts(record)
     if bf:
         card["bureau"] = {k: bf[k] for k in ("outcome_kind", "review_required", "info_requested", "retryable",

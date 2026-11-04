@@ -605,8 +605,9 @@ class AdvisoryAgent:
         elif st == "no_decision":
             txt, action = P.template("no_decision"), "clarify"
         elif st == "info_requested":
-            missing = (rec.get("inputs") or {}).get("missing_fields") or ["details flagged as invalid"]
-            txt, action = P.template("info_requested", missing=", ".join(m.replace("_", " ") for m in missing)), "clarify"
+            fields = F.borrower_missing_fields(rec)  # E2E D-17: plain words, never a rule id, in the borrower's language
+            missing = F.missing_field_words(fields or ["documents"], req.locale)
+            txt, action = P.template("info_requested", req.locale, missing=missing), "clarify"
         elif st == "bureau_review":
             bf = F.bureau_facts(rec) or {}
             if bf.get("info_requested"):
@@ -672,7 +673,7 @@ class AdvisoryAgent:
                      for c in s.get("cited") or [] if c in by_label]
         missing = []
         if s.get("status") in ("info_requested", "bureau_review"):
-            missing = ((s.get("record") or {}).get("inputs") or {}).get("missing_fields") or []
+            missing = F.borrower_missing_fields(s.get("record") or {})
         plan_steps = (s.get("plan") or {}).get("steps") or []
         timings = {"total_ms": round((time.perf_counter() - s["t0"]) * 1000, 1), "llm_calls": list(self.llm.calls[-6:]) if hasattr(self.llm, "calls") else []}
         if s.get("retrieval"):
