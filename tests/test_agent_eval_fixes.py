@@ -217,9 +217,14 @@ def _v2_agent(llm, tmp_path, decision="COUNTER_OFFER", cats=("REPAYMENTS_TOO_HIG
     from decision_engine.catalogue_v2.engine import build_record_v2
     from decision_engine.policies.registry import load_policy
     from loan_advisory.infrastructure.evidence_store import InMemoryEvidenceSink
-    from loan_advisory.infrastructure.frappe_adapter import MockStore
+    from loan_advisory.infrastructure.frappe_adapter import UnknownApplication
 
-    class Store(MockStore):
+    class Store:  # read-only by construction (Phase 1 boundary B): get only
+        def get(self, app_id):
+            if app_id not in self._apps:
+                raise UnknownApplication(app_id)
+            return dict(self._apps[app_id])
+
         def __init__(self):
             self._apps = {"SYN-LA-0040": {"name": "SYN-LA-0040", "applicant": "SYN-APP-0040", "loan_product": "SYNTHETIC-PERSONAL-LOAN",
                                           "loan_amount": 1200000, "repayment_periods": 60, "custom_monthly_income": 60000,
