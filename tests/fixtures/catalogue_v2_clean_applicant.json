@@ -265,5 +265,84 @@
  "verified_income": 43000.0,
  "wedding_date": "2027-05-07",
  "written_off_account_count": 0,
- "written_off_within_lookback": false
+ "written_off_within_lookback": false,
+ "residency_status": "RESIDENT",
+ "evidence_references": [
+  "SYN-BUR-I6A42CE046B2",
+  "SYN-DOC-A54C7349CE16",
+  "SYN-DOC-AEB2D71CB163",
+  "SYN-DOC-B545F37A4B33",
+  "SYN-DOC-E01D2AD73ECC",
+  "SYN-DOC-IA22F6C8E1E5",
+  "SYN-DOC-KA02A23D40E9",
+  "SYN-DOC-OA8C9BB5D623"
+ ],
+ "expected_emi_debits": {
+  "ACC-PL": {
+   "amount": 5000,
+   "months_due": [
+    "2026-08",
+    "2026-09",
+    "2026-10"
+   ]
+  },
+  "ACC-AUTO": {
+   "amount": 6000,
+   "months_due": [
+    "2026-08",
+    "2026-09",
+    "2026-10"
+   ]
+  }
+ },
+ "actual_emi_debits": [
+  {
+   "month": "2026-05",
+   "amount": 5000.0
+  },
+  {
+   "month": "2026-05",
+   "amount": 6000.0
+  },
+  {
+   "month": "2026-06",
+   "amount": 5000.0
+  },
+  {
+   "month": "2026-06",
+   "amount": 6000.0
+  },
+  {
+   "month": "2026-07",
+   "amount": 5000.0
+  },
+  {
+   "month": "2026-07",
+   "amount": 6000.0
+  },
+  {
+   "month": "2026-08",
+   "amount": 5000.0
+  },
+  {
+   "month": "2026-08",
+   "amount": 6000.0
+  },
+  {
+   "month": "2026-09",
+   "amount": 5000.0
+  },
+  {
+   "month": "2026-09",
+   "amount": 6000.0
+  },
+  {
+   "month": "2026-10",
+   "amount": 5000.0
+  },
+  {
+   "month": "2026-10",
+   "amount": 6000.0
+  }
+ ]
 }

@@ -956,6 +956,126 @@
     "payslip_count",
     "statement_months"
    ]
+  },
+  "PL-013": {
+   "name": "Employer stability",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "EMPLOYMENT_STABILITY",
+   "missing_category": "EMPLOYMENT_STABILITY",
+   "inputs": [
+    "employer_changes_24m"
+   ]
+  },
+  "PL-016": {
+   "name": "Employment type",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "EMPLOYMENT_STABILITY",
+   "missing_category": "EMPLOYMENT_STABILITY",
+   "inputs": [
+    "employment_status"
+   ]
+  },
+  "PL-130": {
+   "name": "Residency eligibility",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "residency_status"
+   ]
+  },
+  "PL-074": {
+   "name": "EMI calculation validation",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "calculated_emi",
+    "independently_calculated_emi"
+   ]
+  },
+  "PL-075": {
+   "name": "Interest rate eligibility",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "interest_rate"
+   ]
+  },
+  "PL-079": {
+   "name": "Average monthly balance",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "REPAYMENTS_TOO_HIGH",
+   "missing_category": "REPAYMENTS_TOO_HIGH",
+   "inputs": [
+    "average_monthly_balance",
+    "proposed_emi"
+   ]
+  },
+  "PL-082": {
+   "name": "EMI debit consistency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "missing_emi_debit_count"
+   ]
+  },
+  "PL-099": {
+   "name": "Decision trace completeness",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "evidence_references",
+    "policy_version"
+   ]
+  },
+  "PL-127": {
+   "name": "Purpose-specific consistency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "REQUEST_OUTSIDE_OFFER",
+   "missing_category": "REQUEST_OUTSIDE_OFFER",
+   "inputs": [
+    "loan_purpose"
+   ]
   }
  },
  "sized_rules": [
@@ -970,14 +1090,7 @@
   "PL-123",
   "PL-126"
  ],
- "not_compiled": {
-  "PL-074": "EMI cross-check: the engine computes the EMI itself, so there is nothing independent to compare",
-  "PL-075": "rate range: one flat sizing rate (ADR-0011), never a quoted rate",
-  "PL-079": "AMB vs the offered EMI: needs the offer first; left to the officer view",
-  "PL-082": "expected vs observed EMI debits: list matching is a preprocessing step not built yet",
-  "PL-099": "trace completeness: guaranteed by the evidence builder, not a ZEN rule",
-  "PL-127": "purpose date windows: needs the purpose documents' dates (OCR); not on the live path yet"
- },
+ "not_compiled": {},
  "sizing": {
   "flat_rate_by_purpose": {
    "wedding": 0.2,

@@ -371,6 +371,51 @@
       "id": "o_PL_121",
       "key": "o_PL_121",
       "value": "(payslip_count == null or statement_months == null) ? 'INSUFFICIENT_DATA' : ((payslip_count >= 3 and statement_months >= 3) ? 'PASS' : 'INSUFFICIENT_DATA')"
+     },
+     {
+      "id": "o_PL_013",
+      "key": "o_PL_013",
+      "value": "(employer_changes_24m == null) ? 'INSUFFICIENT_DATA' : ((employer_changes_24m <= 2) ? 'PASS' : 'REVIEW')"
+     },
+     {
+      "id": "o_PL_016",
+      "key": "o_PL_016",
+      "value": "(employment_status == null) ? 'INSUFFICIENT_DATA' : ((employment_status in ['PERMANENT']) ? 'PASS' : 'REVIEW')"
+     },
+     {
+      "id": "o_PL_130",
+      "key": "o_PL_130",
+      "value": "(residency_status == null) ? 'INSUFFICIENT_DATA' : ((residency_status in ['RESIDENT']) ? 'PASS' : 'FAIL')"
+     },
+     {
+      "id": "o_PL_074",
+      "key": "o_PL_074",
+      "value": "(calculated_emi == null or independently_calculated_emi == null) ? 'INSUFFICIENT_DATA' : ((abs(calculated_emi - independently_calculated_emi) <= 1) ? 'PASS' : 'REVIEW')"
+     },
+     {
+      "id": "o_PL_075",
+      "key": "o_PL_075",
+      "value": "(interest_rate == null) ? 'INSUFFICIENT_DATA' : ((interest_rate >= 0.1 and interest_rate <= 0.305) ? 'PASS' : 'REVIEW')"
+     },
+     {
+      "id": "o_PL_079",
+      "key": "o_PL_079",
+      "value": "(average_monthly_balance == null or proposed_emi == null) ? 'INSUFFICIENT_DATA' : ((average_monthly_balance >= 1.0 * proposed_emi) ? 'PASS' : 'REVIEW')"
+     },
+     {
+      "id": "o_PL_082",
+      "key": "o_PL_082",
+      "value": "(missing_emi_debit_count == null) ? 'INSUFFICIENT_DATA' : ((missing_emi_debit_count <= 0) ? 'PASS' : 'REVIEW')"
+     },
+     {
+      "id": "o_PL_099",
+      "key": "o_PL_099",
+      "value": "(evidence_references == null or policy_version == null) ? 'INSUFFICIENT_DATA' : ((len(evidence_references) > 0 and policy_version != '') ? 'PASS' : 'REVIEW')"
+     },
+     {
+      "id": "o_PL_127",
+      "key": "o_PL_127",
+      "value": "(loan_purpose == null) ? 'INSUFFICIENT_DATA' : (loan_purpose == 'home_renovation' ? (property_ownership == null ? 'INSUFFICIENT_DATA' : (property_ownership in ['OWNED', 'FAMILY_OWNED'] ? 'PASS' : 'REVIEW')) : (purpose_date_offset_days == null ? 'INSUFFICIENT_DATA' : (((loan_purpose == 'wedding' and purpose_date_offset_days >= -90 and purpose_date_offset_days <= 365) or (loan_purpose == 'higher_education' and purpose_date_offset_days >= -180 and purpose_date_offset_days <= 365) or (loan_purpose == 'medical_emergency' and purpose_date_offset_days >= -90 and purpose_date_offset_days <= 90)) ? 'PASS' : 'REVIEW')))"
      }
     ]
    }
@@ -384,17 +429,17 @@
      {
       "id": "any_decline",
       "key": "any_decline",
-      "value": "o_PL_001 == 'FAIL' or o_PL_002 == 'FAIL' or o_PL_003 == 'FAIL' or o_PL_004 == 'FAIL' or o_PL_008 == 'FAIL' or o_PL_029 == 'FAIL' or o_PL_040 == 'FAIL' or o_PL_043 == 'FAIL' or o_PL_047 == 'FAIL' or o_PL_048 == 'FAIL' or o_PL_069 == 'FAIL' or o_PL_070 == 'FAIL' or o_PL_071 == 'FAIL' or o_PL_072 == 'FAIL' or o_PL_073 == 'FAIL' or o_PL_076 == 'FAIL' or o_PL_081 == 'FAIL'"
+      "value": "o_PL_001 == 'FAIL' or o_PL_002 == 'FAIL' or o_PL_003 == 'FAIL' or o_PL_004 == 'FAIL' or o_PL_008 == 'FAIL' or o_PL_029 == 'FAIL' or o_PL_040 == 'FAIL' or o_PL_043 == 'FAIL' or o_PL_047 == 'FAIL' or o_PL_048 == 'FAIL' or o_PL_069 == 'FAIL' or o_PL_070 == 'FAIL' or o_PL_071 == 'FAIL' or o_PL_072 == 'FAIL' or o_PL_073 == 'FAIL' or o_PL_076 == 'FAIL' or o_PL_081 == 'FAIL' or o_PL_130 == 'FAIL'"
      },
      {
       "id": "any_manual_review",
       "key": "any_manual_review",
-      "value": "o_PL_001 == 'REVIEW' or o_PL_002 == 'REVIEW' or o_PL_003 == 'REVIEW' or o_PL_004 == 'REVIEW' or o_PL_005 == 'FAIL' or o_PL_005 == 'REVIEW' or o_PL_006 == 'REVIEW' or o_PL_007 == 'FAIL' or o_PL_007 == 'REVIEW' or o_PL_008 == 'REVIEW' or o_PL_011 == 'FAIL' or o_PL_011 == 'REVIEW' or o_PL_012 == 'FAIL' or o_PL_012 == 'REVIEW' or o_PL_014 == 'FAIL' or o_PL_014 == 'REVIEW' or o_PL_017 == 'FAIL' or o_PL_017 == 'REVIEW' or o_PL_018 == 'FAIL' or o_PL_018 == 'REVIEW' or o_PL_019 == 'FAIL' or o_PL_019 == 'REVIEW' or o_PL_020 == 'FAIL' or o_PL_020 == 'REVIEW' or o_PL_024 == 'FAIL' or o_PL_024 == 'REVIEW' or o_PL_025 == 'FAIL' or o_PL_025 == 'REVIEW' or o_PL_026 == 'FAIL' or o_PL_026 == 'REVIEW' or o_PL_027 == 'FAIL' or o_PL_027 == 'REVIEW' or o_PL_028 == 'FAIL' or o_PL_028 == 'REVIEW' or o_PL_029 == 'REVIEW' or o_PL_031 == 'FAIL' or o_PL_031 == 'REVIEW' or o_PL_033 == 'FAIL' or o_PL_033 == 'REVIEW' or o_PL_035 == 'FAIL' or o_PL_035 == 'REVIEW' or o_PL_037 == 'FAIL' or o_PL_037 == 'REVIEW' or o_PL_040 == 'REVIEW' or o_PL_041 == 'FAIL' or o_PL_041 == 'REVIEW' or o_PL_042 == 'FAIL' or o_PL_042 == 'REVIEW' or o_PL_043 == 'REVIEW' or o_PL_044 == 'FAIL' or o_PL_044 == 'REVIEW' or o_PL_046 == 'FAIL' or o_PL_046 == 'REVIEW' or o_PL_047 == 'REVIEW' or o_PL_048 == 'REVIEW' or o_PL_051 == 'FAIL' or o_PL_051 == 'REVIEW' or o_PL_052 == 'FAIL' or o_PL_052 == 'REVIEW' or o_PL_053 == 'FAIL' or o_PL_053 == 'REVIEW' or o_PL_055 == 'FAIL' or o_PL_055 == 'REVIEW' or o_PL_069 == 'REVIEW' or o_PL_070 == 'REVIEW' or o_PL_071 == 'REVIEW' or o_PL_072 == 'REVIEW' or o_PL_073 == 'REVIEW' or o_PL_076 == 'REVIEW' or o_PL_077 == 'FAIL' or o_PL_077 == 'REVIEW' or o_PL_078 == 'FAIL' or o_PL_078 == 'REVIEW' or o_PL_080 == 'FAIL' or o_PL_080 == 'REVIEW' or o_PL_081 == 'REVIEW' or o_PL_083 == 'FAIL' or o_PL_083 == 'REVIEW' or o_PL_084 == 'FAIL' or o_PL_084 == 'REVIEW' or o_PL_086 == 'FAIL' or o_PL_086 == 'REVIEW' or o_PL_087 == 'FAIL' or o_PL_087 == 'REVIEW' or o_PL_088 == 'REVIEW' or o_PL_089 == 'FAIL' or o_PL_089 == 'REVIEW' or o_PL_091 == 'FAIL' or o_PL_091 == 'REVIEW' or o_PL_092 == 'FAIL' or o_PL_092 == 'REVIEW' or o_PL_093 == 'FAIL' or o_PL_093 == 'REVIEW' or o_PL_094 == 'FAIL' or o_PL_094 == 'REVIEW' or o_PL_095 == 'REVIEW' or o_PL_097 == 'FAIL' or o_PL_097 == 'REVIEW' or o_PL_098 == 'FAIL' or o_PL_098 == 'REVIEW' or o_PL_100 == 'FAIL' or o_PL_100 == 'REVIEW' or o_PL_101 == 'FAIL' or o_PL_101 == 'REVIEW' or o_PL_102 == 'FAIL' or o_PL_102 == 'REVIEW' or o_PL_103 == 'FAIL' or o_PL_103 == 'REVIEW' or o_PL_104 == 'FAIL' or o_PL_104 == 'REVIEW' or o_PL_105 == 'FAIL' or o_PL_105 == 'REVIEW' or o_PL_106 == 'FAIL' or o_PL_106 == 'REVIEW' or o_PL_111 == 'REVIEW' or o_PL_112 == 'FAIL' or o_PL_112 == 'REVIEW' or o_PL_114 == 'FAIL' or o_PL_114 == 'REVIEW' or o_PL_115 == 'FAIL' or o_PL_115 == 'REVIEW' or o_PL_121 == 'REVIEW'"
+      "value": "o_PL_001 == 'REVIEW' or o_PL_002 == 'REVIEW' or o_PL_003 == 'REVIEW' or o_PL_004 == 'REVIEW' or o_PL_005 == 'FAIL' or o_PL_005 == 'REVIEW' or o_PL_006 == 'REVIEW' or o_PL_007 == 'FAIL' or o_PL_007 == 'REVIEW' or o_PL_008 == 'REVIEW' or o_PL_011 == 'FAIL' or o_PL_011 == 'REVIEW' or o_PL_012 == 'FAIL' or o_PL_012 == 'REVIEW' or o_PL_014 == 'FAIL' or o_PL_014 == 'REVIEW' or o_PL_017 == 'FAIL' or o_PL_017 == 'REVIEW' or o_PL_018 == 'FAIL' or o_PL_018 == 'REVIEW' or o_PL_019 == 'FAIL' or o_PL_019 == 'REVIEW' or o_PL_020 == 'FAIL' or o_PL_020 == 'REVIEW' or o_PL_024 == 'FAIL' or o_PL_024 == 'REVIEW' or o_PL_025 == 'FAIL' or o_PL_025 == 'REVIEW' or o_PL_026 == 'FAIL' or o_PL_026 == 'REVIEW' or o_PL_027 == 'FAIL' or o_PL_027 == 'REVIEW' or o_PL_028 == 'FAIL' or o_PL_028 == 'REVIEW' or o_PL_029 == 'REVIEW' or o_PL_031 == 'FAIL' or o_PL_031 == 'REVIEW' or o_PL_033 == 'FAIL' or o_PL_033 == 'REVIEW' or o_PL_035 == 'FAIL' or o_PL_035 == 'REVIEW' or o_PL_037 == 'FAIL' or o_PL_037 == 'REVIEW' or o_PL_040 == 'REVIEW' or o_PL_041 == 'FAIL' or o_PL_041 == 'REVIEW' or o_PL_042 == 'FAIL' or o_PL_042 == 'REVIEW' or o_PL_043 == 'REVIEW' or o_PL_044 == 'FAIL' or o_PL_044 == 'REVIEW' or o_PL_046 == 'FAIL' or o_PL_046 == 'REVIEW' or o_PL_047 == 'REVIEW' or o_PL_048 == 'REVIEW' or o_PL_051 == 'FAIL' or o_PL_051 == 'REVIEW' or o_PL_052 == 'FAIL' or o_PL_052 == 'REVIEW' or o_PL_053 == 'FAIL' or o_PL_053 == 'REVIEW' or o_PL_055 == 'FAIL' or o_PL_055 == 'REVIEW' or o_PL_069 == 'REVIEW' or o_PL_070 == 'REVIEW' or o_PL_071 == 'REVIEW' or o_PL_072 == 'REVIEW' or o_PL_073 == 'REVIEW' or o_PL_076 == 'REVIEW' or o_PL_077 == 'FAIL' or o_PL_077 == 'REVIEW' or o_PL_078 == 'FAIL' or o_PL_078 == 'REVIEW' or o_PL_080 == 'FAIL' or o_PL_080 == 'REVIEW' or o_PL_081 == 'REVIEW' or o_PL_083 == 'FAIL' or o_PL_083 == 'REVIEW' or o_PL_084 == 'FAIL' or o_PL_084 == 'REVIEW' or o_PL_086 == 'FAIL' or o_PL_086 == 'REVIEW' or o_PL_087 == 'FAIL' or o_PL_087 == 'REVIEW' or o_PL_088 == 'REVIEW' or o_PL_089 == 'FAIL' or o_PL_089 == 'REVIEW' or o_PL_091 == 'FAIL' or o_PL_091 == 'REVIEW' or o_PL_092 == 'FAIL' or o_PL_092 == 'REVIEW' or o_PL_093 == 'FAIL' or o_PL_093 == 'REVIEW' or o_PL_094 == 'FAIL' or o_PL_094 == 'REVIEW' or o_PL_095 == 'REVIEW' or o_PL_097 == 'FAIL' or o_PL_097 == 'REVIEW' or o_PL_098 == 'FAIL' or o_PL_098 == 'REVIEW' or o_PL_100 == 'FAIL' or o_PL_100 == 'REVIEW' or o_PL_101 == 'FAIL' or o_PL_101 == 'REVIEW' or o_PL_102 == 'FAIL' or o_PL_102 == 'REVIEW' or o_PL_103 == 'FAIL' or o_PL_103 == 'REVIEW' or o_PL_104 == 'FAIL' or o_PL_104 == 'REVIEW' or o_PL_105 == 'FAIL' or o_PL_105 == 'REVIEW' or o_PL_106 == 'FAIL' or o_PL_106 == 'REVIEW' or o_PL_111 == 'REVIEW' or o_PL_112 == 'FAIL' or o_PL_112 == 'REVIEW' or o_PL_114 == 'FAIL' or o_PL_114 == 'REVIEW' or o_PL_115 == 'FAIL' or o_PL_115 == 'REVIEW' or o_PL_121 == 'REVIEW' or o_PL_013 == 'FAIL' or o_PL_013 == 'REVIEW' or o_PL_016 == 'FAIL' or o_PL_016 == 'REVIEW' or o_PL_130 == 'REVIEW' or o_PL_074 == 'FAIL' or o_PL_074 == 'REVIEW' or o_PL_075 == 'FAIL' or o_PL_075 == 'REVIEW' or o_PL_079 == 'FAIL' or o_PL_079 == 'REVIEW' or o_PL_082 == 'FAIL' or o_PL_082 == 'REVIEW' or o_PL_099 == 'FAIL' or o_PL_099 == 'REVIEW' or o_PL_127 == 'FAIL' or o_PL_127 == 'REVIEW'"
      },
      {
       "id": "any_more_information_required",
       "key": "any_more_information_required",
-      "value": "o_PL_001 == 'INSUFFICIENT_DATA' or o_PL_002 == 'INSUFFICIENT_DATA' or o_PL_003 == 'INSUFFICIENT_DATA' or o_PL_004 == 'INSUFFICIENT_DATA' or o_PL_005 == 'INSUFFICIENT_DATA' or o_PL_006 == 'FAIL' or o_PL_006 == 'INSUFFICIENT_DATA' or o_PL_008 == 'INSUFFICIENT_DATA' or o_PL_012 == 'INSUFFICIENT_DATA' or o_PL_014 == 'INSUFFICIENT_DATA' or o_PL_019 == 'INSUFFICIENT_DATA' or o_PL_020 == 'INSUFFICIENT_DATA' or o_PL_024 == 'INSUFFICIENT_DATA' or o_PL_028 == 'INSUFFICIENT_DATA' or o_PL_069 == 'INSUFFICIENT_DATA' or o_PL_070 == 'INSUFFICIENT_DATA' or o_PL_071 == 'INSUFFICIENT_DATA' or o_PL_072 == 'INSUFFICIENT_DATA' or o_PL_073 == 'INSUFFICIENT_DATA' or o_PL_076 == 'INSUFFICIENT_DATA' or o_PL_078 == 'INSUFFICIENT_DATA' or o_PL_088 == 'FAIL' or o_PL_088 == 'INSUFFICIENT_DATA' or o_PL_094 == 'INSUFFICIENT_DATA' or o_PL_095 == 'FAIL' or o_PL_095 == 'INSUFFICIENT_DATA' or o_PL_102 == 'INSUFFICIENT_DATA' or o_PL_111 == 'FAIL' or o_PL_111 == 'INSUFFICIENT_DATA' or o_PL_112 == 'INSUFFICIENT_DATA' or o_PL_121 == 'FAIL' or o_PL_121 == 'INSUFFICIENT_DATA'"
+      "value": "o_PL_001 == 'INSUFFICIENT_DATA' or o_PL_002 == 'INSUFFICIENT_DATA' or o_PL_003 == 'INSUFFICIENT_DATA' or o_PL_004 == 'INSUFFICIENT_DATA' or o_PL_005 == 'INSUFFICIENT_DATA' or o_PL_006 == 'FAIL' or o_PL_006 == 'INSUFFICIENT_DATA' or o_PL_008 == 'INSUFFICIENT_DATA' or o_PL_012 == 'INSUFFICIENT_DATA' or o_PL_014 == 'INSUFFICIENT_DATA' or o_PL_019 == 'INSUFFICIENT_DATA' or o_PL_020 == 'INSUFFICIENT_DATA' or o_PL_024 == 'INSUFFICIENT_DATA' or o_PL_028 == 'INSUFFICIENT_DATA' or o_PL_069 == 'INSUFFICIENT_DATA' or o_PL_070 == 'INSUFFICIENT_DATA' or o_PL_071 == 'INSUFFICIENT_DATA' or o_PL_072 == 'INSUFFICIENT_DATA' or o_PL_073 == 'INSUFFICIENT_DATA' or o_PL_076 == 'INSUFFICIENT_DATA' or o_PL_078 == 'INSUFFICIENT_DATA' or o_PL_088 == 'FAIL' or o_PL_088 == 'INSUFFICIENT_DATA' or o_PL_094 == 'INSUFFICIENT_DATA' or o_PL_095 == 'FAIL' or o_PL_095 == 'INSUFFICIENT_DATA' or o_PL_102 == 'INSUFFICIENT_DATA' or o_PL_111 == 'FAIL' or o_PL_111 == 'INSUFFICIENT_DATA' or o_PL_112 == 'INSUFFICIENT_DATA' or o_PL_121 == 'FAIL' or o_PL_121 == 'INSUFFICIENT_DATA' or o_PL_130 == 'INSUFFICIENT_DATA' or o_PL_074 == 'INSUFFICIENT_DATA' or o_PL_099 == 'INSUFFICIENT_DATA'"
      }
     ]
    }

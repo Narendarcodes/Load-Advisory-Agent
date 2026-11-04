@@ -4,8 +4,8 @@
 
 Thresholds, outcomes, decision effects, reason categories and the sizing parameters are read from the catalogue;
 only the comparison for each rule (which data point, which operator) is written here, in RULE_SPECS, because the
-catalogue states conditions as prose. A rule whose inputs the live pipeline cannot supply is listed in NOT_COMPILED
-with the reason, so nothing is silently dropped.
+catalogue states conditions as prose. Every ACTIVE, non-amount-dependent rule is compiled; a rule whose input the
+live pipeline does not supply evaluates to INSUFFICIENT_DATA and takes the catalogue's on_missing effect.
 
 Graph: input -> "rule_outcomes" (expression node: PASS / FAIL / REVIEW / INSUFFICIENT_DATA per rule) ->
 "effects" (expression node: one boolean per effect, built from each rule's catalogue decision_effect) ->
@@ -113,19 +113,43 @@ RULE_SPECS: dict[str, tuple] = {
     "PL-114": (["days_since_last_decline_or_never"], "days_since_last_decline_or_never >= {cool_down_days}"),
     "PL-115": (["shared_contact_pan_count"], "shared_contact_pan_count <= {max_other_pans_per_contact}"),
     "PL-121": (["payslip_count", "statement_months"], "payslip_count >= 3 and statement_months >= 3"),
+    # ZEN gap fixes (user OK 2026-11-04 09:36 IST). D-12: PL-013 / PL-016 read the KYC/AA employer history and status.
+    "PL-013": (["employer_changes_24m"], "employer_changes_24m <= {max_employer_changes_24m}"),
+    "PL-016": (["employment_status"], "employment_status in {accepted_employment_statuses}"),
+    # D-13: residency gate (PL-130, catalogue 2.1 on #49).
+    "PL-130": (["residency_status"], "residency_status in {eligible_residency_statuses}"),
+    # The six left out of the first compile. Each reads a data point the KYC/AA consumer or engine.preprocess supplies;
+    # a missing input is INSUFFICIENT_DATA with the catalogue's on_missing effect.
+    "PL-074": (["calculated_emi", "independently_calculated_emi"],
+               "abs(calculated_emi - independently_calculated_emi) <= {emi_tolerance}"),
+    "PL-075": (["interest_rate"],
+               "interest_rate >= {approved_interest_rate_range_lo} and interest_rate <= {approved_interest_rate_range_hi}"),
+    "PL-079": (["average_monthly_balance", "proposed_emi"], "average_monthly_balance >= {amb_emi_multiple} * proposed_emi"),
+    "PL-082": (["missing_emi_debit_count"], "missing_emi_debit_count <= {max_missing_emi_debits}"),
+    "PL-099": (["evidence_references", "policy_version"], "len(evidence_references) > 0 and policy_version != ''"),
+    "PL-127": (["loan_purpose"], None, lambda raw: _purpose_window_expr(raw["purpose_windows"])),
 }
 
 # Amount-dependent rules: applied by the PL-129 sizing (engine.size_offer) at the offered amount.
 SIZED_RULES = ("PL-064", "PL-065", "PL-108", "PL-109", "PL-110", "PL-118", "PL-120", "PL-122", "PL-123", "PL-126")
-NOT_COMPILED = {
-    "PL-074": "EMI cross-check: the engine computes the EMI itself, so there is nothing independent to compare",
-    "PL-075": "rate range: one flat sizing rate (ADR-0011), never a quoted rate",
-    "PL-079": "AMB vs the offered EMI: needs the offer first; left to the officer view",
-    "PL-082": "expected vs observed EMI debits: list matching is a preprocessing step not built yet",
-    "PL-099": "trace completeness: guaranteed by the evidence builder, not a ZEN rule",
-    "PL-127": "purpose date windows: needs the purpose documents' dates (OCR); not on the live path yet",
-}
+# Every catalogue rule that is ACTIVE and not amount-dependent is compiled (ZEN gap fixes, 2026-11-04). PL-099's
+# "every applicable rule has a result" half is checked after ZEN by engine.decide_v2 (a rule ZEN did not evaluate
+# turns PL-099 into REVIEW).
+NOT_COMPILED: dict[str, str] = {}
 EFFECTS = ("DECLINE", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED")
+
+
+def _purpose_window_expr(w: dict) -> str:
+    """PL-127 outcome: home renovation reads property ownership; the other purposes read the offset in days from the
+    assessment date to their purpose date (engine.preprocess: purpose_date_offset_days)."""
+    d = "purpose_date_offset_days"
+    win = " or ".join(f"(loan_purpose == '{p}' and {d} >= {w[k][0]} and {d} <= {w[k][1]})"
+                      for p, k in (("wedding", "wedding_date_days"), ("higher_education", "course_start_days"),
+                                   ("medical_emergency", "treatment_date_days")))
+    own = _lit(w["renovation_property_ownership"])
+    return (f"loan_purpose == 'home_renovation' ? (property_ownership == null ? 'INSUFFICIENT_DATA' : "
+            f"(property_ownership in {own} ? 'PASS' : 'REVIEW')) : ({d} == null ? 'INSUFFICIENT_DATA' : "
+            f"(({win}) ? 'PASS' : 'REVIEW'))")
 
 
 def _param_values(rule: dict) -> dict:
@@ -165,9 +189,16 @@ def compile_catalogue(cat: dict) -> tuple[dict, dict]:
         if not rule.get("enabled", True) or rule.get("mvp_status") == "DEFERRED":
             continue
         inputs, pass_expr = spec[0], spec[1]
-        params = {k: _lit(v) for k, v in _param_values(rule).items()}
+        raw = _param_values(rule)
+        params = {k: _lit(v) for k, v in raw.items()}
+        for k, v in raw.items():  # a [low, high] range is also usable as {name_lo} / {name_hi}
+            if isinstance(v, (list, tuple)) and len(v) == 2 and all(isinstance(i, (int, float)) for i in v):
+                params[k + "_lo"], params[k + "_hi"] = _lit(v[0]), _lit(v[1])
         on_false = (rule.get("outcome") or {}).get("when_condition_false") or "FAIL"
-        body = spec[2].format(**params) if len(spec) > 2 else f"({pass_expr.format(**params)}) ? 'PASS' : '{on_false}'"
+        if len(spec) > 2:
+            body = spec[2](raw) if callable(spec[2]) else spec[2].format(**params)
+        else:
+            body = f"({pass_expr.format(**params)}) ? 'PASS' : '{on_false}'"
         missing = " or ".join(f"{i} == null" for i in inputs)
         exprs.append({"id": _key(rid), "key": _key(rid), "value": f"({missing}) ? 'INSUFFICIENT_DATA' : ({body})"})
         meta[rid] = {"name": rule["rule_name"], "effects": rule_effects(rule),
