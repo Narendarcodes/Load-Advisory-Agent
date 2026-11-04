@@ -40,23 +40,27 @@ def _get_demo_applicants() -> dict[str, dict[str, Any]]:
     if _DEMO_CACHE is not None:
         return _DEMO_CACHE
 
-    _DEMO_CACHE = {}
     demo_path = _find_demo_path()
-    if demo_path and demo_path.exists():
-        try:
-            with open(demo_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            applicants = data.get("applicants") or data.get("cases") or []
-            for app in applicants:
-                aid = app.get("applicant_id")
-                app_ref = app.get("application_id")
-                if aid:
-                    _DEMO_CACHE[str(aid)] = app
-                if app_ref:
-                    _DEMO_CACHE[str(app_ref)] = app
-        except Exception:
-            pass
-    return _DEMO_CACHE
+    if demo_path is None:
+        return {}
+
+    index: dict[str, dict[str, Any]] = {}
+    try:
+        with open(demo_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        applicants = data.get("applicants") or data.get("cases") or []
+        for app in applicants:
+            aid = app.get("applicant_id")
+            app_ref = app.get("application_id")
+            if aid:
+                index[str(aid)] = app
+            if app_ref:
+                index[str(app_ref)] = app
+    except Exception:
+        return {}
+
+    _DEMO_CACHE = index
+    return index
 
 
 def get_customer_segmentation(
@@ -72,15 +76,20 @@ def get_customer_segmentation(
     candidate: dict[str, Any] | None = None
 
     if isinstance(applicant_data, dict):
-        # Case 1: Direct applicant object or object containing cibil_report/bureau
+        report = (
+            applicant_data.get("cibil_report")
+            or applicant_data.get("bureau_report")
+            or applicant_data.get("bureau")
+            or {}
+        )
+        # Accept as candidate report only when it contains actual credit details
         if (
-            "cibil_report" in applicant_data
-            or "bureau_report" in applicant_data
-            or "bureau" in applicant_data
-            or "accounts" in applicant_data
+            "accounts" in applicant_data
+            or "accounts" in report
+            or "credit_history_months" in report
         ):
             candidate = applicant_data
-        # Case 2: Decision Evidence record with applicant_ref / application_ref
+
         applicant_id = applicant_id or applicant_data.get("applicant_ref") or applicant_data.get("applicant_id")
         application_ref = application_ref or applicant_data.get("application_ref") or applicant_data.get("application_id")
 

@@ -39,14 +39,21 @@ def load_applicants(file_path: str | Path) -> list[dict[str, Any]]:
     if not isinstance(applicants, list):
         raise ValueError("JSON must contain an applicants or cases list.")
 
-    applicant_ids = set()
-    for applicant in applicants:
+    id_owner: dict[str, int] = {}
+    for index, applicant in enumerate(applicants):
         applicant_id = applicant.get("applicant_id") or applicant.get("application_id")
         if not applicant_id:
             raise ValueError("Applicant ID is missing in record.")
-        if applicant_id in applicant_ids:
-            raise ValueError(f"Duplicate Applicant ID: {applicant_id}")
-        applicant_ids.add(applicant_id)
+        aliases = {
+            value
+            for value in (applicant.get("applicant_id"), applicant.get("application_id"))
+            if value
+        }
+        for alias in aliases:
+            owner = id_owner.get(alias)
+            if owner is not None and owner != index:
+                raise ValueError(f"Duplicate Applicant ID: {alias}")
+            id_owner[alias] = index
 
     return applicants
 
@@ -88,10 +95,7 @@ def main():
 
     if args.all:
         results = [
-            {
-                "applicant_id": applicant.get("applicant_id") or applicant.get("application_id"),
-                **classify_applicant(applicant)
-            }
+            classify_applicant(applicant)
             for applicant in applicants
         ]
     else:

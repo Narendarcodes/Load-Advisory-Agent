@@ -19,6 +19,16 @@ from typing import Any
 from .guidance import GUIDANCE
 
 
+def _safe_int(value: Any, default: int = 0) -> int:
+    """Safely convert a value to int, handling 'N/A', floats, and non-numeric strings."""
+    if value is None:
+        return default
+    try:
+        return int(float(str(value).strip()))
+    except (ValueError, TypeError):
+        return default
+
+
 def derive_features(applicant: dict[str, Any]) -> dict[str, Any]:
     """Derive non-sensitive borrowing features from applicant credit report data.
 
@@ -43,9 +53,9 @@ def derive_features(applicant: dict[str, Any]) -> dict[str, Any]:
     loan_count = len(loan_accounts)
 
     distinct_loan_types = len({
-        account.get("account_type")
+        str(account.get("account_type")).strip().lower()
         for account in loan_accounts
-        if account.get("account_type")
+        if str(account.get("account_type", "")).strip()
     })
 
     active_accounts = sum(
@@ -59,23 +69,28 @@ def derive_features(applicant: dict[str, Any]) -> dict[str, Any]:
     )
 
     late_payments = sum(
-        int(account.get("late_payments_12m") or 0)
+        _safe_int(account.get("late_payments_12m"))
         for account in accounts
     )
 
-    cibil_score = (
+    raw_score = (
         report.get("cibil_score")
         if report.get("cibil_score") is not None
         else (applicant.get("cibil_score") if applicant.get("cibil_score") is not None else applicant.get("credit_score"))
     )
-    if cibil_score is None and isinstance(report.get("score"), dict):
-        cibil_score = report.get("score", {}).get("value")
-    if cibil_score is None and isinstance(applicant.get("score"), dict):
-        cibil_score = applicant.get("score", {}).get("value")
+    if raw_score is None and isinstance(report.get("score"), dict):
+        raw_score = report.get("score", {}).get("value")
+    if raw_score is None and isinstance(applicant.get("score"), dict):
+        raw_score = applicant.get("score", {}).get("value")
+
+    try:
+        cibil_score = float(raw_score) if raw_score is not None else None
+    except (ValueError, TypeError):
+        cibil_score = None
 
     if cibil_score in (None, 0, -1):
         score_band = "Unavailable"
-    elif not isinstance(cibil_score, (int, float)) or not 300 <= cibil_score <= 900:
+    elif not 300 <= cibil_score <= 900:
         score_band = "Unavailable"
     elif cibil_score >= 750:
         score_band = "High"
@@ -86,20 +101,25 @@ def derive_features(applicant: dict[str, Any]) -> dict[str, Any]:
     else:
         score_band = "Low"
 
-    history_months = int(
+    history_months = _safe_int(
         report.get("credit_history_months")
         if report.get("credit_history_months") is not None
-        else (applicant.get("credit_history_months") or 0)
+        else applicant.get("credit_history_months")
     )
-    utilization = (
+    raw_util = (
         report.get("credit_card_utilization_percent")
         if report.get("credit_card_utilization_percent") is not None
         else applicant.get("credit_card_utilization_percent")
     )
-    enquiries = int(
+    try:
+        utilization = float(raw_util) if raw_util is not None else None
+    except (ValueError, TypeError):
+        utilization = None
+
+    enquiries = _safe_int(
         report.get("enquiries_last_6_months")
         if report.get("enquiries_last_6_months") is not None
-        else (applicant.get("enquiries_last_6_months") or 0)
+        else applicant.get("enquiries_last_6_months")
     )
 
     if loan_count == 0 and history_months == 0:

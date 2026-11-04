@@ -4,7 +4,7 @@ import json
 import unittest
 from pathlib import Path
 
-from decision_engine.segmentation.classifier import classify_applicant
+from decision_engine.segmentation.classifier import classify_applicant, derive_features
 from decision_engine.segmentation.guidance import GUIDANCE, SEGMENT_NAMES
 from decision_engine.segmentation.customer_segmentation import load_applicants, find_applicant
 from loan_advisory.agent.segmentation import get_customer_segmentation, format_persona_guidance
@@ -108,6 +108,23 @@ class TestCustomerSegmentation(unittest.TestCase):
         self.assertEqual(res["segment"], "Technical Explanation Required")
         self.assertTrue(any("FOIR" in step for step in res["how_to_explain"]))
 
+    def test_load_applicants_duplicate_cross_field(self):
+        """Cross-field duplicate ID collisions across records must raise ValueError."""
+        tmp_file = self.demo_path.parent / "temp_dup.json"
+        try:
+            tmp_file.write_text(json.dumps({
+                "applicants": [
+                    {"applicant_id": "ID_X", "application_id": "ID_Y"},
+                    {"applicant_id": "ID_Y", "application_id": "ID_Z"}
+                ]
+            }), encoding="utf-8")
+            with self.assertRaises(ValueError) as ctx:
+                load_applicants(tmp_file)
+            self.assertIn("Duplicate Applicant ID", str(ctx.exception))
+        finally:
+            if tmp_file.exists():
+                tmp_file.unlink()
+
     def test_demo_applicants_dataset(self):
         self.assertTrue(self.demo_path.exists(), f"Demo file not found at {self.demo_path}")
         applicants = load_applicants(self.demo_path)
@@ -134,6 +151,57 @@ class TestCustomerSegmentation(unittest.TestCase):
         formatted = format_persona_guidance(seg)
         self.assertIn("Communication Persona (Technical Explanation Required):", formatted)
         self.assertIn("FOIR", formatted)
+
+    def test_normalize_account_types_case_insensitive(self):
+        """Case and whitespace variations of the same account type should count as one type."""
+        applicant = {
+            "applicant_id": "APP_CASE_NORM",
+            "cibil_report": {
+                "cibil_score": 710,
+                "credit_history_months": 24,
+                "accounts": [
+                    {"account_type": "Personal Loan", "status": "Closed"},
+                    {"account_type": "personal loan ", "status": "Closed"}
+                ]
+            }
+        }
+        features = derive_features(applicant)
+        self.assertEqual(features["loan_count"], 2)
+        self.assertEqual(features["distinct_loan_types"], 1)
+        res = classify_applicant(applicant)
+        self.assertEqual(res["segment"], "Simple Explanation Required")
+
+    def test_non_numeric_bureau_values(self):
+        """Unusable or non-numeric counts should fall back safely without uncaught ValueError."""
+        applicant = {
+            "applicant_id": "APP_DIRTY_DATA",
+            "cibil_report": {
+                "cibil_score": "N/A",
+                "credit_history_months": "unknown",
+                "enquiries_last_6_months": "none",
+                "accounts": [
+                    {"account_type": "Personal Loan", "status": "Closed", "late_payments_12m": "N/A"}
+                ]
+            }
+        }
+        res = classify_applicant(applicant)
+        self.assertIn("segment", res)
+        self.assertIn("how_to_explain", res)
+
+    def test_bureau_summary_without_details_not_treated_as_empty_credit_report(self):
+        """A decision evidence record with only bureau status metadata shouldn't be misclassified as empty report."""
+        record = {
+            "application_ref": "APP-UNKNOWN-999",
+            "applicant_ref": "CUS-UNKNOWN-999",
+            "bureau": {
+                "fetched": True,
+                "score": {"source": "SYNTHETIC_BUREAU"},
+                "data_quality": {"required": False}
+            }
+        }
+        seg = get_customer_segmentation(applicant_data=record)
+        # Should fall back to Standard Explanation Required, not Guided
+        self.assertEqual(seg["segment"], "Standard Explanation Required")
 
     def test_root_level_accounts_supported(self):
         """Test classifier supports root-level accounts and credit fields directly."""
