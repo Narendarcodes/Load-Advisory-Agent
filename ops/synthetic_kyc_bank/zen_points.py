@@ -21,6 +21,16 @@ IDENTITY_KEYS = ("applicant_identity", "identity_fields", "extracted_identity_fi
                  "supplied_fields")
 
 
+def served_points(rec: dict) -> dict:
+    """The data points served for one applicant: zen_inputs without identity blocks, plus the declared residency the
+    KYC record carries (identity, else declared), which catalogue rule PL-130 reads (ZEN gap fix D-13)."""
+    points = {k: v for k, v in (rec.get("zen_inputs") or {}).items() if k not in IDENTITY_KEYS}
+    residency = (rec.get("identity") or {}).get("residency_status") or (rec.get("declared") or {}).get("residency_status")
+    if residency and "residency_status" not in points:
+        points["residency_status"] = residency
+    return points
+
+
 def register(app, data_dir: str | None = None):
     from ops.synthetic_kyc_bank.app import ApplicantRequest, _jsonl
 
@@ -36,8 +46,7 @@ def register(app, data_dir: str | None = None):
         if not (rec.get("consents") or {}).get("aa_data_fetch"):
             return JSONResponse(status_code=403, content={"code": "AA_CONSENT_MISSING", "synthetic": True,
                                                           "message": "no account-aggregator consent recorded"})
-        points = {k: v for k, v in rec["zen_inputs"].items() if k not in IDENTITY_KEYS}
-        return {"applicant_id": req.applicant_id, "synthetic": True, "data_points": points}
+        return {"applicant_id": req.applicant_id, "synthetic": True, "data_points": served_points(rec)}
 
     return app
 

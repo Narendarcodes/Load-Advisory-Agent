@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 ROUTABLE = ("explain", "status", "improve", "what_if", "policy", "greeting", "other", "vague", "human_review",
-            "distress", "misrepresentation", "bureau_request", "other_applicant", "injection")
+            "distress", "misrepresentation", "bureau_request", "other_applicant", "injection", "guarantee")
 
 
 @dataclass
@@ -97,7 +97,12 @@ _ACK = (r"(hi|hello|hey|namaste|namaskar|namaskaram|thanks?|thank\s+you( so much
 _THANKS = re.compile(
     rf"^\W*{_ACK}([\s,.!]+{_ACK})*(\s+(a\s+lot|so\s+much|again|ji|jee|andi|for\s+(explaining|the\s+help|your\s+help|that|"
     r"the\s+information|clarifying)))?\W*$", re.I)
+_GUARANTEE = re.compile(
+    r"\bwill\s+you\s+(give|approve|sanction|grant)\s+(me|it|my)\b|\bpromise\s+me\b|\byou'?ll\s+approve\b|"
+    r"\bwill\s+the\s+(reviewer|officer|person)\s+approve\b|\b(pakka|pukka)\s+mil\w*|ఖాయంగా|పక్కాగా|पक्का\s+मिल", re.I)
 _OTHER_PERSON = re.compile(
+    r"\b(husband|wife|brother|sister|friend|father|mother|son|daughter|colleague|cousin)\b.{0,20}\b(also\s+)?applied\b.{0,80}"
+    r"\b(his|her|their|its)\b|"
     r"\b(my\s+)?(friend|brother|sister|cousin|colleague|neighbou?r|dost|bhai|behen|didi)\b.{0,40}\b(loan|application|status|"
     r"score|cibil)\b.{0,40}\b(status|tell|cheppa\w*|batao|bataiye|show|check|what)|"
     r"\b(vaadi|vaadu|aame|aavida|uska|uski|unka|unki)\s+(loan|application|status|score)\b|"
@@ -168,6 +173,8 @@ class KeywordRouter:
             return RouteResult("distress")
         if _THANKS.match(msg):
             return RouteResult("greeting")
+        if _GUARANTEE.search(msg):
+            return RouteResult("guarantee")
         if _OTHER_PERSON.search(msg):
             return RouteResult("other_applicant")
         if _STATUS.search(msg) and not howto:

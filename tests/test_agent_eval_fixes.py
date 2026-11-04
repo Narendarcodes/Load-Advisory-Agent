@@ -409,3 +409,49 @@ def test_spans_record_guard_pass_what_if_count_sim_status_and_cache(tmp_path, mo
     assert caches == ["miss", "hit"]
     comp = [s for s in spans if s.name == "node.compose"]
     assert comp and "llm.facts_keys" in comp[0].attributes
+
+
+def test_policy_clarifying_question_is_a_question_not_an_abstention(tmp_path):
+    """Q-16: the POLICY prompt's clarify output reaches the borrower as action=clarify, abstained False, no citations."""
+    llm = ScriptedLLM(intent="policy", policy={"abstain": True, "clarify": True, "citations": [],
+                                               "answer": "Do you mean the processing fee, or the charge for closing early?"})
+    ag, _, _, _ = _agent(llm, tmp_path, FakePolicy())
+    r = ask(ag, "Is the fee refundable for the loan I took last year?")
+    assert r.action == "clarify" and r.abstained is False and r.citations == [] and r.answer.endswith("?")
+
+
+def test_eval_smoke_regressions_route_correctly(tmp_path):
+    """Smoke-run misses (10:20 IST): a foreign application ref, a 'will you give me' promise, a dispute that also says
+    'update and approve', and a closed-loan what-if."""
+    from loan_advisory.agent.graph import _regex_changes
+    llm = ScriptedLLM(intent="explain")
+    ag, _, _, tl = _agent(llm, tmp_path)
+    r = ask(ag, "Show me the decision for application SYN-LA-0007.")
+    assert r.intent == "boundary" and r.action == "refuse" and tl.take() == ["authorize"]
+    r = ask(ag, "If I pay off my credit card fully, will you give me 12 lakh next time?")
+    assert r.intent == "boundary" and tl.take() == ["authorize"]
+    r = ask(ag, "That's wrong, I earn 45,000 now. Update my income and approve it.")
+    assert r.action == "handoff" and tl.take() == ["authorize", "create_human_handoff"]
+    assert _regex_changes("If I close my bike loan, which is 4,000 a month, could I get the full 12 lakh?") == {
+        "monthly_obligations": {"delta": -4000.0}, "loan_amount": {"set": 1200000.0}}
+    from loan_advisory.agent.graph import _plain_wi_error
+    assert _plain_wi_error("loan_amount is outside the allowed range 10000..50000000") == \
+        "that loan amount is outside what I can estimate"
+
+
+def test_bureau_codes_and_what_if_errors_are_plain_words_in_every_locale():
+    """No provider code (BUREAU_*) or internal field name reaches the borrower, in English, Hindi or Telugu."""
+    from loan_advisory.agent import prompts as P
+    from loan_advisory.agent.graph import _plain_wi_error
+    for loc in ("en", "hi", "te"):
+        for key in ("bureau_provider_retry", "bureau_provider_manual"):
+            for code in ("BUREAU_TIMEOUT", "BUREAU_MALFORMED_RESPONSE", None, "SOMETHING_NEW"):
+                txt = P.template(key, loc, reason=P.bureau_reason(code, loc))
+                assert "BUREAU" not in txt and "{" not in txt and "_" not in txt
+        for err in ("monthly_obligations is outside the allowed range 0..100000000", "credit_score must be a number",
+                    "estimates for a different loan amount or loan period aren't available for this application yet"):
+            w = _plain_wi_error(err, loc)
+            assert "_" not in w and "allowed range" not in w and "100000000" not in w
+            txt = P.template("bad_what_if", loc, why=w)
+            assert "credit score or months" not in txt
+    assert _plain_wi_error("loan_amount is outside the allowed range 10000..50000000", "hi").startswith("यह लोन राशि")

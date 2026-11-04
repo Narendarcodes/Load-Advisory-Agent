@@ -190,7 +190,8 @@ def test_retryable_provider_failure_invites_a_retry_and_invents_no_score(client,
     ag, _ = _agent(case, client, scenario="TIMEOUT", llm=llm, tmp_path=tmp_path)
     r = _ask(ag, "What is my decision?", case)
     assert r.action == "clarify" and r.abstained is True and not _composed(llm)
-    assert "BUREAU_TIMEOUT" in r.answer and "try again" in r.answer
+    assert "didn't respond in time" in r.answer and "try again" in r.answer
+    assert "BUREAU_" not in r.answer  # provider codes are never shown to the borrower
     assert "your score" not in r.answer.lower()
     assert "APPROVED" not in r.answer and "REJECTED" not in r.answer  # no decision was recorded
     card = r.decision_card
@@ -203,7 +204,7 @@ def test_non_retryable_provider_failure_routes_to_a_human(client, tmp_path):
     ag, _ = _agent(case, client, scenario="MALFORMED_RESPONSE", tmp_path=tmp_path)
     r = _ask(ag, "Why was I rejected?", case)
     assert r.action == "handoff" and "human reviewer" in r.answer
-    assert "BUREAU_MALFORMED_RESPONSE" in r.answer
+    assert "reply couldn't be read" in r.answer and "BUREAU_" not in r.answer
     assert r.decision_card["bureau"]["outcome_kind"] == "PROVIDER_FAILURE"
     assert r.decision_card["bureau"]["retryable"] is False
 

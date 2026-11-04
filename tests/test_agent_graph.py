@@ -198,7 +198,9 @@ def test_what_if_audit_marks_simulation_and_keeps_no_financial_values(tmp_path):
 def test_out_of_range_what_if_is_clarified_not_simulated(tmp_path):
     ag, _, _ = agent_for(ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": -5}}), tmp_path=tmp_path)
     r = ask(ag, "what if my EMIs were -5")
-    assert r.action == "clarify" and "outside the allowed range" in r.answer
+    # plain words, never the allowed range itself (smoke-run fix): still a clarify, still not simulated
+    assert r.action == "clarify" and "monthly EMIs is outside what I can estimate" in r.answer
+    assert "allowed range" not in r.answer and "100000000" not in r.answer
     with pytest.raises(InvalidWhatIf):
         ag.tools.run_what_if("APP-TEST-005", Session(applicant_ref="CUS-TEST-005"), {"loan_amount": 1})
 
