@@ -35862,7 +35862,13 @@ function EM(e, t) {
 function DM(e) {
 	if (!e) return null;
 	let t = e.toUpperCase();
-	return t === "APPROVED" || t === "WOULD_LIKELY_MEET" || t === "MEET";
+	return [
+		"COULD_NOT_ESTIMATE",
+		"ERROR",
+		"MANUAL_REVIEW",
+		"MORE_INFORMATION_REQUIRED",
+		"REVIEW"
+	].includes(t) ? null : t === "APPROVED" || t === "WOULD_LIKELY_MEET" || t === "MEET" || t === "ELIGIBILITY_CONDITIONS_MET";
 }
 // src/genui/schema.ts
 function OM(e) {
