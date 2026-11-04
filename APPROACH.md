@@ -311,7 +311,7 @@ against a 12 GB voice budget (PR #7). The retriever is capped separately with `A
 
 - Fix the `eval_agent.py` set B harness issue (about 30% answered vs 95% in `eval_policy_split.py` on the same split).
 - Confirm what the production `:8095` droplet runs; its state is not recorded in this repo and the last recorded
-  evidence is PR #10-era. Deploying the merged post-#10 work is the owner's decision.
+  evidence is PR #10-era.
 - Human review of `abstain_v2`, and more unanswerable questions to calibrate abstention.
 - Decide the default citation mode (`labels` vs `primary_source`).
 - Human sign-off on register v2 (two repeals are inferred) and on the currency of the older Bajaj terms documents.

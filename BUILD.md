@@ -9,7 +9,7 @@ estimated.
 
 | Person | GitHub | Commits (all branches) | Pull requests opened |
 |---|---|---:|---|
-| Golla Narendar (project owner) | [@Narendarcodes](https://github.com/Narendarcodes) | 461 (333 excluding merges) | #1–#40, #42, #44–#50, #52–#59 (56 PRs; 52 merged on GitHub, plus #5 fast-forwarded into `main`; #53 integration test bed, #57 and #58 open) |
+| Golla Narendar (team lead) | [@Narendarcodes](https://github.com/Narendarcodes) | 461 (333 excluding merges) | #1–#40, #42, #44–#50, #52–#59 (56 PRs; 52 merged on GitHub, plus #5 fast-forwarded into `main`; #53 integration test bed, #57 and #58 open) |
 | Vikram Kamishetti | [@vikram-kamishetti](https://github.com/vikram-kamishetti) | 1 (`dd45a2f`, 30 files, +3,071 / −14) | #41 |
 | Bharath Kumar Goud | [@BharathkumarGoud179](https://github.com/BharathkumarGoud179) | 3 (`7b648d2`, `9420290`, `dc09ea6`; +983 / −17) | #43 |
 | Syed Imaaduddin | [@Itsimaady](https://github.com/Itsimaady) | 1 (`2e67fbd`, +241) | #51 (merged 2026-11-04) |
@@ -55,7 +55,7 @@ GitHub's no-reply address for merges made in the web interface); they are counte
 - How it is used: `docs/functional.md` keeps his structure and is updated to the final Saral system in #58
   (with a credit line to him), adding the problem, domain, interventions, user-journey and tech sections.
 
-### Golla Narendar: project owner
+### Golla Narendar: team lead
 
 Every other commit and PR in the repository. Grouped from the PR list:
 
@@ -78,7 +78,7 @@ Every other commit and PR in the repository. Grouped from the PR list:
 | Plain-language explanations and decision authority | #46 |
 | OCR comparison (PaddleOCR vs Tesseract), fallback chain and signature screening, on Vikram's OCR | #47 |
 | Frappe doctypes for all 229 data fields and the Loan Officer review desk | #48 |
-| Rule catalogue v2, contracts and owner threshold decisions (ADR-0007..0011) | #49 |
+| Rule catalogue v2, contracts and threshold decisions (ADR-0007..0011) | #49 |
 | Synthetic KYC, PAN, account-aggregator bank and bureau data | #50 |
 | Explanation tone from customer segmentation, on Bharath's classifier | #52 |
 | Integration build used for the live end-to-end test | #53 |

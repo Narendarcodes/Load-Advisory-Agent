@@ -192,7 +192,7 @@ real lender policy; products other than salaried personal loans in four purposes
 Full numbers and disclosures (the judge is the same model as the generator):
 [saral/FINAL_EVAL_20261104.md](saral/FINAL_EVAL_20261104.md).
 
-## 11. Assumptions and open points for the problem owner
+## 11. Assumptions and open questions
 
 - No lender-specific waiting period before reapplying is defined; the assistant does not state one.
 - Handoffs go to the Loan Officer queue in the Frappe desk; a production escalation channel is not built.

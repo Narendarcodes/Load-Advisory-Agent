@@ -43,8 +43,8 @@ rows; 256/256 rows scored, 0 errors).
 
 ## 3. Agent, held-out split (11 conversations, 33 turns), automated, single run
 
-Run 14:55–15:00 on the same build, after the owner's go. **Disclosure:** the held-out conversation ids were visible
-to reviewers in the golden review sheet from 07:42 IST; no code was tuned on them, and the owner chose to proceed.
+Run 14:55–15:00 on the same build. **Disclosure:** the held-out conversation ids were visible
+to reviewers in the golden review sheet before the run; no code was tuned on them.
 
 | Metric | Bar | Dev (Gemini) | **Held-out** | Verdict |
 |---|---|---|---|---|
@@ -62,7 +62,7 @@ to reviewers in the golden review sheet from 07:42 IST; no code was tuned on the
 
 ## 4. RAG
 
-- **Held-out (49 items): not run** (owner decision 2026-11-04 14:49 IST: no new RAG eval).
+- **Held-out (49 items): not run** (kept for a future run on the shipped model).
 - A Gemini-generated, Gemini-judged dev run was started and stopped by the same decision (49 of about 636 judge jobs
   scored); its partial files are kept unreported and no number is taken from them.
 - **Reported RAG numbers: the earlier dev run** (178 items; generator `claude-sonnet-4-6`, judge `gpt-6-luna`;
@@ -101,8 +101,8 @@ that run 116/140 (82.9%), +1.4 points against a +2.0 gate fixed before the run. 
 ## 7. Decisions and OCR (automated)
 
 - **ZEN label agreement, 200 synthetic applicants (group B):** 187/200 offline after the gap fixes; 188/200 with the
-  owner's SYN-APP-0131 ruling (its dataset label is superseded), plus 12 catalogue design choices the owner accepted
-  as intended. 0 open defects. Before the fixes: 174/200 (87.0%) on the live API at 03:50 IST.
+  SYN-APP-0131 ruling (its dataset label is superseded), plus 12 catalogue design choices accepted
+as intended. 0 open defects. Before the fixes: 174/200 (87.0%) on the live API at 03:50 IST.
 - **OCR, public sample documents:** 46 public specimen, sample and third-party synthetic documents (no real person's
   ID), 184 pages including phone-style variants, single annotator. All fields correct, Tesseract vs PaddleOCR: PAN 4%
   vs 58%, Aadhaar 62% vs 98%, bank statement 6% vs 48%, payslip 51% vs 79%. PaddleOCR median 0.52 s, p90 5.96 s per

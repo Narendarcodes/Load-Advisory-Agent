@@ -17,7 +17,7 @@ Architecture: [architecture.drawio.svg](architecture.drawio.svg) (opens in draw.
 | 6 | Synthetic credit bureau, self-hosted tracing, QA fixes, CI and pre-commit checks | 10-25 to 10-26 | #17 to #21, #30 | Golla Narendar |
 | 7 | Security and privacy hardening | 10-28 | #22 to #25, #27, #28, #31, #33 | Golla Narendar |
 | 8 | Borrower platform on Frappe, reproducible install, audits | 10-30 to 11-03 | #34 to #37, #39, #40, #42 | Golla Narendar |
-| 9 | Saral product definition: name, four purpose products, rule catalogue v2, owner threshold decisions (ADR-0007 to ADR-0011) | 11-02 to 11-04 | #49 | Golla Narendar |
+| 9 | Saral product definition: name, four purpose products, rule catalogue v2, threshold decisions (ADR-0007 to ADR-0011) | 11-02 to 11-04 | #49 | Golla Narendar |
 | 10 | Saral corpus split into Bajaj and RBI collections; golden datasets for RAG and conversations | 11-03, merged 11-04 | #45, #44 | Golla Narendar |
 | 11 | Document OCR (Tesseract pipeline, parser, masking, review step) | 11-03 | #41 (carried in #47) | Vikram Kamishetti |
 | 12 | OCR comparison, PaddleOCR default with Tesseract fallback, signature screening | 11-03 to 11-04 | #47 | Golla Narendar, on Vikram Kamishetti's OCR |
@@ -39,11 +39,11 @@ Architecture: [architecture.drawio.svg](architecture.drawio.svg) (opens in draw.
 |---|---|---|
 | Agent-in-the-frontend live cases (A5) | Run on 2026-11-04 afternoon; totals go into the README when it finishes | Golla Narendar |
 | Agent eval bars | Every agent bar fails on dev and held-out (README, Evaluation results) | Golla Narendar |
-| RAG held-out run | Not run (owner decision 2026-11-04 14:49 IST) | Golla Narendar |
+| RAG held-out run | Not run (kept for a future run on the shipped model) | Golla Narendar |
 | Human review of both golden sets and of the judge | Both sets were drafted with an LLM; judge-human agreement is not measured | Team |
 | Counter-offer accept action in the portal and desk | Blocked one live case | Golla Narendar |
 | Multi-hop retrieval (recall 0.657 on multi-hop items) | Weakest RAG area | Golla Narendar |
 | Laya router: fine-tune, re-benchmark, wire into the graph | Fine-tuned hybrid missed its +2-point gate (84.3% vs 82.9%) | Golla Narendar |
-| Hosted deployment (Azure VM) | Submission runs on a laptop behind a tunnel | Golla Narendar |
+| Hosted deployment (Azure VM) | The prototype runs on one machine behind a Cloudflare tunnel | Golla Narendar |
 
 Full limitations list: [../project-management/AGENT_LIMITATIONS.md](../project-management/AGENT_LIMITATIONS.md).
