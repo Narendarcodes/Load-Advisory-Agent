@@ -1,0 +1,677 @@
+
+project:
+  name: Personal Loan Underwriting Rule Catalogue
+  product: Personal Loan
+  lender_policy_source: Bajaj Finance
+  decision_engine: ZEN Engine
+  purpose: Student prototype and advisory decision evaluation
+  policy_constraints:
+    - Do not invent Bajaj Finance underwriting thresholds.
+    - Separate published lender criteria from synthetic prototype rules.
+    - Every rule must have a source, version, and approval status.
+    - Missing data must not automatically mean rejection.
+    - ZEN evaluates structured data; it does not fetch bureau reports or perform OCR.
+    - A ZEN outcome is not an actual lender sanction.
+
+outcomes:
+  - PASS
+  - FAIL
+  - REVIEW
+  - INSUFFICIENT_DATA
+
+implementation_types:
+  ZEN_DIRECT: Deterministic condition, comparison, calculation, or decision aggregation.
+  PREPROCESS_THEN_ZEN: Calculate or normalize the input outside ZEN, then evaluate it in ZEN.
+  EXTERNAL_CHECK: Obtain or verify evidence externally, then pass the result to ZEN.
+
+rule_groups:
+
+  A_APPLICANT_ELIGIBILITY:
+    - id: PL-001
+      name: Applicant minimum age
+      inputs: [date_of_birth, assessment_date, minimum_age]
+      check: Applicant meets minimum age
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-002
+      name: Maximum age at maturity
+      inputs: [date_of_birth, assessment_date, loan_tenure_months, maximum_age_at_maturity]
+      check: Age at end of tenure is within product limit
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-003
+      name: Nationality eligibility
+      inputs: [nationality, eligible_nationalities]
+      check: Applicant satisfies approved nationality criteria
+      implementation: ZEN_DIRECT
+
+    - id: PL-004
+      name: Applicant profile
+      inputs: [employment_type, supported_employment_types]
+      check: Salaried or self-employed profile is supported
+      implementation: ZEN_DIRECT
+
+    - id: PL-005
+      name: Employment category
+      inputs: [employment_category, eligible_employment_categories]
+      check: Employment category is eligible
+      implementation: ZEN_DIRECT
+
+    - id: PL-006
+      name: Identity completeness
+      inputs: [identity_verification_status, required_identity_fields]
+      check: Required identity information is available
+      implementation: ZEN_DIRECT
+
+    - id: PL-007
+      name: Duplicate applicant
+      inputs: [applicant_identifier, duplicate_match_result]
+      check: Detect duplicate applicant or application
+      implementation: EXTERNAL_CHECK
+
+  B_INCOME_AND_EMPLOYMENT:
+    - id: PL-008
+      name: Minimum monthly income
+      inputs: [monthly_net_income, minimum_income, applicant_city]
+      check: Income meets applicable location-specific threshold
+      implementation: ZEN_DIRECT
+
+    - id: PL-009
+      name: Net monthly income
+      inputs: [gross_income, deductions, monthly_net_income]
+      check: Use verified take-home income
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-010
+      name: Average monthly income
+      inputs: [monthly_income_history, assessment_period]
+      check: Calculate average income across assessment period
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-011
+      name: Income consistency
+      inputs: [monthly_income_history, income_variation]
+      check: Detect significant income fluctuations
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-012
+      name: Salary credit verification
+      inputs: [declared_salary, observed_salary_credits, salary_match_status]
+      check: Compare declared income with bank salary credits
+      implementation: EXTERNAL_CHECK
+
+    - id: PL-013
+      name: Employer stability
+      inputs: [employer_history, employer_stability_indicator]
+      check: Assess employer continuity
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-014
+      name: Employment duration
+      inputs: [employment_start_date, assessment_date, employment_months]
+      check: Minimum employment duration
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-015
+      name: Employment gaps
+      inputs: [employment_history, employment_gap_months]
+      check: Detect recent employment gaps
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-016
+      name: Employment type
+      inputs: [employment_type, employment_status]
+      check: Evaluate permanent, contractual, probationary or other status
+      implementation: ZEN_DIRECT
+
+    - id: PL-017
+      name: Income source consistency
+      inputs: [declared_income, verified_income, income_match_status]
+      check: Compare declared and supporting evidence
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-018
+      name: Recent income reduction
+      inputs: [historical_income, recent_income, income_reduction_percentage]
+      check: Detect material income decline
+      implementation: PREPROCESS_THEN_ZEN
+
+  C_BUREAU_IDENTITY_AND_DATA_QUALITY:
+    - id: PL-019
+      name: Bureau report availability
+      inputs: [bureau_report_status]
+      check: Determine whether bureau report exists
+      implementation: EXTERNAL_CHECK
+
+    - id: PL-020
+      name: Bureau identity match
+      inputs: [applicant_identity, bureau_identity, identity_match_status]
+      check: Verify report belongs to applicant
+      implementation: EXTERNAL_CHECK
+
+    - id: PL-021
+      name: Name mismatch
+      inputs: [applicant_name, bureau_name, name_match_status]
+      check: Detect name mismatch
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-022
+      name: Date-of-birth mismatch
+      inputs: [applicant_dob, bureau_dob, dob_match_status]
+      check: Compare dates of birth when available
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-023
+      name: Address mismatch
+      inputs: [applicant_address, bureau_address, address_match_status]
+      check: Compare available address information
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-024
+      name: Report freshness
+      inputs: [bureau_report_date, assessment_date, maximum_report_age_days]
+      check: Check report age
+      implementation: ZEN_DIRECT
+
+    - id: PL-025
+      name: Duplicate tradelines
+      inputs: [bureau_accounts, duplicate_tradeline_count]
+      check: Detect duplicate credit accounts
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-026
+      name: Thin credit file
+      inputs: [credit_history_months, active_account_count]
+      check: Identify insufficient credit history
+      implementation: ZEN_DIRECT
+
+    - id: PL-027
+      name: No-hit detection
+      inputs: [bureau_report_status, bureau_match_status]
+      check: Identify no matching bureau record
+      implementation: ZEN_DIRECT
+
+    - id: PL-028
+      name: Bureau data inconsistency
+      inputs: [bureau_data_quality_flags]
+      check: Identify missing or contradictory bureau fields
+      implementation: PREPROCESS_THEN_ZEN
+
+  D_CREDIT_SCORE_AND_HISTORY:
+    - id: PL-029
+      name: Credit score threshold
+      inputs: [bureau_score, approved_minimum_score]
+      check: Compare score with approved product threshold
+      implementation: ZEN_DIRECT
+
+    - id: PL-030
+      name: Credit score trend
+      inputs: [historical_scores, current_score, score_trend]
+      check: Identify improving or declining score
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-031
+      name: Credit history length
+      inputs: [oldest_account_date, assessment_date, credit_history_months]
+      check: Evaluate credit history duration
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-032
+      name: Credit mix
+      inputs: [secured_account_count, unsecured_account_count]
+      check: Assess credit account mix
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-033
+      name: Active credit accounts
+      inputs: [bureau_accounts, active_account_count]
+      check: Count active accounts
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-034
+      name: Closed credit accounts
+      inputs: [bureau_accounts, closed_account_count]
+      check: Review closed account history
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-035
+      name: Recent account openings
+      inputs: [bureau_accounts, recent_open_account_count]
+      check: Identify recently opened accounts
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-036
+      name: Credit utilisation
+      inputs: [credit_card_balances, total_credit_limits, utilisation_ratio]
+      check: Calculate revolving credit utilisation
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-037
+      name: High credit utilisation
+      inputs: [utilisation_ratio, approved_utilisation_threshold]
+      check: Flag high credit utilisation
+      implementation: ZEN_DIRECT
+
+    - id: PL-038
+      name: Unsecured exposure
+      inputs: [bureau_accounts, total_unsecured_exposure]
+      check: Calculate outstanding unsecured exposure
+      implementation: PREPROCESS_THEN_ZEN
+
+  E_REPAYMENT_AND_DELINQUENCY:
+    - id: PL-039
+      name: Current overdue amount
+      inputs: [bureau_accounts, total_overdue_amount]
+      check: Calculate outstanding overdue amount
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-040
+      name: Days past due
+      inputs: [bureau_accounts, dpd_history]
+      check: Evaluate delinquency status of each account
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-041
+      name: Recent 30+ DPD
+      inputs: [dpd_history, assessment_window]
+      check: Identify recent 30 or more days past due
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-042
+      name: Recent 60+ DPD
+      inputs: [dpd_history, assessment_window]
+      check: Identify recent 60 or more days past due
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-043
+      name: Recent 90+ DPD
+      inputs: [dpd_history, assessment_window]
+      check: Identify recent 90 or more days past due
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-044
+      name: DPD frequency
+      inputs: [dpd_history, dpd_occurrence_count]
+      check: Count delinquency occurrences
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-045
+      name: DPD recency
+      inputs: [dpd_history, last_dpd_date, days_since_last_dpd]
+      check: Determine how recently delinquency occurred
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-046
+      name: Payment regularity
+      inputs: [repayment_history, payment_regularity_indicator]
+      check: Assess repayment consistency
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-047
+      name: Settled accounts
+      inputs: [bureau_accounts, settled_account_count]
+      check: Detect accounts reported as settled
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-048
+      name: Written-off accounts
+      inputs: [bureau_accounts, written_off_account_count]
+      check: Detect written-off accounts
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-049
+      name: Suit-filed accounts
+      inputs: [bureau_accounts, suit_filed_status]
+      check: Identify suit-filed or reported default indicators
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-050
+      name: Restructured accounts
+      inputs: [bureau_accounts, restructured_account_count]
+      check: Identify restructured loans
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-051
+      name: Credit card repayment behaviour
+      inputs: [credit_card_payment_history, missed_payment_count]
+      check: Evaluate credit card repayment patterns
+      implementation: PREPROCESS_THEN_ZEN
+
+  F_CREDIT_ENQUIRIES_AND_RECENT_BORROWING:
+    - id: PL-052
+      name: Recent hard enquiries
+      inputs: [bureau_enquiries, enquiries_last_30_days]
+      check: Count recent hard enquiries
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-053
+      name: Enquiry frequency
+      inputs: [bureau_enquiries, enquiries_last_90_days, approved_enquiry_threshold]
+      check: Detect excessive enquiry frequency
+      implementation: ZEN_DIRECT
+
+    - id: PL-054
+      name: Recent loan applications
+      inputs: [bureau_enquiries, recent_loan_application_count]
+      check: Identify repeated recent applications
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-055
+      name: Recent unsecured borrowing
+      inputs: [bureau_accounts, recent_unsecured_account_count]
+      check: Identify recently opened unsecured loans
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-056
+      name: Credit exposure growth
+      inputs: [historical_exposure, current_exposure, exposure_growth_percentage]
+      check: Measure recent credit exposure growth
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-057
+      name: Enquiry-to-account conversion
+      inputs: [enquiry_count, recently_opened_account_count]
+      check: Compare enquiries with newly opened accounts
+      implementation: PREPROCESS_THEN_ZEN
+
+  G_REPAYMENT_CAPACITY_AND_FOIR:
+    - id: PL-058
+      name: Existing EMI calculation
+      inputs: [active_credit_accounts, existing_monthly_obligations]
+      check: Calculate total current EMI obligations
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-059
+      name: Credit card obligation
+      inputs: [credit_card_balance, approved_card_obligation_method]
+      check: Calculate card obligation using approved methodology
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-060
+      name: Other debt obligations
+      inputs: [other_monthly_obligations]
+      check: Include relevant recurring debt payments
+      implementation: ZEN_DIRECT
+
+    - id: PL-061
+      name: Proposed EMI
+      inputs: [requested_amount, interest_rate, tenure_months, proposed_emi]
+      check: Calculate proposed loan EMI
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-062
+      name: Total monthly obligations
+      inputs: [existing_monthly_obligations, proposed_emi, total_monthly_obligations]
+      check: Add existing obligations and proposed EMI
+      implementation: ZEN_DIRECT
+
+    - id: PL-063
+      name: FOIR calculation
+      inputs: [total_monthly_obligations, monthly_net_income, foir]
+      check: Calculate total obligations divided by net income
+      implementation: ZEN_DIRECT
+
+    - id: PL-064
+      name: FOIR threshold
+      inputs: [foir, approved_maximum_foir]
+      check: Compare FOIR with approved threshold
+      implementation: ZEN_DIRECT
+
+    - id: PL-065
+      name: Residual income
+      inputs: [monthly_net_income, total_monthly_obligations, residual_income]
+      check: Calculate income remaining after obligations
+      implementation: ZEN_DIRECT
+
+    - id: PL-066
+      name: Loan affordability
+      inputs: [monthly_net_income, existing_obligations, proposed_emi]
+      check: Determine whether requested loan is affordable
+      implementation: ZEN_DIRECT
+
+    - id: PL-067
+      name: Maximum affordable EMI
+      inputs: [monthly_net_income, existing_obligations, approved_maximum_foir]
+      check: Calculate maximum permitted EMI under approved methodology
+      implementation: ZEN_DIRECT
+
+    - id: PL-068
+      name: Loan amount affordability
+      inputs: [maximum_affordable_emi, interest_rate, tenure_months, eligible_amount]
+      check: Calculate maximum affordable loan amount
+      implementation: PREPROCESS_THEN_ZEN
+
+  H_LOAN_REQUEST_AND_PRODUCT_PARAMETERS:
+    - id: PL-069
+      name: Minimum loan amount
+      inputs: [requested_amount, minimum_loan_amount]
+      check: Requested amount meets minimum
+      implementation: ZEN_DIRECT
+
+    - id: PL-070
+      name: Maximum loan amount
+      inputs: [requested_amount, maximum_loan_amount]
+      check: Requested amount is within product limit
+      implementation: ZEN_DIRECT
+
+    - id: PL-071
+      name: Minimum tenure
+      inputs: [tenure_months, minimum_tenure_months]
+      check: Requested tenure meets minimum
+      implementation: ZEN_DIRECT
+
+    - id: PL-072
+      name: Maximum tenure
+      inputs: [tenure_months, maximum_tenure_months]
+      check: Requested tenure does not exceed maximum
+      implementation: ZEN_DIRECT
+
+    - id: PL-073
+      name: Age-tenure compatibility
+      inputs: [age_at_maturity, maximum_age_at_maturity]
+      check: Validate age at loan maturity
+      implementation: ZEN_DIRECT
+
+    - id: PL-074
+      name: EMI calculation validation
+      inputs: [principal, interest_rate, tenure_months, calculated_emi, independently_calculated_emi]
+      check: Verify EMI calculation
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-075
+      name: Interest rate eligibility
+      inputs: [approved_interest_rate_range, applicant_pricing_band]
+      check: Apply approved pricing rules
+      implementation: ZEN_DIRECT
+
+    - id: PL-076
+      name: Loan purpose restrictions
+      inputs: [loan_purpose, eligible_loan_purposes]
+      check: Validate loan purpose
+      implementation: ZEN_DIRECT
+
+    - id: PL-077
+      name: Existing exposure
+      inputs: [total_existing_exposure, approved_exposure_limit]
+      check: Evaluate existing exposure against approved limit
+      implementation: ZEN_DIRECT
+
+  I_BANK_STATEMENT_AND_CASH_FLOW:
+    - id: PL-078
+      name: Salary credit consistency
+      inputs: [bank_transactions, salary_credit_consistency]
+      check: Identify regular salary credits
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-079
+      name: Average monthly balance
+      inputs: [bank_transactions, average_monthly_balance]
+      check: Calculate average bank balance
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-080
+      name: Negative balance frequency
+      inputs: [bank_transactions, negative_balance_count]
+      check: Count negative balance occurrences
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-081
+      name: Cheque bounce and NACH returns
+      inputs: [bank_transactions, return_count]
+      check: Identify failed payment transactions
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-082
+      name: EMI debit consistency
+      inputs: [bank_transactions, expected_emi_debits, actual_emi_debits]
+      check: Compare expected and observed EMI debits
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-083
+      name: Cash deposit concentration
+      inputs: [bank_transactions, cash_deposit_percentage]
+      check: Identify unusual dependence on cash deposits
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-084
+      name: Income volatility
+      inputs: [bank_transactions, monthly_income_variance]
+      check: Measure variation in incoming credits
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-085
+      name: Unusual transaction patterns
+      inputs: [bank_transactions, anomaly_indicators]
+      check: Identify transactions requiring review
+      implementation: EXTERNAL_CHECK
+
+    - id: PL-086
+      name: Undeclared debt
+      inputs: [declared_obligations, observed_recurring_debits, debt_mismatch]
+      check: Identify possible undeclared obligations
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-087
+      name: Salary credit reversal
+      inputs: [bank_transactions, salary_reversal_indicator]
+      check: Identify reversed salary credits
+      implementation: PREPROCESS_THEN_ZEN
+
+  J_DOCUMENT_AND_FRAUD_CONTROLS:
+    - id: PL-088
+      name: Document completeness
+      inputs: [submitted_documents, required_documents]
+      check: Verify required documents are present
+      implementation: ZEN_DIRECT
+
+    - id: PL-089
+      name: OCR confidence
+      inputs: [ocr_field_confidence, minimum_confidence]
+      check: Evaluate extracted field confidence
+      implementation: ZEN_DIRECT
+
+    - id: PL-090
+      name: Document tampering indicators
+      inputs: [document_integrity_result, tampering_flags]
+      check: Evaluate document integrity signals
+      implementation: EXTERNAL_CHECK
+
+    - id: PL-091
+      name: Duplicate document
+      inputs: [document_hash, duplicate_document_result]
+      check: Identify duplicate submitted documents
+      implementation: EXTERNAL_CHECK
+
+    - id: PL-092
+      name: Income mismatch
+      inputs: [declared_income, ocr_extracted_income, verified_income]
+      check: Compare declared and extracted income
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-093
+      name: Bank statement integrity
+      inputs: [statement_integrity_result, statement_validation_flags]
+      check: Evaluate statement validation result
+      implementation: EXTERNAL_CHECK
+
+    - id: PL-094
+      name: Identity evidence consistency
+      inputs: [identity_fields, extracted_identity_fields, identity_match_status]
+      check: Compare identity evidence
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-095
+      name: Consent validation
+      inputs: [required_consents, recorded_consents]
+      check: Ensure required consents are recorded
+      implementation: ZEN_DIRECT
+
+    - id: PL-096
+      name: Missing evidence
+      inputs: [required_fields, supplied_fields]
+      check: Identify missing underwriting inputs
+      implementation: ZEN_DIRECT
+
+    - id: PL-097
+      name: Conflicting evidence
+      inputs: [evidence_comparison_results, conflict_flags]
+      check: Detect conflicting evidence across sources
+      implementation: PREPROCESS_THEN_ZEN
+
+    - id: PL-098
+      name: Manual review routing
+      inputs: [review_flags, unresolved_conflicts, fraud_indicators]
+      check: Route unresolved cases for human review
+      implementation: ZEN_DIRECT
+
+    - id: PL-099
+      name: Decision trace completeness
+      inputs: [rule_results, evidence_references, policy_version]
+      check: Ensure decision has a complete audit trace
+      implementation: ZEN_DIRECT
+
+decision_aggregation:
+  precedence:
+    - DECLINE: An approved hard-decline rule has failed.
+    - MANUAL_REVIEW: Material risk signal or unresolved evidence conflict.
+    - MORE_INFORMATION_REQUIRED: Essential inputs are missing.
+    - ELIGIBILITY_CONDITIONS_MET: All applicable checks pass.
+
+  constraints:
+    - Risk indicators must not automatically become hard declines.
+    - Missing inputs must not be treated as failed inputs.
+    - Hard-decline rules require explicit policy approval.
+    - Manual review must override automatic positive outcomes.
+    - Every outcome must include rule IDs and explanations.
+    - Eligibility conditions met does not mean loan sanctioned.
+
+policy_governance:
+  required_rule_metadata:
+    - rule_id
+    - rule_name
+    - rule_group
+    - implementation_type
+    - input_schema
+    - condition
+    - outcome
+    - severity
+    - policy_source
+    - policy_version
+    - approval_status
+    - effective_from
+    - effective_to
+    - test_cases
+
+  approval_status_values:
+    - APPROVED_BAJAJ_SOURCE
+    - APPROVED_REGULATORY
+    - PROTOTYPE_SYNTHETIC
+    - PENDING_BUSINESS_APPROVAL
+    - DEPRECATED
+
+  final_instruction:
+    - Implement only approved rules in production decision paths.
+    - Keep synthetic rules in a separate test profile.
+    - Do not use invented thresholds as Bajaj policy.
+    - Keep evidence acquisition and document processing outside ZEN.
+    - Use ZEN for deterministic evaluation and decision aggregation.

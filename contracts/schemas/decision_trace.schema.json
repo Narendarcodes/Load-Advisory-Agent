@@ -1,0 +1,443 @@
+{
+  "$comment": "Generated from contracts/*.py by contracts/export_schemas.py. Synthetic development contract; cross-field rules are enforced by the pydantic models only.",
+  "$defs": {
+    "ActualSource": {
+      "enum": [
+        "BUREAU",
+        "OCR",
+        "DECLARED",
+        "COMPUTED",
+        "APPLICANT_RECORD",
+        "EXISTING_KYC",
+        "SIGNATURE_CHECK"
+      ],
+      "title": "ActualSource",
+      "type": "string"
+    },
+    "ApprovalStatus": {
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED"
+      ],
+      "title": "ApprovalStatus",
+      "type": "string"
+    },
+    "Citation": {
+      "additionalProperties": false,
+      "description": "A pointer into the Saral corpus (corpus_v3 collections).\n\n``chunk_id`` uses the corpus_v3 form ``<DOC-ID>#<NNN>``. The excerpt mirrors the\nPR #38 source-chip excerpt: plain text, at most 320 characters.",
+      "properties": {
+        "chunk_id": {
+          "pattern": "^(BFL|RBI)-[A-Z0-9-]+#[0-9]{3}$",
+          "title": "Chunk Id",
+          "type": "string"
+        },
+        "collection": {
+          "enum": [
+            "saral_nbfc_policy",
+            "rbi_regulatory"
+          ],
+          "title": "Collection",
+          "type": "string"
+        },
+        "doc_id": {
+          "pattern": "^(BFL|RBI)-[A-Z0-9-]+$",
+          "title": "Doc Id",
+          "type": "string"
+        },
+        "excerpt": {
+          "maxLength": 320,
+          "minLength": 1,
+          "title": "Excerpt",
+          "type": "string"
+        },
+        "relationship": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Relationship"
+        }
+      },
+      "required": [
+        "doc_id",
+        "chunk_id",
+        "collection",
+        "excerpt"
+      ],
+      "title": "Citation",
+      "type": "object"
+    },
+    "EngineRef": {
+      "additionalProperties": false,
+      "properties": {
+        "decision_model": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Decision Model",
+          "type": "string"
+        },
+        "decision_model_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Decision Model Sha256",
+          "type": "string"
+        },
+        "name": {
+          "const": "zen",
+          "default": "zen",
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 20,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "decision_model",
+        "decision_model_sha256"
+      ],
+      "title": "EngineRef",
+      "type": "object"
+    },
+    "OnFail": {
+      "enum": [
+        "DECLINE",
+        "REFER"
+      ],
+      "title": "OnFail",
+      "type": "string"
+    },
+    "Operator": {
+      "enum": [
+        ">=",
+        "<=",
+        ">",
+        "<",
+        "==",
+        "!=",
+        "in"
+      ],
+      "title": "Operator",
+      "type": "string"
+    },
+    "PolicyRef": {
+      "additionalProperties": false,
+      "properties": {
+        "lender": {
+          "const": "Bajaj Finance Ltd",
+          "default": "Bajaj Finance Ltd",
+          "title": "Lender",
+          "type": "string"
+        },
+        "lender_relationship": {
+          "const": "public reference lender, not a partner",
+          "default": "public reference lender, not a partner",
+          "title": "Lender Relationship",
+          "type": "string"
+        },
+        "policy_id": {
+          "pattern": "^SARAL_PL_[A-Z_]+$",
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "policy_version": {
+          "maxLength": 40,
+          "minLength": 1,
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "DRAFT",
+            "APPROVED"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_id",
+        "policy_version",
+        "status"
+      ],
+      "title": "PolicyRef",
+      "type": "object"
+    },
+    "RowOutcome": {
+      "enum": [
+        "PASS",
+        "REFER",
+        "DECLINE",
+        "NO_EFFECT"
+      ],
+      "title": "RowOutcome",
+      "type": "string"
+    },
+    "RuleCategory": {
+      "enum": [
+        "ELIGIBILITY",
+        "INCOME",
+        "AFFORDABILITY",
+        "CREDIT",
+        "VERIFICATION",
+        "PRODUCT",
+        "SCREENING"
+      ],
+      "title": "RuleCategory",
+      "type": "string"
+    },
+    "RuleResult": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "NOT_EVALUATED"
+      ],
+      "title": "RuleResult",
+      "type": "string"
+    },
+    "ThresholdBasis": {
+      "description": "Where a rule's threshold comes from. Exactly one per rule row.",
+      "enum": [
+        "BAJAJ-SOURCED",
+        "ASSUMPTION"
+      ],
+      "title": "ThresholdBasis",
+      "type": "string"
+    },
+    "TraceRow": {
+      "additionalProperties": false,
+      "properties": {
+        "actual_low_confidence": {
+          "default": false,
+          "title": "Actual Low Confidence",
+          "type": "boolean"
+        },
+        "actual_source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ActualSource"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "actual_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actual Value"
+        },
+        "approval_status": {
+          "$ref": "#/$defs/ApprovalStatus"
+        },
+        "assumption_id": {
+          "anyOf": [
+            {
+              "pattern": "^A-[0-9]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assumption Id"
+        },
+        "category": {
+          "$ref": "#/$defs/RuleCategory"
+        },
+        "citation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Citation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "downgraded_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OnFail"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "field": {
+          "description": "ZenInput data point the rule reads",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Field",
+          "type": "string"
+        },
+        "on_fail": {
+          "$ref": "#/$defs/OnFail"
+        },
+        "operator": {
+          "$ref": "#/$defs/Operator"
+        },
+        "outcome": {
+          "$ref": "#/$defs/RowOutcome"
+        },
+        "reason_code": {
+          "pattern": "^ERR_[A-Z0-9_]+$",
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "result": {
+          "$ref": "#/$defs/RuleResult"
+        },
+        "rule_id": {
+          "pattern": "^[A-Z][A-Z0-9_]+$",
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "rule_name": {
+          "maxLength": 120,
+          "minLength": 3,
+          "title": "Rule Name",
+          "type": "string"
+        },
+        "segment_override": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "segment that set this threshold, if any",
+          "title": "Segment Override"
+        },
+        "threshold_basis": {
+          "$ref": "#/$defs/ThresholdBasis"
+        },
+        "threshold_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Threshold Value"
+        }
+      },
+      "required": [
+        "rule_id",
+        "rule_name",
+        "category",
+        "field",
+        "threshold_value",
+        "operator",
+        "result",
+        "on_fail",
+        "outcome",
+        "reason_code",
+        "threshold_basis",
+        "approval_status"
+      ],
+      "title": "TraceRow",
+      "type": "object"
+    }
+  },
+  "$id": "https://saral.invalid/contracts/decision_trace.schema.json",
+  "additionalProperties": false,
+  "properties": {
+    "application_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Application Id",
+      "type": "string"
+    },
+    "engine": {
+      "$ref": "#/$defs/EngineRef"
+    },
+    "evaluated_at": {
+      "format": "date-time",
+      "title": "Evaluated At",
+      "type": "string"
+    },
+    "policy": {
+      "$ref": "#/$defs/PolicyRef"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/TraceRow"
+      },
+      "minItems": 1,
+      "title": "Rows",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "saral-decision-trace/1",
+      "default": "saral-decision-trace/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "trace_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Trace Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "trace_id",
+    "application_id",
+    "evaluated_at",
+    "policy",
+    "engine",
+    "rows"
+  ],
+  "title": "DecisionTrace",
+  "type": "object"
+}

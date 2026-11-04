@@ -1,3 +1,4 @@
 [pre_model_sync]
 
 [post_model_sync]
+loan_advisory_portal.patches.v0_2.flag_applicant_typed_credit_scores

@@ -1,0 +1,244 @@
+{
+  "$comment": "Generated from contracts/*.py by contracts/export_schemas.py. Synthetic development contract; cross-field rules are enforced by the pydantic models only.",
+  "$defs": {
+    "BureauSnapshotRef": {
+      "additionalProperties": false,
+      "description": "The bureau report as stored on the applicant record: a pointer plus a digest.\n\nThe full report lives in the bureau store; ZEN reads it through ``BureauReport``.",
+      "properties": {
+        "fetched_at": {
+          "format": "date-time",
+          "title": "Fetched At",
+          "type": "string"
+        },
+        "provider_schema": {
+          "const": "bureau-report/1",
+          "default": "bureau-report/1",
+          "title": "Provider Schema",
+          "type": "string"
+        },
+        "report_date": {
+          "format": "date",
+          "title": "Report Date",
+          "type": "string"
+        },
+        "report_id": {
+          "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+          "title": "Report Id",
+          "type": "string"
+        },
+        "snapshot_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Snapshot Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "report_id",
+        "report_date",
+        "fetched_at",
+        "snapshot_sha256"
+      ],
+      "title": "BureauSnapshotRef",
+      "type": "object"
+    },
+    "Consents": {
+      "additionalProperties": false,
+      "description": "Time-stamped consents. A bureau pull without ``bureau_pull_at`` is a contract error.",
+      "properties": {
+        "bureau_pull_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bureau Pull At"
+        },
+        "document_processing_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Document Processing At"
+        }
+      },
+      "title": "Consents",
+      "type": "object"
+    },
+    "EmployerCategory": {
+      "description": "Bajaj lists \"Employed with: Public, private, or MNC\" (BFL-PL-SALARIED#004).",
+      "enum": [
+        "PUBLIC",
+        "PRIVATE",
+        "MNC",
+        "OTHER",
+        "NOT_APPLICABLE"
+      ],
+      "title": "EmployerCategory",
+      "type": "string"
+    },
+    "EmploymentType": {
+      "enum": [
+        "SALARIED",
+        "SELF_EMPLOYED"
+      ],
+      "title": "EmploymentType",
+      "type": "string"
+    },
+    "SyntheticMarker": {
+      "additionalProperties": false,
+      "description": "Stamped on every record so nothing synthetic is ever mistaken for real data.",
+      "properties": {
+        "synthetic": {
+          "const": true,
+          "default": true,
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "warning": {
+          "default": "SYNTHETIC DEVELOPMENT DATA. Never use for a real lending decision.",
+          "title": "Warning",
+          "type": "string"
+        }
+      },
+      "title": "SyntheticMarker",
+      "type": "object"
+    }
+  },
+  "$id": "https://saral.invalid/contracts/applicant.schema.json",
+  "additionalProperties": false,
+  "properties": {
+    "aadhaar_last4": {
+      "description": "Last four Aadhaar digits only",
+      "pattern": "^[0-9]{4}$",
+      "title": "Aadhaar Last4",
+      "type": "string"
+    },
+    "applicant_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Applicant Id",
+      "type": "string"
+    },
+    "bureau_snapshot": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BureauSnapshotRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "consents": {
+      "$ref": "#/$defs/Consents"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "date_of_birth": {
+      "format": "date",
+      "title": "Date Of Birth",
+      "type": "string"
+    },
+    "declared_monthly_income": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "maximum": 100000000,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Declared Monthly Income"
+    },
+    "declared_monthly_obligations": {
+      "anyOf": [
+        {
+          "maximum": 100000000,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Declared Monthly Obligations"
+    },
+    "employer_category": {
+      "$ref": "#/$defs/EmployerCategory"
+    },
+    "employment_type": {
+      "$ref": "#/$defs/EmploymentType"
+    },
+    "existing_customer": {
+      "default": false,
+      "title": "Existing Customer",
+      "type": "boolean"
+    },
+    "full_name": {
+      "description": "Synthetic name",
+      "maxLength": 120,
+      "minLength": 2,
+      "title": "Full Name",
+      "type": "string"
+    },
+    "marker": {
+      "$ref": "#/$defs/SyntheticMarker"
+    },
+    "nationality": {
+      "description": "ISO 3166-1 alpha-2, e.g. IN",
+      "pattern": "^[A-Z]{2}$",
+      "title": "Nationality",
+      "type": "string"
+    },
+    "pan_masked": {
+      "description": "XXXXX + 4 digits + X; never the full PAN",
+      "pattern": "^XXXXX[0-9]{4}X$",
+      "title": "Pan Masked",
+      "type": "string"
+    },
+    "residence_city": {
+      "maxLength": 60,
+      "minLength": 2,
+      "title": "Residence City",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "saral-applicant/1",
+      "default": "saral-applicant/1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "applicant_id",
+    "full_name",
+    "date_of_birth",
+    "nationality",
+    "pan_masked",
+    "aadhaar_last4",
+    "residence_city",
+    "employment_type",
+    "employer_category",
+    "created_at"
+  ],
+  "title": "Applicant",
+  "type": "object"
+}

@@ -1,0 +1,40 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-11-03 00:00:00.000000",
+ "description": "Experimental signature screening. Results are LMS_SNAPSHOT; the crop image is SOURCE_REFERENCE.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["loan_application", "document_extraction", "reference_document", "candidate_document", "signature_present", "signature_crop_sha256", "crop_source_uri", "signature_similarity", "signature_anomaly_score", "method", "method_version", "refer_flag"],
+ "fields": [
+  {"fieldname": "loan_application", "fieldtype": "Link", "label": "Loan Application", "options": "Loan Application", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "document_extraction", "fieldtype": "Link", "label": "Candidate Extraction", "options": "Document Extraction"},
+  {"fieldname": "reference_document", "fieldtype": "Link", "label": "Reference Document (File)", "options": "File"},
+  {"fieldname": "candidate_document", "fieldtype": "Link", "label": "Candidate Document (File)", "options": "File"},
+  {"fieldname": "signature_present", "fieldtype": "Check", "label": "Signature Present", "default": "0", "in_list_view": 1},
+  {"fieldname": "signature_crop_sha256", "fieldtype": "Data", "label": "Crop SHA256", "length": 64},
+  {"fieldname": "crop_source_uri", "fieldtype": "Data", "label": "Crop Source Reference", "read_only": 1},
+  {"fieldname": "signature_similarity", "fieldtype": "Float", "label": "Similarity", "precision": "4", "in_list_view": 1},
+  {"fieldname": "signature_anomaly_score", "fieldtype": "Float", "label": "Anomaly Score", "precision": "4"},
+  {"fieldname": "method", "fieldtype": "Data", "label": "Method"},
+  {"fieldname": "method_version", "fieldtype": "Data", "label": "Method Version"},
+  {"fieldname": "refer_flag", "fieldtype": "Check", "label": "Refer To Officer", "default": "0", "in_list_view": 1}
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Signature Screening Result",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1},
+  {"role": "Loan Officer", "read": 1, "report": 1},
+  {"role": "Agent Integration", "read": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
