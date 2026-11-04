@@ -1,0 +1,32 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-11-03 00:00:00.000000",
+ "description": "Hash-only internal negative list (synthetic). Never holds a raw PAN.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["pan_hash", "reason", "source", "added_on", "active"],
+ "fields": [
+  {"fieldname": "pan_hash", "fieldtype": "Data", "label": "PAN Hash", "length": 64, "reqd": 1, "unique": 1, "in_list_view": 1},
+  {"fieldname": "reason", "fieldtype": "Small Text", "label": "Reason", "reqd": 1},
+  {"fieldname": "source", "fieldtype": "Data", "label": "Source", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "added_on", "fieldtype": "Date", "label": "Added On", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "active", "fieldtype": "Check", "label": "Active", "default": "1", "in_standard_filter": 1}
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Negative List Entry",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1},
+  {"role": "Loan Officer", "read": 1, "report": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

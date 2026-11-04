@@ -1,0 +1,957 @@
+{
+ "mode": "automated / live-local",
+ "device": "cpu",
+ "dtype": "bfloat16",
+ "embed_model": "google/embeddinggemma-2",
+ "reranker": "BAAI/bge-reranker-v2-m3",
+ "fusion": {
+  "k": 10,
+  "w_dense": 1.0,
+  "w_bm25": 0.5,
+  "rerank_candidates": 50
+ },
+ "collections": {
+  "saral_nbfc_policy": {
+   "points": 329,
+   "embed_seconds": 43.7,
+   "qdrant_path": "/data/workspace/saral/qdrant_v3/saral_nbfc_policy",
+   "audit": {
+    "chunks": 329,
+    "documents": [
+     "BFL-APP-TNC-2023",
+     "BFL-CITIZENS-CHARTER-2025",
+     "BFL-DL-PARTNERS",
+     "BFL-FAQ-REJECTION",
+     "BFL-FPC-2026",
+     "BFL-GRIEVANCE",
+     "BFL-INSIGHT-REJECTION",
+     "BFL-IRP-2026",
+     "BFL-KYC-TNC",
+     "BFL-PL-DETAILED-TNC",
+     "BFL-PL-ELIG-DOCS",
+     "BFL-PL-OVERVIEW",
+     "BFL-PL-RATES-FEES",
+     "BFL-PL-SALARIED",
+     "BFL-PRIVACY"
+    ],
+    "foreign_source_documents": [],
+    "hdfc_icici_synthetic_documents": [],
+    "synthetic_or_injection_text_chunks": [],
+    "wrong_collection_tag": [],
+    "excluded_texts_checked": [
+     "HDFC-PL-ELIG",
+     "ICICI-PL-ELIG",
+     "SYN-INJECT-001",
+     "SYN-INJECT-002",
+     "SYN-POLICY-V1"
+    ],
+    "chunks_sharing_10_words_with_excluded_text": {},
+    "informational_name_mentions_in_own_text": {
+     "HDFC": 0,
+     "ICICI": 0
+    },
+    "pass": true
+   }
+  },
+  "rbi_regulatory": {
+   "points": 317,
+   "embed_seconds": 26.9,
+   "qdrant_path": "/data/workspace/saral/qdrant_v3/rbi_regulatory",
+   "audit": {
+    "chunks": 317,
+    "documents": [
+     "RBI-CIC-COMP-2023",
+     "RBI-CIC-CS-2023",
+     "RBI-IOS-2026",
+     "RBI-IOS-2026-FAQ",
+     "RBI-NBFC-CF-2025",
+     "RBI-RBC-NBFC-2025"
+    ],
+    "foreign_source_documents": [],
+    "hdfc_icici_synthetic_documents": [],
+    "synthetic_or_injection_text_chunks": [],
+    "wrong_collection_tag": [],
+    "excluded_texts_checked": [
+     "HDFC-PL-ELIG",
+     "ICICI-PL-ELIG",
+     "SYN-INJECT-001",
+     "SYN-INJECT-002",
+     "SYN-POLICY-V1"
+    ],
+    "chunks_sharing_10_words_with_excluded_text": {},
+    "informational_name_mentions_in_own_text": {
+     "HDFC": 0,
+     "ICICI": 0
+    },
+    "pass": true
+   }
+  }
+ },
+ "questions": [
+  {
+   "id": "B01",
+   "topic": "eligibility",
+   "collection": "saral_nbfc_policy",
+   "q": "What age and CIBIL score do I need to be eligible for a personal loan?",
+   "expect": [
+    "BFL-PL-ELIG-DOCS",
+    "BFL-PL-OVERVIEW",
+    "BFL-PL-SALARIED"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-PL-ELIG-DOCS#007",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9912
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-PL-ELIG-DOCS#000",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9815
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-PL-SALARIED#004",
+     "document_id": "BFL-PL-SALARIED",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9693
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-INSIGHT-REJECTION#007",
+     "document_id": "BFL-INSIGHT-REJECTION",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9592
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-OVERVIEW#021",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9579
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 13620.6
+  },
+  {
+   "id": "B02",
+   "topic": "rates_and_fees",
+   "collection": "saral_nbfc_policy",
+   "q": "What is the interest rate range and the processing fee on a personal loan?",
+   "expect": [
+    "BFL-PL-RATES-FEES",
+    "BFL-PL-OVERVIEW"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-PL-RATES-FEES#000",
+     "document_id": "BFL-PL-RATES-FEES",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9781
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-PL-RATES-FEES#017",
+     "document_id": "BFL-PL-RATES-FEES",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9728
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-PL-RATES-FEES#021",
+     "document_id": "BFL-PL-RATES-FEES",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9711
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-PL-RATES-FEES#010",
+     "document_id": "BFL-PL-RATES-FEES",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9621
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-RATES-FEES#004",
+     "document_id": "BFL-PL-RATES-FEES",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9546
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 11263.0
+  },
+  {
+   "id": "B03",
+   "topic": "documents",
+   "collection": "saral_nbfc_policy",
+   "q": "Which documents do I need to submit for a personal loan application?",
+   "expect": [
+    "BFL-PL-ELIG-DOCS",
+    "BFL-PL-OVERVIEW"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-PL-ELIG-DOCS#009",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9974
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-PL-ELIG-DOCS#012",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9965
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-PL-ELIG-DOCS#003",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9959
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-PL-ELIG-DOCS#010",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9933
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-ELIG-DOCS#001",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9929
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 13764.2
+  },
+  {
+   "id": "B04",
+   "topic": "rejection",
+   "collection": "saral_nbfc_policy",
+   "q": "How will I know the reason my loan application was rejected?",
+   "expect": [
+    "BFL-FAQ-REJECTION",
+    "BFL-INSIGHT-REJECTION",
+    "BFL-APP-TNC-2023"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-FAQ-REJECTION#000",
+     "document_id": "BFL-FAQ-REJECTION",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.979
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-INSIGHT-REJECTION#001",
+     "document_id": "BFL-INSIGHT-REJECTION",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.884
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-INSIGHT-REJECTION#000",
+     "document_id": "BFL-INSIGHT-REJECTION",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.83
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-INSIGHT-REJECTION#014",
+     "document_id": "BFL-INSIGHT-REJECTION",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.7994
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-OVERVIEW#018",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.7994
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 14123.9
+  },
+  {
+   "id": "B05",
+   "topic": "purpose_wedding",
+   "collection": "saral_nbfc_policy",
+   "q": "Can I use a personal loan to pay for my wedding expenses like the venue and caterers?",
+   "expect": [
+    "BFL-PL-OVERVIEW",
+    "BFL-PL-SALARIED"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-PL-OVERVIEW#002",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9946
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-PL-OVERVIEW#016",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.1176
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-PL-SALARIED#002",
+     "document_id": "BFL-PL-SALARIED",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0307
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-PL-SALARIED#003",
+     "document_id": "BFL-PL-SALARIED",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0065
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-OVERVIEW#012",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0041
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 9715.1
+  },
+  {
+   "id": "B06",
+   "topic": "purpose_higher_education",
+   "collection": "saral_nbfc_policy",
+   "q": "Can a personal loan cover higher education costs such as tuition and accommodation?",
+   "expect": [
+    "BFL-PL-OVERVIEW",
+    "BFL-PL-SALARIED",
+    "BFL-PL-ELIG-DOCS"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-PL-OVERVIEW#002",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9969
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-PL-OVERVIEW#016",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.7786
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-PL-ELIG-DOCS#002",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.3049
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-PL-SALARIED#002",
+     "document_id": "BFL-PL-SALARIED",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0316
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-SALARIED#008",
+     "document_id": "BFL-PL-SALARIED",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.015
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 10180.6
+  },
+  {
+   "id": "B07",
+   "topic": "purpose_home_renovation",
+   "collection": "saral_nbfc_policy",
+   "q": "Can I take a personal loan for home renovation such as painting, flooring and a kitchen upgrade?",
+   "expect": [
+    "BFL-PL-OVERVIEW",
+    "BFL-PL-SALARIED",
+    "BFL-PL-ELIG-DOCS"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-PL-OVERVIEW#003",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9995
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-PL-OVERVIEW#016",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.3346
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-PL-OVERVIEW#002",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.1824
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-PL-ELIG-DOCS#002",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0827
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-OVERVIEW#026",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0792
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 9815.9
+  },
+  {
+   "id": "B08",
+   "topic": "purpose_medical_emergency",
+   "collection": "saral_nbfc_policy",
+   "q": "I have a medical emergency in the family. Can I get a personal loan quickly to pay the hospital?",
+   "expect": [
+    "BFL-PL-OVERVIEW",
+    "BFL-PL-ELIG-DOCS",
+    "BFL-PL-SALARIED"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-PL-OVERVIEW#002",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.4278
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-PL-OVERVIEW#016",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0792
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-PL-SALARIED#002",
+     "document_id": "BFL-PL-SALARIED",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0434
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-PL-ELIG-DOCS#008",
+     "document_id": "BFL-PL-ELIG-DOCS",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0351
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-OVERVIEW#012",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0197
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 9520.0
+  },
+  {
+   "id": "B09",
+   "topic": "purpose_travel",
+   "collection": "saral_nbfc_policy",
+   "q": "Can I use a personal loan for an international trip or honeymoon, for flights and visa fees?",
+   "expect": [
+    "BFL-PL-OVERVIEW",
+    "BFL-PL-SALARIED"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-PL-OVERVIEW#002",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.9927
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-PL-OVERVIEW#016",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0637
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-PL-OVERVIEW#001",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.011
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-PL-SALARIED#002",
+     "document_id": "BFL-PL-SALARIED",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0091
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-OVERVIEW#024",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0067
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 9826.5
+  },
+  {
+   "id": "B10",
+   "topic": "purpose_debt_consolidation",
+   "collection": "saral_nbfc_policy",
+   "q": "Can I take a personal loan to consolidate my existing debts into one EMI?",
+   "expect": [
+    "BFL-PL-OVERVIEW"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "BFL-PL-OVERVIEW#016",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.2309
+    },
+    {
+     "rank": 2,
+     "chunk_id": "BFL-PL-OVERVIEW#017",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.15
+    },
+    {
+     "rank": 3,
+     "chunk_id": "BFL-INSIGHT-REJECTION#014",
+     "document_id": "BFL-INSIGHT-REJECTION",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.046
+    },
+    {
+     "rank": 4,
+     "chunk_id": "BFL-PL-OVERVIEW#002",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0421
+    },
+    {
+     "rank": 5,
+     "chunk_id": "BFL-PL-OVERVIEW#012",
+     "document_id": "BFL-PL-OVERVIEW",
+     "collection": "saral_nbfc_policy",
+     "section": "preamble",
+     "score": 0.0373
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 13166.4
+  },
+  {
+   "id": "R01",
+   "topic": "kfs",
+   "collection": "rbi_regulatory",
+   "q": "What must a lender disclose to me in the Key Facts Statement before I sign a loan?",
+   "expect": [
+    "RBI-RBC-NBFC-2025"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "RBI-NBFC-CF-2025#035",
+     "document_id": "RBI-NBFC-CF-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 9",
+     "score": 0.6732
+    },
+    {
+     "rank": 2,
+     "chunk_id": "RBI-RBC-NBFC-2025#055",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 34",
+     "score": 0.5006
+    },
+    {
+     "rank": 3,
+     "chunk_id": "RBI-RBC-NBFC-2025#011",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 6",
+     "score": 0.3858
+    },
+    {
+     "rank": 4,
+     "chunk_id": "RBI-RBC-NBFC-2025#127",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "Chapter V – Repeal and Other Provisions A. Repeal and Savings 106.With the issue",
+     "score": 0.2697
+    },
+    {
+     "rank": 5,
+     "chunk_id": "RBI-RBC-NBFC-2025#047",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 30",
+     "score": 0.1981
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": false,
+   "latency_ms": 10085.1
+  },
+  {
+   "id": "R02",
+   "topic": "penal_charges",
+   "collection": "rbi_regulatory",
+   "q": "Can an NBFC add penal interest to my loan's rate of interest if I miss an EMI?",
+   "expect": [
+    "RBI-RBC-NBFC-2025"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "RBI-RBC-NBFC-2025#044",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 30",
+     "score": 0.9917
+    },
+    {
+     "rank": 2,
+     "chunk_id": "RBI-RBC-NBFC-2025#047",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 30",
+     "score": 0.8164
+    },
+    {
+     "rank": 3,
+     "chunk_id": "RBI-RBC-NBFC-2025#045",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 30",
+     "score": 0.6307
+    },
+    {
+     "rank": 4,
+     "chunk_id": "RBI-RBC-NBFC-2025#022",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 13",
+     "score": 0.4007
+    },
+    {
+     "rank": 5,
+     "chunk_id": "RBI-RBC-NBFC-2025#000",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "preamble",
+     "score": 0.3748
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 9777.8
+  },
+  {
+   "id": "R03",
+   "topic": "ombudsman",
+   "collection": "rbi_regulatory",
+   "q": "If the lender does not resolve my complaint within 30 days, how do I complain to the RBI Ombudsman?",
+   "expect": [
+    "RBI-IOS-2026",
+    "RBI-IOS-2026-FAQ"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "RBI-IOS-2026-FAQ#018",
+     "document_id": "RBI-IOS-2026-FAQ",
+     "collection": "rbi_regulatory",
+     "section": "para 17",
+     "score": 0.9924
+    },
+    {
+     "rank": 2,
+     "chunk_id": "RBI-NBFC-CF-2025#044",
+     "document_id": "RBI-NBFC-CF-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 12",
+     "score": 0.9698
+    },
+    {
+     "rank": 3,
+     "chunk_id": "RBI-IOS-2026#043",
+     "document_id": "RBI-IOS-2026",
+     "collection": "rbi_regulatory",
+     "section": "para 2",
+     "score": 0.9585
+    },
+    {
+     "rank": 4,
+     "chunk_id": "RBI-IOS-2026#017",
+     "document_id": "RBI-IOS-2026",
+     "collection": "rbi_regulatory",
+     "section": "para 10",
+     "score": 0.9399
+    },
+    {
+     "rank": 5,
+     "chunk_id": "RBI-IOS-2026#047",
+     "document_id": "RBI-IOS-2026",
+     "collection": "rbi_regulatory",
+     "section": "para 6",
+     "score": 0.8948
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 9129.9
+  },
+  {
+   "id": "R04",
+   "topic": "digital_lending_cooling_off",
+   "collection": "rbi_regulatory",
+   "q": "Is there a cooling-off period to exit a digital loan without penalty?",
+   "expect": [
+    "RBI-NBFC-CF-2025"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "RBI-NBFC-CF-2025#042",
+     "document_id": "RBI-NBFC-CF-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 11",
+     "score": 0.9989
+    },
+    {
+     "rank": 2,
+     "chunk_id": "RBI-RBC-NBFC-2025#129",
+     "document_id": "RBI-RBC-NBFC-2025",
+     "collection": "rbi_regulatory",
+     "section": "Chapter V – Repeal and Other Provisions A. Repeal and Savings 106.With the issue",
+     "score": 0.9274
+    },
+    {
+     "rank": 3,
+     "chunk_id": "RBI-NBFC-CF-2025#067",
+     "document_id": "RBI-NBFC-CF-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 27",
+     "score": 0.0226
+    },
+    {
+     "rank": 4,
+     "chunk_id": "RBI-NBFC-CF-2025#033",
+     "document_id": "RBI-NBFC-CF-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 7",
+     "score": 0.0128
+    },
+    {
+     "rank": 5,
+     "chunk_id": "RBI-NBFC-CF-2025#035",
+     "document_id": "RBI-NBFC-CF-2025",
+     "collection": "rbi_regulatory",
+     "section": "para 9",
+     "score": 0.0113
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 8983.2
+  },
+  {
+   "id": "R05",
+   "topic": "credit_report_correction",
+   "collection": "rbi_regulatory",
+   "q": "What compensation do I get if my credit information is not corrected on time?",
+   "expect": [
+    "RBI-CIC-COMP-2023",
+    "RBI-CIC-CS-2023"
+   ],
+   "hits": [
+    {
+     "rank": 1,
+     "chunk_id": "RBI-CIC-COMP-2023#001",
+     "document_id": "RBI-CIC-COMP-2023",
+     "collection": "rbi_regulatory",
+     "section": "para 2",
+     "score": 0.884
+    },
+    {
+     "rank": 2,
+     "chunk_id": "RBI-CIC-COMP-2023#002",
+     "document_id": "RBI-CIC-COMP-2023",
+     "collection": "rbi_regulatory",
+     "section": "para 2",
+     "score": 0.6671
+    },
+    {
+     "rank": 3,
+     "chunk_id": "RBI-CIC-COMP-2023#003",
+     "document_id": "RBI-CIC-COMP-2023",
+     "collection": "rbi_regulatory",
+     "section": "para 2",
+     "score": 0.6487
+    },
+    {
+     "rank": 4,
+     "chunk_id": "RBI-CIC-COMP-2023#005",
+     "document_id": "RBI-CIC-COMP-2023",
+     "collection": "rbi_regulatory",
+     "section": "para 2",
+     "score": 0.2999
+    },
+    {
+     "rank": 5,
+     "chunk_id": "RBI-CIC-COMP-2023#004",
+     "document_id": "RBI-CIC-COMP-2023",
+     "collection": "rbi_regulatory",
+     "section": "para 2",
+     "score": 0.248
+    }
+   ],
+   "all_from_target_collection": true,
+   "no_hdfc_icici_synthetic": true,
+   "expected_doc_in_top_k": true,
+   "expected_doc_at_rank1": true,
+   "latency_ms": 8337.5
+  }
+ ],
+ "summary": {
+  "questions": 15,
+  "all_from_target_collection": 15,
+  "no_hdfc_icici_synthetic": 15,
+  "expected_doc_in_top_k": 15,
+  "expected_doc_at_rank1": 14,
+  "collection_audits_pass": true,
+  "total_seconds": 238.2
+ }
+}
