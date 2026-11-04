@@ -58,7 +58,7 @@ Node runtime  ──POST /api/method/loan_advisory_portal.api.agent.mint_asserti
    │ POST <agui_url>  Authorization: Bearer <assertion>
    ▼
 FastAPI /api/agui  ── verify issuer/audience/expiry + single-use jti
-   └─► LangGraph turn → evidence sink (Frappe `Loan Decision Evidence`)
+   └─► LangGraph turn → read-only views (application GET + one evidence read method)
 ```
 
 ### Implemented on the Frappe side
@@ -177,7 +177,7 @@ plainly that no person has been contacted and no external ticket exists.
 | Claims | `assertion.py:230` | `customer → applicant_ref` (Frappe Customer name), optional `application`, `thread`, `literacy`, `locale` |
 | Auth | `auth.py:19` | missing/bad assertion → 401 `sign in first`; unconfigured secret → 503; `require_application` → 409 before any stream; `require_conversation` (`routes_agent.py:41`) → 403 when the body names a conversation other than the asserted one |
 | Thread binding | `agui.py:44` | AG-UI refuses a run whose `threadId` is absent from or differs from the assertion's `thread` claim (403), so the token cannot be reused to stream into another conversation |
-| Routes | `routes_agent.py:39`, `agui.py:31` | `/healthz`, `/api/chat`, `/api/chat/stream`, `/api/bureau/run`, `/api/agui` only |
+| Routes | `routes_agent.py:52`, `agui.py:31` | `/healthz`, `/api/chat`, `/api/chat/stream`, `/api/agui` only |
 | App | `app.py:64` | security headers, admission cap, JSON error shapes; no static UI, demo, account or application routes |
 
 The agent's `literacy`/`locale` now come from the assertion (the borrower profile, translated in
@@ -215,10 +215,11 @@ foreign and unknown id, chooser, stale selection, guest redirect, account key).
   LangGraph checkpointer comes from `build_checkpointer()` (`agent/checkpoint.py`): process-local memory
   in development, shared Redis (`AGENT_CHECKPOINT_REDIS_URL`, defaulting to the replay URL) as soon as
   more than one worker exists, and a refusal to start on memory when `APP_ENV`/`ENVIRONMENT` is
-  production. Retention is an owner decision — `AGENT_CHECKPOINT_TTL_S=0` keeps checkpoints until the
-  operator sets a TTL. Two-process continuation is proven in `tests/e2e/two_worker_check.py`; a
-  restored thread that predates the shared store still replays the transcript to the borrower without
-  pretending the graph saw it.
+  production. Retention is an owner decision — except in production, where leaving
+  `AGENT_CHECKPOINT_TTL_S` unset is refused at startup, because keeping every borrower transcript
+  forever is a retention policy chosen by no one. Two-process continuation is proven in
+  `tests/e2e/two_worker_check.py`; a restored thread that predates the shared store still replays the
+  transcript to the borrower without pretending the graph saw it.
 - A restored thread is adopted only when the account and application match; a stale or foreign thread
   is answered as missing (404) and the island simply starts a new conversation. Identity change and
   logout are handled by the account-scoped key plus the assertion check at mint time.

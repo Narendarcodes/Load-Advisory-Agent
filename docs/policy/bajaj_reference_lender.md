@@ -3,6 +3,41 @@
 Date: 2026-10-14. Branch `feat/bajaj-policy-rag`, stacked on `feat/policy-register-rag` (PR #4).
 Labels: **verified** (measured, or seen in the source on 2026-10-14), **proposed**, **unresolved**.
 
+> ## Decision update — 2026-11-03 (owner). Bajaj Finance is the product's lender, not a reference lender.
+>
+> This section **supersedes** the framing above wherever the two differ. The documents below are kept unchanged
+> because they record what was decided and measured at the time; read them as history, not as the current brief.
+>
+> 1. **Bajaj Finance product documents are this product's lender-policy source.** The agent's job is to explain
+>    Bajaj Finance loan decisions and policy using `BFL-*` documents plus applicable RBI regulation. They are **not**
+>    third-party or competitor material and must not be excluded from retrieval.
+> 2. **The fully synthetic lender plan is cancelled.** `SARAL_DEMO`, the borrower-facing label
+>    "Demo Sample Lender (Synthetic)", the 14-document synthetic policy pack and the corpus-deletion-first sequence
+>    approved earlier on 2026-11-03 are **withdrawn**. Do not rename Bajaj Finance and do not substitute a synthetic
+>    lender identity.
+> 3. **What changes in the corpus:** competing lenders' product-policy documents are **removed from active production
+>    retrieval** — `HDFC-PL-ELIG` and `ICICI-PL-ELIG` (the only two such documents in the register; 18 of 1,557
+>    chunks). Removal is a reversible archive plus a clean rebuilt index, not an irreversible delete.
+> 4. **What does not change:** `SYN-POLICY-V1` stays confined to the `synthetic_prototype` evaluation profile and must
+>    never be served into a Bajaj answer; `SYN-INJECT-001`/`SYN-INJECT-002` stay adversarial fixtures isolated from
+>    production retrieval; applicable RBI sources are retained and bank-only sources stay inapplicable to NBFC answers.
+> 5. **Truthfulness constraint that survives the rename of this role.** Saying "our product's lender" is a statement
+>    about scope, **not** about authorisation. There is still no commercial relationship with Bajaj Finance, so
+>    `lender_relationship: "public reference lender, not a partner"` stays in the register and in citations until the
+>    owner states otherwise in writing; changing it to imply partnership, endorsement or an offer would misrepresent
+>    the position to a borrower. Public Bajaj pages still do not reveal its internal underwriting scorecard.
+> 6. **ZEN is still the prototype engine.** The `synthetic-v1` thresholds (₹25,000 income · FOIR 0.45 · score 700 ·
+>    12-month tenure) remain **explicitly labelled prototype assumptions** and are **not** Bajaj underwriting rules.
+>    Mapping each rule to an authoritative Bajaj source is unresolved business policy; unsupported rules stay
+>    **UNRESOLVED** and no threshold may be inferred from marketing pages or invented to make the two agree.
+>    Consequence to keep visible: the served Bajaj pages state a **650** score floor where the engine evaluates
+>    **700**, so an answer must not present the engine's number as Bajaj's published criterion.
+> 7. **Superseded analysis, recorded rather than hidden.** `docs/audit/agent-rag-policy-cost-audit.md`
+>    (PR #42) §3/§5 recommends excluding all 18 `BFL-*` documents and building a synthetic pack; that recommendation
+>    is superseded by this decision. Its factual findings — chunk counts, reachability under the profile, extraction
+>    and provenance defects, and the benchmark↔filter contradiction — are unaffected and still stand.
+
+
 > **Bajaj Finance Ltd is a public reference lender, not a partner.** There is no relationship with Bajaj Finance,
 > VaaniLabs or anyone else. We use Bajaj's *public* personal-loan documents to build, evaluate and test the policy
 > RAG. Every Bajaj source in the register carries `lender_relationship: "public reference lender, not a partner"`,

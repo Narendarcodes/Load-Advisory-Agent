@@ -356,10 +356,10 @@ TEMPLATES = {
                         "these details are provided or corrected: {missing}. Once they are provided, the application is "
                         "assessed again; I can't fill them in for you. I can't cite an approved correction procedure — "
                         "please use the lender's own channel or its grievance route."),
-        "bureau_provider_retry": ("I couldn't get a bureau report from the synthetic prototype bureau ({code}), so your "
+        "bureau_provider_retry": ("I couldn't get a bureau report from the synthetic prototype bureau ({reason}), so your "
                                   "application has no credit decision yet and I won't guess one. This looks temporary; "
                                   "please try again shortly."),
-        "bureau_provider_manual": ("I couldn't get a bureau report from the synthetic prototype bureau ({code}), so your "
+        "bureau_provider_manual": ("I couldn't get a bureau report from the synthetic prototype bureau ({reason}), so your "
                                    "application has no credit decision yet and I won't guess one. Retrying on its own "
                                    "won't fix this; a human reviewer needs to look at it."),
         "policy_abstain": ("I couldn't find this in the approved policy sources I can cite, so I won't guess. You could "
@@ -421,9 +421,9 @@ TEMPLATES = {
         "bureau_info": ("आपका आवेदन रिजेक्ट नहीं हुआ है। सिंथेटिक प्रोटोटाइप ब्यूरो के तहत यह तब तक रोका गया है जब तक ये जानकारी "
                         "दी या सुधारी नहीं जाती: {missing}। इसके बाद आवेदन फिर से जाँचा जाता है; मैं इसे भर नहीं सकता। मैं किसी "
                         "स्वीकृत सुधार प्रक्रिया का हवाला नहीं दे सकता — कृपया लेंडर के अपने माध्यम या शिकायत मार्ग का उपयोग करें।"),
-        "bureau_provider_retry": ("मुझे सिंथेटिक प्रोटोटाइप ब्यूरो से रिपोर्ट नहीं मिली ({code}), इसलिए आपके आवेदन का क्रेडिट फ़ैसला "
+        "bureau_provider_retry": ("मुझे सिंथेटिक प्रोटोटाइप ब्यूरो से रिपोर्ट नहीं मिली ({reason}), इसलिए आपके आवेदन का क्रेडिट फ़ैसला "
                                   "अभी नहीं है और मैं अनुमान नहीं लगाऊँगा। यह अस्थायी लगता है; कृपया थोड़ी देर बाद फिर कोशिश करें।"),
-        "bureau_provider_manual": ("मुझे सिंथेटिक प्रोटोटाइप ब्यूरो से रिपोर्ट नहीं मिली ({code}), इसलिए आपके आवेदन का क्रेडिट फ़ैसला "
+        "bureau_provider_manual": ("मुझे सिंथेटिक प्रोटोटाइप ब्यूरो से रिपोर्ट नहीं मिली ({reason}), इसलिए आपके आवेदन का क्रेडिट फ़ैसला "
                                    "अभी नहीं है और मैं अनुमान नहीं लगाऊँगा। सिर्फ़ दोबारा कोशिश करने से यह ठीक नहीं होगा; एक मानव "
                                    "समीक्षक को इसे देखना होगा।"),
         "policy_abstain": "मुझे यह उन स्वीकृत नीति स्रोतों में नहीं मिला जिनका मैं हवाला दे सकता हूँ, इसलिए मैं अनुमान नहीं लगाऊँगा।",
@@ -479,9 +479,9 @@ TEMPLATES = {
         "bureau_info": ("మీ దరఖాస్తు తిరస్కరించబడలేదు. సింథటిక్ ప్రోటోటైప్ బ్యూరో కింద ఈ వివరాలు ఇచ్చే వరకు లేదా సరిచేసే వరకు "
                         "ఇది నిలిపివేయబడింది: {missing}. తర్వాత దరఖాస్తు మళ్ళీ పరిశీలించబడుతుంది; నేను వాటిని నింపలేను. "
                         "ఆమోదిత సవరణ ప్రక్రియను నేను ఉదహరించలేను — దయచేసి లెండర్ సొంత మార్గాన్ని లేదా ఫిర్యాదు మార్గాన్ని ఉపయోగించండి."),
-        "bureau_provider_retry": ("సింథటిక్ ప్రోటోటైప్ బ్యూరో నుండి నాకు రిపోర్ట్ రాలేదు ({code}), కాబట్టి మీ దరఖాస్తుకు ఇంకా "
+        "bureau_provider_retry": ("సింథటిక్ ప్రోటోటైప్ బ్యూరో నుండి నాకు రిపోర్ట్ రాలేదు ({reason}), కాబట్టి మీ దరఖాస్తుకు ఇంకా "
                                   "క్రెడిట్ నిర్ణయం లేదు; నేను ఊహించి చెప్పను. ఇది తాత్కాలికంగా ఉంది; దయచేసి కొద్దిసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి."),
-        "bureau_provider_manual": ("సింథటిక్ ప్రోటోటైప్ బ్యూరో నుండి నాకు రిపోర్ట్ రాలేదు ({code}), కాబట్టి మీ దరఖాస్తుకు ఇంకా "
+        "bureau_provider_manual": ("సింథటిక్ ప్రోటోటైప్ బ్యూరో నుండి నాకు రిపోర్ట్ రాలేదు ({reason}), కాబట్టి మీ దరఖాస్తుకు ఇంకా "
                                    "క్రెడిట్ నిర్ణయం లేదు; నేను ఊహించి చెప్పను. కేవలం మళ్ళీ ప్రయత్నించడం వల్ల ఇది సరికాదు; మానవ "
                                    "సమీక్షకుడు దీన్ని చూడాలి."),
         "policy_abstain": "నేను ఉదహరించగల ఆమోదిత నియమ పత్రాలలో ఇది కనిపించలేదు, కాబట్టి ఊహించి చెప్పను.",
@@ -532,6 +532,25 @@ FALLBACK_EXPLAIN = {
            "offer": "ఏమి మారాలో చూపించగలను, లేదా మీ ప్రశ్నలకు సమాధానం ఇవ్వగలను.",
            "counter": "మీరు అడిగిన పూర్తి మొత్తాన్ని మేము ఇవ్వలేము. మేము {amount} ఇవ్వగలము, {tenure} నెలల పాటు నెలకు {emi} EMIతో."},
 }
+
+BUREAU_REASONS = {  # provider failure codes in plain words; the code itself is never shown to the borrower
+    "en": {"BUREAU_TIMEOUT": "it didn't respond in time", "BUREAU_RATE_LIMITED": "it is too busy right now",
+           "BUREAU_UNAVAILABLE": "it isn't available right now", "BUREAU_MALFORMED_RESPONSE": "its reply couldn't be read",
+           "BUREAU_UNSAFE_NON_SYNTHETIC": "the report didn't come from the approved source",
+           "": "something went wrong on its side"},
+    "hi": {"BUREAU_TIMEOUT": "समय पर जवाब नहीं आया", "BUREAU_RATE_LIMITED": "वह अभी बहुत व्यस्त है",
+           "BUREAU_UNAVAILABLE": "वह अभी उपलब्ध नहीं है", "BUREAU_MALFORMED_RESPONSE": "उसका जवाब पढ़ा नहीं जा सका",
+           "BUREAU_UNSAFE_NON_SYNTHETIC": "रिपोर्ट स्वीकृत स्रोत से नहीं आई", "": "उसकी तरफ़ कुछ गड़बड़ हुई"},
+    "te": {"BUREAU_TIMEOUT": "సమయానికి స్పందన రాలేదు", "BUREAU_RATE_LIMITED": "అది ప్రస్తుతం చాలా బిజీగా ఉంది",
+           "BUREAU_UNAVAILABLE": "అది ప్రస్తుతం అందుబాటులో లేదు", "BUREAU_MALFORMED_RESPONSE": "దాని సమాధానం చదవలేకపోయాను",
+           "BUREAU_UNSAFE_NON_SYNTHETIC": "రిపోర్ట్ ఆమోదిత మూలం నుండి రాలేదు", "": "దాని వైపు ఏదో సమస్య వచ్చింది"},
+}
+
+
+def bureau_reason(code: str | None, locale: str = "en") -> str:
+    words = BUREAU_REASONS.get(locale) or BUREAU_REASONS["en"]
+    return words.get(code or "", words[""])
+
 
 def template(key: str, locale: str = "en", **kw) -> str:
     t = TEMPLATES.get(locale, {}).get(key) or TEMPLATES["en"][key]

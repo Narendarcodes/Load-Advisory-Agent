@@ -1,0 +1,111 @@
+{
+  "schema_version": "saral-document-extraction/1",
+  "extraction_id": "SYN-EXT-BANK0101",
+  "applicant_id": "SYN-APP-000101",
+  "document": {
+    "document_id": "SYN-DOC-BANK0101",
+    "kind": "bank_statement",
+    "uploaded_at": "2026-11-03T16:00:00Z",
+    "pages": 3,
+    "sha256": "48c58cffa2625368af45eadc91594b84f157ce107dbb453c4d01d85183f92519"
+  },
+  "engine": {
+    "name": "synthetic-fixture",
+    "version": "1"
+  },
+  "extracted_at": "2026-11-03T16:02:00Z",
+  "fields": {
+    "account_holder": {
+      "key": "account_holder",
+      "value": "Ananya S Rao",
+      "status": "found",
+      "ocr_confidence": 88.4,
+      "source": {
+        "document_id": "SYN-DOC-BANK0101",
+        "kind": "bank_statement",
+        "page": 1,
+        "line_index": 1
+      },
+      "note": null
+    },
+    "statement_period": {
+      "key": "statement_period",
+      "value": "2026-08-01 to 2026-10-31",
+      "status": "found",
+      "ocr_confidence": 90.0,
+      "source": {
+        "document_id": "SYN-DOC-BANK0101",
+        "kind": "bank_statement",
+        "page": 1,
+        "line_index": 2
+      },
+      "note": null
+    },
+    "salary_credits": {
+      "key": "salary_credits",
+      "value": 274500.0,
+      "status": "found",
+      "ocr_confidence": 89.9,
+      "source": {
+        "document_id": "SYN-DOC-BANK0101",
+        "kind": "bank_statement",
+        "page": 2,
+        "line_index": 40
+      },
+      "note": null
+    },
+    "salary_credit_months": {
+      "key": "salary_credit_months",
+      "value": 3,
+      "status": "found",
+      "ocr_confidence": 89.9,
+      "source": {
+        "document_id": "SYN-DOC-BANK0101",
+        "kind": "bank_statement",
+        "page": 2,
+        "line_index": null
+      },
+      "note": null
+    },
+    "total_credits": {
+      "key": "total_credits",
+      "value": 301000.0,
+      "status": "found",
+      "ocr_confidence": 90.3,
+      "source": {
+        "document_id": "SYN-DOC-BANK0101",
+        "kind": "bank_statement",
+        "page": 3,
+        "line_index": 12
+      },
+      "note": null
+    },
+    "total_debits": {
+      "key": "total_debits",
+      "value": 246800.0,
+      "status": "found",
+      "ocr_confidence": 90.3,
+      "source": {
+        "document_id": "SYN-DOC-BANK0101",
+        "kind": "bank_statement",
+        "page": 3,
+        "line_index": 13
+      },
+      "note": null
+    },
+    "closing_balance": {
+      "key": "closing_balance",
+      "value": 54200.0,
+      "status": "low_confidence",
+      "ocr_confidence": 57.5,
+      "source": {
+        "document_id": "SYN-DOC-BANK0101",
+        "kind": "bank_statement",
+        "page": 3,
+        "line_index": 14
+      },
+      "note": "Tesseract confidence below 60"
+    }
+  },
+  "warnings": []
+}

@@ -10,6 +10,29 @@ import {
   type VoiceStatus,
 } from "./voice";
 import { createLiveKitTransport, type VoiceTransport, type VoiceTransportFactory, type VoiceUtterance } from "./voice-transport";
+import { ORB_LABEL, nextOrbState, type OrbState, type VoiceSpeaker } from "./voice-orb";
+
+/**
+ * A clean CSS circle that follows the call (idle, connecting, listening, thinking, speaking, microphone off)
+ * and scales gently with LiveKit's audio level; still under reduced motion. Decorative; the static state
+ * label, status line and transcript carry the meaning, so the circle is hidden from assistive tech.
+ */
+function VoiceOrb({ state, level }: { state: OrbState; level: number }) {
+  return (
+    <div className="voice-stage">
+      <div
+        className="voice-orb"
+        data-state={state}
+        data-level={level.toFixed(2)}
+        aria-hidden="true"
+        style={{ ["--voice-level" as string]: level.toFixed(2) }}
+      >
+        <span className="voice-orb__core" />
+      </div>
+      <p className="voice-orb__label">{ORB_LABEL[state]}</p>
+    </div>
+  );
+}
 
 const STATUS_LABEL: Record<VoiceStatus, string> = {
   idle: "Not started",
@@ -47,6 +70,15 @@ export function VoicePanel({ context, createTransport, onSessionExpired }: Voice
   const [entries, setEntries] = useState<VoiceUtterance[]>([]);
   const [showTranscript, setShowTranscript] = useState(true);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+  const [orb, setOrb] = useState<{ state: OrbState; level: number; speaker: VoiceSpeaker }>({
+    state: "idle",
+    level: 0,
+    speaker: null,
+  });
+  const statusRef = useRef<VoiceStatus>("idle");
+  statusRef.current = status;
+  const mutedRef = useRef(false);
+  mutedRef.current = muted;
 
   const sessionRef = useRef<VoiceSessionInfo | null>(null);
   const transportRef = useRef<VoiceTransport | null>(null);
@@ -123,8 +155,37 @@ export function VoicePanel({ context, createTransport, onSessionExpired }: Voice
       transportRef.current = transport;
       unsubsRef.current = [
         transport.onStatus((next) => setStatus(next)),
-        transport.onUtterance((utterance) => setEntries((previous) => [...previous, utterance])),
+        transport.onUtterance((utterance) => {
+          setEntries((previous) => [...previous, utterance]);
+          if (utterance.role === "assistant") {
+            setOrb((previous) => ({
+              ...previous,
+              state: nextOrbState(previous.state, {
+                status: statusRef.current,
+                muted: mutedRef.current,
+                speaker: previous.speaker,
+                answered: true,
+              }),
+            }));
+          }
+        }),
       ];
+      if (transport.onActivity) {
+        unsubsRef.current.push(
+          transport.onActivity((activity) =>
+            setOrb((previous) => ({
+              speaker: activity.speaker,
+              level: activity.speaker ? Math.min(1, Math.max(0, activity.level)) : 0,
+              state: nextOrbState(previous.state, {
+                status: statusRef.current,
+                muted: mutedRef.current,
+                speaker: activity.speaker,
+                previous: previous.speaker,
+              }),
+            })),
+          ),
+        );
+      }
       await transport.connect(created.url, created.token);
       if (transportRef.current !== transport) return;
       await transport.setMicrophoneEnabled(true);
@@ -155,6 +216,15 @@ export function VoicePanel({ context, createTransport, onSessionExpired }: Voice
     setEntries([]);
     setExpiresAt(null);
   }, []);
+
+  // Status and mute changes move the orb too (connecting, listening, muted, idle at the end).
+  useEffect(() => {
+    setOrb((previous) => {
+      const state = nextOrbState(previous.state, { status, muted, speaker: previous.speaker, previous: previous.speaker });
+      const ended = state === "idle" || state === "connecting";
+      return { state, level: ended ? 0 : previous.level, speaker: ended ? null : previous.speaker };
+    });
+  }, [status, muted]);
 
   // The token and the room grant die with the row. Closing here makes the panel state match that.
   useEffect(() => {
@@ -191,6 +261,8 @@ export function VoicePanel({ context, createTransport, onSessionExpired }: Voice
         The assistant listens only while this page is open. Your speech goes to the advisory voice service to answer
         your question, and each question and answer also appears here as text.
       </p>
+
+      <VoiceOrb state={orb.state} level={orb.level} />
 
       {!active && !finished ? (
         <div className="voice__start">

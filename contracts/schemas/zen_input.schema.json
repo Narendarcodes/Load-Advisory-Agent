@@ -1,0 +1,268 @@
+{
+  "$comment": "Generated from contracts/*.py by contracts/export_schemas.py. Synthetic development contract; cross-field rules are enforced by the pydantic models only.",
+  "$defs": {
+    "DataPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "fallback_used": {
+          "default": false,
+          "title": "Fallback Used",
+          "type": "boolean"
+        },
+        "low_confidence": {
+          "default": false,
+          "title": "Low Confidence",
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/$defs/DataSource"
+        },
+        "source_document_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Document Ids",
+          "type": "array"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "title": "DataPoint",
+      "type": "object"
+    },
+    "DataPointName": {
+      "enum": [
+        "loan_amount",
+        "tenure_months",
+        "purpose",
+        "age_at_application",
+        "age_at_maturity",
+        "nationality",
+        "employer_category",
+        "employment_months",
+        "payslip_net_avg",
+        "bank_salary_credit_avg",
+        "net_monthly_income",
+        "income_variance_ratio",
+        "existing_emi_total",
+        "proposed_emi",
+        "foir",
+        "credit_score",
+        "max_dpd_12m",
+        "max_dpd_24m",
+        "enquiries_6m",
+        "writeoff_settlement_24m",
+        "writeoff_settlement_older",
+        "salary_credit_months",
+        "debit_credit_ratio",
+        "kyc_name_match_score",
+        "kyc_dob_match",
+        "kyc_id_last4_match",
+        "required_docs_present",
+        "min_ocr_confidence",
+        "signature_similarity"
+      ],
+      "title": "DataPointName",
+      "type": "string"
+    },
+    "DataSource": {
+      "enum": [
+        "APPLICATION",
+        "APPLICANT_RECORD",
+        "BUREAU",
+        "OCR_SALARY_SLIP",
+        "OCR_BANK_STATEMENT",
+        "OCR_EMPLOYMENT_LETTER",
+        "OCR_PAN",
+        "OCR_AADHAAR",
+        "OCR_MULTI",
+        "DECLARED",
+        "COMPUTED",
+        "EXISTING_KYC",
+        "SIGNATURE_CHECK",
+        "NONE"
+      ],
+      "title": "DataSource",
+      "type": "string"
+    },
+    "ProductId": {
+      "description": "The four personal-loan subcategories, by purpose (owner decision, 2026-11-03).",
+      "enum": [
+        "PL_WEDDING",
+        "PL_HIGHER_EDUCATION",
+        "PL_HOME_RENOVATION",
+        "PL_MEDICAL_EMERGENCY"
+      ],
+      "title": "ProductId",
+      "type": "string"
+    },
+    "SegmentAssignment": {
+      "additionalProperties": false,
+      "description": "The segments one application landed in, with the facts that put it there.",
+      "properties": {
+        "applicant_id": {
+          "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+          "title": "Applicant Id",
+          "type": "string"
+        },
+        "basis": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "segment id -> why, in plain words",
+          "title": "Basis",
+          "type": "object"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/SegmentId"
+          },
+          "minItems": 1,
+          "title": "Segments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "applicant_id",
+        "segments"
+      ],
+      "title": "SegmentAssignment",
+      "type": "object"
+    },
+    "SegmentId": {
+      "enum": [
+        "SALARIED_METRO",
+        "SALARIED_NON_METRO",
+        "SELF_EMPLOYED",
+        "NEW_TO_CREDIT",
+        "PRIME",
+        "NEAR_PRIME",
+        "EXISTING_CUSTOMER"
+      ],
+      "title": "SegmentId",
+      "type": "string"
+    },
+    "SyntheticMarker": {
+      "additionalProperties": false,
+      "description": "Stamped on every record so nothing synthetic is ever mistaken for real data.",
+      "properties": {
+        "synthetic": {
+          "const": true,
+          "default": true,
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "warning": {
+          "default": "SYNTHETIC DEVELOPMENT DATA. Never use for a real lending decision.",
+          "title": "Warning",
+          "type": "string"
+        }
+      },
+      "title": "SyntheticMarker",
+      "type": "object"
+    }
+  },
+  "$id": "https://saral.invalid/contracts/zen_input.schema.json",
+  "additionalProperties": false,
+  "properties": {
+    "applicant_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Applicant Id",
+      "type": "string"
+    },
+    "application_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Application Id",
+      "type": "string"
+    },
+    "bureau_report_id": {
+      "anyOf": [
+        {
+          "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Bureau Report Id"
+    },
+    "data_points": {
+      "additionalProperties": {
+        "$ref": "#/$defs/DataPoint"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/DataPointName"
+      },
+      "title": "Data Points",
+      "type": "object"
+    },
+    "extraction_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Extraction Ids",
+      "type": "array"
+    },
+    "marker": {
+      "$ref": "#/$defs/SyntheticMarker"
+    },
+    "policy_version": {
+      "maxLength": 40,
+      "minLength": 1,
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "prepared_at": {
+      "format": "date-time",
+      "title": "Prepared At",
+      "type": "string"
+    },
+    "product_id": {
+      "$ref": "#/$defs/ProductId"
+    },
+    "schema_version": {
+      "const": "saral-zen-input/1",
+      "default": "saral-zen-input/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "segments": {
+      "$ref": "#/$defs/SegmentAssignment"
+    }
+  },
+  "required": [
+    "application_id",
+    "applicant_id",
+    "product_id",
+    "policy_version",
+    "segments",
+    "data_points",
+    "prepared_at"
+  ],
+  "title": "ZenInput",
+  "type": "object"
+}

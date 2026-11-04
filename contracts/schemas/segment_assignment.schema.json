@@ -1,0 +1,50 @@
+{
+  "$comment": "Generated from contracts/*.py by contracts/export_schemas.py. Synthetic development contract; cross-field rules are enforced by the pydantic models only.",
+  "$defs": {
+    "SegmentId": {
+      "enum": [
+        "SALARIED_METRO",
+        "SALARIED_NON_METRO",
+        "SELF_EMPLOYED",
+        "NEW_TO_CREDIT",
+        "PRIME",
+        "NEAR_PRIME",
+        "EXISTING_CUSTOMER"
+      ],
+      "title": "SegmentId",
+      "type": "string"
+    }
+  },
+  "$id": "https://saral.invalid/contracts/segment_assignment.schema.json",
+  "additionalProperties": false,
+  "description": "The segments one application landed in, with the facts that put it there.",
+  "properties": {
+    "applicant_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Applicant Id",
+      "type": "string"
+    },
+    "basis": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "segment id -> why, in plain words",
+      "title": "Basis",
+      "type": "object"
+    },
+    "segments": {
+      "items": {
+        "$ref": "#/$defs/SegmentId"
+      },
+      "minItems": 1,
+      "title": "Segments",
+      "type": "array"
+    }
+  },
+  "required": [
+    "applicant_id",
+    "segments"
+  ],
+  "title": "SegmentAssignment",
+  "type": "object"
+}

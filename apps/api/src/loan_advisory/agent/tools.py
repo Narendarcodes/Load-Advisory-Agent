@@ -3,10 +3,18 @@
 Every applicant-specific tool re-checks authorization server-side against the system of record
 (the Loan Application's `applicant`), never against the message, the thread id or the LLM.
 There is no generic Frappe/SQL/web tool and no write path: decisions are only READ from the stored
-Decision Evidence; what-if goes through lifecycle.simulate (in memory, never persisted).
+Decision Evidence; what-if goes through lifecycle.simulate (in memory, never persisted). The same
+refusal that applies to the Frappe store applies to the retriever — a handle that can create, upsert
+or delete index points is rejected before the first query, in either Qdrant mode.
+
+`DecisionTools` is where that promise becomes enforceable rather than aspirational. Its two
+dependencies are typed as the read-only ports in `application/ports.py` and checked at construction,
+so a store or evidence object that can write — directly, or through anything it holds — is refused
+before the first turn runs (Phase 1 security boundary B).
 """
 import hashlib
 import json
+import sys
 import threading
 import time
 import uuid
@@ -15,15 +23,22 @@ from dataclasses import dataclass
 from loan_advisory.agent import observability as obs
 from loan_advisory.agent.contracts import Citation, Session
 from loan_advisory.agent.facts import SCORED, counterfactual_targets
-from loan_advisory.application.lifecycle import simulate
+from loan_advisory.application.lifecycle import V2_VERSION, configured_policy_version, simulate, simulate_v2
+from loan_advisory.application.ports import ApplicationReader, EvidenceSource, assert_reader
 from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
-from loan_advisory.state_paths import HANDOFF_LOG, append_private, resolve
+from loan_advisory.state_paths import HANDOFF_LOG, append_line, resolve
 
 FIELD_TO_DOC = {k: f"custom_{k}" for k in SCORED}
 _ZEN_LOCK = threading.Lock()   # the shared ZEN decision object is used from server/eval threads
 _RETRIEVER_LOCK = threading.Lock()
 LIMITS = {"monthly_income": (1, 100_000_000), "monthly_obligations": (0, 100_000_000),
-          "credit_score": (300, 900), "employment_months": (0, 600)}
+          "credit_score": (300, 900), "employment_months": (0, 600),
+          "loan_amount": (10_000, 50_000_000), "tenure_months": (12, 108)}
+V2_ONLY_FIELDS = ("loan_amount", "tenure_months")  # amount / loan-period estimates need the catalogue-v2 sizing (Q-03)
+# Outcome names only catalogue v2 records; a record carrying one is estimated under v2 even if its policy version is blank.
+V2_DECISIONS = ("ELIGIBILITY_CONDITIONS_MET", "COUNTER_OFFER", "DECLINE", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED")
+WOULD_MEET = ("APPROVED", "ELIGIBILITY_CONDITIONS_MET")
+NOT_ESTIMABLE = ("ERROR", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED", "REVIEW")
 
 
 class NotAuthorized(Exception):
@@ -38,35 +53,58 @@ class InvalidWhatIf(Exception):
 class FrappeEvidenceSource:
     """Latest stored `Loan Decision Evidence` for a Loan Application (written by the conventional workflow)."""
 
-    def __init__(self, sink):
-        self.sink = sink
+    def __init__(self, reader):
+        self.reader = reader   # a FrappeEvidenceReader: get_record only, never the sink that ingests
+
+    def stamp(self, application_ref: str, doc: dict) -> str | None:
+        """Version stamp of the latest evidence: the evidence pointer plus the application's `modified` time. None when
+        the application carries no pointer (nothing to cache)."""
+        rid = doc.get("custom_latest_evidence")
+        return f"{rid}|{doc.get('modified') or ''}" if rid else None
 
     def latest(self, application_ref: str, doc: dict) -> dict | None:
         rid = doc.get("custom_latest_evidence")
         if not rid:
             return None
         with obs.span("frappe.get_loan_decision_evidence", kind="TOOL", **{"frappe.doctype": "Loan Decision Evidence", "frappe.record_id": rid}):
-            return self.sink.get_record(rid)
+            return self.reader.get_record(rid)
 
 
 class InMemoryEvidenceSource:
-    """Same contract over an InMemoryEvidenceSink (tests, offline eval over synthetic personas)."""
+    """Same contract over an InMemoryEvidenceSink (tests, offline eval over synthetic personas).
+
+    Holds the sink's two dicts, not the sink: the records the agent reads stay live, and `persist()`
+    is not reachable through anything in the agent's object graph.
+    """
 
     def __init__(self, sink):
-        self.sink = sink
+        self.records, self.latest_ids = sink.records, sink.latest_ids
+
+    def stamp(self, application_ref: str, doc: dict) -> str | None:
+        """Latest record id for the application plus the number of stored records (a new evaluation changes it)."""
+        recs = self.records
+        rid = self.latest_ids.get(application_ref)
+        if rid is None:
+            mine = [k for k, r in recs.items() if r.get("application_ref") == application_ref and not r.get("is_simulation")]
+            rid = mine[-1] if mine else None
+        return f"{rid}|{len(recs)}" if rid else None
 
     def latest(self, application_ref: str, doc: dict) -> dict | None:
-        rid = getattr(self.sink, "latest_ids", {}).get(application_ref)
-        if rid in self.sink.records:
-            return self.sink.records[rid]
-        recs = [r for r in self.sink.records.values() if r["application_ref"] == application_ref and not r["is_simulation"]]
+        rid = self.latest_ids.get(application_ref)
+        if rid in self.records:
+            return self.records[rid]
+        recs = [r for r in self.records.values() if r["application_ref"] == application_ref and not r["is_simulation"]]
         return recs[-1] if recs else None
 
 
 @dataclass
 class DecisionTools:
-    store: object
-    evidence: object
+    store: ApplicationReader
+    evidence: EvidenceSource
+
+    def __post_init__(self):
+        assert_reader(self.store, role="the agent's application store")
+        assert_reader(self.evidence, role="the agent's evidence source")
 
     def owned_doc(self, application_ref: str, session: Session) -> dict:
         """The Loan Application document, only when the session's applicant owns it."""
@@ -93,17 +131,42 @@ class DecisionTools:
                 "lifecycle_state": doc.get("custom_lifecycle_state")}
 
     @obs.tool("get_decision_evidence")
-    def get_decision_evidence(self, application_ref: str, session: Session) -> dict | None:
+    def get_decision_evidence(self, application_ref: str, session: Session, cached: dict | None = None,
+                              with_stamp: bool = False):
+        """The latest stored decision. Ownership is re-checked on every call; the evidence record itself is re-read
+        only when its version stamp differs from `cached` ({"application_ref", "stamp", "record"}), so a conversation
+        reads its decision once and re-reads it only after a new evaluation. `with_stamp=True` returns
+        (record, stamp, "hit"|"miss"|"none")."""
         doc = self.owned_doc(application_ref, session)
-        return self.evidence.latest(application_ref, doc)
+        stamp_fn = getattr(self.evidence, "stamp", None)
+        stamp = stamp_fn(application_ref, doc) if stamp_fn else None
+        if stamp and cached and cached.get("application_ref") == application_ref and cached.get("stamp") == stamp \
+                and cached.get("record") is not None:
+            rec, status = cached["record"], "hit"
+        else:
+            rec, status = self.evidence.latest(application_ref, doc), ("miss" if stamp else "none")
+        sp = obs.current_span()
+        if rec is not None:
+            offer = rec.get("offer") or {}
+            obs.set_attrs(sp, **{"decision.cache": status, "decision.outcome": rec.get("outcome") or rec.get("decision"),
+                                 "decision.policy_version": (rec.get("policy") or {}).get("version"),
+                                 "decision.reason_categories": list(rec.get("reason_categories") or []),
+                                 "decision.offer_present": bool(offer.get("amount"))},
+                          **obs.lf_meta(decision_cache=status, reason_categories=list(rec.get("reason_categories") or []),
+                                        offer=({k: offer.get(k) for k in ("amount", "emi", "tenure_months", "counter_offer")}
+                                               if offer.get("amount") and obs.capture_content() else None)))
+        else:
+            obs.set_attrs(sp, **{"decision.cache": status})
+        return (rec, stamp, status) if with_stamp else rec
 
     @obs.tool("run_what_if")
     def run_what_if(self, application_ref: str, session: Session, changes: dict, record: dict | None = None) -> dict:
-        """Hypothetical re-evaluation through the unchanged ZEN path. Returns before/after per rule."""
+        """Hypothetical re-evaluation through the unchanged ZEN path, under the policy version the stored decision
+        was made with (catalogue v2 = synthetic-v2, else the v1 files). Returns before/after per rule (server side)."""
         doc = self.owned_doc(application_ref, session)
         clean = {}
         for k, v in (changes or {}).items():
-            if k not in FIELD_TO_DOC:
+            if k not in LIMITS:
                 raise InvalidWhatIf(f"unsupported what-if field (allowed: {', '.join(SCORED)})")
             try:
                 fv = float(v)
@@ -112,25 +175,50 @@ class DecisionTools:
             lo, hi = LIMITS[k]
             if not lo <= fv <= hi:
                 raise InvalidWhatIf(f"{k} is outside the allowed range {lo}..{hi}")
-            clean[k] = int(fv) if k in ("credit_score", "employment_months") else fv
+            clean[k] = int(fv) if k in ("credit_score", "employment_months", "tenure_months") else fv
         if not clean:
             raise InvalidWhatIf("no hypothetical change given")
+        record = record if record is not None else self.evidence.latest(application_ref, doc)
+        version = ((record or {}).get("policy") or {}).get("version") or configured_policy_version()
+        if version == V2_VERSION or (record or {}).get("decision") in V2_DECISIONS:
+            return self._what_if_v2(application_ref, doc, record or {}, clean)
+        if any(k in V2_ONLY_FIELDS for k in clean):
+            raise InvalidWhatIf("estimates for a different loan amount or loan period aren't available for this application yet")
         before_vals = {k: doc.get(FIELD_TO_DOC[k], doc.get(k)) for k in SCORED}
         # A bureau-underwritten application may carry no local score; simulate from the value the
         # stored evaluation actually used, so the what-if is not an ERROR caused by a missing field.
-        record = record if record is not None else self.evidence.latest(application_ref, doc)
         used = ((record or {}).get("inputs") or {}).get("values") or {}
         base = {FIELD_TO_DOC[k]: used[k] for k in SCORED
                 if doc.get(FIELD_TO_DOC[k], doc.get(k)) in (None, "") and used.get(k) is not None}
         with obs.span("zen.simulate", kind="TOOL", **{"zen.engine": "zen-engine 2.1.2", "zen.fields": sorted(clean)}) as sp, _ZEN_LOCK:
             sim = simulate(application_ref, self.store, {FIELD_TO_DOC[k]: v for k, v in clean.items()}, base=base)
-            obs.set_attrs(sp, **{"zen.simulated_decision": sim["decision"], "zen.policy_version": sim["policy"]["version"]})
+            _mark_sim(sp, sim["decision"], sim["policy"]["version"])
         after_doc = self.store.get(application_ref)
         unchanged = all(after_doc.get(FIELD_TO_DOC[k], after_doc.get(k)) == before_vals[k] for k in SCORED)
         return {"changes": clean, "simulated_decision": sim["decision"], "is_simulation": True,
                 "rule_results": {e["rule_id"]: e["result"] for e in sim["rule_evaluations"]},
                 "failed_reason_codes": sim["failed_reason_codes"], "record": sim,
-                "original_record_unchanged": unchanged,
+                "original_record_unchanged": unchanged, "policy_version": sim["policy"]["version"],
+                "sim_status": "error" if sim["decision"] in NOT_ESTIMABLE else "ok",
+                "label": "hypothetical result under the synthetic prototype policy; not a decision and not a guarantee"}
+
+    def _what_if_v2(self, application_ref: str, doc: dict, record: dict, clean: dict) -> dict:
+        before = dict(doc)
+        with obs.span("zen.simulate", kind="TOOL", **{"zen.engine": "zen-engine 2.1.2 (catalogue v2)",
+                                                      "zen.fields": sorted(clean)}) as sp, _ZEN_LOCK:
+            try:
+                sim = simulate_v2(application_ref, self.store, record, clean)
+            except ValueError as e:
+                raise InvalidWhatIf(str(e)) from None
+            _mark_sim(sp, sim["decision"], (sim.get("policy") or {}).get("version"), basis=sim.get("estimate_basis"))
+        unchanged = self.store.get(application_ref) == before
+        return {"changes": clean, "simulated_decision": sim["decision"], "is_simulation": True,
+                "rule_results": {e["rule_id"]: e["result"] for e in sim.get("rule_evaluations") or []},
+                "failed_reason_codes": sim.get("failed_reason_codes") or [], "record": sim,
+                "reason_categories": list(sim.get("reason_categories") or []), "offer": sim.get("offer"),
+                "original_record_unchanged": unchanged, "policy_version": (sim.get("policy") or {}).get("version"),
+                "estimate_basis": sim.get("estimate_basis"),
+                "sim_status": "error" if sim["decision"] in NOT_ESTIMABLE else "ok",
                 "label": "hypothetical result under the synthetic prototype policy; not a decision and not a guarantee"}
 
     @obs.tool("improvement_plan")
@@ -152,11 +240,24 @@ class DecisionTools:
         return {"steps": steps, "all_changes_together": combined}
 
 
+def _mark_sim(sp, decision, version, basis=None):
+    """zen.simulate span: the simulated decision and policy version; an ERROR / not-estimable result is an ERROR
+    status and level, so a failed estimate never looks like a normal span (Langfuse gap 8)."""
+    status = "error" if decision in NOT_ESTIMABLE else "ok"
+    obs.set_attrs(sp, **{"zen.simulated_decision": decision, "zen.policy_version": version, "zen.sim_status": status,
+                         "zen.estimate_basis": basis},
+                  **({"langfuse.observation.level": "ERROR", "langfuse.observation.status_message": "simulation not estimable"}
+                     if status == "error" else {}))
+    if status == "error":
+        obs.mark_error(sp, "simulation not estimable")
+
+
 # ------------------------------------------------------------------ policy retrieval (read-only)
 class PolicyTools:
     """search_approved_policy over the hybrid + rerank retriever with lender-profile filters."""
 
     def __init__(self, retriever, chunks_by_id: dict, profile: dict | None, rfilter, k: int = 5, hfilter=None):
+        assert_reader(retriever, role="the agent's retriever")
         self.retriever, self.by_id, self.profile, self.rfilter, self.k = retriever, chunks_by_id, profile, rfilter, k
         self.hfilter = hfilter  # historical-mode filter (approved + approved_historical), used for temporal questions
 
@@ -197,18 +298,32 @@ def citation_for(label: str, c: dict, profile: dict | None) -> Citation:
 
 # ------------------------------------------------------------------ human handoff + audit
 class HandoffQueue:
+    """The escalation queue: an operational log, not a borrower record.
+
+    It is the only file this process writes during a turn (the audit row being the other). It keeps the
+    application reference because a queue nobody can act on is not a queue, and it keeps no message text —
+    only a hash and a length, so the applicant's words stay in Frappe. A row that cannot be written returns
+    no reference: the answer then says the handoff is pending instead of quoting one that was never stored.
+    """
+
     def __init__(self, path: str | None = None):
         self.path = resolve(path, "AGENT_HANDOFF_LOG", HANDOFF_LOG, "agent_out/handoffs.jsonl",
                             legacy="agent_out/handoffs.jsonl")
 
     @obs.tool("create_human_handoff")
-    def create(self, category: str, refs: list[str], message: str, request_id: str | None = None) -> str:
+    def create(self, category: str, refs: list[str], message: str, request_id: str | None = None) -> str | None:
         """Queue a handoff without the applicant's words: hash and length only (P0d)."""
         ref = f"HO-{uuid.uuid4().hex[:10]}"
-        with append_private(self.path) as f:
-            f.write(json.dumps({"handoff_ref": ref, "category": category, "refs": refs, "request_id": request_id,
-                                "message_sha256": hashlib.sha256(message.encode()).hexdigest(),
-                                "message_chars": len(message), "created_at": time.time()}) + "\n")
+        row = {"handoff_ref": ref, "category": category, "refs": refs, "request_id": request_id,
+               "message_sha256": hashlib.sha256(message.encode()).hexdigest(),
+               "message_chars": len(message), "created_at": time.time()}
+        try:
+            append_line(self.path, json.dumps(row) + "\n")
+        except OSError as e:                      # a full or read-only disk is an ops failure, not the borrower's
+            sys.stderr.write(f"handoff {ref} not queued: {type(e).__name__}: {e}\n")
+            obs.set_attrs(obs.current_span(), **{"handoff.queued": False, "handoff.error": type(e).__name__})
+            return None
+        obs.set_attrs(obs.current_span(), **{"handoff.queued": True})
         return ref
 
 

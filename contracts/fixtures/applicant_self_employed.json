@@ -1,0 +1,20 @@
+{
+  "schema_version": "saral-applicant/1",
+  "applicant_id": "SYN-APP-000404",
+  "full_name": "Kiran Synthetic Das",
+  "date_of_birth": "1988-09-01",
+  "nationality": "IN",
+  "pan_masked": "XXXXX1180X",
+  "aadhaar_last4": "0457",
+  "residence_city": "Warangal",
+  "employment_type": "SELF_EMPLOYED",
+  "employer_category": "NOT_APPLICABLE",
+  "declared_monthly_income": 55000,
+  "existing_customer": true,
+  "consents": {
+    "bureau_pull_at": null,
+    "document_processing_at": "2026-11-03T12:00:00Z"
+  },
+  "bureau_snapshot": null,
+  "created_at": "2026-11-03T11:50:00Z"
+}

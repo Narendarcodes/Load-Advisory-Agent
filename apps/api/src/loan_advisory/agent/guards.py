@@ -65,8 +65,25 @@ _REQ = {
                        r"\b(?:application|loan|score|record|details|data|status|report)\s+of\s+(?:my\s+(?:friend|brother|sister|"
                        r"wife|husband|father|mother|son|daughter|colleague|cousin|relative)|another|someone\s+else)\b|"
                        r"\b(SYN-APP|APP-TEST|ACC-LOAP)-[0-9]+",
+    # Prompt-injection framing, in every language the agent serves. Until 2026-11-03 (Phase 1 boundary E)
+    # this was English-only, so a Hindi or Telugu borrower could say "forget your instructions" in their own
+    # script and reach the composer. "निर्देश" and "సూచన" are ordinary loan words, so every Indic branch
+    # pairs the instruction noun with a forget / reveal / disobey verb or with a role change, and the whole
+    # set is calibrated in tests/test_agent_dispatch_isolation.py against the full synthetic persona corpus.
     "injection": r"ignore (all |the )?(previous|prior|above) (instructions|rules)|system prompt|developer mode|you are now|"
-                 r"pretend (to be|you are)|jailbreak|reveal your (prompt|instructions)",
+                 r"pretend (to be|you are)|jailbreak|reveal your (prompt|instructions)|"
+                 r"निर्देश[^.!?]{0,30}(?:भूल|नज़रअंदाज़|नजरअंदाज़|तोड़|छोड़|ignore)"
+                 r"|(?:भूल|नज़रअंदाज़|नजरअंदाज़|तोड़|छोड़|ignore)[^.!?]{0,30}निर्देश"
+                 r"|सिस्टम\s*प्र[^ ]{0,8}ट|डेवलपर\s*मोड"
+                 r"|अपने?\s+(?:निर्देश|प्र[^ ]{0,8}ट)[^.!?]{0,15}(?:बताओ|दिखाओ|देख|बताना)"
+                 r"|(?:तुम|आप)\s+अब\s+(?:एक[^.!?]{0,30}(?:हो|हूँ|हैं|है|बन)|[^.!?]{0,25}(?:बन|जाओ|जाइए))|"
+                 r"సూచన[^.!?]{0,30}(?:మరచిపో|విస్మరించ|ignore)"
+                 r"|(?:మరచిపో|విస్మరించ|ignore)[^.!?]{0,30}సూచన"
+                 r"|సిస్టమ్\s*ప్[^ ]{0,8}ట్|డెవలపర్\s*మోడ్"
+                 r"|మీ సూచనలు[^.!?]{0,15}(?:చెప్పండి|చూపించు|చూపించండి)"
+                 r"|మీరు\s+ఇప్పుడు\s+(?:ఒక[^.!?]{0,30}(?:అవ|మార)|[^.!?]{0,25}(?:మారండి|అవ్వండి))|"
+                 # Roman-script Hindi (code-mixed borrower text), kept to a two-part frame on purpose.
+                 r"instructions?\s+bhool|ignore\s+(?:apne|saare|sare|pichle|previous)\b[^.!?]{0,20}instructions",
 }
 REQ_PATTERNS = {k: re.compile(v, re.I) for k, v in _REQ.items()}
 

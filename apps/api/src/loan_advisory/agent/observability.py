@@ -229,6 +229,17 @@ def set_attrs(sp, **attrs):
             _LOG.warning("dropped span attributes (%s)", type(e).__name__)
 
 
+def mark_error(sp, message: str):
+    """ERROR status on a span (a fixed, value-free message). Never breaks the turn."""
+    if sp is None:
+        return
+    try:
+        from opentelemetry.trace import Status, StatusCode
+        sp.set_status(Status(StatusCode.ERROR, message))
+    except Exception:
+        pass
+
+
 def content_enabled() -> bool:
     """Read at call time so a process that sets AGENT_TRACE_CONTENT later is not stuck with the import-time value."""
     return os.environ.get("AGENT_TRACE_CONTENT") == "1"

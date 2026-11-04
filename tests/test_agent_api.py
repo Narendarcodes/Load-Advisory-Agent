@@ -60,7 +60,7 @@ def _secret(monkeypatch):
 @pytest.fixture(scope="module")
 def service():
     agent, store, _ = build_offline_agent(llm=ScriptedLLM(intent="explain"), policy_tools=FakePolicy())
-    return srv.App(agent, store.get)
+    return srv.App(agent)
 
 
 @pytest.fixture
@@ -123,7 +123,7 @@ def test_agui_event_sequence_and_allowlisted_state(client):
 
     deltas = [event.delta for event in events if event.type == "TEXT_MESSAGE_CONTENT"]
     assert deltas and deltas[0].startswith("This uses a synthetic prototype policy.")
-    assert any("Credit score" in delta for delta in deltas)
+    assert any("existing EMIs are high" in delta for delta in deltas)  # one plain reason, never rule names (fix 2)
     state = events[-3].snapshot
     assert set(state) <= set(PUBLIC_STATE_FIELDS) and "timings" not in state
     assert state["decision_card"]["application_ref"] == "APP-TEST-005"

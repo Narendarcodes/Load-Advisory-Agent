@@ -8,7 +8,8 @@ Literacy = Literal["low", "medium", "high"]
 # portal app); tests/test_preference_vocabulary.py fails if these two drift from it.
 LOCALES = ("en", "hi", "te")           # answer language; one source of truth for request and token validation
 Action = Literal["answer", "clarify", "simulate", "handoff", "refuse"]
-Intent = Literal["explain", "improve", "what_if", "policy", "boundary", "greeting", "other"]
+Intent = Literal["explain", "improve", "what_if", "policy", "boundary", "greeting", "other", "status", "human_review",
+                 "distress", "clarify"]
 
 
 class Session(BaseModel):
@@ -39,6 +40,7 @@ class Citation(BaseModel):
     publisher: str | None = None
     relationship: str | None = None         # e.g. "public reference lender, not a partner"
     applies_to_entity: list[str] | None = None
+    excerpt: str | None = None              # opening of the cited passage, plain text (source chip)
 
 
 class AgentResponse(BaseModel):

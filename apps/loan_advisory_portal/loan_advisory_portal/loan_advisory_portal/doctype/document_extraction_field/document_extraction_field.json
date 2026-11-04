@@ -1,0 +1,28 @@
+{
+ "actions": [],
+ "creation": "2026-11-03 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["field_key", "masked_value", "status", "confidence", "source_page"],
+ "fields": [
+  {"fieldname": "field_key", "fieldtype": "Data", "label": "Field", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "masked_value", "fieldtype": "Data", "label": "Value (masked)", "in_list_view": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "found\nlow_confidence\nmissing\ninvalid", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "confidence", "fieldtype": "Float", "label": "Confidence (0-100)", "precision": "2", "in_list_view": 1},
+  {"fieldname": "source_page", "fieldtype": "Int", "label": "Source Page"}
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Loan Advisory Portal",
+ "name": "Document Extraction Field",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
