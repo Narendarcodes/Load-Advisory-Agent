@@ -181,7 +181,7 @@ class FallbackLLM:
 
 
 def bm25_policy_tools(policy_dir):
-    from rag.retrieve import BM25Index, HybridRetriever, load_profile, load_rag_config, profile_filter
+    from rag.retrieve import BM25Index, HybridRetriever, load_rag_config, profile_filter
     from rag.routed import RoutedPolicyTools
     from loan_advisory.agent.runtime import load_chunks
     from loan_advisory.agent.tools import PolicyTools
