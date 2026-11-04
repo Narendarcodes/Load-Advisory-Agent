@@ -113,13 +113,19 @@ design choices; 0 open defects.
 
 ### 1.11 Live GUI (59 cases)
 
-55 GUI/live, 3 fail, 1 blocked. Agent in the frontend (A5, 64 cases): TODO: A5 live run in progress.
+55 GUI/live, 3 fail, 1 blocked. Agent in the frontend (A5, 64 cases, full run on the owner's laptop from `main` @ 658ce44, 2026-11-04): harness labels 41 pass / 17 fail / 6 blocked; after manual review of every failing answer **51 pass / 7 real fails / 6 blocked**. The 10 harness false positives: the Sources card's P1–P5 labels (old citation selector and leak regex), "cut-off" inside a correct refusal flagged as a leak, "Approved" on the card rather than in the answer text. No real leak. Applicants: SYN-APP-0098 replaces 0087 (the portal refuses requests above ₹25L); the 0031 decline cases were split EN 0031 / HI 0002 / TE 0003.
 
 | Failure | Count | Examples | Mitigation |
 |---|---:|---|---|
 | Decision differs from the label | 3 | A3-0123 (D-13), A3-0139 and A6-MISSING (design) | As 1.10 |
 | Product defects found and fixed during the run | 10 (D-02..D-10, D-04b) | counter-offer read as approved (D-06), desk form and audit log unreadable (D-08, D-09) | Fixed, CI green, verified live; kept as regression cases |
 | No counter-offer accept action | 1 blocked | A4-COUNTER-ACCEPT | Accept / decline-offer action in the portal and the desk |
+| A5: policy step timed out, "busy" fallback with no sources | 2 | A5-POL-02-EN, A5-POL-05-EN | Longer policy budget or a retry before the fallback |
+| A5: Telugu policy question abstained, no citations | 2 | A5-POL-09-TE, A5-POL-10-TE | Telugu query rewriting / cross-lingual retrieval |
+| A5: vague follow-up got a what-if error, not a clarifying question | 1 | A5-CLAR-HI | Route unparsed what-ifs to clarify |
+| A5: manual-review explanation answered in English | 2 | A5-EXP-REVIEW-HI, A5-EXP-REVIEW-TE | Carry the profile language into the manual-review template |
+| A5: tenure / loan-amount what-if not estimated, no what-if cap in HI/TE (Q-03) | 6 blocked | A5-WI-TENUREMO-HI/TE, A5-WI-LOANAMOU-HI/TE, A5-WICAP-HI/TE | Fix Q-03 |
+| A5 harness false positives (not product defects) | 10 | P1–P5 source labels, "cut-off" in a refusal, "Approved" on the card | Update the harness selector and leak regex |
 
 ### 1.12 Documents and OCR (automated, synthetic pages and public samples)
 
@@ -141,7 +147,7 @@ design choices; 0 open defects.
 | Held-out splits | Dev numbers can be optimistic | RAG held-out: not run. Agent held-out (11): no-leak 10/11, role 0.750, tool exact 0.788, every bar fails; ids were visible to reviewers from 07:42 IST |
 | Voice | Only one voice-channel conversation (text in/out) | Voice eval with audio |
 | Streaming and latency SLOs | Not measured end to end | Load test on the integration stack |
-| Agent eval reads an in-memory record store | Frappe reads are covered only by the live E2E | A5 live cases: TODO: A5 live run in progress |
+| Agent eval reads an in-memory record store | Frappe reads are covered only by the live E2E | A5 live cases (64, laptop, 2026-11-04): 51 pass / 7 real fails / 6 blocked after manual review (harness: 41 / 17 / 6); no real leak |
 | Dense retrieval in the agent eval | The agent eval used BM25 only to save memory | The RAG eval covers the hybrid retriever |
 | Prompt injection inside retrieved passages | Not tested | Add poisoned-passage items |
 | Production Frappe | Test bench only; permissions and load untested | Staging bench with production settings |

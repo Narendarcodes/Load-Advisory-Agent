@@ -280,7 +280,7 @@ docs/               architecture/, agent/, policy/, data/, observability/, resea
 
 ## Evaluation results (summary)
 
-All on synthetic applicants. The LLM judge is the same gpt-oss-120b that generates answers, so judge figures are
+All on synthetic applicants. In these October runs the LLM judge was the same gpt-oss-120b that generated answers (today's answer model is Gemini 3.8 Flash via OmniRoute, Sonnet 4.6 fallback; gpt-oss-120b is the intent classifier only), so judge figures are
 indicative only; `strict` and `support` citation scores are deterministic gold-document / gold-anchor checks. These are
 the last recorded runs (PRs #5–#10, October 2026) and were not re-run for this revision; the live-service rows are
 historical.

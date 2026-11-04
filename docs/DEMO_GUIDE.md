@@ -33,13 +33,16 @@ differ live.
 |---|---|---|---|---|---|---|
 | SYN-APP-0001 | Imran Sharma | ZZZPS9430U | 143766630106 | Wedding | **Approved with offer**: ₹1,15,000, EMI ₹3,047, 60 months | Policy question: "What documents do I need for a personal loan?" (cited answer) |
 | SYN-APP-0080 | Nikhil Rao | ZZOPR9906L | 180009235201 | Medical emergency | **Approved with offer**: ₹5,65,000, EMI ₹28,756, 24 months | Telugu: "నా లోన్ ఎందుకు ఆమోదించబడింది?" (why was my loan approved?) |
-| SYN-APP-0098 | Nandini Khan | ZZRPK5405J | 103472529847 | Higher education | **Counter-offer**: ₹13,08,000 at 84 months (reason: repayments too high) | Income what-if: "What if my monthly income were ₹20,000 higher?" ("would likely meet" / "wouldn't meet", estimate only) |
-| SYN-APP-0087 | Sneha Patel | ZZPPP4714I | 029943229816 | Home renovation | **Counter-offer at the ₹25 lakh cap** (asked for ₹35,40,000); EMI ₹55,515, 84 months | "Why didn't I get the full amount?" (plain reason, no cut-off) |
+| SYN-APP-0098 | Nandini Khan | ZZRPK5405J | 103472529847 | Higher education | **Counter-offer**: ₹13,08,000 at 84 months (reason: repayments too high) | "Why didn't I get the full amount?" (plain reason, no cut-off); then the income what-if: "What if my monthly income were ₹20,000 higher?" ("would likely meet" / "wouldn't meet", estimate only) |
 | SYN-APP-0031 | Pooja Patel | ZZDPP4539C | 055310132733 | Home renovation | **Declined** (reason category: credit history) | Hindi: "मेरा लोन क्यों रिजेक्ट हुआ?"; then leak probe: "What exact credit score cut-off did I miss?" (must refuse to give a threshold) |
 | SYN-APP-0011 | Lavanya Pillai | ZZKPP6727Z | 094262360689 | Home renovation | **Manual review** (income could not be verified); appears in the officer queue | "I want to talk to a person" (creates a handoff); then show the case in the officer desk |
 | SYN-APP-0020 | Vikas Reddy | ZZPPR3856D | 198119720606 | Medical emergency | **Referred: stale bureau report** → manual review (borrower sees reason "Other"; accepted design choice) | "What happens next with my application?" |
 | SYN-APP-0072 | Pooja Iyer | ZZKPI1393K | 131745395983 | Medical emergency | **Missing documents** → more information required (signature missing) | "What do I need to send?" |
 | SYN-APP-0007 | Imran Rao | ZZOPR1486Y | 133812057233 | Home renovation | **Missing documents** → more information required (identity details incomplete) | Vague question: "Is it okay?" (Saral should ask a clarifying question) |
+
+SYN-APP-0087 (asked for ₹35,40,000) is not in the table: on `main` the portal refuses any request above the ₹25 lakh
+cap when the application is created, so a fresh seed has no application for it (the seeder reports 16 refused).
+Use SYN-APP-0098 for the counter-offer demo (laptop run, 2026-11-04).
 
 Borrower login for each row: `syn.app.NNNN@example.invalid` with the password from your `creds.json`, for example
 `syn.app.0001@example.invalid` for SYN-APP-0001. The portal shows the applicant id as the borrower's name (a seeding
