@@ -172,7 +172,10 @@ def decision_card(record: dict) -> dict:
                       "reason_code": e["reason_code"], "result": e["result"],
                       "actual": actual_disp,
                       "threshold": ("≥ " if e["operator"] == ">=" else "≤ ") + _display(e["rule_id"], e["threshold"]),
-                      "threshold_source": "synthetic" if pol.get("synthetic") else e.get("threshold_source")})
+                      "threshold_source": "synthetic" if pol.get("synthetic") else e.get("threshold_source"),
+                      # The engine's own numbers, for meters. None when the engine did not evaluate the rule.
+                      "actual_value": _number(e.get("actual_value")), "threshold_value": _number(e.get("threshold")),
+                      "operator": e.get("operator") if e.get("operator") in (">=", "<=") else None})
     card = {"application_ref": record.get("application_ref"), "decision": record.get("decision"),
             "recorded_outcome": record.get("outcome") or record.get("decision"),
             "lifecycle_state": record.get("lifecycle_state"), "record_id": record.get("record_id"),
@@ -187,6 +190,13 @@ def decision_card(record: dict) -> dict:
                                              "info_requested_fields", "data_quality_category", "score_source",
                                              "score_conflict", "provider_error", "retryable", "synthetic_report")}
     return card
+
+
+def _number(v):
+    """A finite int/float from the engine record, else None (never a string or bool)."""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return None
+    return v if v == v and v not in (float("inf"), float("-inf")) else None
 
 
 def _display_vs(rule_id, actual, threshold):

@@ -9,7 +9,7 @@ base_template_path = "templates/portal/base.html"
 
 
 def get_context(context):
-	context = borrower_page(context, "applications", "Application")
+	context = borrower_page(context, "application", "Application")
 	if context.get("blocked"):
 		return context
 
