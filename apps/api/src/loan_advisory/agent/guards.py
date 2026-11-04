@@ -234,21 +234,59 @@ _SAN = [
 ]
 
 
+# Recorded outcome codes must never reach the borrower (E2E D-16: "ELIGIBILITY_CONDITIONS_MET", "COUNTER_OFFER" and a
+# bare "DECLINE" were shown). The EXPLAIN prompt forbids them; sanitize_answer() swaps any that slip through for plain
+# words in the answer's language. A bare v2 short code (DECLINE, COUNTER, REFER) only counts in capitals at the end of a
+# sentence or alone on a line; legacy v1 words (APPROVED/REJECTED) are left to the v1 templates.
+OUTCOME_WORDS = {
+    "en": {"ELIGIBILITY_CONDITIONS_MET": "Your application met our conditions.",
+           "COUNTER_OFFER": "We can't offer the full amount you asked for, but we can offer a smaller loan.",
+           "MANUAL_REVIEW": "A person on our team will look at your application.",
+           "MORE_INFORMATION_REQUIRED": "We need a few more details from you.",
+           "DECLINE": "We can't approve this application right now."},
+    "hi": {"ELIGIBILITY_CONDITIONS_MET": "आपका आवेदन हमारी शर्तें पूरी करता है।",
+           "COUNTER_OFFER": "हम आपकी माँगी गई पूरी राशि नहीं दे सकते, पर कम राशि का लोन दे सकते हैं।",
+           "MANUAL_REVIEW": "हमारी टीम का एक व्यक्ति आपका आवेदन देखेगा।",
+           "MORE_INFORMATION_REQUIRED": "हमें आपसे कुछ और जानकारी चाहिए।",
+           "DECLINE": "हम अभी यह आवेदन स्वीकृत नहीं कर सकते।"},
+    "te": {"ELIGIBILITY_CONDITIONS_MET": "మీ దరఖాస్తు మా షరతులను నెరవేర్చింది.",
+           "COUNTER_OFFER": "మీరు అడిగిన పూర్తి మొత్తం ఇవ్వలేము, కానీ తక్కువ మొత్తంలో లోన్ ఇవ్వగలము.",
+           "MANUAL_REVIEW": "మా బృందంలోని ఒక వ్యక్తి మీ దరఖాస్తును చూస్తారు.",
+           "MORE_INFORMATION_REQUIRED": "మాకు మీ నుండి మరికొన్ని వివరాలు కావాలి.",
+           "DECLINE": "ప్రస్తుతం ఈ దరఖాస్తును మేము ఆమోదించలేము."},
+}
+_ALIASES = {"COUNTER": "COUNTER_OFFER", "REJECTED": "DECLINE", "REJECT": "DECLINE", "APPROVED": "ELIGIBILITY_CONDITIONS_MET",
+            "APPROVE": "ELIGIBILITY_CONDITIONS_MET", "REFER": "MANUAL_REVIEW", "REVIEW": "MANUAL_REVIEW",
+            "INFO_REQUESTED": "MORE_INFORMATION_REQUIRED"}
+LEAK_OUTCOME = re.compile(r"\b(ELIGIBILITY_CONDITIONS_MET|COUNTER_OFFER|MANUAL_REVIEW|MORE_INFORMATION_REQUIRED|INFO_REQUESTED)\b"
+                          r"|\bDECLINE\b(?=\s*(?:[.:]|$))|^[ \t]*(?:COUNTER|REFER)[ \t]*$", re.M)
+
+
 def leaked_terms(text: str) -> list[str]:
     """Internal labels / machinery words in borrower-visible text (case kept for labels, lower-cased words)."""
     found = [m.group(0) for m in LEAK_CASED.finditer(text or "")]
     found += [m.group(0).lower() for m in LEAK_WORDS.finditer(text or "")]
+    found += [m.group(0) for m in LEAK_OUTCOME.finditer(text or "")]
     return sorted(set(found))
 
 
-def sanitize_answer(text: str) -> str:
-    """Strip passage labels and retrieval words from an answer before the borrower sees it.
+def _plain_outcome(m: re.Match, locale: str) -> str:
+    code = m.group(0).strip()
+    words = OUTCOME_WORDS.get(locale, OUTCOME_WORDS["en"])
+    return words[_ALIASES.get(code, code)]
 
-    Facts, numbers and qualifiers are left untouched; only the machinery is removed or replaced by "source(s)".
-    Idempotent and a no-op on clean text."""
+
+def sanitize_answer(text: str, locale: str = "en") -> str:
+    """Strip passage labels, retrieval words and outcome codes from an answer before the borrower sees it.
+
+    Facts, numbers and qualifiers are left untouched; only the machinery is removed or replaced by "source(s)", and an
+    outcome code is replaced by plain words in `locale`. Idempotent and a no-op on clean text."""
     if not text or not leaked_terms(text):
         return text
-    out = text
+    # "Your decision is COUNTER_OFFER." -> the plain sentence on its own (only right before a code)
+    out = re.sub(r"\b(?:[Yy]our |[Tt]he )?(?:recorded )?(?:[Dd]ecision|[Oo]utcome|[Ss]tatus)(?: is| was|:)\s*(?=" + LEAK_OUTCOME.pattern + ")", "", text)
+    out = LEAK_OUTCOME.sub(lambda m: _plain_outcome(m, locale), out)
+    out = re.sub(r"([.!?।])\.", r"\1", out)
     for pat, rep in _SAN:
         out = pat.sub(rep, out)
     out = re.sub(r"[ \t]{2,}", " ", out)

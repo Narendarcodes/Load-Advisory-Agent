@@ -99,10 +99,23 @@ Return JSON only: {{"intent": "<label>", "what_if_changes": {{"<field>": {{"set"
 
 EXPLAIN = CORE_RULES + DISCLOSURE + """
 Task: explain the recorded decision in plain language, in this order: what happened, why in plain words, what you can do next.
-- What happened: say the recorded decision in one short sentence. Never go beyond the recorded decision.
-- Why: if the decision is REJECTED, give the main reason as a plain category (see the disclosure rules). You may add
-  other failed checks as plain categories, within 3 points in total. Only FAILED checks are reasons; never present a
-  passed check as a reason, and do not say how many checks were met.
+- What happened: say the recorded decision in one short sentence, using the plain words in "outcome_plain" from the
+  facts (in the answer's language). Never go beyond the recorded decision.
+- NEVER write an outcome code: no words in capitals joined by underscores and no bare status codes (for example
+  ELIGIBILITY_CONDITIONS_MET, COUNTER_OFFER, MANUAL_REVIEW, MORE_INFORMATION_REQUIRED, DECLINE, APPROVED, REJECTED).
+  Do not translate a code word for word either (not "eligibility conditions met"); say what it means for the applicant.
+- Why: if the decision is REJECTED or a decline, give the main reason as a plain category (see the disclosure rules).
+  You may add other failed checks as plain categories, within 3 points in total. Only FAILED checks are reasons; never
+  present a passed check as a reason, and do not say how many checks were met.
+- If the decision is a counter-offer: say plainly that we can't offer the full amount they asked for, then state the
+  offer from "offer" in the facts exactly: the loan amount, the monthly EMI and the loan period in months. Then say why
+  in plain words from "reason_categories" (for example "your existing EMIs are high for the amount you asked for" or
+  "the amount you asked for is more than we can offer"), never with a limit or a number to reach. Next step: they can
+  accept the offer, ask about a smaller amount, or ask for a human review.
+- If the decision is approved or a counter-offer and "offer" is in the facts, you may state its amount, EMI and loan
+  period; say it is not a final loan sanction.
+- When nothing failed (approved or counter-offer), do not write "no failed check" or "no failed reason was recorded";
+  just explain the decision.
 - What you can do next: one short, general, honest step, and offer a human review or to answer questions.
 Style: {style}
 Language: write in {lang}. Keep numbers as digits.
@@ -408,17 +421,20 @@ FALLBACK_EXPLAIN = {
            "rule": "- {name} did not meet our requirement.",
            "passed": "Other parts of your application were fine.",
            "bureau": "The credit score used for this assessment came from {src}; this is synthetic prototype data, not a real credit bureau report.",
-           "offer": "I can share general steps that help, answer questions, or ask a person to review it."},
+           "offer": "I can share general steps that help, answer questions, or ask a person to review it.",
+           "counter": "We can't offer the full amount you asked for. We can offer {amount}, with an EMI of {emi} a month for {tenure} months."},
     "hi": {"head": "सिंथेटिक प्रोटोटाइप नीति के तहत आपके आवेदन का दर्ज निर्णय {decision} है।",
            "rule": "- {name}: यह हमारी ज़रूरत पूरी नहीं करता।",
            "passed": "बाकी जाँचें पूरी हुईं।",
            "bureau": "इस आकलन में इस्तेमाल हुआ क्रेडिट स्कोर {src} से आया; यह सिंथेटिक प्रोटोटाइप डेटा है, असली क्रेडिट ब्यूरो रिपोर्ट नहीं।",
-           "offer": "मैं बता सकता हूँ कि क्या बदलना होगा, या आपके सवालों के जवाब दे सकता हूँ।"},
+           "offer": "मैं बता सकता हूँ कि क्या बदलना होगा, या आपके सवालों के जवाब दे सकता हूँ।",
+           "counter": "हम आपकी माँगी गई पूरी राशि नहीं दे सकते। हम {amount} दे सकते हैं, {tenure} महीनों के लिए हर महीने {emi} की EMI पर।"},
     "te": {"head": "సింథటిక్ ప్రోటోటైప్ పాలసీ ప్రకారం మీ దరఖాస్తుకు నమోదైన నిర్ణయం: {decision}.",
            "rule": "- {name}: ఇది మా అవసరాన్ని తీర్చలేదు.",
            "passed": "మిగతా తనిఖీలు నెరవేరాయి.",
            "bureau": "ఈ అంచనాకు ఉపయోగించిన క్రెడిట్ స్కోర్ {src} నుండి వచ్చింది; ఇది సింథటిక్ ప్రోటోటైప్ డేటా, నిజమైన క్రెడిట్ బ్యూరో రిపోర్ట్ కాదు.",
-           "offer": "ఏమి మారాలో చూపించగలను, లేదా మీ ప్రశ్నలకు సమాధానం ఇవ్వగలను."},
+           "offer": "ఏమి మారాలో చూపించగలను, లేదా మీ ప్రశ్నలకు సమాధానం ఇవ్వగలను.",
+           "counter": "మీరు అడిగిన పూర్తి మొత్తాన్ని మేము ఇవ్వలేము. మేము {amount} ఇవ్వగలము, {tenure} నెలల పాటు నెలకు {emi} EMIతో."},
 }
 
 def template(key: str, locale: str = "en", **kw) -> str:
