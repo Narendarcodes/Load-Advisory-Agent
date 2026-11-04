@@ -61,15 +61,16 @@ Paddle wheels need.
 
 ## Memory guidance
 
-* **~2 GB peak RSS per process** that has run Paddle mobile (measured 1.9 GB in the bake-off;
-  see the real-sample benchmark in `OCR_BAKEOFF.md` §9). The models stay resident between
-  pages, so the cost is paid once per worker, not per page.
+* **~2-3 GB peak RSS per process** that has run Paddle mobile: 1.9 GB on the small synthetic
+  pages of the bake-off, **3.0 GB** on 1,650x2,340 px statement pages in the real-sample benchmark
+  (`OCR_BAKEOFF.md` §9). The models stay resident between pages, so the cost is paid once per
+  worker, not per page; large pages raise the peak.
 * Every gunicorn/RQ worker that serves an OCR request loads its own copy. Budget
-  **2.5 GB per OCR-serving worker** on top of the rest of the stack. On a 7-8 GB box with the
+  **3 GB per OCR-serving worker** on top of the rest of the stack. On a 7-8 GB box with the
   agent stack running, allow one OCR worker, or set `SARAL_OCR_ENGINES=tesseract` (~75 MB).
 * Do not use the server models on 7-8 GB hosts (~4.7 GB RSS, slower and no more accurate
   in the bake-off).
-* First call per worker pays ~10 s of model load; later pages take ~0.9 s (4 vCPU).
+* First call per worker pays ~4-10 s of model load; later pages take ~0.5 s median, ~6 s p90 for full statement pages (4 vCPU).
 
 ## Data handling (unchanged from PR #41)
 
