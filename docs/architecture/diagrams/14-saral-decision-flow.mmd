@@ -1,0 +1,15 @@
+flowchart TD
+  S["Application SUBMITTED in Frappe"] --> K["KYC: PAN + Aadhaar (synthetic API)"]
+  K --> BK["Bank: AA fetch, else PDF + OCR"]
+  BK --> BU["Bureau report"]
+  BU --> G{"Bureau gate"}
+  G -- "no hit / thin file /<br/>data-quality issue" --> MR["MANUAL_REVIEW<br/>(plain reason)"]
+  G -- "ok" --> Z["ZEN: catalogue v2 rules<br/>(per product and amount band)"]
+  Z --> O{"Outcome"}
+  O -- "all pass" --> AP["APPROVED"]
+  O -- "fails only on amount" --> CO["COUNTER_OFFER<br/>largest passing amount"]
+  O -- "hard fail" --> DE["DECLINED<br/>one reason category"]
+  O -- "missing document or field" --> MI["MORE_INFORMATION_REQUIRED"]
+  O -- "review trigger, fraud or list hit,<br/>low OCR confidence" --> MR
+  AP & CO & DE & MI & MR --> EV["Decision evidence + snapshot<br/>stored in Frappe (audit log)"]
+  MR --> DESK["Loan Officer desk:<br/>Approve / Decline / Request info"]

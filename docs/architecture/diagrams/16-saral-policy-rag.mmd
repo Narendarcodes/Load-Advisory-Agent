@@ -1,0 +1,11 @@
+flowchart LR
+  subgraph CORPUS["Cleaned corpus (G1)"]
+    BJ["Bajaj Finance public docs<br/>15 docs, 329 chunks<br/>authority: indicative"]
+    RB["RBI directions<br/>6 docs, 317 chunks"]
+  end
+  BJ --> C1[("saral_nbfc_policy")]
+  RB --> C2[("rbi_regulatory")]
+  Qy["Question"] --> DQ["Optional sub-queries<br/>(multi-hop)"]
+  DQ --> BM["BM25"] & DN["Dense: EmbeddingGemma"]
+  C1 & C2 --> BM & DN
+  BM & DN --> RRF["Weighted RRF"] --> RR["Reranker (optional)"] --> TOP["Top 5 passages"] --> ANS["Cited answer,<br/>labels stripped"]

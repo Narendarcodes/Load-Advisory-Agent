@@ -1,0 +1,46 @@
+flowchart LR
+  subgraph USERS["People"]
+    BOR["Borrower"]
+    OFF["Loan Officer"]
+  end
+
+  subgraph ORCH["Orchestration machine (dev sandbox)"]
+    FD["Front door :18100<br/>one origin for portal + assistant"]
+    RT["Assistant runtime :4200<br/>CopilotKit (Node)"]
+    AG["Saral agent :8095<br/>FastAPI + LangGraph"]
+    RUN["Decision runner<br/>(always on, polls Frappe)"]
+    ZEN["ZEN Engine<br/>catalogue v2 (in process)"]
+    RUN --> ZEN
+    AG -- "what-if" --> ZEN
+  end
+
+  subgraph IB2["InstaBox 2"]
+    FR["Frappe stack :8080<br/>frappe 16 + erpnext 16 +<br/>lending 16 + loan_advisory_portal"]
+    DB[("MariaDB + Redis")]
+    LF["Langfuse 4.70 :3000<br/>(optional)"]
+    FR --- DB
+  end
+
+  subgraph IB1["InstaBox 1"]
+    QD[("Qdrant :6333<br/>saral_nbfc_policy 329<br/>rbi_regulatory 317")]
+    EMB["Embedding service :8013<br/>EmbeddingGemma (768-d)"]
+    BUR["Synthetic bureau :8011"]
+    KYC["Synthetic KYC + AA :8012"]
+  end
+
+  LLM["LLM endpoint<br/>(OpenAI-compatible)"]
+  KG["Kaggle 2x T4<br/>(eval retrieval only)"]
+
+  BOR --> FD
+  OFF --> FR
+  FD --> FR
+  FD --> RT
+  RT -- "60 s assertion" --> AG
+  AG -- "read-only views" --> FR
+  AG --> QD
+  AG --> EMB
+  AG --> LLM
+  AG -.-> LF
+  RUN --> FR
+  RUN --> BUR
+  RUN --> KYC

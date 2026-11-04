@@ -1,5 +1,9 @@
 # Architecture
 
+> **Saral (current build, 2026-11-04):** see [../saral/ARCHITECTURE.md](../saral/ARCHITECTURE.md) for the system,
+> decision flow, assistant turn, policy RAG and the approach drawing (sources `diagrams/12-16-saral-*.mmd`). The
+> diagrams below describe the earlier agent and portal and are kept for history.
+
 Mermaid sources live in [`diagrams/`](diagrams/) next to their rendered SVG and PNG (re-render with
 `bash docs/architecture/diagrams/render.sh`). The revised diagrams (01, 02, 05) were checked against `main` at
 `9a6e3f6` (2026-10-27), so they cover the bureau entry point (PR #17) and optional Langfuse export (PR #18) as well
