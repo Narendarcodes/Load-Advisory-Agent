@@ -1,0 +1,98 @@
+{
+ "deepeval": {
+  "Faithfulness": {
+   "n": 149,
+   "scored": 149,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.9813,
+   "pass_rate@0.5": 0.9933
+  },
+  "ContextualPrecision": {
+   "n": 149,
+   "scored": 149,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.8971,
+   "pass_rate@0.5": 0.953
+  },
+  "AnswerRelevancy": {
+   "n": 149,
+   "scored": 149,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.9598,
+   "pass_rate@0.5": 0.9799
+  },
+  "ContextualRecall": {
+   "n": 149,
+   "scored": 149,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.8372,
+   "pass_rate@0.5": 0.8993
+  },
+  "ExpectedBehaviour": {
+   "n": 40,
+   "scored": 40,
+   "errors": 0,
+   "skipped_time_budget": 0,
+   "mean": 0.7525,
+   "pass_rate@0.5": 0.875
+  }
+ },
+ "deterministic": {
+  "gold_chunk_in_top5": {
+   "n": 149,
+   "true": 129,
+   "rate": 0.8658
+  },
+  "gold_doc_in_top5": {
+   "n": 149,
+   "true": 145,
+   "rate": 0.9732
+  },
+  "cited_gold_chunk": {
+   "n": 149,
+   "true": 123,
+   "rate": 0.8255
+  },
+  "cited_gold_doc": {
+   "n": 149,
+   "true": 138,
+   "rate": 0.9262
+  },
+  "leak_any": {
+   "n": 178,
+   "true": 0
+  },
+  "leak_any_raw": {
+   "n": 178,
+   "true": 6
+  },
+  "passage_label_leak": {
+   "n": 178,
+   "true": 0
+  },
+  "passage_label_leak_raw": {
+   "n": 178,
+   "true": 2
+  },
+  "script_ok": {
+   "n": 20,
+   "true": 19,
+   "rate": 0.95
+  }
+ },
+ "taxonomy": {
+  "retrieval_miss_chunk_only": 16,
+  "discrepancy_not_noted": 9,
+  "retrieval_miss": 4,
+  "over_abstain": 3,
+  "generator_error": 1,
+  "no_clarifying_question": 5,
+  "language_garble": 1
+ },
+ "questions": 178,
+ "questions_with_failure": 37
+}

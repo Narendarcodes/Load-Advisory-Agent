@@ -3,7 +3,6 @@
 {% block page_content %}
 <div class="page-head">
 	<div>
-		<p class="eyebrow">Indicative check</p>
 		<h1>See what you may be able to borrow</h1>
 		<p>Answer a few questions about income and commitments. You get an indicative estimate, not an approval, and nothing is sent for review from this page.</p>
 	</div>
@@ -14,7 +13,7 @@
 
 {% if not product %}
 <div class="card empty">
-	<span class="empty__mark" aria-hidden="true">EL</span>
+	<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/service-unavailable.svg" alt="" width="180" height="135">
 	<h2>No lending product is available right now</h2>
 	<p>An estimate needs a current product rate. Ask your loan advisor when applications can be started again.</p>
 	<a class="btn btn--ghost" href="/borrower/help">Read the help page</a>
@@ -31,7 +30,6 @@
 		<section class="form-section" aria-labelledby="req-heading">
 			<div class="form-section__head">
 				<h2 id="req-heading">What you need</h2>
-				<span class="tiny">Step 1 of 3</span>
 			</div>
 			<div class="field">
 				<label for="el-amount">Amount you want to borrow (₹)</label>
@@ -74,7 +72,6 @@
 		<section class="form-section" aria-labelledby="work-heading">
 			<div class="form-section__head">
 				<h2 id="work-heading">How you earn</h2>
-				<span class="tiny">Step 2 of 3</span>
 			</div>
 			<fieldset>
 				<legend class="field__label">Employment type</legend>
@@ -99,7 +96,6 @@
 		<section class="form-section" aria-labelledby="money-heading">
 			<div class="form-section__head">
 				<h2 id="money-heading">Income and commitments</h2>
-				<span class="tiny">Step 3 of 3</span>
 			</div>
 			<div class="grid-2">
 				<div class="field">
@@ -138,10 +134,15 @@
 			<span>Recalculate to refresh the estimate.</span>
 		</div>
 		<div class="result-card" id="result-panel" aria-live="polite">
-			<p class="eyebrow">Your estimate</p>
-			<h2>Nothing calculated yet</h2>
-			<p class="small muted">Fill in the three sections and choose Estimate eligibility. You can change any answer and recalculate.</p>
-			<div>
+			<div class="result-head">
+				<img class="result-head__art" src="/assets/loan_advisory_portal/illustrations/eligibility.svg" alt="" width="120" height="90">
+				<div class="result-head__text">
+					<p class="result-head__status"><span class="badge badge--neutral">Not calculated yet</span></p>
+					<h2>Your estimate appears here</h2>
+					<p class="small muted">Fill in the three sections and choose Estimate eligibility. You can change any answer and recalculate.</p>
+				</div>
+			</div>
+			<section class="result-section">
 				<h3>What the estimate uses</h3>
 				<ul class="result-factors">
 					<li>The amount and tenure you choose</li>
@@ -149,11 +150,8 @@
 					<li>Your employment type and time in work</li>
 					<li>The current product rate</li>
 				</ul>
-			</div>
-			<div class="alert alert--info">
-				<strong>This is not an approval</strong>
-				<span>It does not check your credit file, ask for identity numbers or run a credit bureau enquiry.</span>
-			</div>
+			</section>
+			<p class="result-note">This is not an approval. It does not check your credit file, ask for identity numbers or run a credit bureau enquiry.</p>
 		</div>
 	</aside>
 </div>

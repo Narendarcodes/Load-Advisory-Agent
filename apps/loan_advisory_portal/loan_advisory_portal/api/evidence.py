@@ -24,7 +24,12 @@ EVIDENCE_ROLE = "Evidence Service"
 EVIDENCE_DOCTYPE = "Loan Decision Evidence"
 LOG_DOCTYPE = "Evidence Ingestion Log"
 STATE_LOG_DOCTYPE = "Application State Log"
-ALLOWED_DECISIONS = {"APPROVED", "REJECTED", "ERROR"}
+# Legacy v1 values stay accepted for existing records; the Saral ZEN engine records the
+# four-level outcome plus COUNTER_OFFER (data dictionary gap G06).
+ALLOWED_DECISIONS = {
+	"APPROVED", "REJECTED", "ERROR",
+	"ELIGIBILITY_CONDITIONS_MET", "COUNTER_OFFER", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED", "DECLINE",
+}
 
 
 def _require_service() -> None:

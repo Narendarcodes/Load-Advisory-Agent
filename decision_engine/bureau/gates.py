@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
+from decision_engine.schemas.underwriting import MAX_TENURE_MONTHS, MIN_TENURE_MONTHS
 from decision_engine.schemas.bureau import (
     BureauReport,
     IssueSeverity,
@@ -168,7 +169,7 @@ def _validate_application(application: dict) -> tuple[list[GateIssue], list[str]
         "monthly_obligations": lambda v: _is_number(v) and v >= 0,
         "employment_months": lambda v: _is_number(v) and 0 <= v <= 600,
         "loan_amount": lambda v: _is_number(v) and v > 0,
-        "loan_tenure_months": lambda v: _is_number(v) and 1 <= v <= 360,
+        "loan_tenure_months": lambda v: _is_number(v) and MIN_TENURE_MONTHS <= v <= MAX_TENURE_MONTHS,
     }
     for name, check in checks.items():
         value = application.get(name)

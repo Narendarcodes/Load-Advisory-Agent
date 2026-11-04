@@ -1,0 +1,30 @@
+{
+  "schema": "saral-consent-texts/1",
+  "status": "PROTOTYPE - pending legal review (ADR-0009, 2026-11-03). Not for live use.",
+  "texts": [
+    {
+      "consent_type": "BUREAU_PULL",
+      "version": "0.1-prototype",
+      "title": "Credit check",
+      "body": "PROTOTYPE TEXT, PENDING LEGAL REVIEW. We will ask a credit bureau for your credit report to see how you have repaid loans and cards before. This is a soft check for this application only. We use your PAN to find your report and we do not keep your full PAN. You can say no, but we cannot assess your application without it."
+    },
+    {
+      "consent_type": "KYC_AADHAAR",
+      "version": "0.1-prototype",
+      "title": "KYC verification",
+      "body": "PROTOTYPE TEXT, PENDING LEGAL REVIEW. We will check that your PAN and Aadhaar details are real and belong to you. We keep only a masked PAN and the last 4 digits of your Aadhaar, never the full numbers. We use the result only to confirm who you are for this application."
+    },
+    {
+      "consent_type": "BANK_DATA_AA",
+      "version": "0.1-prototype",
+      "title": "Bank statement fetch",
+      "body": "PROTOTYPE TEXT, PENDING LEGAL REVIEW. Through an Account Aggregator we will fetch the last 3 months of statements from the bank account you choose (6 months for amounts above 10 lakh). We look at salary credits, regular payments and balances to understand what you can repay. We keep a summary and a reference to the statement, not every transaction."
+    },
+    {
+      "consent_type": "DATA_USE_AND_PROCESSING",
+      "version": "0.1-prototype",
+      "title": "How we use your data",
+      "body": "PROTOTYPE TEXT, PENDING LEGAL REVIEW. We use the details and documents you give us only to assess this loan application, to keep a record of our decision, and to meet legal duties. Documents are read by software and, where needed, by a loan officer. We do not sell your data or use it for marketing unless you separately agree. You can ask us what we hold about you."
+    }
+  ]
+}

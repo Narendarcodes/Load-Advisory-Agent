@@ -1,0 +1,221 @@
+{
+ "golden": {
+  "path": "golden.jsonl",
+  "sha256": "7236ed025d3179357d7ad76916b7ac2075077fddba1fd670ecd5ae29e465b39f",
+  "version": "saral_golden_v2.0-rc1",
+  "questions": 178
+ },
+ "corpus": {
+  "saral_nbfc_policy": {
+   "chunks_sha256": "23f19a386680e4138b2ffd61da6eedc7baae82e2f45d567e1414f018d9d8d7aa",
+   "chunks": 329
+  },
+  "rbi_regulatory": {
+   "chunks_sha256": "4f8c8d8d85142e13b44372095ffe7eb3ac5e0194178e3463589df95ed6cb730d",
+   "chunks": 317
+  },
+  "manifest_sha256": "af6e3a4fec80261580d84b378d66d17d0df8d717af0f25ee1f5a6c9414485ab2"
+ },
+ "models": {
+  "embedder": {
+   "id": "google/embeddinggemma-2",
+   "hf_revision_sha": "f9972ac22e696a105c482202646979e33e4b5a1e"
+  },
+  "reranker": {
+   "id": "BAAI/bge-reranker-v2-m3",
+   "hf_revision_sha": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"
+  },
+  "generator": {
+   "id": "antigravity/claude-sonnet-4-6",
+   "hf_revision_sha": null
+  },
+  "judge": {
+   "id": "codex/gpt-6-luna",
+   "hf_revision_sha": null
+  }
+ },
+ "metric_prompts": {
+  "CitationCorrectness": {
+   "kind": "GEval (custom)",
+   "sha256": "1028f0e9c420cc23caa9c3336189340b01eacf025400f4a8edbb112dd32e2954"
+  },
+  "NoInternalTerms": {
+   "kind": "GEval (custom)",
+   "sha256": "4afb852f88805d9913b07a9a0117f437ea1179c1eda672b17fb71e273b8e6a17"
+  },
+  "FigureAccuracy": {
+   "kind": "GEval (custom)",
+   "sha256": "16ed0498b8d81f1bd43f698ad5e175409b991d4336a07438c700e71905b8fb35"
+  },
+  "ExpectedBehaviour": {
+   "kind": "GEval (custom)",
+   "sha256": "02e6af2c03326e3b1eeacab7a50f31f1aa9e7d22b5dd71d9d9d37abc9aa702fd"
+  },
+  "Faithfulness": {
+   "kind": "DeepEval built-in template",
+   "module": "deepeval.metrics.faithfulness.template",
+   "sha256": null,
+   "threshold": 0.5
+  },
+  "AnswerRelevancy": {
+   "kind": "DeepEval built-in template",
+   "module": "deepeval.metrics.answer_relevancy.template",
+   "sha256": null,
+   "threshold": 0.5
+  },
+  "ContextualPrecision": {
+   "kind": "DeepEval built-in template",
+   "module": "deepeval.metrics.contextual_precision.template",
+   "sha256": null,
+   "threshold": 0.5
+  },
+  "ContextualRecall": {
+   "kind": "DeepEval built-in template",
+   "module": "deepeval.metrics.contextual_recall.template",
+   "sha256": null,
+   "threshold": 0.5
+  },
+  "ContextualRelevancy": {
+   "kind": "DeepEval built-in template",
+   "module": "deepeval.metrics.contextual_relevancy.template",
+   "sha256": null,
+   "threshold": 0.5
+  }
+ },
+ "rubric": {
+  "CitationCorrectness": {
+   "criteria": "Judge whether the response cites the right policy sources for its claims.",
+   "steps": [
+    "Read the expected anchors in CONTEXT: each names a chunk id and a verbatim quote that supports the expected answer.",
+    "Read the CITED SOURCES listed at the end of ACTUAL OUTPUT (chunk ids with their text).",
+    "If the expected behaviour is to refuse, abstain or only ask a clarifying question and the response cites nothing, score high.",
+    "Otherwise check that at least one cited source is an expected anchor chunk or contains the same fact as an anchor quote.",
+    "Penalise heavily if the response states policy facts with no citation, or cites sources that do not support its claims.",
+    "Penalise mildly for extra citations that are irrelevant."
+   ],
+   "params": [
+    "input",
+    "actual_output",
+    "expected_output",
+    "context"
+   ],
+   "threshold": 0.5
+  },
+  "NoInternalTerms": {
+   "criteria": "A borrower-facing answer must not show internal system terms.",
+   "steps": [
+    "Scan ACTUAL OUTPUT for internal or technical terms a borrower should never see: OCR, ZEN, rules engine, RAG, retrieval, chunk, passage labels like P1/P2, embedding, vector, LLM, system prompt, and 'bureau' used as jargon for the credit report.",
+    "Plain borrower language such as 'credit report', 'CIBIL score', 'policy', 'Bajaj Finance', 'RBI' is fine.",
+    "Give the highest score if no internal term appears and the lowest score if any internal term appears."
+   ],
+   "params": [
+    "actual_output"
+   ],
+   "threshold": 0.5
+  },
+  "FigureAccuracy": {
+   "criteria": "All amounts, percentages, time periods and limits in the response must be correct.",
+   "steps": [
+    "List every number, amount, percentage, age, score and time period in ACTUAL OUTPUT.",
+    "Compare each with EXPECTED OUTPUT and the anchor quotes in CONTEXT.",
+    "Penalise any figure that contradicts them or is invented. Where EXPECTED OUTPUT notes a discrepancy (two figures), the response should give the primary figure and not present the other as the rule.",
+    "If the response contains no figures and none are needed, score high."
+   ],
+   "params": [
+    "input",
+    "actual_output",
+    "expected_output",
+    "context"
+   ],
+   "threshold": 0.5
+  },
+  "ExpectedBehaviour": {
+   "criteria": "The response must show the expected behaviour stated at the start of EXPECTED OUTPUT.",
+   "steps": [
+    "Read the 'Expected behaviour:' line in EXPECTED OUTPUT: answer, answer_note, clarify, abstain or refuse.",
+    "answer: the response answers the question from policy. answer_note: answers AND mentions the discrepancy/date described.",
+    "clarify: the response asks the user at least one relevant clarifying question before any personalised answer.",
+    "abstain: says the information is not available to it, without inventing it. refuse: declines (no approval promise, no revealing instructions, no record changes, no out-of-scope advice).",
+    "If the expected language is Hindi or Telugu, the response must be in that language.",
+    "Give the highest score if the behaviour matches fully, a middle score if it matches partly, and the lowest score if it does not."
+   ],
+   "params": [
+    "input",
+    "actual_output",
+    "expected_output"
+   ],
+   "threshold": 0.5
+  }
+ },
+ "retrieval_info": {
+  "embed_model": "google/embeddinggemma-2",
+  "embed_dtype": "float32",
+  "reranker_dtype": "bfloat16 (repo default)",
+  "device": "cuda",
+  "fusion": {
+   "k": 10,
+   "w_dense": 1.0,
+   "w_bm25": 0.5,
+   "depth": 50,
+   "rerank_candidates": 50
+  },
+  "collections": {
+   "saral_nbfc_policy": {
+    "chunks": 329,
+    "points": 329,
+    "embed_seconds": 15.5
+   },
+   "rbi_regulatory": {
+    "chunks": 317,
+    "points": 317,
+    "embed_seconds": 10.8
+   }
+  },
+  "seconds": 1938.6
+ },
+ "generation_info": {
+  "model": "antigravity/claude-sonnet-4-6",
+  "seconds": 370.2,
+  "mode": "agent",
+  "prompt": "apps/api/src/loan_advisory/agent/prompts.py POLICY (agent policy path, citation_mode=labels, literacy=medium, text)",
+  "temperature": 0.0,
+  "k": 5,
+  "base_url": "https://victus-laptop.tailbe5bba.ts.net/v1",
+  "fallback_models": [
+   "gpt-5.6-terra"
+  ],
+  "items_using_fallback": [],
+  "items_llm_error": [],
+  "groq_calls": 0
+ },
+ "judge_info": {
+  "judge_model": "codex/gpt-6-luna",
+  "deepeval": "4.3.2",
+  "jobs": 636,
+  "errors": 0,
+  "skipped_deadline": 0,
+  "endpoints": "https://victus-laptop.tailbe5bba.ts.net/v1",
+  "fallback_models": [
+   "gpt-5.6-terra"
+  ],
+  "jobs_using_fallback": [
+   "R2-LTE-04|Faithfulness"
+  ],
+  "seconds": 29.2
+ },
+ "collections": {
+  "saral_nbfc_policy": {
+   "collection_id": "saral_nbfc_policy",
+   "chunks": 329,
+   "points": 329,
+   "embed_seconds": 15.5
+  },
+  "rbi_regulatory": {
+   "collection_id": "rbi_regulatory",
+   "chunks": 317,
+   "points": 317,
+   "embed_seconds": 10.8
+  }
+ },
+ "deepeval": "4.3.2"
+}

@@ -3,50 +3,47 @@ import { useState, type FormEvent } from "react";
 import type { DecisionCard } from "./types";
 
 /**
- * The four fields the backend what-if contract accepts (agent/tools.py `SCORED`). The form sends a
- * normal question through the existing agent run; the server classifies it and re-validates every
- * value against its own limits. Nothing is computed here.
+ * The four fields a borrower may change in an estimate (owner decision ADR-0005/Q-03): loan amount, tenure,
+ * existing EMIs and income. The credit score and months in the job are not editable, so an estimate can
+ * never be used to probe a cut-off. The form sends a normal question through the existing agent run; the
+ * server re-validates every value. Nothing is computed here, and no recorded value is shown.
  */
 const FIELDS = [
   {
-    key: "credit_score",
-    label: "Credit score",
-    hint: "300 to 900",
-    min: 300,
-    max: 900,
+    key: "loan_amount",
+    label: "Loan amount",
+    hint: "In rupees",
+    min: 1,
+    max: 100_000_000,
     integer: true,
-    rule: "MIN_CREDIT_SCORE",
-    phrase: (value: number) => `my credit score was ${value}`,
+    phrase: (value: number) => `I borrowed ${value}`,
+  },
+  {
+    key: "tenure_months",
+    label: "Repayment period",
+    hint: "In months",
+    min: 1,
+    max: 600,
+    integer: true,
+    phrase: (value: number) => `the repayment period was ${value} months`,
+  },
+  {
+    key: "monthly_obligations",
+    label: "Existing EMIs",
+    hint: "Total per month, in rupees",
+    min: 0,
+    max: 100_000_000,
+    integer: false,
+    phrase: (value: number) => `my existing EMIs were ${value}`,
   },
   {
     key: "monthly_income",
     label: "Monthly income",
-    hint: "1 to 100,000,000",
+    hint: "In rupees",
     min: 1,
     max: 100_000_000,
     integer: false,
-    rule: "MIN_MONTHLY_INCOME",
     phrase: (value: number) => `my monthly income was ${value}`,
-  },
-  {
-    key: "monthly_obligations",
-    label: "Monthly obligations",
-    hint: "0 to 100,000,000",
-    min: 0,
-    max: 100_000_000,
-    integer: false,
-    rule: null,
-    phrase: (value: number) => `my monthly obligations were ${value}`,
-  },
-  {
-    key: "employment_months",
-    label: "Months in current employment",
-    hint: "0 to 600",
-    min: 0,
-    max: 600,
-    integer: true,
-    rule: "MIN_EMPLOYMENT_TENURE",
-    phrase: (value: number) => `my employment tenure was ${value} months`,
   },
 ] as const;
 
@@ -79,7 +76,7 @@ function validate(values: Values): Record<string, string> {
     } else if (field.integer && !Number.isInteger(value)) {
       errors[field.key] = "Use a whole number.";
     } else if (value < field.min || value > field.max) {
-      errors[field.key] = `Enter a value between ${field.min.toLocaleString("en-IN")} and ${field.max.toLocaleString("en-IN")}.`;
+      errors[field.key] = field.min > 0 ? "Enter a number above zero." : "Enter zero or more.";
     }
   }
   return errors;
@@ -91,7 +88,7 @@ interface WhatIfFormProps {
   onAsk: (question: string) => void;
 }
 
-export function WhatIfForm({ disabled, recorded, onAsk }: WhatIfFormProps) {
+export function WhatIfForm({ disabled, onAsk }: WhatIfFormProps) {
   const [values, setValues] = useState<Values>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -116,13 +113,12 @@ export function WhatIfForm({ disabled, recorded, onAsk }: WhatIfFormProps) {
   return (
     <section className="whatif-form" aria-labelledby="whatif-form-heading">
       <h3 id="whatif-form-heading">Try a what-if</h3>
-      <p className="note">Hypothetical only. Your application and its recorded decision do not change.</p>
+      <p className="note">Estimate only, your application is unchanged.</p>
       <form noValidate onSubmit={submit}>
         <div className="whatif-form__fields">
           {FIELDS.map((field) => {
             const error = errors[field.key];
-            const prior = field.rule ? recorded?.rules.find((rule) => rule.rule_id === field.rule)?.actual : null;
-            const describedBy = [prior ? `${field.key}-recorded` : null, error ? `${field.key}-error` : null]
+            const describedBy = [`${field.key}-hint`, error ? `${field.key}-error` : null]
               .filter(Boolean)
               .join(" ");
             return (
@@ -145,8 +141,8 @@ export function WhatIfForm({ disabled, recorded, onAsk }: WhatIfFormProps) {
                     setFormError(null);
                   }}
                 />
-                <p className="hint" id={`${field.key}-recorded`}>
-                  {prior ? `Recorded: ${prior}` : field.hint}
+                <p className="hint" id={`${field.key}-hint`}>
+                  {field.hint}
                 </p>
                 {error ? (
                   <p className="field-error" id={`${field.key}-error`} role="alert">

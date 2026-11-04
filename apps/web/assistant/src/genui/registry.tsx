@@ -1,16 +1,13 @@
 import type { ReactNode } from "react";
 
-import type { Citation, DecisionCard, DecisionRule, ImprovementTask, PublicState, WhatIf } from "../types";
+import type { Citation, DecisionCard, ImprovementTask, Locale, PublicState, WhatIf } from "../types";
 import {
-  ApplicationContextBlock,
   DecisionCardBlock,
   HumanAssistanceBlock,
   ImprovementPlanBlock,
   MissingInformationBlock,
   NoticeBlock,
   PolicyCitationBlock,
-  ProgressBlock,
-  RuleEvaluationList,
   WhatIfResultBlock,
 } from "./blocks";
 import { missingInformationItem, type MissingInformationItem } from "./catalog";
@@ -21,55 +18,58 @@ import { WhatIfForm } from "../what-if-form";
  * state; there is no HTML or script channel, and an unrecognised block renders nothing.
  */
 export type GenUiBlock =
-  | { type: "application_context"; application: string }
   | { type: "decision_card"; card: DecisionCard }
-  | { type: "rule_evaluation"; rules: DecisionRule[] }
   | { type: "policy_citation"; citations: Citation[] }
   | { type: "what_if_form"; card?: DecisionCard }
   | { type: "what_if_result"; whatIf: WhatIf; card?: DecisionCard }
   | { type: "improvement_plan"; plan: ImprovementTask[] }
   | { type: "missing_information"; items: MissingInformationItem[] }
   | { type: "human_assistance"; handoffRef: string }
-  | { type: "progress"; stage: string }
   | { type: "notice"; tone: "info" | "error"; text: string };
 
 export type BlockKind = GenUiBlock["type"];
 
-export const GENUI_BLOCK_TYPES: readonly BlockKind[] = [
+/** Frozen: rule_evaluation, progress and application_context were removed (no rule rows, ever). */
+export const GENUI_BLOCK_TYPES: readonly BlockKind[] = Object.freeze([
   "decision_card",
-  "rule_evaluation",
   "policy_citation",
   "what_if_form",
   "what_if_result",
   "improvement_plan",
   "missing_information",
-  "application_context",
   "human_assistance",
-  "progress",
   "notice",
-];
+] as const);
 
 export interface GenUiContext {
   application: string;
   busy?: boolean;
+  /** The profile language for reason copy (en, hi, te). */
+  locale?: Locale;
   onAsk: (question: string) => void;
+  /** Opens the inline what-if form (the chat panel owns it). Absent where there is no form. */
+  onOpenWhatIf?: () => void;
 }
 
 type Renderer<K extends BlockKind> = (block: Extract<GenUiBlock, { type: K }>, context: GenUiContext) => ReactNode;
 
 const RENDERERS: { [K in BlockKind]: Renderer<K> } = {
-  application_context: (block) => <ApplicationContextBlock application={block.application} />,
-  decision_card: (block) => <DecisionCardBlock card={block.card} />,
-  rule_evaluation: (block) => <RuleEvaluationList rules={block.rules} />,
+  decision_card: (block, context) => <DecisionCardBlock card={block.card} locale={context.locale} />,
   policy_citation: (block) => <PolicyCitationBlock citations={block.citations} />,
   what_if_form: (block, context) => (
     <WhatIfForm disabled={Boolean(context.busy)} recorded={block.card} onAsk={context.onAsk} />
   ),
-  what_if_result: (block) => <WhatIfResultBlock whatIf={block.whatIf} card={block.card} />,
-  improvement_plan: (block) => <ImprovementPlanBlock plan={block.plan} />,
+  what_if_result: (block, context) => (
+    <WhatIfResultBlock
+      whatIf={block.whatIf}
+      card={block.card}
+      locale={context.locale}
+      onAdjust={context.busy ? undefined : context.onOpenWhatIf}
+    />
+  ),
+  improvement_plan: (block, context) => <ImprovementPlanBlock plan={block.plan} locale={context.locale} />,
   missing_information: (block) => <MissingInformationBlock items={block.items} />,
   human_assistance: (block) => <HumanAssistanceBlock handoffRef={block.handoffRef} />,
-  progress: (block) => <ProgressBlock stage={block.stage} />,
   notice: (block) => <NoticeBlock tone={block.tone} text={block.text} />,
 };
 

@@ -1,0 +1,1185 @@
+{
+ "policy_id": "PERSONAL_LOAN",
+ "policy_version": "synthetic-v2",
+ "synthetic": true,
+ "catalogue_version": "saral-pl-catalogue-2.1.0-draft",
+ "threshold_source": "catalogue v2 (ADR-0011 OWNER_APPROVED for prototype_synthetic only); NOT a lender policy",
+ "precedence": [
+  "DECLINE",
+  "MANUAL_REVIEW",
+  "MORE_INFORMATION_REQUIRED",
+  "ELIGIBILITY_CONDITIONS_MET"
+ ],
+ "rules": {
+  "PL-001": {
+   "name": "Applicant minimum age",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "age_at_assessment"
+   ]
+  },
+  "PL-002": {
+   "name": "Maximum age at maturity",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "age_at_maturity"
+   ]
+  },
+  "PL-003": {
+   "name": "Nationality eligibility",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "nationality"
+   ]
+  },
+  "PL-004": {
+   "name": "Applicant profile",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "EMPLOYMENT_STABILITY",
+   "missing_category": "EMPLOYMENT_STABILITY",
+   "inputs": [
+    "employment_type"
+   ]
+  },
+  "PL-005": {
+   "name": "Employment category",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "EMPLOYMENT_STABILITY",
+   "missing_category": "EMPLOYMENT_STABILITY",
+   "inputs": [
+    "employment_category"
+   ]
+  },
+  "PL-006": {
+   "name": "Identity completeness",
+   "effects": {
+    "FAIL": "MORE_INFORMATION_REQUIRED",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "identity_verification_status"
+   ]
+  },
+  "PL-007": {
+   "name": "Duplicate applicant",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DETAILS_NOT_VERIFIED",
+   "inputs": [
+    "duplicate_match_result"
+   ]
+  },
+  "PL-008": {
+   "name": "Minimum monthly income",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "monthly_net_income"
+   ]
+  },
+  "PL-011": {
+   "name": "Income consistency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "income_variation"
+   ]
+  },
+  "PL-012": {
+   "name": "Salary credit verification",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "salary_gap"
+   ]
+  },
+  "PL-014": {
+   "name": "Employment duration",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "EMPLOYMENT_STABILITY",
+   "missing_category": "EMPLOYMENT_STABILITY",
+   "inputs": [
+    "employment_months"
+   ]
+  },
+  "PL-017": {
+   "name": "Income source consistency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "declared_vs_verified_gap"
+   ]
+  },
+  "PL-018": {
+   "name": "Recent income reduction",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "income_reduction_percentage"
+   ]
+  },
+  "PL-019": {
+   "name": "Bureau report availability",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "bureau_report_status"
+   ]
+  },
+  "PL-020": {
+   "name": "Bureau identity match",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DETAILS_NOT_VERIFIED",
+   "inputs": [
+    "identity_match_status"
+   ]
+  },
+  "PL-024": {
+   "name": "Report freshness",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "bureau_report_age_days"
+   ]
+  },
+  "PL-025": {
+   "name": "Duplicate tradelines",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "duplicate_tradeline_count"
+   ]
+  },
+  "PL-026": {
+   "name": "Thin credit file",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "credit_history_months",
+    "active_account_count"
+   ]
+  },
+  "PL-027": {
+   "name": "No-hit detection",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "bureau_match_status"
+   ]
+  },
+  "PL-028": {
+   "name": "Bureau data inconsistency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "bureau_dq_flag_count"
+   ]
+  },
+  "PL-029": {
+   "name": "Credit score threshold",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "bureau_score"
+   ]
+  },
+  "PL-031": {
+   "name": "Credit history length",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "credit_history_months"
+   ]
+  },
+  "PL-033": {
+   "name": "Active credit accounts",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "active_personal_loan_count"
+   ]
+  },
+  "PL-035": {
+   "name": "Recent account openings",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "RECENT_CREDIT_APPLICATIONS",
+   "missing_category": "RECENT_CREDIT_APPLICATIONS",
+   "inputs": [
+    "recent_open_account_count"
+   ]
+  },
+  "PL-037": {
+   "name": "High credit utilisation",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "utilisation_ratio"
+   ]
+  },
+  "PL-040": {
+   "name": "Days past due",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "current_default_count"
+   ]
+  },
+  "PL-041": {
+   "name": "Recent 30+ DPD",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "max_dpd_12m"
+   ]
+  },
+  "PL-042": {
+   "name": "Recent 60+ DPD",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "max_dpd_12m"
+   ]
+  },
+  "PL-043": {
+   "name": "Recent 90+ DPD",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "max_dpd_24m"
+   ]
+  },
+  "PL-044": {
+   "name": "DPD frequency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "dpd_occurrence_count"
+   ]
+  },
+  "PL-046": {
+   "name": "Payment regularity",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "payment_regularity_indicator"
+   ]
+  },
+  "PL-047": {
+   "name": "Settled accounts",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "settled_within_lookback",
+    "settled_account_count"
+   ]
+  },
+  "PL-048": {
+   "name": "Written-off accounts",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "written_off_within_lookback",
+    "written_off_account_count"
+   ]
+  },
+  "PL-051": {
+   "name": "Credit card repayment behaviour",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "missed_payment_count"
+   ]
+  },
+  "PL-052": {
+   "name": "Recent hard enquiries",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "RECENT_CREDIT_APPLICATIONS",
+   "missing_category": "RECENT_CREDIT_APPLICATIONS",
+   "inputs": [
+    "enquiries_last_30_days"
+   ]
+  },
+  "PL-053": {
+   "name": "Enquiry frequency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "RECENT_CREDIT_APPLICATIONS",
+   "missing_category": "RECENT_CREDIT_APPLICATIONS",
+   "inputs": [
+    "enquiries_last_6_months"
+   ]
+  },
+  "PL-055": {
+   "name": "Recent unsecured borrowing",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "RECENT_CREDIT_APPLICATIONS",
+   "missing_category": "RECENT_CREDIT_APPLICATIONS",
+   "inputs": [
+    "recent_unsecured_account_count"
+   ]
+  },
+  "PL-069": {
+   "name": "Minimum loan amount",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "REQUEST_OUTSIDE_OFFER",
+   "missing_category": "REQUEST_OUTSIDE_OFFER",
+   "inputs": [
+    "requested_amount"
+   ]
+  },
+  "PL-070": {
+   "name": "Maximum loan amount",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "REQUEST_OUTSIDE_OFFER",
+   "missing_category": "REQUEST_OUTSIDE_OFFER",
+   "inputs": [
+    "requested_amount"
+   ]
+  },
+  "PL-071": {
+   "name": "Minimum tenure",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "REQUEST_OUTSIDE_OFFER",
+   "missing_category": "REQUEST_OUTSIDE_OFFER",
+   "inputs": [
+    "tenure_months"
+   ]
+  },
+  "PL-072": {
+   "name": "Maximum tenure",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "REQUEST_OUTSIDE_OFFER",
+   "missing_category": "REQUEST_OUTSIDE_OFFER",
+   "inputs": [
+    "tenure_months"
+   ]
+  },
+  "PL-073": {
+   "name": "Age-tenure compatibility",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "age_at_maturity"
+   ]
+  },
+  "PL-076": {
+   "name": "Loan purpose restrictions",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "REQUEST_OUTSIDE_OFFER",
+   "missing_category": "REQUEST_OUTSIDE_OFFER",
+   "inputs": [
+    "loan_purpose"
+   ]
+  },
+  "PL-077": {
+   "name": "Existing exposure",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "REPAYMENTS_TOO_HIGH",
+   "missing_category": "REPAYMENTS_TOO_HIGH",
+   "inputs": [
+    "total_unsecured_exposure",
+    "monthly_net_income"
+   ]
+  },
+  "PL-078": {
+   "name": "Salary credit consistency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "salary_credit_months"
+   ]
+  },
+  "PL-080": {
+   "name": "Negative balance frequency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "REPAYMENTS_TOO_HIGH",
+   "missing_category": "REPAYMENTS_TOO_HIGH",
+   "inputs": [
+    "negative_balance_count"
+   ]
+  },
+  "PL-081": {
+   "name": "Cheque bounce and NACH returns",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "return_count"
+   ]
+  },
+  "PL-083": {
+   "name": "Cash deposit concentration",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "cash_deposit_percentage"
+   ]
+  },
+  "PL-084": {
+   "name": "Income volatility",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "monthly_income_variance"
+   ]
+  },
+  "PL-086": {
+   "name": "Undeclared debt",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DETAILS_NOT_VERIFIED",
+   "inputs": [
+    "debt_mismatch"
+   ]
+  },
+  "PL-087": {
+   "name": "Salary credit reversal",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "salary_reversal_indicator"
+   ]
+  },
+  "PL-088": {
+   "name": "Document completeness",
+   "effects": {
+    "FAIL": "MORE_INFORMATION_REQUIRED",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "missing_document_count"
+   ]
+  },
+  "PL-089": {
+   "name": "OCR confidence",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "min_ocr_confidence"
+   ]
+  },
+  "PL-091": {
+   "name": "Duplicate document",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DETAILS_NOT_VERIFIED",
+   "inputs": [
+    "duplicate_document_result"
+   ]
+  },
+  "PL-092": {
+   "name": "Income mismatch",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "declared_vs_ocr_gap"
+   ]
+  },
+  "PL-093": {
+   "name": "Bank statement integrity",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DETAILS_NOT_VERIFIED",
+   "inputs": [
+    "statement_integrity_result",
+    "statement_flag_count"
+   ]
+  },
+  "PL-094": {
+   "name": "Identity evidence consistency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "kyc_name_match_score",
+    "kyc_dob_match",
+    "kyc_id_last4_match"
+   ]
+  },
+  "PL-095": {
+   "name": "Consent validation",
+   "effects": {
+    "FAIL": "MORE_INFORMATION_REQUIRED",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "missing_consent_count"
+   ]
+  },
+  "PL-097": {
+   "name": "Conflicting evidence",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DETAILS_NOT_VERIFIED",
+   "inputs": [
+    "conflict_flag_count"
+   ]
+  },
+  "PL-098": {
+   "name": "Manual review routing",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DETAILS_NOT_VERIFIED",
+   "inputs": [
+    "risk_flag_count"
+   ]
+  },
+  "PL-100": {
+   "name": "Total work experience",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "EMPLOYMENT_STABILITY",
+   "missing_category": "EMPLOYMENT_STABILITY",
+   "inputs": [
+    "total_experience_months"
+   ]
+  },
+  "PL-101": {
+   "name": "Residence stability",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "months_at_current_address"
+   ]
+  },
+  "PL-102": {
+   "name": "PAN format validity",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "pan_format_valid"
+   ]
+  },
+  "PL-103": {
+   "name": "Document recency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "document_age_days"
+   ]
+  },
+  "PL-104": {
+   "name": "Signature screening",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DETAILS_NOT_VERIFIED",
+   "inputs": [
+    "signature_present",
+    "signature_similarity"
+   ]
+  },
+  "PL-105": {
+   "name": "Salary credit employer match",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "missing_category": "INCOME_NOT_VERIFIED_OR_INSUFFICIENT",
+   "inputs": [
+    "employer_name_similarity"
+   ]
+  },
+  "PL-106": {
+   "name": "Debit-to-credit ratio",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "REPAYMENTS_TOO_HIGH",
+   "missing_category": "REPAYMENTS_TOO_HIGH",
+   "inputs": [
+    "debit_credit_ratio"
+   ]
+  },
+  "PL-111": {
+   "name": "Purpose evidence",
+   "effects": {
+    "FAIL": "MORE_INFORMATION_REQUIRED",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "purpose_evidence_status"
+   ]
+  },
+  "PL-112": {
+   "name": "Purpose matches product",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "REQUEST_OUTSIDE_OFFER",
+   "missing_category": "REQUEST_OUTSIDE_OFFER",
+   "inputs": [
+    "declared_purpose",
+    "product_purpose"
+   ]
+  },
+  "PL-114": {
+   "name": "Cool-down after a decline",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "RECENT_CREDIT_APPLICATIONS",
+   "missing_category": "RECENT_CREDIT_APPLICATIONS",
+   "inputs": [
+    "days_since_last_decline_or_never"
+   ]
+  },
+  "PL-115": {
+   "name": "Phone or email shared across PANs",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "DETAILS_NOT_VERIFIED",
+   "missing_category": "DETAILS_NOT_VERIFIED",
+   "inputs": [
+    "shared_contact_pan_count"
+   ]
+  },
+  "PL-121": {
+   "name": "Band income-proof depth",
+   "effects": {
+    "FAIL": "MORE_INFORMATION_REQUIRED",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "payslip_count",
+    "statement_months"
+   ]
+  },
+  "PL-013": {
+   "name": "Employer stability",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "EMPLOYMENT_STABILITY",
+   "missing_category": "EMPLOYMENT_STABILITY",
+   "inputs": [
+    "employer_changes_24m"
+   ]
+  },
+  "PL-016": {
+   "name": "Employment type",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "EMPLOYMENT_STABILITY",
+   "missing_category": "EMPLOYMENT_STABILITY",
+   "inputs": [
+    "employment_status"
+   ]
+  },
+  "PL-130": {
+   "name": "Residency eligibility",
+   "effects": {
+    "FAIL": "DECLINE",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "applies_to_purposes": [
+    "home_renovation"
+   ],
+   "reason_category": "OTHER",
+   "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+   "inputs": [
+    "residency_status"
+   ]
+  },
+  "PL-074": {
+   "name": "EMI calculation validation",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "calculated_emi",
+    "independently_calculated_emi"
+   ]
+  },
+  "PL-075": {
+   "name": "Interest rate eligibility",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "interest_rate"
+   ]
+  },
+  "PL-079": {
+   "name": "Average monthly balance",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "REPAYMENTS_TOO_HIGH",
+   "missing_category": "REPAYMENTS_TOO_HIGH",
+   "inputs": [
+    "average_monthly_balance",
+    "proposed_emi"
+   ]
+  },
+  "PL-082": {
+   "name": "EMI debit consistency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "CREDIT_HISTORY",
+   "missing_category": "CREDIT_HISTORY",
+   "inputs": [
+    "missing_emi_debit_count"
+   ]
+  },
+  "PL-099": {
+   "name": "Decision trace completeness",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
+   },
+   "reason_category": "OTHER",
+   "missing_category": "OTHER",
+   "inputs": [
+    "evidence_references",
+    "policy_version"
+   ]
+  },
+  "PL-127": {
+   "name": "Purpose-specific consistency",
+   "effects": {
+    "FAIL": "MANUAL_REVIEW",
+    "REVIEW": "MANUAL_REVIEW",
+    "INSUFFICIENT_DATA": "NO_EFFECT"
+   },
+   "reason_category": "REQUEST_OUTSIDE_OFFER",
+   "missing_category": "REQUEST_OUTSIDE_OFFER",
+   "inputs": [
+    "loan_purpose"
+   ]
+  }
+ },
+ "sized_rules": [
+  "PL-064",
+  "PL-065",
+  "PL-108",
+  "PL-109",
+  "PL-110",
+  "PL-118",
+  "PL-120",
+  "PL-122",
+  "PL-123",
+  "PL-126"
+ ],
+ "not_compiled": {},
+ "sizing": {
+  "flat_rate_by_purpose": {
+   "wedding": 0.2,
+   "higher_education": 0.2,
+   "home_renovation": 0.2,
+   "medical_emergency": 0.2
+  },
+  "minimum_amount": 40000,
+  "maximum_amount": 7500000,
+  "mvp_amount_ceiling": 2500000,
+  "purpose_amount_cap": {
+   "wedding": 2500000,
+   "higher_education": 2500000,
+   "home_renovation": 2500000,
+   "medical_emergency": 2500000
+  },
+  "purpose_tenure_cap": {
+   "wedding": 60,
+   "higher_education": 84,
+   "home_renovation": 84,
+   "medical_emergency": 60
+  },
+  "approved_maximum_foir": 0.5,
+  "min_residual_income": 15000,
+  "max_amount_income_multiple": 24,
+  "ntc_indicative_cap": 200000,
+  "band_minimum_score": {
+   "B1": 700,
+   "B2": 700,
+   "B3": 700,
+   "B4": 725
+  },
+  "band_min_employment_months": {
+   "B1": 6,
+   "B2": 6,
+   "B3": 12,
+   "B4": 24
+  },
+  "band_employer_categories": {
+   "B1": [
+    "PUBLIC",
+    "PRIVATE",
+    "MNC"
+   ],
+   "B2": [
+    "PUBLIC",
+    "PRIVATE",
+    "MNC"
+   ],
+   "B3": [
+    "PUBLIC",
+    "PRIVATE",
+    "MNC"
+   ],
+   "B4": [
+    "PUBLIC",
+    "MNC"
+   ]
+  },
+  "band_review_foir": {
+   "B3": 0.45
+  },
+  "evidence_tolerance": 1.1,
+  "amount_bands": {
+   "B1": [
+    40000,
+    200000
+   ],
+   "B2": [
+    200001,
+    1000000
+   ],
+   "B3": [
+    1000001,
+    2500000
+   ],
+   "B4": [
+    2500001,
+    7500000
+   ]
+  },
+  "eligible_loan_purposes": [
+   "wedding",
+   "higher_education",
+   "home_renovation",
+   "medical_emergency"
+  ]
+ }
+}

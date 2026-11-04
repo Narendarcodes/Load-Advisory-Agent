@@ -1,0 +1,324 @@
+{
+ "label": "automated (LLM-judged, no human review)",
+ "headline": {
+  "Faithfulness": {
+   "mean": 0.9813,
+   "scored": 149,
+   "n": 149,
+   "bar": 0.85,
+   "pass": true
+  },
+  "AnswerRelevancy": {
+   "mean": 0.9598,
+   "scored": 149,
+   "n": 149,
+   "bar": 0.8,
+   "pass": true
+  },
+  "ContextualRecall": {
+   "mean": 0.8372,
+   "scored": 149,
+   "n": 149,
+   "bar": 0.8,
+   "pass": true
+  },
+  "ContextualPrecision": {
+   "mean": 0.8971,
+   "scored": 149,
+   "n": 149,
+   "bar": null,
+   "pass": null
+  }
+ },
+ "by_language": {
+  "en": {
+   "Faithfulness": [
+    0.9785897435897436,
+    130
+   ],
+   "AnswerRelevancy": [
+    0.9577289377289377,
+    130
+   ],
+   "ContextualRecall": [
+    0.8301282051282052,
+    130
+   ],
+   "ContextualPrecision": [
+    0.8956089743589744,
+    130
+   ],
+   "ExpectedBehaviour": [
+    0.754054054054054,
+    37
+   ],
+   "_n": [
+    158,
+    158
+   ]
+  },
+  "hi": {
+   "Faithfulness": [
+    1.0,
+    9
+   ],
+   "AnswerRelevancy": [
+    1.0,
+    9
+   ],
+   "ContextualRecall": [
+    0.9444444444444444,
+    9
+   ],
+   "ContextualPrecision": [
+    0.9358024691358025,
+    9
+   ],
+   "ExpectedBehaviour": [
+    0.7,
+    2
+   ],
+   "_n": [
+    9,
+    9
+   ]
+  },
+  "te": {
+   "Faithfulness": [
+    1.0,
+    10
+   ],
+   "AnswerRelevancy": [
+    0.95,
+    10
+   ],
+   "ContextualRecall": [
+    0.8333333333333334,
+    10
+   ],
+   "ContextualPrecision": [
+    0.8816666666666666,
+    10
+   ],
+   "ExpectedBehaviour": [
+    0.8,
+    1
+   ],
+   "_n": [
+    11,
+    11
+   ]
+  }
+ },
+ "by_variant": {
+  "behaviour": {
+   "Faithfulness": [
+    null,
+    0
+   ],
+   "AnswerRelevancy": [
+    null,
+    0
+   ],
+   "ContextualRecall": [
+    null,
+    0
+   ],
+   "ContextualPrecision": [
+    null,
+    0
+   ],
+   "ExpectedBehaviour": [
+    0.7586206896551724,
+    29
+   ],
+   "_n": [
+    29,
+    29
+   ]
+  },
+  "direct": {
+   "Faithfulness": [
+    0.9666666666666667,
+    45
+   ],
+   "AnswerRelevancy": [
+    0.9243915343915344,
+    45
+   ],
+   "ContextualRecall": [
+    0.8677777777777778,
+    45
+   ],
+   "ContextualPrecision": [
+    0.9140123456790122,
+    45
+   ],
+   "ExpectedBehaviour": [
+    0.75,
+    6
+   ],
+   "_n": [
+    45,
+    45
+   ]
+  },
+  "multi_hop": {
+   "Faithfulness": [
+    0.9878048780487805,
+    41
+   ],
+   "AnswerRelevancy": [
+    0.9727642276422764,
+    41
+   ],
+   "ContextualRecall": [
+    0.6573170731707317,
+    41
+   ],
+   "ContextualPrecision": [
+    0.8461720867208672,
+    41
+   ],
+   "ExpectedBehaviour": [
+    0.7250000000000001,
+    4
+   ],
+   "_n": [
+    41,
+    41
+   ]
+  },
+  "paraphrase": {
+   "Faithfulness": [
+    0.9875661375661376,
+    63
+   ],
+   "AnswerRelevancy": [
+    0.9765684051398338,
+    63
+   ],
+   "ContextualRecall": [
+    0.9325396825396826,
+    63
+   ],
+   "ContextualPrecision": [
+    0.9181657848324515,
+    63
+   ],
+   "ExpectedBehaviour": [
+    0.7,
+    1
+   ],
+   "_n": [
+    63,
+    63
+   ]
+  }
+ },
+ "behaviour": {
+  "refuse": {
+   "n": 10,
+   "judge_scored": 10,
+   "judge_mean": 0.8300000000000001,
+   "judge_pass@0.5": 1.0,
+   "deterministic_rate": 0.9
+  },
+  "abstain": {
+   "n": 8,
+   "judge_scored": 8,
+   "judge_mean": 0.9,
+   "judge_pass@0.5": 1.0,
+   "deterministic_rate": 1.0
+  },
+  "clarify": {
+   "n": 11,
+   "judge_scored": 11,
+   "judge_mean": 0.5909090909090909,
+   "judge_pass@0.5": 0.5454545454545454,
+   "deterministic_rate": 0.5454545454545454
+  },
+  "answer_note": {
+   "n": 11,
+   "judge_scored": 11,
+   "judge_mean": 0.7363636363636363,
+   "judge_pass@0.5": 1.0,
+   "deterministic_rate": null
+  }
+ },
+ "failure_tags": {
+  "retrieval_miss_chunk_only": 16,
+  "discrepancy_not_noted": 9,
+  "retrieval_miss": 4,
+  "over_abstain": 3,
+  "generator_error": 1,
+  "no_clarifying_question": 5,
+  "language_garble": 1
+ },
+ "limitations": {
+  "Retrieval misses": {
+   "count": 20,
+   "examples": [
+    "R2-AMT-02",
+    "R2-DIS-04"
+   ],
+   "rule": "answerable item whose anchored chunk is not in the final top 5 (4 with no gold document at all)",
+   "cause": "Reranked top 5 favours sibling chunks or a neighbouring document: for R2-AMT-02 (minimum amount) the rates-and-fees page was outranked by overview/eligibility pages; for R2-DLR-05 (delete my data) Bajaj's privacy/app T&C outranked the RBI consumer-finance direction. No collection router, and both collections compete for 5 slots. Most misses still answered correctly from a sibling chunk (Faithfulness stayed 1.0)."
+  },
+  "Unfaithful or unsupported claims": {
+   "count": 7,
+   "examples": [
+    "R2-DLR-11",
+    "R2-GRV-12"
+   ],
+   "rule": "Faithfulness < 0.85 (1 below 0.5)",
+   "cause": "Over-strong paraphrase of qualified policy text: 'up to 36%' stated as exactly 36% (R2-LHR-05), exceptions dropped in the digital-lending disbursal rule (R2-DLR-01), 'dropline limit' turned into 'outstanding limit' (R2-PRE-05). No figure was invented outright in the 149 judged answers."
+  },
+  "Wrong abstain or refuse": {
+   "count": 8,
+   "examples": [
+    "R2-CLA-01",
+    "R2-CLA-03"
+   ],
+   "rule": "over-abstained on an answerable item (3), refuse/abstain item judged wrong (0), clarify item with no clarifying question (5)",
+   "cause": "Clarify items: the policy prompt has no instruction to ask a clarifying question, and the intent classifier/clarify logic of the full agent was not exercised, so 10 of 11 vague questions got a direct answer (e.g. R2-CLA-03, R2-CLA-08). Over-abstain: the deterministic request guards fire on benign policy questions: 'my friend and I took the same loan' -> other_applicant (R2-RAT-07) and 'credit guarantee scheme fee' -> guarantee (R2-FEE-08); R2-PUR-01 abstained because no passage states per-purpose limits. All 10 refuse and 8 abstain items were handled acceptably by the judge's rubric."
+  },
+  "Hindi and Telugu failures": {
+   "count": 10,
+   "examples": [
+    "R2-LHI-03",
+    "R2-LHI-04"
+   ],
+   "rule": "hi/te item with a failure tag (other than leaked labels) or a metric below its bar (hi 5/9, te 5/11; wrong script: 1)",
+   "cause": "No wrong-script answers (20/20 in the right script). The few hi/te failures are the same causes as English: a retrieval miss on the RBI-IOS FAQ (R2-LHI-06), a qualified '36%' stated flatly (R2-LHR-05), and conflict notes not made (R2-LHI-03). Samples are small (9 hi, 11 te)."
+  },
+  "Conflict-note handling": {
+   "count": 9,
+   "examples": [
+    "R2-AMT-01",
+    "R2-AMT-03"
+   ],
+   "rule": "answer_note (conflicting-source) item with ExpectedBehaviour < 1.0, of 11 such items",
+   "cause": "The POLICY prompt asks to flag [historical] passages but not to surface disagreeing current sources, so the model gives one figure (e.g. ₹75 lakh in R2-AMT-01) without noting the ₹55 lakh conflict; 10 of 11 answer_note items were scored below 1.0."
+  },
+  "Latency or rate-limit fallbacks": {
+   "count": 3,
+   "examples": [
+    "R2-DOC-02",
+    "R2-GRV-04"
+   ],
+   "rule": "generator fell back to gpt-5.6-terra on 0 items []; generator gave no answer on 0; judge fell back on 0 metric calls (0 items); agent guard fallback template on 3 items; Groq calls: 0; generation latency per item p50 5.88 s, p95 10.54 s, max 18.59 s (OmniRoute, includes the agent's one rewrite when it happened)",
+   "cause": "No Groq call is made in this eval (OmniRoute stand-ins), so the Groq-to-OmniRoute fallback never fired. Judge stalls happened when in-flight OmniRoute calls hung after sandbox suspension; the judge was re-run in resumable chunks with a 60 s client timeout, and one metric call fell back to gpt-5.6-terra."
+  },
+  "Internal labels shown to the borrower (also observed)": {
+   "count": 0,
+   "examples": [],
+   "rule": "answer text contains an internal term or passage label (leak regex)",
+   "cause": "The policy prompt asks for citations as P1..P5 labels, and the model also writes them (and the word 'passages') into the answer text; the agent's citation pipeline maps labels to sources but nothing strips them from the prose. Mostly 'passages'/'P1'; 4 answers say 'bureau'."
+  }
+ },
+ "judge_model": "codex/gpt-6-luna",
+ "generator_model": "antigravity/claude-sonnet-4-6",
+ "golden_dev_sha256": "7236ed025d3179357d7ad76916b7ac2075077fddba1fd670ecd5ae29e465b39f",
+ "golden_full_sha256": "338fb92b4e278ab223102c3dbed61689ca545b69251ed716729cb029a5b0d372"
+}

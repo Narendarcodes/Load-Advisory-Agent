@@ -28,3 +28,8 @@ apps/web/advisory/node_modules/
 # Only the 120-case synthetic bureau fixture is committed; generate 1,000 on demand
 data/synthetic/bureau/*.json
 !data/synthetic/bureau/cases_120.json
+
+# Real-world OCR sample images (specimens/third-party datasets): never committed
+work/ocr_real/
+**/ocr_real/raw/
+**/ocr_real/images/

@@ -62,14 +62,15 @@ def test_groq_is_selected_from_the_environment():
         "groq", "https://api.groq.com/openai/v1", "openai/gpt-oss-120b", SECRET)
 
 
-def test_omniroute_is_the_default_and_keeps_its_gateway_url():
-    cfg = L.provider_from_env({"LLM_MODEL": "gpt-oss-120b"})
+def test_omniroute_keeps_its_gateway_url():
+    # River AI is the default provider since 2026-11-04 (test_llm_river_chain.py); OmniRoute stays selectable.
+    cfg = L.provider_from_env({"LLM_PROVIDER": "omniroute", "LLM_MODEL": "gpt-oss-120b"})
     assert (cfg.provider, cfg.base) == ("omniroute", "http://127.0.0.1:20128/v1")
     assert cfg.api_key == ""
 
 
 def test_omniroute_base_url_override_and_generic_base_override():
-    assert L.provider_from_env({"LLM_MODEL": "m", "OMNIROUTE_BASE_URL": "http://127.0.0.1:9000/v1"}).base == \
+    assert L.provider_from_env({"LLM_PROVIDER": "omniroute", "LLM_MODEL": "m", "OMNIROUTE_BASE_URL": "http://127.0.0.1:9000/v1"}).base == \
         "http://127.0.0.1:9000/v1"
     # The generic override still lets an existing deployment keep pointing at any compatible endpoint.
     assert L.provider_from_env({"LLM_MODEL": "m", "LLM_PROVIDER": "groq",
@@ -93,11 +94,12 @@ def test_ad_hoc_client_keeps_a_lenient_model_default():
 
 
 def test_key_precedence_is_generic_then_provider():
-    assert L.provider_from_env({"LLM_MODEL": "m", "LLM_API_KEY": "generic",
-                                "OMNIROUTE_API_KEY": "provider"}).api_key == "generic"
-    assert L.provider_from_env({"LLM_MODEL": "m", "OMNIROUTE_API_KEY": "provider"}).api_key == "provider"
-    # A Groq key is never sent to the OmniRoute gateway.
-    assert L.provider_from_env({"LLM_MODEL": "m", "GROQ_API_KEY": "groq-only"}).api_key == ""
+    om = {"LLM_PROVIDER": "omniroute", "LLM_MODEL": "m"}
+    assert L.provider_from_env({**om, "LLM_API_KEY": "generic", "OMNIROUTE_API_KEY": "provider"}).api_key == "generic"
+    assert L.provider_from_env({**om, "OMNIROUTE_API_KEY": "provider"}).api_key == "provider"
+    # A Groq key is never sent to the OmniRoute gateway, nor to River.
+    assert L.provider_from_env({**om, "GROQ_API_KEY": "groq-only"}).api_key == ""
+    assert L.provider_from_env({"GROQ_API_KEY": "groq-only"}).api_key == ""
 
 
 # ------------------------------------------------------------------ requests
@@ -116,7 +118,7 @@ def test_groq_request_carries_its_url_model_and_bearer(monkeypatch):
 
 def test_omniroute_request_uses_the_gateway_without_a_key(monkeypatch):
     calls = _patch(monkeypatch, _Resp(_sse("hi")))
-    c = L.ChatLLM(env={"LLM_MODEL": "route/default"})
+    c = L.ChatLLM(env={"LLM_PROVIDER": "omniroute", "LLM_MODEL": "route/default"})
     assert c.chat("s", "u") == "hi"
     assert calls.seen[0]["url"] == "http://127.0.0.1:20128/v1/chat/completions"
     assert calls.seen[0]["headers"] == {}

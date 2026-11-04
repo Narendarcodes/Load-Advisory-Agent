@@ -22,8 +22,13 @@
 		labels: {},
 		canEdit: false,
 		uploading: false,
+		extractingRow: null,
+		confirmingRow: null,
+		confirmedRows: {},
+		extraction: null,
 		pendingRow: null,
 		previewRow: null,
+		previewToken: 0,
 	};
 
 	function field(id) {
@@ -152,7 +157,8 @@
 		state.labels = {};
 		var options = ['<option value="">Choose a type</option>'];
 		state.types.forEach(function (type) {
-			var label = type.loan_document_type || type.name;
+			var code = type.loan_document_type || type.name;
+			var label = window.PortalStatus ? window.PortalStatus.docLabel(code) : code;
 			state.labels[type.name] = label;
 			options.push('<option value="' + Portal.esc(type.name) + '">' + Portal.esc(label) + "</option>");
 		});
@@ -175,6 +181,17 @@
 					index +
 					'">Download</button>';
 				if (state.canEdit) {
+					if (!DEMO) {
+						var reading = state.extractingRow === doc.row;
+						actions +=
+							'<button type="button" class="btn btn--quiet btn--sm" data-extract="' +
+							index +
+							'"' +
+							(reading ? " disabled aria-busy=\"true\"" : "") +
+							">" +
+							(reading ? "Reading…" : state.confirmedRows[doc.row] ? "View fields" : "Read fields") +
+							"</button>";
+					}
 					actions +=
 						'<button type="button" class="btn btn--quiet btn--sm" data-remove="' + index + '">Remove</button>';
 				}
@@ -194,10 +211,14 @@
 	}
 
 	function resetPreview() {
+		state.previewToken += 1;
 		state.previewRow = null;
+		state.extraction = null;
+		field("preview-heading").textContent = "Document preview";
 		hide(field("preview-close"));
+		field("preview-body").removeAttribute("aria-busy");
 		field("preview-body").innerHTML =
-			'<p class="small muted">Choose Preview on a document to see what a checking view would show.</p>';
+			'<p class="small muted">Choose Preview for a person-review note, or Read fields to read the details from an attached document.</p>';
 	}
 
 	function previewHeader(doc, badge) {
@@ -216,7 +237,11 @@
 
 	function renderPreview(doc) {
 		if (!doc) return;
+		var token = ++state.previewToken;
 		state.previewRow = doc.row;
+		state.extraction = null;
+		field("preview-heading").textContent = "Document preview";
+		field("preview-body").removeAttribute("aria-busy");
 		show(field("preview-card"));
 		show(field("preview-close"));
 		field("preview-body").innerHTML =
@@ -225,12 +250,13 @@
 			'<div class="skeleton skeleton--block" aria-hidden="true"></div>' +
 			'<p class="small muted">Preparing a preview</p></div>';
 		window.setTimeout(function () {
-			if (state.previewRow !== doc.row) return;
-			renderPreviewResult(doc);
+			if (state.previewToken !== token || state.previewRow !== doc.row) return;
+			renderPreviewResult(doc, token);
 		}, DEMO ? 650 : 350);
 	}
 
-	function renderPreviewResult(doc) {
+	function renderPreviewResult(doc, token) {
+		if (state.previewToken !== token || state.previewRow !== doc.row) return;
 		if (DEMO) {
 			field("preview-body").innerHTML =
 				'<div class="preview-sheet">' +
@@ -246,8 +272,208 @@
 		field("preview-body").innerHTML =
 			'<div class="preview-sheet">' +
 			previewHeader(doc, '<span class="badge badge--neutral">Person review</span>') +
-			'<p class="small muted">Automatic text extraction is not available in this environment, so no fields are shown here. A person reviews the uploaded file after you submit.</p>' +
+			'<p class="small muted">Choose Read fields to extract supported values locally, or use Download to inspect the original. A person reviews the uploaded file after you submit.</p>' +
 			'<p class="small muted">Open the original with Download if you need to check what you sent.</p></div>';
+	}
+
+	function renderExtraction(doc, result, confirmedValues, alreadyConfirmed) {
+		var fields = result.fields || result.extracted_values || {};
+		var keys = Object.keys(fields);
+		var confirmed = confirmedValues || {};
+		var warnings = result.warnings || [];
+		var suggestions = result.suggestions || {};
+		state.previewRow = doc.row;
+		state.extraction = {
+			row: doc.row,
+			result: result,
+			confirmedValues: confirmed,
+			alreadyConfirmed: alreadyConfirmed,
+		};
+		if (alreadyConfirmed) state.confirmedRows[doc.row] = true;
+		field("preview-heading").textContent = alreadyConfirmed ? "Confirmed extraction" : "Review extracted fields";
+		show(field("preview-card"));
+		show(field("preview-close"));
+
+		var fieldHtml = keys
+			.map(function (key) {
+				var item = fields[key] || {};
+				var value = Object.prototype.hasOwnProperty.call(confirmed, key) ? confirmed[key] : item.value;
+				var confidence =
+					typeof item.confidence === "number" ? Math.round(item.confidence) + "% confidence" : "Confidence unavailable";
+				var status = String(item.status || "unknown").replace(/_/g, " ");
+				return (
+					'<div class="ocr-field"><div class="ocr-field__head"><label for="ocr-field-' +
+					Portal.esc(key) +
+					'">' +
+					Portal.esc(item.label || key) +
+					'</label><span class="badge badge--neutral">' +
+					Portal.esc(status) +
+					'</span></div><input id="ocr-field-' +
+					Portal.esc(key) +
+							'" type="text" autocomplete="off" spellcheck="false" data-ocr-field="' +
+					Portal.esc(key) +
+					'" value="' +
+					Portal.esc(value == null ? "" : value) +
+					'"' +
+					(alreadyConfirmed ? " readonly" : "") +
+					'><p class="tiny muted">' +
+					Portal.esc(item.note || confidence) +
+					(item.note ? " · " + Portal.esc(confidence) : "") +
+					"</p></div>"
+				);
+			})
+			.join("");
+		var warningHtml = warnings.length
+			? '<div class="alert alert--warn"><strong>Check these notes</strong><ul>' +
+				warnings.map(function (warning) {
+					return "<li>" + Portal.esc(warning) + "</li>";
+				}).join("") +
+				"</ul></div>"
+			: "";
+		var suggestionKeys = Object.keys(suggestions);
+		var suggestionHtml = suggestionKeys.length
+			? '<div class="ocr-suggestions"><strong>Suggested only — not applied to your application</strong><ul>' +
+				suggestionKeys.map(function (key) {
+					var item = suggestions[key] || {};
+					return (
+						"<li>" +
+						Portal.esc(key.replace(/_/g, " ")) +
+						": " +
+						Portal.esc(item.value) +
+						(item.source ? " (from " + Portal.esc(item.source.replace(/_/g, " ")) + ")" : "") +
+						"</li>"
+					);
+				}).join("") +
+				"</ul></div>"
+			: "";
+		var confirmHtml =
+			!alreadyConfirmed && keys.length && state.canEdit
+				? '<button type="button" class="btn" data-confirm-extraction' +
+					(state.confirmingRow === doc.row ? " disabled aria-busy=\"true\"" : "") +
+					">" +
+					(state.confirmingRow === doc.row ? "Saving…" : "Confirm these values") +
+					"</button>"
+				: "";
+		field("preview-body").innerHTML =
+			'<div class="preview-sheet"><div class="preview-sheet__top"><div><strong>' +
+			Portal.esc(doc.file_name || "Document") +
+			'</strong><p class="small muted">' +
+			Portal.esc(result.kind || "unknown") +
+			" · " +
+			Portal.esc(result.engine || "Tesseract") +
+			(result.engine_version ? " " + Portal.esc(result.engine_version) : "") +
+			'</p></div><span class="badge badge--info">' +
+			(alreadyConfirmed ? "Confirmed" : "Review required") +
+			"</span></div>" +
+			'<p class="small muted">These suggestions can be wrong. Check every value before confirming. This record does not update your application; your document is not sent to any AI chat service.</p>' +
+			warningHtml +
+			(keys.length ? '<div class="ocr-fields">' + fieldHtml + "</div>" : '<p class="small muted">No supported fields were recognised. Try a clearer scan or ask your advisor to review the file.</p>') +
+			suggestionHtml +
+			confirmHtml +
+			(alreadyConfirmed ? '<p class="small muted">Your confirmed values are saved for review. They have not been copied into application fields.</p>' : "") +
+			"</div>";
+	}
+
+	async function readDocument(doc) {
+		if (!doc || !state.canEdit || state.extractingRow) return;
+		var token = ++state.previewToken;
+		state.previewRow = doc.row;
+		state.extraction = null;
+		state.extractingRow = doc.row;
+		field("preview-heading").textContent = "Reading document";
+		show(field("preview-card"));
+		show(field("preview-close"));
+		field("preview-body").setAttribute("aria-busy", "true");
+		field("preview-body").innerHTML =
+			'<div class="preview-sheet"><p class="small muted">Reading the attached document on our own server. Your document is not sent to any AI chat service.</p><div class="skeleton skeleton--block" aria-hidden="true"></div></div>';
+		renderDocuments();
+
+		try {
+			var saved = await Portal.call("loan_advisory_portal.api.ocr.get_extraction", {
+				application: state.application.name,
+				row: doc.row,
+			});
+			if (state.previewToken !== token || state.previewRow !== doc.row) return;
+			if (saved) {
+				renderExtraction(
+					doc,
+					{
+						kind: saved.kind || "unknown",
+						engine: saved.engine,
+						engine_version: saved.engine_version,
+						fields: saved.extracted_values || {},
+						warnings: [],
+					},
+					saved.confirmed_values || {},
+					true
+				);
+				return;
+			}
+			var result = await Portal.call("loan_advisory_portal.api.ocr.extract", {
+				application: state.application.name,
+				row: doc.row,
+			});
+			if (state.previewToken === token && state.previewRow === doc.row) {
+				renderExtraction(doc, result, {}, false);
+			}
+		} catch (error) {
+			if (state.previewToken !== token || state.previewRow !== doc.row || isAuth(error)) return;
+			field("preview-heading").textContent = "Document could not be read";
+			field("preview-body").innerHTML =
+				'<div class="alert alert--error" role="alert"><strong>Automatic reading did not complete</strong><span>' +
+				Portal.esc(error.message || "Try a clearer file or ask your advisor to review it.") +
+				"</span></div>";
+		} finally {
+			if (state.previewToken === token && state.previewRow === doc.row) {
+				field("preview-body").removeAttribute("aria-busy");
+			}
+			if (state.extractingRow === doc.row) {
+				state.extractingRow = null;
+				renderDocuments();
+			}
+		}
+	}
+
+	async function confirmExtraction(button) {
+		var extraction = state.extraction;
+		if (!extraction || extraction.alreadyConfirmed || state.confirmingRow) return;
+		var token = state.previewToken;
+		var doc = state.documents.find(function (item) {
+			return item.row === extraction.row;
+		});
+		if (!doc) return;
+
+		var values = {};
+		field("preview-body").querySelectorAll("[data-ocr-field]").forEach(function (input) {
+			var value = input.value.trim();
+			if (value) values[input.dataset.ocrField] = value;
+		});
+		if (!Object.keys(values).length) {
+			Portal.flash("error", "No values to confirm", "Enter or correct at least one extracted value.");
+			return;
+		}
+
+		state.confirmingRow = doc.row;
+		Portal.busy(button, true, "Saving");
+		try {
+			var response = await Portal.call("loan_advisory_portal.api.ocr.confirm", {
+				application: state.application.name,
+				row: doc.row,
+				values: values,
+			});
+			state.confirmedRows[doc.row] = true;
+			if (state.previewToken === token && state.previewRow === doc.row) {
+				renderExtraction(doc, extraction.result, response.confirmed_values || values, true);
+			}
+			Portal.flash("success", "Values saved for review", "They were not copied into your application.");
+		} catch (error) {
+			if (!isAuth(error)) {
+				Portal.flash("error", "We could not confirm these values", error.message);
+			}
+		} finally {
+			state.confirmingRow = null;
+			renderDocuments();
+		}
 	}
 
 	async function uploadFile(file) {
@@ -321,6 +547,7 @@
 				row: row,
 			});
 			state.documents = response.documents || [];
+			delete state.confirmedRows[row];
 			renderDocuments();
 			if (state.previewRow === row) resetPreview();
 			setStatus("Document removed", "ok");
@@ -488,12 +715,20 @@
 	field("doc-list").addEventListener("click", function (event) {
 		var button = event.target.closest("button");
 		if (!button) return;
-		var index = Number(button.dataset.preview || button.dataset.download || button.dataset.remove);
+		var index = Number(
+			button.dataset.preview || button.dataset.download || button.dataset.remove || button.dataset.extract
+		);
 		var doc = state.documents[index];
 		if (!doc) return;
 		if (button.hasAttribute("data-preview")) renderPreview(doc);
 		else if (button.hasAttribute("data-download")) download(doc);
 		else if (button.hasAttribute("data-remove")) askRemove(doc);
+		else if (button.hasAttribute("data-extract")) readDocument(doc);
+	});
+
+	field("preview-body").addEventListener("click", function (event) {
+		var button = event.target.closest("[data-confirm-extraction]");
+		if (button) confirmExtraction(button);
 	});
 
 	field("preview-close").addEventListener("click", resetPreview);

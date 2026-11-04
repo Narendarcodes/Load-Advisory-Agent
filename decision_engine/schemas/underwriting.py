@@ -5,6 +5,10 @@ Invalid input raises; we never silently transform dangerous values.
 """
 from pydantic import BaseModel, Field, field_validator
 
+# Q-01: the one tenure bound (Bajaj 12..108 months, BFL-PL-ELIG-DOCS#008, catalogue PL-071/PL-072).
+# Product maxima (60/84) come from the catalogue (PL-110) and are a counter-offer, not a validation error.
+MIN_TENURE_MONTHS, MAX_TENURE_MONTHS = 12, 108
+
 
 class UnderwritingInput(BaseModel):
     application_id: str = Field(min_length=1)
@@ -58,8 +62,8 @@ class UnderwritingInput(BaseModel):
     @field_validator("loan_tenure_months")
     @classmethod
     def _tenure(cls, v):
-        if v is None or not 1 <= v <= 360:
-            raise ValueError("loan_tenure_months must be within 1..360")
+        if v is None or not MIN_TENURE_MONTHS <= v <= MAX_TENURE_MONTHS:
+            raise ValueError(f"loan_tenure_months must be within {MIN_TENURE_MONTHS}..{MAX_TENURE_MONTHS}")
         return v
 
     def zen_context(self) -> dict:

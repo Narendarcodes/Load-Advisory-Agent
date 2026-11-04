@@ -23,6 +23,10 @@ jinja = {
 	]
 }
 
+# Desk-only form script for the Saral Review officer actions (ADR-0008). It is loaded by the
+# Desk for Loan Application forms and never by the borrower portal.
+doctype_js = {"Loan Application": "public/js/desk/loan_application_review.js"}
+
 doc_events = {
 	"User": {
 		"on_update": "loan_advisory_portal.portal.identity.on_user_update",

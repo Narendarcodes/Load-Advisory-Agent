@@ -1,0 +1,44 @@
+{
+ "embed_model": "google/embeddinggemma-2",
+ "embed_dtype": "float32",
+ "reranker_dtype": "float16 (RERANK_DTYPE=float16)",
+ "device": "cuda",
+ "fusion": {
+  "k": 10,
+  "w_dense": 1.0,
+  "w_bm25": 0.5,
+  "depth": 50,
+  "rerank_candidates": 50
+ },
+ "collections": {
+  "saral_nbfc_policy": {
+   "chunks": 329,
+   "points": 329,
+   "embed_seconds": 15.7
+  },
+  "rbi_regulatory": {
+   "chunks": 317,
+   "points": 317,
+   "embed_seconds": 10.0
+  }
+ },
+ "candidates": {
+  "items": 178,
+  "queries": 469,
+  "depth_settings": [
+   50,
+   100
+  ],
+  "cand_k": 20,
+  "seconds": 1335.6
+ },
+ "seconds": 1435.2,
+ "merge": {
+  "depth": "50",
+  "router": false,
+  "demote": 0.7,
+  "subqueries": true,
+  "original_first": 1,
+  "min_score": 0.0
+ }
+}
