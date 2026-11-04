@@ -11,13 +11,14 @@ from loan_advisory.agent.tools import DecisionTools, InMemoryEvidenceSource
 from loan_advisory.application.bureau_intake import run_bureau_evaluation
 from loan_advisory.infrastructure.bureau_client import BureauClient
 from loan_advisory.infrastructure.evidence_store import InMemoryEvidenceSink
-from loan_advisory.infrastructure.frappe_adapter import MockStore
+from loan_advisory.infrastructure.frappe_adapter import MockStore, read_only_view
 from synthetic_bureau.app import create_app
 
 
 def _latest(sink, store, ref):
     doc = store.get(ref)
-    return DecisionTools(store, InMemoryEvidenceSource(sink)).get_decision_evidence(ref, Session(applicant_ref=doc["applicant"]))
+    tools = DecisionTools(read_only_view(store), InMemoryEvidenceSource(sink))
+    return tools.get_decision_evidence(ref, Session(applicant_ref=doc["applicant"]))
 
 
 def test_rerun_of_an_earlier_scenario_becomes_the_latest_evidence_again():
