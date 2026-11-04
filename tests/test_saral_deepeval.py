@@ -199,3 +199,8 @@ def test_generator_fallback_crosses_endpoints_and_reports_the_model(monkeypatch)
     assert (used, fb) == ("GLM-5.3", True)
     assert seen == [("https://api.river.ai/v1", "deepseek-ai/DeepSeek-V4.1-Flash", None),
                     ("https://api.river.ai/v1", "GLM-5.3", "low")]
+
+
+def test_primary_spec_with_endpoint_is_not_counted_as_fallback():
+    ev = _load("eval_saral_deepeval")
+    assert ev.gen_route("deepseek-ai/DeepSeek-V4.1-Flash@river", None)[1] == "deepseek-ai/DeepSeek-V4.1-Flash"

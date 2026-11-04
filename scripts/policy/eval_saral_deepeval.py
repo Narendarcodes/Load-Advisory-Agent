@@ -443,7 +443,7 @@ def generate(a):
         base["attempts"] = attempt
         base["models_used"] = used_models
         base["model_used"] = used_models[-1] if used_models else None
-        base["fallback_used"] = any(m and m != a.llm_model for m in used_models)
+        base["fallback_used"] = any(m and m != gen_route(a.llm_model, a.llm_base)[1] for m in used_models)
         if gflags or not isinstance(out, dict):  # graph.finalize: flagged after the rewrite -> policy_abstain template
             return {**base, "path": "fallback_template", "guard_flags": gflags, "abstain": True,
                     "answer": P.template("policy_abstain", loc), "citation_labels": [], "cited": [], "parse_error": perr,
