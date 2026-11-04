@@ -7,8 +7,8 @@ turns in any language never wait on a slow classifier, and a turn that needs no 
     Router.route(message, locale, context) -> RouteResult | None
 
 `KeywordRouter` is the built-in high-precision router (English, Hindi, Telugu, romanised Hindi/Telugu).
-`LayaRouterAdapter` lets the Laya System-1 router (`loan_advisory.agent.routing.laya_router`, another branch) plug in
-behind a flag: it is only built when `SARAL_LAYA_ROUTER_URL` is set, and any error or low confidence means "not sure".
+`LayaRouterAdapter` is the plug-in point for the Laya System-1 router; it is not wired (measured 2026-11-04: no gain,
++0.85 s per turn). Any error or low confidence from an adapter means "not sure".
 
 Graph intents a router may return:
   explain, status, improve, what_if, policy, greeting, other, vague, human_review, distress, misrepresentation,
@@ -16,7 +16,6 @@ Graph intents a router may return:
 """
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -221,18 +220,11 @@ class LayaRouterAdapter:
 
 
 def build_routers(env=None) -> list:
-    """Keyword router always; the Laya router only when SARAL_LAYA_ROUTER_URL is set and its module is importable."""
-    env = os.environ if env is None else env
-    routers: list = [KeywordRouter()]
-    url = (env.get("SARAL_LAYA_ROUTER_URL") or "").strip()
-    if url:
-        try:
-            from loan_advisory.agent.routing.laya_router import LayaRouter, LayaRouterSettings
-            client = LayaRouter(LayaRouterSettings(url=url))
-            routers.append(LayaRouterAdapter(client, float(env.get("SARAL_LAYA_MIN_CONFIDENCE") or 0.6)))
-        except Exception:  # module missing or misconfigured: keyword routing still works
-            pass
-    return routers
+    """The keyword router only. The Laya System-1 router was measured and NOT adopted (2026-11-04: untuned hybrid
+    80.0% vs 79.3% keyword-only, +0.85 s per turn), so nothing builds it here; `LayaRouterAdapter` stays as the
+    documented plug-in point if a tuned model is evaluated later."""
+    del env
+    return [KeywordRouter()]
 
 
 def first_route(routers, message: str, locale: str = "en", context: str = "") -> RouteResult | None:
