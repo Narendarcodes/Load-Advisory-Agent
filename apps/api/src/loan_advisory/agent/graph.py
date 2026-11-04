@@ -1048,7 +1048,7 @@ class AdvisoryAgent:
         g.add_edge("receive", "authenticate")
         g.add_conditional_edges("authenticate", lambda s: "simple" if s.get("status") in ("not_authorized", "unavailable") else "classify",
                                 ["simple", "classify"])
-        g.add_conditional_edges("classify", self._after_classify,
+        g.add_conditional_edges("classify", _after_classify,
                                 ["boundary", "human_review", "clarify", "load_evidence", "retrieve_policy", "simple"])
         g.add_conditional_edges("load_evidence", _after_evidence, ["compose", "plan", "what_if", "simple"])
         g.add_edge("plan", "compose")
@@ -1064,22 +1064,25 @@ class AdvisoryAgent:
         g.add_edge("finalize", END)
         return g
 
-    def _after_classify(self, s):
-        """Fixed tool plan per intent: only explain / status / distress / improve / what-if read the decision."""
-        i = s["intent"]
-        if i == "boundary":
-            return "boundary"
-        if i == "human_review":
-            return "human_review"
-        if i == "vague":
-            return "clarify"
-        if i == "what_if" and s.get("status") == "what_if_cap":
-            return "simple"
-        if i in DECISION_INTENTS:
-            return "load_evidence"
-        if i == "policy":
-            return "retrieve_policy"
+
+
+def _after_classify(s):
+    """Fixed tool plan per intent: only explain / status / distress / improve / what-if read the decision. An unknown
+    intent gets a template, never a tool."""
+    i = s.get("intent")
+    if i == "boundary":
+        return "boundary"
+    if i == "human_review":
+        return "human_review"
+    if i == "vague":
+        return "clarify"
+    if i == "what_if" and s.get("status") == "what_if_cap":
         return "simple"
+    if i in DECISION_INTENTS:
+        return "load_evidence"
+    if i == "policy":
+        return "retrieve_policy"
+    return "simple"
 
 
 def _after_evidence(s):
