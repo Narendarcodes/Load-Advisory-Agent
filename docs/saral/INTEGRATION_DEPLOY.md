@@ -16,7 +16,7 @@ or seeded login files.
 | InstaBox 2 | 4 vCPU, 8 GB RAM, no GPU | Frappe stack (Docker) and the optional Langfuse server |
 | Orchestration machine | 2 CPU, ~7 GB RAM (aarch64 dev sandbox) | Front door, assistant runtime, agent, decision runner; test harnesses and evals |
 | Kaggle | 2x T4 | Eval retrieval only (embedding, indexing, retrieval, reranking). No LLM is served there |
-| LLM endpoint | — | OpenAI-compatible gateway used for the agent and the evals during the test; production default is `gpt-oss-120b` on Groq |
+| LLM endpoints | — | OmniRoute OpenAI-compatible gateway on the owner's laptop (answer model Gemini 3.8 Flash, Sonnet 4.6 fallback; eval judge), reached through a temporary Cloudflare quick tunnel during the final runs; Groq for the intent classifier (`gpt-oss-120b` → `gpt-oss-20b`) |
 
 InstaBox sessions pause after 30 minutes idle and stop after 8 hours, so long runs are batched and the stack is
 restarted by a script with a watchdog.
@@ -59,7 +59,8 @@ reaches the InstaBox services through SSH port forwards (local port → remote p
 | Variable | Used by | Meaning |
 |---|---|---|
 | `AGENT_ASSERTION_SECRET` | agent, Frappe site | Must equal the site's `agent_assertion_secret`; the agent refuses to start without it |
-| `LLM_PROVIDER`, `LLM_MODEL`, provider base URL and key | agent | `groq` or `omniroute`; the model id must be set explicitly |
+| `SARAL_LLM_PROVIDER`, `SARAL_LLM_MODEL`, `SARAL_LLM_FALLBACK_MODEL`, `OMNIROUTE_BASE_URL`, `OMNIROUTE_API_KEY` | agent | answer model: `omniroute`, `antigravity/gemini-3.8-flash`, `antigravity/claude-sonnet-4-6@omniroute` |
+| `SARAL_INTENT_PROVIDER`, `SARAL_INTENT_MODEL`, `SARAL_INTENT_FALLBACK_MODEL`, `SARAL_INTENT_GROQ_BACKUP`, `GROQ_API_KEY` | agent | intent classifier chain (Groq gpt-oss-120b → 20b → OmniRoute flash-lite → rules) |
 | `AGENT_RAG_COLLECTIONS` | agent | `saral_nbfc_policy,rbi_regulatory` |
 | `AGENT_QDRANT_URL` | agent | Forwarded Qdrant, e.g. `http://127.0.0.1:16333` |
 | `AGENT_RERANK`, `AGENT_RETRIEVER_DEVICE` | agent | `off` and `cpu` on this test bed |
