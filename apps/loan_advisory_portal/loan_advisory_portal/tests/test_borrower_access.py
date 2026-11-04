@@ -162,8 +162,11 @@ class BorrowerAccessTest(FrappeTestCase):
 				make_application(self.profile.customer, tenure_months=0)
 			with self.assertRaises(Forbidden):
 				make_application(self.profile.customer, purpose="")
-			with self.assertRaises(Forbidden):
-				make_application(self.profile.customer, credit_score=120)
+			# A typed credit score is ignored: the score is filled from the bureau only.
+			created = make_application(self.profile.customer, credit_score=120)
+		doc = frappe.get_doc("Loan Application", created["name"])
+		self.assertEqual(doc.custom_credit_score or 0, 0)
+		self.assertEqual(doc.custom_credit_score_origin, "NOT_FETCHED")
 
 	def test_profile_defaults_feed_new_application(self):
 		with as_user(self.user.name):

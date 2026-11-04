@@ -1,0 +1,172 @@
+[
+  {
+    "schema_version": "saral-segment/1",
+    "segment_id": "SALARIED_METRO",
+    "dimension": "EMPLOYMENT_GEO",
+    "approval_status": "PENDING",
+    "assignment_rule": "employment_type=SALARIED and residence_city in {Pune, Bengaluru, Mumbai, Delhi} (A-03)",
+    "effects": [
+      {
+        "rule_id": "B10_MIN_NET_INCOME",
+        "change": "SET_THRESHOLD",
+        "value": 40000,
+        "basis": "BAJAJ-SOURCED",
+        "source_chunk": "BFL-PL-SALARIED#012"
+      }
+    ]
+  },
+  {
+    "schema_version": "saral-segment/1",
+    "segment_id": "SALARIED_NON_METRO",
+    "dimension": "EMPLOYMENT_GEO",
+    "approval_status": "APPROVED",
+    "assignment_rule": "employment_type=SALARIED and residence_city not in the metro list",
+    "effects": [
+      {
+        "rule_id": "B10_MIN_NET_INCOME",
+        "change": "SET_THRESHOLD",
+        "value": 25001,
+        "basis": "BAJAJ-SOURCED",
+        "source_chunk": "BFL-PL-SALARIED#004"
+      }
+    ]
+  },
+  {
+    "schema_version": "saral-segment/1",
+    "segment_id": "SELF_EMPLOYED",
+    "dimension": "EMPLOYMENT_GEO",
+    "approval_status": "PENDING",
+    "assignment_rule": "employment_type=SELF_EMPLOYED (Bajaj lists the profile: BFL-PL-ELIG-DOCS#007)",
+    "effects": [
+      {
+        "rule_id": "B10_MIN_NET_INCOME",
+        "change": "SET_SOURCE",
+        "value": "avg monthly bank credits",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-23"
+      },
+      {
+        "rule_id": "B10_MIN_NET_INCOME",
+        "change": "SET_THRESHOLD",
+        "value": 25001,
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-23"
+      },
+      {
+        "rule_id": "B08_EMPLOYER_CATEGORY",
+        "change": "SKIP_RULE",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-23"
+      },
+      {
+        "rule_id": "B12_EMPLOYMENT_MIN",
+        "change": "SKIP_RULE",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-23"
+      },
+      {
+        "rule_id": "B19_INCOME_CROSS_CHECK",
+        "change": "SKIP_RULE",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-23"
+      },
+      {
+        "rule_id": "B20_SALARY_CREDIT_MONTHS",
+        "change": "SKIP_RULE",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-23"
+      },
+      {
+        "rule_id": "SE01_MANUAL_INCOME_REVIEW",
+        "change": "ADD_RULE",
+        "value": "always REFER",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-23"
+      }
+    ]
+  },
+  {
+    "schema_version": "saral-segment/1",
+    "segment_id": "NEW_TO_CREDIT",
+    "dimension": "CREDIT",
+    "approval_status": "PENDING",
+    "assignment_rule": "bureau score status NO_HIT or INSUFFICIENT_HISTORY",
+    "effects": [
+      {
+        "rule_id": "B09_CREDIT_SCORE_MIN",
+        "change": "SET_EFFECT",
+        "value": "NOT_EVALUATED -> REFER",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-22"
+      },
+      {
+        "rule_id": "B11_FOIR_MAX",
+        "change": "SET_THRESHOLD",
+        "value": 0.4,
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-22"
+      },
+      {
+        "rule_id": "NTC01_INDICATIVE_AMOUNT_CAP",
+        "change": "ADD_RULE",
+        "value": 200000,
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-22"
+      }
+    ]
+  },
+  {
+    "schema_version": "saral-segment/1",
+    "segment_id": "PRIME",
+    "dimension": "CREDIT",
+    "approval_status": "PENDING",
+    "assignment_rule": "credit_score >= 750 (A-20)",
+    "effects": [
+      {
+        "rule_id": "B11_FOIR_MAX",
+        "change": "SET_THRESHOLD",
+        "value": 0.55,
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-21"
+      }
+    ]
+  },
+  {
+    "schema_version": "saral-segment/1",
+    "segment_id": "NEAR_PRIME",
+    "dimension": "CREDIT",
+    "approval_status": "PENDING",
+    "assignment_rule": "650 <= credit_score <= 749 (A-20); base thresholds apply unchanged",
+    "effects": []
+  },
+  {
+    "schema_version": "saral-segment/1",
+    "segment_id": "EXISTING_CUSTOMER",
+    "dimension": "RELATIONSHIP",
+    "approval_status": "PENDING",
+    "assignment_rule": "existing_customer=true on the synthetic applicant record (BFL-APP-TNC-2023#012)",
+    "effects": [
+      {
+        "rule_id": "B22_KYC_NAME_MATCH",
+        "change": "SET_SOURCE",
+        "value": "existing KYC",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-24"
+      },
+      {
+        "rule_id": "B23_KYC_DOB_MATCH",
+        "change": "SET_SOURCE",
+        "value": "existing KYC",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-24"
+      },
+      {
+        "rule_id": "B24_KYC_ID_LAST4_MATCH",
+        "change": "SET_SOURCE",
+        "value": "existing KYC",
+        "basis": "ASSUMPTION",
+        "assumption_id": "A-24"
+      }
+    ]
+  }
+]

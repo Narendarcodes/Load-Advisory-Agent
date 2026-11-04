@@ -1,0 +1,284 @@
+{
+  "$comment": "Generated from contracts/*.py by contracts/export_schemas.py. Synthetic development contract; cross-field rules are enforced by the pydantic models only.",
+  "$defs": {
+    "DocumentKind": {
+      "enum": [
+        "salary_slip",
+        "bank_statement",
+        "employment_letter",
+        "pan_card",
+        "aadhaar_card",
+        "signature_specimen",
+        "unknown"
+      ],
+      "title": "DocumentKind",
+      "type": "string"
+    },
+    "DocumentRef": {
+      "additionalProperties": false,
+      "properties": {
+        "document_id": {
+          "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/DocumentKind"
+        },
+        "pages": {
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Pages",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "uploaded_at": {
+          "format": "date-time",
+          "title": "Uploaded At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "document_id",
+        "kind",
+        "uploaded_at",
+        "pages",
+        "sha256"
+      ],
+      "title": "DocumentRef",
+      "type": "object"
+    },
+    "EngineInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "enum": [
+            "tesseract",
+            "text-layer",
+            "synthetic-fixture"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 40,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "EngineInfo",
+      "type": "object"
+    },
+    "ExtractedFieldValue": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Key",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "ocr_confidence": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ocr Confidence"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceRef"
+        },
+        "status": {
+          "$ref": "#/$defs/FieldStatus"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "key",
+        "status",
+        "source"
+      ],
+      "title": "ExtractedFieldValue",
+      "type": "object"
+    },
+    "FieldStatus": {
+      "enum": [
+        "found",
+        "low_confidence",
+        "missing",
+        "invalid"
+      ],
+      "title": "FieldStatus",
+      "type": "string"
+    },
+    "SourceRef": {
+      "additionalProperties": false,
+      "description": "Where on which document a value was read.",
+      "properties": {
+        "document_id": {
+          "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/DocumentKind"
+        },
+        "line_index": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Index"
+        },
+        "page": {
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Page",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "document_id",
+        "kind",
+        "page"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    },
+    "SyntheticMarker": {
+      "additionalProperties": false,
+      "description": "Stamped on every record so nothing synthetic is ever mistaken for real data.",
+      "properties": {
+        "synthetic": {
+          "const": true,
+          "default": true,
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "warning": {
+          "default": "SYNTHETIC DEVELOPMENT DATA. Never use for a real lending decision.",
+          "title": "Warning",
+          "type": "string"
+        }
+      },
+      "title": "SyntheticMarker",
+      "type": "object"
+    }
+  },
+  "$id": "https://saral.invalid/contracts/document_extraction.schema.json",
+  "additionalProperties": false,
+  "properties": {
+    "applicant_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Applicant Id",
+      "type": "string"
+    },
+    "document": {
+      "$ref": "#/$defs/DocumentRef"
+    },
+    "engine": {
+      "$ref": "#/$defs/EngineInfo"
+    },
+    "extracted_at": {
+      "format": "date-time",
+      "title": "Extracted At",
+      "type": "string"
+    },
+    "extraction_id": {
+      "pattern": "^SYN-[A-Z]{2,6}-[0-9A-Z]{3,16}$",
+      "title": "Extraction Id",
+      "type": "string"
+    },
+    "fields": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ExtractedFieldValue"
+      },
+      "title": "Fields",
+      "type": "object"
+    },
+    "marker": {
+      "$ref": "#/$defs/SyntheticMarker"
+    },
+    "schema_version": {
+      "const": "saral-document-extraction/1",
+      "default": "saral-document-extraction/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "extraction_id",
+    "applicant_id",
+    "document",
+    "engine",
+    "extracted_at",
+    "fields"
+  ],
+  "title": "DocumentExtraction",
+  "type": "object"
+}

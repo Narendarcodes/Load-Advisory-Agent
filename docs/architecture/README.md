@@ -41,12 +41,14 @@ boundaries and its test plan are documented separately:
 ## 1. System context
 
 Who and what the agent talks to. Everything is self-hosted and bound to 127.0.0.1 on the droplet. The advisory server
-is FastAPI (`apps/api/src/loan_advisory/api/`); the synthetic bureau is a separate FastAPI service. `/api/bureau/run`
-evaluates the signed-in application through that bureau and the data-quality gates, then the unchanged ZEN decision.
-The diagrams predate the migration and show the legacy bearer credential; the agent endpoints themselves are unchanged.
+is FastAPI (`apps/api/src/loan_advisory/api/`); the synthetic bureau is a separate FastAPI service. Evaluating an
+application through that bureau and the data-quality gates, then the unchanged ZEN decision, belongs to the bureau
+pipeline process: since 2026-11-03 (Phase 1 boundary A) the agent exposes no route that starts one, and only reads the
+evidence the pipeline stores. The diagrams predate the migration and show the legacy bearer credential.
 
 > Post-migration, the borrower-facing routes in this section belong to Frappe. The agent endpoints
-> (`/api/agui`, `/api/chat`, `/api/chat/stream`, `/api/bureau/run`, `/healthz`) remain; the rest is retired.
+> (`/api/agui`, `/api/chat`, `/api/chat/stream`, `/healthz`) remain; the rest is retired, including
+> `/api/bureau/run` (removed 2026-11-03, Phase 1 boundary A).
 > See the migration documents above.
 
 ![System context](diagrams/01-system-context.png)

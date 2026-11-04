@@ -1,0 +1,9 @@
+[
+ {
+  "collection": "rbi_regulatory",
+  "dropped": "RBI-NBFC-CF-2025#027",
+  "duplicate_of": "RBI-NBFC-CF-2025#002",
+  "chunk_sha256": "97bdeea9fe318fc6f7715313ee1460cb39ba2ea8cf047fab475da4b34fbd27a1",
+  "words": 10
+ }
+]
