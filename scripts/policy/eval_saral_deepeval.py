@@ -304,10 +304,27 @@ def post(base, body, key=None, tries=4):
     return None
 
 
+DEFAULT_GEN_MODEL = "deepseek-ai/DeepSeek-V4.1-Flash@river"  # answer generator since 2026-11-04 (OmniRoute down)
+DEFAULT_GEN_FALLBACKS = "GLM-5.3@river,antigravity/claude-sonnet-4-6@omniroute"
+
+
+def gen_route(spec, base):
+    """`model[@river|omniroute|URL]` -> (base_url, model, extra body). A bare model uses `base` (--llm-base).
+    DeepSeek on River omits reasoning_effort (sending it turns reasoning on); GLM-5.3 cannot disable it, so `low`."""
+    m, _, b = spec.rpartition("@") if "@" in spec else (spec, "", "")
+    url = _resolve_base(b, base or RIVER_BASE)
+    extra = {}
+    if "river.ai" in url and "glm" in m.lower():
+        extra["reasoning_effort"] = "low"
+    return url, m.strip(), extra
+
+
 def chat_with_fallback(base, body, models):
-    """Try each model in order (primary first). Returns (response, model_used, fallback_used)."""
-    for i, m in enumerate(models):
-        res = post(base, {**body, "model": m})
+    """Try each model in order (primary first). Entries may carry `@river|omniroute|URL`. Returns
+    (response, model_used, fallback_used)."""
+    for i, spec in enumerate(models):
+        url, m, extra = gen_route(spec, base)
+        res = post(url, {**body, **extra, "model": m}, key=judge_api_key(url))
         if res is not None:
             return res, m, i > 0
     return None, None, False

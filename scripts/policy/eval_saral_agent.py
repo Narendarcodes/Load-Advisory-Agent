@@ -147,14 +147,25 @@ class ToolLog:
 
 
 class FallbackLLM:
-    """Primary model first; on LLMError the fallback model answers. Every fallback use is logged."""
+    """Primary model first; on LLMError the fallback model answers. Every fallback use is logged and counted.
+    Model entries are `model[@river|omniroute|URL]` (a bare model uses --llm-base); each route gets its own
+    endpoint and placeholder key (the real key is injected on the wire), so River -> OmniRoute chains work."""
 
     def __init__(self, base, primary, fallbacks, log):
         from loan_advisory.agent.llm import ChatLLM
-        self.models = [ChatLLM(base=base, model=m, provider="omniroute", api_key="") for m in [primary, *fallbacks]]
+        sys.path.insert(0, str(Path(__file__).parent))
+        from eval_saral_deepeval import gen_route, judge_api_key
+        self.models = []
+        for spec in [primary, *fallbacks]:
+            url, m, extra = gen_route(spec, base)
+            prov = "omniroute"  # the agent repo's ChatLLM may predate the river provider; base/key are explicit anyway
+            self.models.append(ChatLLM(base=url, model=m, provider=prov, api_key=judge_api_key(url),
+                                       reasoning_effort=extra.get("reasoning_effort", "")))
         self.primary, self.log, self.local = self.models[0], log, threading.local()
-        self.model = primary
+        self.model = self.primary.model
         self.supports_deadline = True
+        self.uses = {}
+        self._ulock = threading.Lock()
 
     @property
     def calls(self):
@@ -169,6 +180,8 @@ class FallbackLLM:
         for i, m in enumerate(self.models):
             try:
                 out = list(m.chat_stream(system, user, **kw))
+                with self._ulock:
+                    self.uses[m.model] = self.uses.get(m.model, 0) + 1
                 if i:
                     self.log({**self._ctx(), "tag": kw.get("tag"), "model": m.model, "primary_error": str(last)[:200]})
                     self.primary.calls.extend(m.calls[-1:])
@@ -300,6 +313,12 @@ def generate(a):
                         futs[ex.submit(run_conv, nxt)] = nxt
     n = len(jl(part))
     total = len(load_dev(a))
+    gi = out / "generator_info.json"  # per-model answer call counts, accumulated across resumed runs
+    prev = json.loads(gi.read_text()) if gi.exists() else {"model_calls": {}}
+    for k, v in llm.uses.items():
+        prev["model_calls"][k] = prev["model_calls"].get(k, 0) + v
+    prev.update({"primary": a.llm_model, "fallbacks": a.llm_fallback})
+    gi.write_text(json.dumps(prev, indent=1), encoding="utf-8")
     if n >= total:
         rows = {r["conv_id"]: r for r in jl(part)}
         with (out / "agent_turns.jsonl").open("w", encoding="utf-8") as f:
@@ -553,8 +572,10 @@ def main():
     p.add_argument("--policy-dir")
     p.add_argument("--out", required=True)
     p.add_argument("--llm-base")
-    p.add_argument("--llm-model", default="antigravity/claude-sonnet-4-6")
-    p.add_argument("--llm-fallback", default="gpt-5.6-terra")
+    p.add_argument("--llm-model", default=os.environ.get("SARAL_LLM_MODEL_SPEC", "deepseek-ai/DeepSeek-V4.1-Flash@river"),
+                   help="model[@river|omniroute|URL]; answer generator (River since 2026-11-04, OmniRoute was down)")
+    p.add_argument("--llm-fallback", default=os.environ.get("SARAL_LLM_FALLBACK_SPEC",
+                                                            "GLM-5.3@river,antigravity/claude-sonnet-4-6@omniroute"))
     p.add_argument("--judge-base")
     p.add_argument("--judge-model", help="default: env SARAL_JUDGE_MODEL, else moonshotai/Kimi-K3 on River AI")
     p.add_argument("--judge-fallback", help="comma list of model@endpoint (river|omniroute|URL); default: env "

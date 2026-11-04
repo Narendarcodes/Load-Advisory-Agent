@@ -174,3 +174,28 @@ def test_judge_falls_back_to_next_route_on_bad_json(monkeypatch):
     j.tl.used = set()
     assert j.generate("q", schema=V).verdict == "yes"
     assert j.tl.used == {"b"} and j.calls == {"b": 1} and j.name == "moonshotai/Kimi-K3"
+
+
+def test_generator_routes_river_deepseek_then_glm_then_omniroute(monkeypatch):
+    ev = _load("eval_saral_deepeval")
+    monkeypatch.delenv("OMNIROUTE_BASE_URL", raising=False)
+    assert ev.gen_route("deepseek-ai/DeepSeek-V4.1-Flash@river", None) == (
+        "https://api.river.ai/v1", "deepseek-ai/DeepSeek-V4.1-Flash", {})
+    assert ev.gen_route("GLM-5.3@river", None) == ("https://api.river.ai/v1", "GLM-5.3", {"reasoning_effort": "low"})
+    assert ev.gen_route("antigravity/claude-sonnet-4-6@omniroute", None)[0] == ev.OMNIROUTE_BASE_DEFAULT
+    assert ev.gen_route("m", "http://gw/v1") == ("http://gw/v1", "m", {})  # bare model keeps --llm-base
+
+
+def test_generator_fallback_crosses_endpoints_and_reports_the_model(monkeypatch):
+    ev = _load("eval_saral_deepeval")
+    seen = []
+
+    def post(base, body, key=None, tries=4):
+        seen.append((base, body["model"], body.get("reasoning_effort")))
+        return None if "deepseek" in body["model"] else {"choices": [{"message": {"content": "{}"}}]}
+    monkeypatch.setattr(ev, "post", post)
+    models = ["deepseek-ai/DeepSeek-V4.1-Flash@river", *ev.DEFAULT_GEN_FALLBACKS.split(",")]
+    res, used, fb = ev.chat_with_fallback(None, {"messages": []}, models)
+    assert (used, fb) == ("GLM-5.3", True)
+    assert seen == [("https://api.river.ai/v1", "deepseek-ai/DeepSeek-V4.1-Flash", None),
+                    ("https://api.river.ai/v1", "GLM-5.3", "low")]
