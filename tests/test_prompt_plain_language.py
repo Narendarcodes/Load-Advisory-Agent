@@ -145,8 +145,13 @@ def test_numbers_hook_can_block_a_threshold_once_limits_leave_the_allowed_set(tm
     assert limit in G.ungrounded_numbers(leaky, allowed)
 
 
-@pytest.mark.xfail(strict=True, reason="graph.validate still allows policy thresholds as grounded numbers; the "
-                                       "disclosure output guard needs a graph.py/guards.py change (Qoder-owned)")
+def _graph_has_output_check() -> bool:
+    from loan_advisory.agent.graph import AdvisoryAgent
+    return hasattr(AdvisoryAgent, "_violations")
+
+
+@pytest.mark.xfail(not _graph_has_output_check(), strict=True,
+                   reason="needs the graph-side output check / Q-08 (feat/saral-qoder-unblock agent eval fixes)")
 def test_live_agent_blocks_a_draft_that_states_a_cut_off(tmp_path):
     ag, _, _ = agent_for(ScriptedLLM(intent="explain"), tmp_path=tmp_path)
     rec, ths = _thresholds(ag)
