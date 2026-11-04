@@ -40,7 +40,8 @@ git config core.hooksPath .githooks
 
 ## 1. Python dependencies
 
-Two manifests, chosen by what you are going to run. Neither pulls torch.
+Three manifests, chosen by what you are going to run. The first two do not pull torch;
+`requirements-rag.txt` (policy search with citations) does.
 
 ```bash
 python -m venv .venv
@@ -49,7 +50,16 @@ python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt -r requirements-test.txt
 # Linux / macOS
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requirements-test.txt
+# Policy search (agent answers with citations): torch, transformers, sentence-transformers, qdrant-client
+.venv\Scripts\python -m pip install -r requirements-rag.txt      # Windows
+.venv/bin/pip install -r requirements-rag.txt                     # Linux / macOS
 ```
+
+The comment in `requirements-rag.txt` that says "GPU container only" is out of date: on a laptop pip installs the
+CPU torch wheel and the agent runs retrieval on CPU with `AGENT_RETRIEVER_DEVICE=cpu` (verified on Windows 11,
+2026-11-04). The embedding model, EmbeddingGemma-2 (`google/embeddinggemma-2`), is gated on Hugging Face: run
+`huggingface-cli login` and accept the model licence once before the first run. The built policy index is not in
+git; how to build it and where the agent expects it: README, "Run it locally", step 6.
 
 `requirements.txt` is the application set (agent, FastAPI surface, ZEN, LangGraph, AG-UI,
 OpenTelemetry). `requirements-test.txt` is what the test suite additionally imports; without it
@@ -158,19 +168,32 @@ docker exec loanrangers-backend-1 bash -lc \
    --install-app erpnext && bench --site loanportal.local install-app lending'
 
 # then the portal, from your checkout
+# (Windows: run this through Git Bash explicitly, "C:\Program Files\Git\bin\bash.exe" -lc "...";
+#  the bash on PATH is often WSL's, which has no docker CLI)
 FRAPPE_SITE=loanportal.local FRAPPE_BACKEND=loanrangers-backend-1 \
-  ./infra/frappe/bootstrap/install_portal_app.sh
+  bash infra/frappe/bootstrap/install_portal_app.sh
 
-# site configuration the app expects
-docker exec loanrangers-backend-1 bash -lc "cd /home/frappe/frappe-bench && \
-  bench --site loanportal.local set-config allow_tests true && \
-  bench --site loanportal.local set-config agent_assertion_secret <32+ random chars>"
+# the script copies the app into the backend container only; restart the background workers
+# so they import the same code (or docker cp the app into them as well)
+docker restart loanrangers-queue-short-1 loanrangers-queue-long-1 loanrangers-scheduler-1
+
+# site configuration the app expects, written straight into site_config.json so the secret never
+# appears on a bench command line (and so never in logs/bench.log). AGENT_ASSERTION_SECRET must be
+# exported in your shell first; `-e NAME` passes it by name, not on the command line.
+docker exec -e AGENT_ASSERTION_SECRET loanrangers-backend-1 python3 -c "import json,os; \
+p='/home/frappe/frappe-bench/sites/loanportal.local/site_config.json'; c=json.load(open(p)); \
+c.update(allow_tests=1, allow_demo_users=1, agent_assertion_secret=os.environ['AGENT_ASSERTION_SECRET']); \
+json.dump(c, open(p, 'w'), indent=1)"
 ```
+
+Container names depend on your compose project; check them with `docker ps`. Document-upload OCR needs the
+`loanrangers-frappe:16-ocr` image (`infra/frappe/Dockerfile.ocr`, `infra/frappe/loanrangers.ocr.yml`); the base
+image has neither Tesseract nor PaddleOCR. The seeded synthetic applicants do not need OCR.
 
 **Anything passed on a `bench` command line is also written to `logs/bench.log`.** The wrapper logs the
 full argv, so the database root password, the admin password and the assertion secret all appear there
 in plaintext. Treat that log as sensitive: do not paste, attach or commit it, and on a host you do not
-own exclusively set `agent_assertion_secret` by editing `site_config.json` instead. The property the
+own exclusively set `agent_assertion_secret` by editing `site_config.json` instead (the command above does). The property the
 browser suites rely on is unaffected — the secret still never enters the repository.
 
 You do **not** need LiveKit credentials to run the portal or its test suite. The voice tests configure a

@@ -2,17 +2,17 @@
 
 Saral was built by **Team Loan Rangers** for the VaaniLabs capstone at CBIT. This page credits each
 person for the work that is in the repository. It is derived from `git log` across all branches on GitHub and from
-the repository's pull requests, counted on 2026-11-04 at about 10:00 IST. Nothing here is taken from memory or
+the repository's pull requests, counted on 2026-11-04 at 16:00 IST, after the final merges into `main`. Nothing here is taken from memory or
 estimated.
 
 ## Contributors
 
 | Person | GitHub | Commits (all branches) | Pull requests opened |
 |---|---|---:|---|
-| Golla Narendar (project owner) | [@Narendarcodes](https://github.com/Narendarcodes) | 380 (300 excluding merges) | #1–#40, #42, #44–#50, #52–#56 (53 PRs; 39 merged on GitHub, plus #5 fast-forwarded into `main`) |
+| Golla Narendar (project owner) | [@Narendarcodes](https://github.com/Narendarcodes) | 461 (333 excluding merges) | #1–#40, #42, #44–#50, #52–#59 (56 PRs; 52 merged on GitHub, plus #5 fast-forwarded into `main`; #53 integration test bed, #57 and #58 open) |
 | Vikram Kamishetti | [@vikram-kamishetti](https://github.com/vikram-kamishetti) | 1 (`dd45a2f`, 30 files, +3,071 / −14) | #41 |
 | Bharath Kumar Goud | [@BharathkumarGoud179](https://github.com/BharathkumarGoud179) | 3 (`7b648d2`, `9420290`, `dc09ea6`; +983 / −17) | #43 |
-| Syed Imaaduddin | [@Itsimaady](https://github.com/Itsimaady) | 1 (`2e67fbd`, +241) | #51 |
+| Syed Imaaduddin | [@Itsimaady](https://github.com/Itsimaady) | 1 (`2e67fbd`, +241) | #51 (merged 2026-11-04) |
 
 Commits by Golla Narendar appear under three author names on GitHub (`Golla Narendar`, `Narendarcodes`, and
 GitHub's no-reply address for merges made in the web interface); they are counted together above.
@@ -50,9 +50,10 @@ GitHub's no-reply address for merges made in the web interface); they are counte
 
 ### Syed Imaaduddin: functional documentation
 
-- **Commit `2e67fbd`**, **PR #51** (2026-11-04, open): `docs/functional.md`, the functional description of the
+- **Commit `2e67fbd`**, **PR #51** (merged into `main` on 2026-11-04 with his commit kept): `docs/functional.md`, the functional description of the
   advisory system: its purpose, user context, inputs, capabilities, behaviours and acceptance criteria.
-- Not yet merged into `main` or the integration build.
+- How it is used: `docs/functional.md` keeps his structure and is updated to the final Saral system in #58
+  (with a credit line to him), adding the problem, domain, interventions, user-journey and tech sections.
 
 ### Golla Narendar: project owner
 
@@ -71,7 +72,7 @@ Every other commit and PR in the repository. Grouped from the PR list:
 | Security and privacy hardening (auth, admission control, state paths, log minimisation, fail-closed store, audit integrity, input validation, what-if privacy) | #22–#25, #27, #28, #31, #33 |
 | Borrower platform on Frappe and backend baseline | #34, #35 |
 | Documentation, reproducibility and audits | #11, #12, #26, #36, #37, #39, #40, #42 |
-| Saral redesign of the borrower portal and assistant | #38 |
+| Saral redesign of the borrower portal and assistant | #38, #59 |
 | Saral golden datasets for RAG and conversations | #44 |
 | Saral corpus split into Bajaj and RBI collections | #45 |
 | Plain-language explanations and decision authority | #46 |
@@ -93,7 +94,7 @@ the only decision authority, human review in the Frappe desk, the threshold appr
 
 ## Reviews
 
-No formal pull-request reviews by people are recorded on GitHub. Golla Narendar merged the 39 merged PRs, recorded
+No formal pull-request reviews by people are recorded on GitHub. Golla Narendar merged the merged PRs (including #51 by Syed Imaaduddin), recorded
 the fast-forward merge of #5 and an erratum on #42 in PR comments, and replied on #43 to explain how the segmentation
 work was built on. Teammates' work was integrated by building on their branches with their commits kept intact
 (#47 on #41, #52 on #43).

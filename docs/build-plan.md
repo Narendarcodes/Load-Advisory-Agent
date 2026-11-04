@@ -24,12 +24,12 @@ Architecture: [architecture.drawio.svg](architecture.drawio.svg) (opens in draw.
 | 13 | Rule-based customer segmentation | 11-03 | #43 (carried in #52) | Bharath Kumar Goud |
 | 14 | Explanation tone from segmentation | 11-03, merged 11-04 | #52 | Golla Narendar, on Bharath Kumar Goud's classifier |
 | 15 | Frappe doctypes for all 229 data fields and the Loan Officer review desk; synthetic KYC / PAN / AA bank / bureau data | 11-03, merged 11-04 | #48, #50 | Golla Narendar |
-| 16 | Saral borrower portal and assistant redesign | 11-02, merged 11-04 | #38 | Golla Narendar |
+| 16 | Saral borrower portal and assistant redesign | 11-02, merged 11-04 | #38, #59 | Golla Narendar |
 | 17 | Live end-to-end test bed: integration build, seeder, synthetic KYC/AA service, decision runner; GUI run (59 cases) | 11-03 to 11-04 | #53 (test bed, not merged), #54 | Golla Narendar |
 | 18 | Fixes from the live test; decision-engine gap fixes; agent fixes (route-first decision fetch, new intents, clarify, what-if cap); intent classifier and answer model switch | 11-03 to 11-04, merged 11-04 | #56 | Golla Narendar |
 | 19 | Plain-language prompts and decision authority | 11-03 to 11-04 | #46 | Golla Narendar |
 | 20 | DeepEval RAG and agent evaluation: dev runs and one held-out agent run | 11-03 to 11-04 | #55 | Golla Narendar |
-| 21 | Functional documentation | 11-04 | #51 (open) | Syed Imaaduddin |
+| 21 | Functional documentation (updated to the final system in #58) | 11-04 | #51 | Syed Imaaduddin |
 | 22 | Optional fast intent router (Laya), flag off | 11-04 | #57 (open) | Golla Narendar |
 | 23 | Final documentation | 11-04 | #58 | Golla Narendar |
 
@@ -45,6 +45,5 @@ Architecture: [architecture.drawio.svg](architecture.drawio.svg) (opens in draw.
 | Multi-hop retrieval (recall 0.657 on multi-hop items) | Weakest RAG area | Golla Narendar |
 | Laya router: fine-tune, re-benchmark, wire into the graph | Fine-tuned hybrid missed its +2-point gate (84.3% vs 82.9%) | Golla Narendar |
 | Hosted deployment (Azure VM) | Submission runs on a laptop behind a tunnel | Golla Narendar |
-| Merge #51 (functional documentation) | Open PR | Syed Imaaduddin |
 
 Full limitations list: [../project-management/AGENT_LIMITATIONS.md](../project-management/AGENT_LIMITATIONS.md).
