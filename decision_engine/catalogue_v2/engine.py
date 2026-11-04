@@ -19,6 +19,8 @@ from functools import lru_cache
 from decision_engine.catalogue_v2.compile import JDM_PATH, POLICY_PATH
 
 REQUIRED_CONSENTS = ("bureau_pull", "terms", "privacy")
+# PL-127: the purpose date each product's window is measured on (catalogue purpose_windows).
+PURPOSE_DATE = {"wedding": "wedding_date", "higher_education": "course_start_date", "medical_emergency": "treatment_date"}
 
 
 @lru_cache(maxsize=1)
@@ -77,7 +79,52 @@ def preprocess(dp: dict) -> dict:
     x["min_ocr_confidence"] = min(conf.values()) if isinstance(conf, dict) and conf else None
     dsl = x.get("days_since_last_decline")
     x["days_since_last_decline_or_never"] = 100000 if dsl is None and "days_since_last_decline" in dp else _num(dsl)
+    # D-15: a blank signature box (signature_present false) leaves the signed document (NACH mandate / application
+    # form) incomplete, so PL-088 asks for it. PL-104 stays a screening signal: nothing to screen, no effect.
+    if x.get("signature_present") is False:
+        x["missing_document_count"] = (x["missing_document_count"] or 0) + 1
+    # D-14 / PL-082: expected EMI debits (bureau active EMIs, by month) not observed in the bank.
+    x["missing_emi_debit_count"] = _missing_emi_debits(x.get("expected_emi_debits"), x.get("actual_emi_debits"))
+    # PL-074 / PL-075: the engine recomputes the supplied EMI (calculated_emi) on the same principal, rate and tenure
+    # the supplier used (PL-061 formula); a request changed since then does not make the supplied figure wrong.
+    purpose = x.get("loan_purpose")
+    if _num(x.get("interest_rate")) is None:
+        x["interest_rate"] = _num(x.get("assessment_rate")) or (
+            policy()["sizing"]["flat_rate_by_purpose"].get(purpose) if isinstance(purpose, str) else None)
+    principal = _num(x.get("principal")) or _num(x.get("requested_amount"))
+    rate, n = _num(x.get("interest_rate")), _num(x.get("loan_tenure_months")) or _num(x.get("tenure_months"))
+    if principal and rate and n:
+        x["independently_calculated_emi"] = _emi(principal, rate, int(n))
+    # PL-099: the policy version the rules run under; evidence references come with the data points.
+    x["policy_version"] = policy()["policy_version"]
+    # PL-127: offset in days from the assessment date to the purpose date.
+    key = PURPOSE_DATE.get(purpose) if isinstance(purpose, str) else None
+    x["purpose_date_offset_days"] = _days(x.get(key), x.get("assessment_date")) if key and x.get(key) else None
     return x
+
+
+def _missing_emi_debits(expected, actual):
+    """How many expected EMI debits are not in the bank. Expected: {account: {amount, months_due}} (or a count);
+    actual: [{month, amount}] (or a count). Each observed debit matches one expected debit of the same month and amount."""
+    if isinstance(expected, (int, float)) and isinstance(actual, (int, float)) and not isinstance(expected, bool):
+        return max(0, int(expected) - int(actual))
+    if not isinstance(expected, dict) or not isinstance(actual, list):
+        return None
+    seen = {}
+    for d in actual:
+        if isinstance(d, dict) and d.get("month") is not None and _num(d.get("amount")) is not None:
+            k = (str(d["month"]), round(float(d["amount"]), 2))
+            seen[k] = seen.get(k, 0) + 1
+    missing = 0
+    for acc in expected.values():
+        amt = _num((acc or {}).get("amount"))
+        for month in (acc or {}).get("months_due") or []:
+            k = (str(month), round(float(amt), 2) if amt is not None else None)
+            if seen.get(k):
+                seen[k] -= 1
+            else:
+                missing += 1
+    return missing
 
 
 # ------------------------------------------------------------------ PL-129 sizing
@@ -157,9 +204,27 @@ BINDING_CATEGORY = {"requested": None, "product_cap": "REQUEST_OUTSIDE_OFFER", "
 
 
 # ------------------------------------------------------------------ decision
+def _offer_emi(x: dict):
+    """PL-079 compares the average balance with the EMI of the amount Saral would offer (PL-129), not the request:
+    an over-cap or unaffordable request is sized down before the balance check. None when it cannot be sized."""
+    try:
+        s = size_offer(float(x["requested_amount"]), int(x["tenure_months"]), x["loan_purpose"],
+                       float(x["monthly_net_income"]),
+                       float(x.get("existing_monthly_obligations") or 0) + float(x.get("other_monthly_obligations") or 0),
+                       score=x.get("bureau_score"), ntc=x.get("bureau_match_status") == "NO_HIT",
+                       employment_months=x.get("employment_months"), employment_category=x.get("employment_category"),
+                       evidence_amount=x.get("purpose_evidence_amount"))
+    except (KeyError, TypeError, ValueError):
+        return None
+    return s["emi"]
+
+
 def decide_v2(data_points: dict) -> dict:
     pol = policy()
     x = preprocess(data_points)
+    offer_emi = _offer_emi(x)
+    if offer_emi is not None:
+        x["proposed_emi"] = offer_emi
     raw = _decision().evaluate(x, {"trace": True})
     trace = raw.get("trace") or {}
     outcomes = (trace.get("rule_outcomes") or {}).get("output") or {}
@@ -169,6 +234,14 @@ def decide_v2(data_points: dict) -> dict:
         res = outcomes.get("o_" + rid.replace("-", "_"), "NOT_EVALUABLE")
         eff = meta["effects"].get(res, "NONE") if res != "PASS" else "NONE"
         evals.append({"rule_id": rid, "rule_name": meta["name"], "result": res, "effect": eff})
+    # PL-099 (trace completeness), second half: every compiled rule must have a result from ZEN.
+    unevaluated = [e["rule_id"] for e in evals if e["result"] == "NOT_EVALUABLE"]
+    if unevaluated and "PL-099" in pol["rules"]:
+        for e in evals:
+            if e["rule_id"] == "PL-099":
+                e["result"], e["effect"], e["unevaluated"] = "REVIEW", "MANUAL_REVIEW", unevaluated
+        if zen_decision in ("MORE_INFORMATION_REQUIRED", "ELIGIBILITY_CONDITIONS_MET"):
+            zen_decision = "MANUAL_REVIEW"
     rank = {e: i for i, e in enumerate(("DECLINE", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED"))}
     if zen_decision in rank:
         for e in evals:

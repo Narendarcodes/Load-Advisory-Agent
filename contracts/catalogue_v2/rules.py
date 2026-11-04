@@ -647,7 +647,9 @@ RULES = [
          "BFL-PL-ELIG-DOCS#009", context=["BFL-PL-SALARIED#004"])],
       fail="INSUFFICIENT_DATA", effect=MIR, msg="DOCUMENTS_INCOMPLETE_OR_UNCLEAR.missing",
       internal="Missing documents: {missing_documents}.", v2=["K05"], draft=["B25_REQUIRED_DOCS"],
-      note="Self-employed list (KYC + PAN + 6 months of statements) is A-23, pending.",
+      note="Self-employed list (KYC + PAN + 6 months of statements) is A-23, pending. A signed document whose signature box is blank "
+           "(signature_present false: NACH mandate, application form) counts as not submitted, so it is asked for (ZEN gap fix D-15); "
+           "PL-104 stays a screening signal with no effect when there is no signature to screen.",
       tests=[T({"submitted_documents": ["KYC_PROOF", "PAN_CARD", "EMPLOYEE_ID", "SALARY_SLIP x3", "BANK_STATEMENT x3 months"]}, "PASS"),
              T({"submitted_documents": ["PAN_CARD"]}, "INSUFFICIENT_DATA")]),
     R("PL-089", SIGNAL, "min(ocr_field_confidence over fields a rule used) >= minimum_confidence",
@@ -1044,16 +1046,41 @@ RULES += [
                 "existing_monthly_obligations": 14500, "other_monthly_obligations": 0, "bureau_score": 720, "bureau_match_status": "HIT",
                 "employment_months": 24, "employment_category": "PRIVATE", "purpose_evidence_amount": None}, "PASS",
                "nothing at or above the minimum passes", expect="DECLINE")]),
+    # ZEN gap fix D-13 (user OK 2026-11-04 09:36 IST): non-residents were approved because no rule read residency.
+    # Bajaj publishes "Nationality: Indian" (PL-003) and mentions "residency criteria" without a value; the resident-only
+    # value is a prototype proposal, kept out of PL-003 so that rule stays Bajaj-sourced.
+    R("PL-130", GATE, "residency_status in eligible_residency_statuses",
+      [P("eligible_residency_statuses", ["RESIDENT"], None, PRO, origin="HARK_NEW_PROPOSAL",
+         note="Prototype proposal (D-13): Bajaj states nationality only; an Indian national living abroad (NRI) is outside the MVP.")],
+      fail="FAIL", effect=DEC, msg="OTHER.eligibility", missing_msg="DOCUMENTS_INCOMPLETE_OR_UNCLEAR.missing",
+      internal="Residency status {residency_status} is not in {eligible_residency_statuses}.",
+      # Owner decision 2026-11-04 10:15 IST: home renovation only; wedding, higher education and medical emergency never
+      # evaluate PL-130 (compile: NOT_APPLICABLE for them, no effect).
+      applies="loan_purpose == home_renovation",
+      note="Scoped to the home renovation product only (owner decision 2026-11-04 10:15 IST); the other three products never evaluate it.",
+      new=dict(name="Residency eligibility", group="A_APPLICANT_ELIGIBILITY", impl="ZEN_DIRECT",
+               inputs=["residency_status"], check="Home renovation applicant is resident in India"),
+      tests=[T({"loan_purpose": "home_renovation", "residency_status": "RESIDENT"}, "PASS"),
+             T({"loan_purpose": "home_renovation", "residency_status": "NRI"}, "FAIL")]),
 ]
+
+# Active although an input has no MVP-form source: on the synthetic test bed the KYC/AA data points supply it
+# (ZEN gap fixes, user OK 2026-11-04 09:36 IST). A live deployment must supply the field before relying on the rule.
+ACTIVE_FROM_KYC_AA = {
+    "PL-013": "D-12: employer_history / employer_changes_24m from the KYC/AA data points",
+    "PL-016": "D-12: employment_status from the KYC/AA data points",
+    "PL-130": "D-13: residency_status from the KYC/AA data points",
+}
 
 # Rules whose breach at the requested amount is sized away by PL-129 (ADR-0007 #2): evaluated at the offered amount.
 AMOUNT_DEPENDENT = ["PL-064", "PL-065", "PL-108", "PL-109", "PL-110", "PL-118", "PL-120", "PL-122", "PL-123", "PL-126"]
 
 # Rules deferred in the salaried-only MVP (user decision 2026-11-03 22:50): kept, not deleted.
+# PL-013 and PL-016 left this list with the ZEN gap fix D-12 (user OK 2026-11-04 09:36 IST): employer history and
+# employment status now reach ZEN from the KYC/AA data points (not the lean MVP form), so contract jobs and employer churn
+# are referred instead of approved. Their parameters are unchanged.
 DEFERRED = {
-    "PL-013": "Employer history is not collected in the lean MVP form (only current employer + total experience).",
     "PL-015": "Employment gap history is not collected in the lean MVP form.",
-    "PL-016": "Employment status (permanent/probation/contract) is not in the MVP step-4 field list.",
     "PL-021": "bureau-report/1 carries no subject name (needs bureau-report/2 subject.name).",
     "PL-022": "bureau-report/1 carries no DOB (needs bureau-report/2 subject.dob).",
     "PL-023": "bureau-report/1 carries no address (needs bureau-report/2 subject.addresses).",

@@ -7,7 +7,10 @@ unmasked form lives only in a local variable.
 
 import re
 
-AADHAAR_RE = re.compile(r"(?<!\d)(\d{4})\s?(\d{4})\s?(\d{4})(?!\d)")
+# Up to three spaces or tabs between groups (cards print wide gaps that OCR keeps:
+# "1234   5678   9012"), but never a line break, so a date ending in a year cannot be
+# glued to the next line's digits.
+AADHAAR_RE = re.compile(r"(?<!\d)(\d{4})[ \t]{0,3}(\d{4})[ \t]{0,3}(\d{4})(?!\d)")
 PAN_RE = re.compile(
     r"(?<![A-Z0-9])([A-Z]{5})\s?(\d{4})\s?([A-Z])(?![A-Z0-9])",
     re.IGNORECASE,

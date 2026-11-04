@@ -28,8 +28,9 @@ def _active(monkeypatch, base="http://127.0.0.1:3000"):
 
 
 def _what_if(monkeypatch, tmp_path):
-    ag, store, _ = agent_for(ScriptedLLM(intent="what_if", changes={"credit_score": {"set": 720}}), tmp_path=tmp_path)
-    resp = ask(ag, "what if my score was 720")
+    # the credit score is not editable in a what-if (agent eval fix 5); EMIs are
+    ag, store, _ = agent_for(ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": 10000}}), tmp_path=tmp_path)
+    resp = ask(ag, "what if my EMIs were 10000")
     return resp, store
 
 

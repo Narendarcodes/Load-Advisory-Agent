@@ -128,6 +128,7 @@ PRODUCT_RULE_DIFFERENCES = {
     "PL-127": "purpose window: wedding date, course start, property ownership, treatment date",
     "PL-128": "disbursal to institution (education) or hospital (medical) when a payee is named",
     "PL-123": "medical fast-track: review is prioritised, not skipped (ASSUMPTION)",
+    "PL-130": "residency gate applies to home renovation only (owner decision 2026-11-04 10:15 IST); not evaluated for the other three",
 }
 
 BANDS = {"B1": (40000, 200000), "B2": (200001, 1000000), "B3": (1000001, 2500000), "B4": (2500001, 7500000)}

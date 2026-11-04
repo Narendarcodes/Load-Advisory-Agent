@@ -155,7 +155,7 @@ def _resolve(location: str) -> bool:
 
 def test_every_storable_field_has_a_frappe_location():
     storable = [f for f in DICTIONARY["fields"] if f["storage"] != "NEVER_STORE"]
-    assert len(storable) == 229
+    assert len(storable) == 230  # + residency_status (PL-130, catalogue 2.1)
     missing = [f["name"] for f in storable if f["name"] not in FIELD_MAP["fields"] or not FIELD_MAP["fields"][f["name"]]["location"]]
     assert missing == [], f"fields without a Frappe location: {missing}"
     assert FIELD_MAP["deferred"] == []

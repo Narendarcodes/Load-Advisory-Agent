@@ -3,8 +3,12 @@
     AGENT_VOICE_DEADLINE_S   per-turn deadline for voice turns (s). Must stay well under the voice worker's HTTP timeout.
     AGENT_TEXT_DEADLINE_S    per-turn deadline for text turns (s).
     AGENT_CLASSIFY_BUDGET_S  max time the LLM intent classifier may take before the deterministic rules decide.
+    AGENT_CLASSIFY_BUDGET_INDIC_S  the same for Hindi / Telugu turns (longer prompts in tokens; agent eval: 15 hi/te
+                             turns passed the 6 s budget and fell to the regex rules).
     AGENT_MIN_COMPOSE_S      minimum time left in the turn to start (or retry) an LLM compose; otherwise the
                              deterministic template is used straight away.
+    SARAL_INTENT_PROVIDER / _MODEL / _FALLBACK_MODEL / _GROQ_BACKUP
+                             the intent classifier's own fast client (see loan_advisory.agent.intent_llm).
     AGENT_FAST_CLASSIFY      off | voice | all — high-precision regex intents skip the LLM classifier.
     AGENT_CITATION_MODE      how policy citations are produced and checked (see loan_advisory.agent.citations).
     AGENT_VERIFY_MIN_LEFT_S  llm_verify only: minimum time left in the turn to run the citation-verifier call.
@@ -21,12 +25,17 @@ CITATION_MODES = ("labels", "verify", "spans", "spans_verify", "llm_verify", "pr
 class AgentSettings:
     voice_deadline_s: float = 25.0
     text_deadline_s: float = 75.0
-    classify_budget_s: float = 6.0
+    classify_budget_s: float = 8.0
+    classify_budget_indic_s: float = 14.0
     min_compose_s: float = 4.0
     fast_classify: str = "voice"
     citation_mode: str = "labels"
     stream_bridge: str = "To be precise:"
     verify_min_left_s: float = 3.0
+    intent_provider: str = ""
+    intent_model: str = ""
+    intent_fallback_model: str = "antigravity/gemini-3.5-flash-lite"  # = intent_llm.DEFAULT_INTENT_FALLBACK_MODEL
+    intent_groq_backup: str = "openai/gpt-oss-20b"  # = intent_llm.DEFAULT_GROQ_BACKUP_MODEL
 
     def __post_init__(self):
         if self.fast_classify not in FAST_CLASSIFY:
@@ -39,6 +48,9 @@ class AgentSettings:
     def deadline_for(self, channel: str) -> float:
         return self.voice_deadline_s if channel == "voice" else self.text_deadline_s
 
+    def classify_budget_for(self, locale: str) -> float:
+        return max(self.classify_budget_s, self.classify_budget_indic_s) if locale in ("hi", "te") else self.classify_budget_s
+
     def fast_classify_for(self, channel: str) -> bool:
         return self.fast_classify == "all" or (self.fast_classify == "voice" and channel == "voice")
 
@@ -47,6 +59,11 @@ class AgentSettings:
         env = os.environ if env is None else env
         kw = {}
         for f in fields(cls):
+            if f.name.startswith("intent_"):  # SARAL_INTENT_*: an empty value is meaningful (auto / no fallback)
+                raw = env.get(f"SARAL_{f.name.upper()}")
+                if raw is not None:
+                    kw[f.name] = raw.strip()
+                continue
             raw = env.get(f"AGENT_{f.name.upper()}")
             if raw is None or raw == "":
                 continue

@@ -26,6 +26,9 @@ def test_v2_is_registered_and_pinned():
 def test_committed_jdm_matches_a_fresh_compile():
     if not C.CATALOGUE_PATH.exists():
         pytest.skip("catalogue v2 lands with #49 (contracts); drift is checked once it is in the tree")
+    version = json.loads(C.CATALOGUE_PATH.read_text()).get("catalogue_version") or ""
+    if version.startswith("saral-pl-catalogue-2.0"):  # main carries 2.0 until #49 (2.1, 130 rules) is merged
+        pytest.skip(f"compiled from catalogue 2.1 (#49); this tree has {version}")
     assert C.main(["--check"]) == 0
 
 
@@ -95,6 +98,8 @@ def test_tenure_above_the_product_max_is_offered_at_the_product_max():
 
 def test_sizing_matches_the_contracts_reference_examples():
     P = pytest.importorskip("contracts.catalogue_v2.products")
+    if not hasattr(P, "FLAT_WORKED_EXAMPLES"):
+        pytest.skip("flat-rate worked examples land with catalogue 2.1 (#49)")
     for ex in P.FLAT_WORKED_EXAMPLES:
         ref = P.size_offer_flat(**{k: v for k, v in ex.items() if k != "name"})
         purpose = {v: k for k, v in P.PURPOSE_TO_PRODUCT.items()}[ex["product_id"]]

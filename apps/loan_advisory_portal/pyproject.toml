@@ -16,6 +16,15 @@ classifiers = [
 dependencies = [
     "Pillow>=10.1",
     "pypdfium2>=4.30",
+    "numpy>=1.26",  # deskew before OCR (ocr/preprocess.py)
+]
+
+[project.optional-dependencies]
+# Default OCR engine (PaddleOCR PP-OCRv5 mobile). Without it, Tesseract is used automatically.
+# Install the CPU wheel from Paddle's index; see requirements-ocr-paddle.txt.
+paddle = [
+    "paddlepaddle==3.2.0",
+    "paddleocr==3.7.0",
 ]
 
 [tool.bench.frappe-dependencies]

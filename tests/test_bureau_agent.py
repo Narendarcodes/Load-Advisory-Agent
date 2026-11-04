@@ -117,7 +117,8 @@ def test_credit_rejection_is_projected_as_a_policy_rejection(client, tmp_path):
     facts = json.loads(llm.prompts[-1][1].split("FACTS (JSON):")[1].rsplit("Return only", 1)[0])
     assert facts["bureau"]["is_credit_rejection"] is True
     assert facts["bureau"]["is_data_quality_hold"] is False
-    assert facts["bureau"]["score_source"]
+    assert facts["bureau"]["score_source_plain"]
+    assert "review_reason_codes" not in facts["bureau"]  # agent eval fix 2: no internal codes reach the LLM
 
 
 def test_rejection_fallback_never_calls_the_hold_the_decision(client, tmp_path):
@@ -125,7 +126,8 @@ def test_rejection_fallback_never_calls_the_hold_the_decision(client, tmp_path):
     ag, _ = _agent(case, client, llm=ScriptedLLM(intent="explain", fail=True), tmp_path=tmp_path)
     r = _ask(ag, "Why was my loan rejected?", case)
     assert "fallback_template" in r.guard_flags
-    assert "REJECTED" in r.answer and "ERROR" not in r.answer
+    # plain outcome words (agent eval fix 2), never the code and never "hold"
+    assert "can't approve this application" in r.answer and "REJECTED" not in r.answer and "ERROR" not in r.answer
     # the score source is named, not implied to be a real bureau; with guards.sanitize_answer wired (Q-15, PR #46)
     # the borrower reads "credit information company" instead of the word "bureau"
     assert "synthetic bureau" in r.answer or "synthetic credit information company" in r.answer
@@ -188,7 +190,8 @@ def test_retryable_provider_failure_invites_a_retry_and_invents_no_score(client,
     ag, _ = _agent(case, client, scenario="TIMEOUT", llm=llm, tmp_path=tmp_path)
     r = _ask(ag, "What is my decision?", case)
     assert r.action == "clarify" and r.abstained is True and not _composed(llm)
-    assert "BUREAU_TIMEOUT" in r.answer and "try again" in r.answer
+    assert "didn't respond in time" in r.answer and "try again" in r.answer
+    assert "BUREAU_" not in r.answer  # provider codes are never shown to the borrower
     assert "your score" not in r.answer.lower()
     assert "APPROVED" not in r.answer and "REJECTED" not in r.answer  # no decision was recorded
     card = r.decision_card
@@ -201,7 +204,7 @@ def test_non_retryable_provider_failure_routes_to_a_human(client, tmp_path):
     ag, _ = _agent(case, client, scenario="MALFORMED_RESPONSE", tmp_path=tmp_path)
     r = _ask(ag, "Why was I rejected?", case)
     assert r.action == "handoff" and "human reviewer" in r.answer
-    assert "BUREAU_MALFORMED_RESPONSE" in r.answer
+    assert "reply couldn't be read" in r.answer and "BUREAU_" not in r.answer
     assert r.decision_card["bureau"]["outcome_kind"] == "PROVIDER_FAILURE"
     assert r.decision_card["bureau"]["retryable"] is False
 

@@ -1,0 +1,561 @@
+{
+ "sources": {
+  "hf_whoismatz": {
+   "url": "https://huggingface.co/datasets/whoismatz/pan-card-ocr-synthetic",
+   "licence": "Apache-2.0 (dataset card)",
+   "provenance": "Third-party synthetic PAN cards; metadata.json: \"All data is synthetic. No real personal information.\" Labels from the dataset labels.jsonl, 4 spot-checked by eye."
+  },
+  "wm_pan": {
+   "url": "https://commons.wikimedia.org/wiki/File:A_sample_of_Permanent_Account_Number_(PAN)_Card.jpg",
+   "licence": "CC BY-SA 4.0 (PageImp)",
+   "provenance": "Computer-rendered PAN specimen with placeholder text; the only value is a placeholder PAN in valid format."
+  },
+  "mendeley": {
+   "url": "https://data.mendeley.com/datasets/wk6n8fhx3c/1",
+   "licence": "CC BY 4.0",
+   "provenance": "Synthetic fake-Aadhaar-app cards (Javeriya & Makandar 2024, DOI 10.17632/wk6n8fhx3c.1); fictitious names/numbers; front, contrast_adjusted variant. Labels hand-written from the image."
+  },
+  "wm_pvc": {
+   "url": "https://commons.wikimedia.org/wiki/File:Aadhar_PVC_Front.jpg",
+   "licence": "CC BY-SA 4.0 (Nishu0246)",
+   "provenance": "Phone photo of the UIDAI PVC-card specimen sheet (placeholder name/DOB, placeholder 12-digit number)."
+  },
+  "uidai_eaadhaar": {
+   "url": "https://www.uidai.gov.in/images/New_eAadhaar1.pdf",
+   "licence": "UIDAI publication; no licence stated; internal evaluation only, not redistributed",
+   "provenance": "UIDAI \"Features of new eAadhaar\" sample image, masked number XXXX XXXX 1234, low resolution."
+  },
+  "wm_aadhaar_neg": {
+   "url": "https://commons.wikimedia.org/wiki/File:A_sample_of_Aadhaar_card.jpg ; https://commons.wikimedia.org/wiki/File:Specimen_of_an_Aadhaar_Card_2024.png",
+   "licence": "CC BY-SA 4.0",
+   "provenance": "Blank/placeholder Aadhaar templates (no number printed): negatives, must not yield an Aadhaar number."
+  },
+  "agami": {
+   "url": "https://huggingface.co/datasets/AgamiAI/Indian-Bank-Statements",
+   "licence": "Apache-2.0",
+   "provenance": "Fully synthetic Indian business bank statements, scanned PDFs + JSON ground truth (page 1 used)."
+  },
+  "bsc": {
+   "url": "https://bankfileconverter.net/bank-statement-examples",
+   "licence": "Publisher sample (\"fictional ... designed for product testing and learning\"); no licence stated; internal evaluation only",
+   "provenance": "Educational sample statements, fictional holder \"Avery Morgan\"; digital PDF rasterised at 200 DPI (page 1)."
+  },
+  "zoho": {
+   "url": "https://www.zoho.com/in/payroll/academy/payroll-administration/salary-slip.html",
+   "licence": "Publisher sample template (Zoho Payroll); no licence stated; internal evaluation only",
+   "provenance": "Zoho Payroll sample payslips, fictional \"Zylker\"/\"Gaurav\"; rasterised at 200 DPI."
+  },
+  "keka": {
+   "url": "https://www.keka.com/media/2024/08/sample-salary-slip-format.pdf",
+   "licence": "Publisher sample (Keka HR); no licence stated; internal evaluation only",
+   "provenance": "Keka sample salary slip, placeholder employee name."
+  },
+  "husys": {
+   "url": "https://husys.com/wp-content/uploads/2026/02/payslip-sample.pdf",
+   "licence": "Publisher sample (Husys); no licence stated; internal evaluation only",
+   "provenance": "Husys sample payslip / salary-structure explainer (no employee or employer fields)."
+  }
+ },
+ "items": [
+  {
+   "id": "pan_hf_00000",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00000.png",
+   "gt": {
+    "pan_number": "XXXXX3295X",
+    "name": "MANOJ DESAI",
+    "date_of_birth": "2003-11-03"
+   }
+  },
+  {
+   "id": "pan_hf_00001",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00001.png",
+   "gt": {
+    "pan_number": "XXXXX6815X",
+    "name": "ASHA MEHTA",
+    "date_of_birth": "1975-01-14"
+   }
+  },
+  {
+   "id": "pan_hf_00002",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00002.png",
+   "gt": {
+    "pan_number": "XXXXX0630X",
+    "name": "PRIYA AGARWAL",
+    "date_of_birth": "2001-02-17"
+   }
+  },
+  {
+   "id": "pan_hf_00003",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00003.png",
+   "gt": {
+    "pan_number": "XXXXX9216X",
+    "name": "SHRUTI DESAI",
+    "date_of_birth": "1999-05-15"
+   }
+  },
+  {
+   "id": "pan_hf_00010",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00010.png",
+   "gt": {
+    "pan_number": "XXXXX8662X",
+    "name": "ASHA JOSHI",
+    "date_of_birth": "1974-05-24"
+   }
+  },
+  {
+   "id": "pan_hf_00050",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00050.png",
+   "gt": {
+    "pan_number": "XXXXX6977X",
+    "name": "POOJA REDDY",
+    "date_of_birth": "1989-10-11"
+   }
+  },
+  {
+   "id": "pan_hf_00100",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00100.png",
+   "gt": {
+    "pan_number": "XXXXX6372X",
+    "name": "AMIT MEHTA",
+    "date_of_birth": "2002-03-23"
+   }
+  },
+  {
+   "id": "pan_hf_00200",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00200.png",
+   "gt": {
+    "pan_number": "XXXXX0259X",
+    "name": "MEERA PANDEY",
+    "date_of_birth": "1965-11-06"
+   }
+  },
+  {
+   "id": "pan_hf_00300",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00300.png",
+   "gt": {
+    "pan_number": "XXXXX4608X",
+    "name": "NIKHIL REDDY",
+    "date_of_birth": "2001-05-17"
+   }
+  },
+  {
+   "id": "pan_hf_00400",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00400.png",
+   "gt": {
+    "pan_number": "XXXXX4412X",
+    "name": "ROHAN NAIR",
+    "date_of_birth": "1975-02-08"
+   }
+  },
+  {
+   "id": "pan_hf_00500",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00500.png",
+   "gt": {
+    "pan_number": "XXXXX3107X",
+    "name": "ROHAN AGARWAL",
+    "date_of_birth": "1967-03-23"
+   }
+  },
+  {
+   "id": "pan_hf_00600",
+   "doc_type": "PAN Card",
+   "source": "hf_whoismatz",
+   "file": "pan_00600.png",
+   "gt": {
+    "pan_number": "XXXXX2771X",
+    "name": "NIKHIL IYER",
+    "date_of_birth": "1987-12-17"
+   }
+  },
+  {
+   "id": "pan_wm_template",
+   "doc_type": "PAN Card",
+   "source": "wm_pan",
+   "file": "A_sample_of_Permanent_Account_Number_%28PAN%29_Card.jpg",
+   "gt": {
+    "pan_number": "XXXXX8888X"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_001",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "1front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 5555",
+    "name": "haroon",
+    "date_of_birth": "1990-03-07",
+    "gender": "Male"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_010",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "10front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 1008",
+    "name": "Rudra",
+    "date_of_birth": "1993-03-05",
+    "gender": "Male"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_025",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "25front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 1132",
+    "name": "Maryam",
+    "date_of_birth": "1994-02-05",
+    "gender": "Female"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_040",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "40front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 3048",
+    "name": "Rekha rathod",
+    "date_of_birth": "2005-05-09",
+    "gender": "Female"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_055",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "55front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 4058",
+    "name": "chitti babu",
+    "date_of_birth": "1978-06-15",
+    "gender": "Male"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_063",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "63front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 6600",
+    "name": "mahendra kumar jain",
+    "date_of_birth": "1982-12-15",
+    "gender": "Male"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_070",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "70front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 9073",
+    "name": "sayed Salman",
+    "date_of_birth": "1993-06-01",
+    "gender": "Male"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_078",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "78front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 3081",
+    "name": "mohemmed asif",
+    "date_of_birth": "1993-01-21",
+    "gender": "Male"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_085",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "85front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 3087",
+    "name": "annamalai",
+    "date_of_birth": "1991-04-21",
+    "gender": "Male"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_092",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "92front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 0193",
+    "name": "Yogeshwar",
+    "date_of_birth": "1970-04-24",
+    "gender": "Male"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_100",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "100front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 0101",
+    "name": "Purvika pujari",
+    "date_of_birth": "1995-09-01",
+    "gender": "Female"
+   }
+  },
+  {
+   "id": "aadhaar_mendeley_108",
+   "doc_type": "Aadhaar Card",
+   "source": "mendeley",
+   "file": "108front_contrast_adjusted.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 0109",
+    "name": "Arjun",
+    "date_of_birth": "1992-07-22",
+    "gender": "Male"
+   }
+  },
+  {
+   "id": "aadhaar_wm_pvc_photo",
+   "doc_type": "Aadhaar Card",
+   "source": "wm_pvc",
+   "file": "Aadhar_PVC_Front.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 9000"
+   }
+  },
+  {
+   "id": "aadhaar_uidai_eaadhaar",
+   "doc_type": "Aadhaar Card",
+   "source": "uidai_eaadhaar",
+   "file": "uid-002.jpg",
+   "gt": {
+    "aadhaar_number": "XXXX XXXX 1234"
+   }
+  },
+  {
+   "id": "aadhaar_wm_blank_2016",
+   "doc_type": "Aadhaar Card",
+   "source": "wm_aadhaar_neg",
+   "file": "A_sample_of_Aadhaar_card.jpg",
+   "gt": {
+    "aadhaar_number": null
+   }
+  },
+  {
+   "id": "aadhaar_wm_blank_2024",
+   "doc_type": "Aadhaar Card",
+   "source": "wm_aadhaar_neg",
+   "file": "Specimen_of_an_Aadhaar_Card_2024.png",
+   "gt": {
+    "aadhaar_number": null
+   }
+  },
+  {
+   "id": "bank_agami_scanned_type1_00003",
+   "doc_type": "Bank Statement",
+   "source": "agami",
+   "file": "Scanned_Type1_00003.pdf",
+   "gt": {
+    "account_holder": "HEALTHPLUS PHARMA LTD",
+    "closing_balance": 94495.02
+   }
+  },
+  {
+   "id": "bank_agami_scanned_type1_00017",
+   "doc_type": "Bank Statement",
+   "source": "agami",
+   "file": "Scanned_Type1_00017.pdf",
+   "gt": {
+    "account_holder": "DISTRIBUTION NETWORKS INDIA",
+    "closing_balance": 408675.61
+   }
+  },
+  {
+   "id": "bank_agami_scanned_type1_00042",
+   "doc_type": "Bank Statement",
+   "source": "agami",
+   "file": "Scanned_Type1_00042.pdf",
+   "gt": {
+    "account_holder": "FINANCE SOLUTIONS INDIA",
+    "closing_balance": 348123.64
+   }
+  },
+  {
+   "id": "bank_agami_scanned_type2_00003",
+   "doc_type": "Bank Statement",
+   "source": "agami",
+   "file": "Scanned_Type2_00003.pdf",
+   "gt": {
+    "account_holder": "PREMIUM PROPERTIES LTD",
+    "closing_balance": 10576796.33
+   }
+  },
+  {
+   "id": "bank_agami_scanned_type2_00017",
+   "doc_type": "Bank Statement",
+   "source": "agami",
+   "file": "Scanned_Type2_00017.pdf",
+   "gt": {
+    "account_holder": "URBAN ESTATES INDIA",
+    "closing_balance": 157831.09
+   }
+  },
+  {
+   "id": "bank_agami_scanned_type2_00042",
+   "doc_type": "Bank Statement",
+   "source": "agami",
+   "file": "Scanned_Type2_00042.pdf",
+   "gt": {
+    "account_holder": "CREDIT SERVICES LTD",
+    "closing_balance": 378404.0
+   }
+  },
+  {
+   "id": "bank_bsc_hdfc",
+   "doc_type": "Bank Statement",
+   "source": "bsc",
+   "file": "hdfc-bank-sample.pdf",
+   "gt": {
+    "account_holder": "Avery Morgan",
+    "closing_balance": 6617.49
+   }
+  },
+  {
+   "id": "bank_bsc_sbi",
+   "doc_type": "Bank Statement",
+   "source": "bsc",
+   "file": "sbi-sample.pdf",
+   "gt": {
+    "account_holder": "Avery Morgan",
+    "closing_balance": 7271.49
+   }
+  },
+  {
+   "id": "bank_bsc_icici",
+   "doc_type": "Bank Statement",
+   "source": "bsc",
+   "file": "icici-bank-sample.pdf",
+   "gt": {
+    "account_holder": "Avery Morgan",
+    "closing_balance": 6572.49
+   }
+  },
+  {
+   "id": "bank_bsc_axis",
+   "doc_type": "Bank Statement",
+   "source": "bsc",
+   "file": "axis-bank-sample.pdf",
+   "gt": {
+    "account_holder": "Avery Morgan",
+    "closing_balance": 6626.49
+   }
+  },
+  {
+   "id": "bank_bsc_kotak",
+   "doc_type": "Bank Statement",
+   "source": "bsc",
+   "file": "kotak-mahindra-bank-sample.pdf",
+   "gt": {
+    "account_holder": "Avery Morgan",
+    "closing_balance": 5997.49
+   }
+  },
+  {
+   "id": "payslip_zoho_excel",
+   "doc_type": "Salary Slip",
+   "source": "zoho",
+   "file": "salary_slip_format_for_excel.pdf",
+   "gt": {
+    "employee_name": "Gaurav",
+    "employer_name": "Zylker Corp",
+    "gross_salary": 87500.0,
+    "net_salary": 87300.0
+   }
+  },
+  {
+   "id": "payslip_zoho_word",
+   "doc_type": "Salary Slip",
+   "source": "zoho",
+   "file": "salary_slip_format_for_word.pdf",
+   "gt": {
+    "employee_name": "Gaurav",
+    "employer_name": "Zylker Corp",
+    "gross_salary": 87500.0,
+    "net_salary": 87300.0
+   }
+  },
+  {
+   "id": "payslip_zoho_simple",
+   "doc_type": "Salary Slip",
+   "source": "zoho",
+   "file": "simple_salary_slip.pdf",
+   "gt": {
+    "employee_name": "Gaurav",
+    "employer_name": "Zylker",
+    "gross_salary": 82250.0,
+    "net_salary": 75750.0
+   }
+  },
+  {
+   "id": "payslip_zoho_standard",
+   "doc_type": "Salary Slip",
+   "source": "zoho",
+   "file": "standard_salary_slip.pdf",
+   "gt": {
+    "employee_name": "Gaurav",
+    "employer_name": "Zylker",
+    "gross_salary": 82250.0,
+    "net_salary": 77000.0
+   }
+  },
+  {
+   "id": "payslip_keka",
+   "doc_type": "Salary Slip",
+   "source": "keka",
+   "file": "sample-salary-slip-format.pdf",
+   "gt": {
+    "employer_name": "XYZ Corporation",
+    "gross_salary": 60000.0,
+    "net_salary": 49200.0
+   }
+  },
+  {
+   "id": "payslip_husys",
+   "doc_type": "Salary Slip",
+   "source": "husys",
+   "file": "payslip-sample.pdf",
+   "gt": {
+    "gross_salary": 50000.0,
+    "net_salary": 46800.0
+   }
+  }
+ ]
+}

@@ -30,6 +30,12 @@ owner decision.
 
 ## OCR setup
 
+**Engines:** PaddleOCR PP-OCRv5 mobile is the default; Tesseract is the automatic fallback
+when Paddle is missing, fails, or reads a critical field with low confidence. Install Paddle
+with `requirements-ocr-paddle.txt` (about 2-3 GB RSS per worker that runs it); without it the
+app uses Tesseract alone. Settings, memory guidance and Docker notes:
+`docs/saral/OCR_DEPLOY.md`.
+
 The app's Python dependencies for image/PDF decoding are declared in
 `pyproject.toml`. `install_portal_app.sh` copies that metadata and installs the
 app in the bench environment so those dependencies are available at runtime.

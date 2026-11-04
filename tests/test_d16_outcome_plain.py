@@ -55,7 +55,8 @@ def test_counter_offer_explain_facts_carry_offer_reasons_and_plain_outcome(tmp_p
     _counter(sink)
     r = ask(ag, "Why did I get this decision?")
     system = next(p[1] for p in llm.prompts if p[0] == "compose_explain")
-    assert '"outcome_plain"' in system and '"offer"' in system and '"reason_categories"' in system
+    # agent eval fix 2/4: plain outcome, the offer and ONE plain reason (main_reason), never rule names
+    assert '"outcome_plain"' in system and '"offer"' in system and '"main_reason"' in system
     assert "₹25,00,000" in system and "₹55,515" in system
     assert r.decision_card["recorded_outcome"] == "COUNTER"
     assert "COUNTER_OFFER" not in r.answer

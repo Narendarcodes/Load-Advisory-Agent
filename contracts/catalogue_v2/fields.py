@@ -141,7 +141,7 @@ employment_gap_months|int|months|DERIVED|DERIVED|MISSING|PERSONAL|LMS|employment
 employment_history|list||APPLICATION|NONE|MISSING|PERSONAL|LMS||Not collected in the lean MVP form
 employment_months|int|months|DERIVED|DERIVED|BP.employment_months; LA.custom_employment_months (declared integer)|PERSONAL|LMS|employment_start_date,assessment_date|PRE-EMP: months from joining date; employment letter OCR as fallback
 employment_start_date|date||APPLICATION|FRONTEND:joining_date|MISSING (months only)|PERSONAL|LMS||
-employment_status|enum|PERMANENT/PROBATION/CONTRACT|APPLICATION|NONE|MISSING|PERSONAL|LMS||Not in the MVP step-4 list (PL-016 deferred)
+employment_status|enum|PERMANENT/PROBATION/CONTRACT|APPLICATION|NONE|MISSING|PERSONAL|LMS||Not in the MVP step-4 list; the KYC/AA data points supply it on the synthetic test bed (PL-016, D-12)
 employment_type|enum|SALARIED|APPLICATION|FRONTEND:employment_type|BP.employment_type (Salaried/Self-employed/Business/Student/Retired/Unemployed)|NONE|LMS||Fixed SALARIED in the MVP
 enquiries_last_30_days|int|count|DERIVED|DERIVED|MISSING|CREDIT|LMS|bureau_enquiries,assessment_date|PRE-BUREAU
 enquiries_last_6_months|int|count|DERIVED|DERIVED|MISSING|CREDIT|LMS|bureau_enquiries,assessment_date|PRE-BUREAU
@@ -233,6 +233,7 @@ required_documents|list||POLICY_PARAMETER|POLICY|LA.documents link Loan Document
 required_fields|list||POLICY_PARAMETER|POLICY|MISSING|NONE|LMS||PL-096
 required_identity_fields|list||POLICY_PARAMETER|POLICY|MISSING|NONE|LMS||PL-006
 residual_income|float|INR/month|DERIVED|DERIVED|MISSING|FINANCIAL|LMS|monthly_net_income,total_monthly_obligations|PL-065
+residency_status|enum|RESIDENT/NRI|APPLICATION|NONE|MISSING|PERSONAL|LMS||Declared residency; not in the MVP form; the KYC/AA data points supply it on the synthetic test bed (PL-130, D-13)
 restructured_account_count|int|count|SYNTHETIC_BUREAU_V2|B2:accounts[].restructured|MISSING|CREDIT|REF||Not in bureau-report/1
 return_count|int|count|DERIVED|DERIVED|MISSING|FINANCIAL|LMS|K:transactions[].category|PRE-BANK: NACH_RETURN + CHEQUE_RETURN in 3 months
 review_flags|list|codes|SYSTEM|SYSTEM|MISSING|INTERNAL_RISK|LMS||Rule results with REVIEW
