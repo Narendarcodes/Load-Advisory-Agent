@@ -46,5 +46,6 @@ Machine-readable: [`contracts/product_matrix.json`](../../contracts/product_matr
 | PL-127 | purpose window: wedding date, course start, property ownership, treatment date |
 | PL-128 | disbursal to institution (education) or hospital (medical) when a payee is named |
 | PL-123 | medical fast-track: review is prioritised, not skipped (ASSUMPTION) |
+| PL-130 | residency gate applies to home renovation only (owner decision 2026-11-04 10:15 IST); not evaluated for the other three |
 
 Every other rule applies identically to all four products. The amount bands (PL-119..PL-123) and the offer sizing (PL-125) vary with the amount and the applicant, so two applicants for the same product can get different amounts.

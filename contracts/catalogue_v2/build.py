@@ -20,7 +20,7 @@ from contracts.catalogue_v2 import products as PR
 from contracts.catalogue_v2 import sources as S
 from contracts.catalogue_v2 import what_if as WI
 from contracts.catalogue_v2.messages import CATEGORIES, MESSAGES
-from contracts.catalogue_v2.rules import ADR11, AMOUNT_DEPENDENT, BAJ, DEFERRED, EXCERPTS, OWN, PEN, PRO, PROTO_ONLY, REG, RULES, V2_IDS
+from contracts.catalogue_v2.rules import ACTIVE_FROM_KYC_AA, ADR11, AMOUNT_DEPENDENT, BAJ, DEFERRED, EXCERPTS, OWN, PEN, PRO, PROTO_ONLY, REG, RULES, V2_IDS
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs" / "saral"
@@ -133,6 +133,8 @@ def build_catalogue():
             if not ok:
                 unsupplied.append(why)
         deferred_reason = DEFERRED.get(rid) or ("; ".join(sorted(set(unsupplied))) if unsupplied else None)
+        if rid in ACTIVE_FROM_KYC_AA:  # test-bed source, see rules.ACTIVE_FROM_KYC_AA
+            deferred_reason = None
         chunks = sorted({p["source_chunk"] for p in spec["params"] if p["source_chunk"]})
         context = sorted({c for p in spec["params"] for c in p["context_chunks"]} | set(spec["ctx"]))
         aids = sorted({p["assumption_id"] for p in spec["params"] if p["assumption_id"]})

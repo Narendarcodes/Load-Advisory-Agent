@@ -404,7 +404,8 @@
     "PL-126": "requested amount vs fee schedule / contractor quote / hospital estimate (not wedding)",
     "PL-127": "purpose window: wedding date, course start, property ownership, treatment date",
     "PL-128": "disbursal to institution (education) or hospital (medical) when a payee is named",
-    "PL-123": "medical fast-track: review is prioritised, not skipped (ASSUMPTION)"
+    "PL-123": "medical fast-track: review is prioritised, not skipped (ASSUMPTION)",
+    "PL-130": "residency gate applies to home renovation only (owner decision 2026-11-04 10:15 IST); not evaluated for the other three"
   },
   "amount_bands": {
     "B1": [

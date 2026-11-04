@@ -144,11 +144,15 @@ def test_every_source_reference_exists_in_the_frontend_or_synthetic_schema():
 
 
 def test_active_rules_are_fully_supplied_in_the_mvp():
+    from contracts.catalogue_v2 import rules as rules_mod
+
     dd = build.dictionary()
     for r in RULES:
         missing = [i["name"] for i in r["input_schema"] if not build.supplied(i["name"], dd)[0]]
-        if r["mvp_status"] == "ACTIVE":
+        if r["mvp_status"] == "ACTIVE" and r["rule_id"] not in rules_mod.ACTIVE_FROM_KYC_AA:
             assert not missing, (r["rule_id"], missing)
+        elif r["mvp_status"] == "ACTIVE":  # test-bed source (KYC/AA data points), named in rules.ACTIVE_FROM_KYC_AA
+            assert missing, r["rule_id"]
         else:
             assert r["mvp_deferred_reason"], r["rule_id"]
 
