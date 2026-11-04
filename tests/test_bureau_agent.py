@@ -126,7 +126,9 @@ def test_rejection_fallback_never_calls_the_hold_the_decision(client, tmp_path):
     r = _ask(ag, "Why was my loan rejected?", case)
     assert "fallback_template" in r.guard_flags
     assert "REJECTED" in r.answer and "ERROR" not in r.answer
-    assert "synthetic bureau" in r.answer  # the score source is named, not implied to be a real bureau
+    # the score source is named, not implied to be a real bureau; with guards.sanitize_answer wired (Q-15, PR #46)
+    # the borrower reads "credit information company" instead of the word "bureau"
+    assert "synthetic bureau" in r.answer or "synthetic credit information company" in r.answer
 
 
 def test_improvement_plan_from_a_bureau_rejection_is_labelled_general_guidance(client, tmp_path):
