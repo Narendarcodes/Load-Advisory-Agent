@@ -31,6 +31,7 @@ from loan_advisory.agent import prompts as P
 from loan_advisory.agent.intent_router import build_routers, first_route
 from loan_advisory.agent.segmentation import bureau_report_from_record, get_customer_segmentation, with_tone
 from loan_advisory.agent.settings import AgentSettings
+from loan_advisory.agent.intent_llm import build_intent_llm
 from loan_advisory.agent.streaming import JSONFieldStreamer, SentenceGate, remainder, split_sentences
 from loan_advisory.agent.citations import labels_of as _labels_of, verify_citations
 from loan_advisory.agent.contracts import AgentRequest, AgentResponse, Session
@@ -223,6 +224,7 @@ class AdvisoryAgent:
                  checkpointer=None, settings: AgentSettings | None = None):
         self.tools, self.llm, self.policy, self.handoff = decision_tools, llm, policy_tools, handoff
         self.settings = settings or AgentSettings.from_env()
+        self.intent_llm = self._make_intent_llm()
         self._streams: dict = {}  # turn_key -> {"emit", "spoken", "first_ms"} for sentence streaming (not graph state)
         self._stages: dict = {}  # turn_key -> on_stage listener for public progress (not graph state)
         self.profile = profile or {}
@@ -318,9 +320,19 @@ class AdvisoryAgent:
     def _left(self, s) -> float:
         return s.get("deadline", float("inf")) - time.perf_counter()
 
-    def _llm_kw(self, s, budget: float | None = None) -> dict:
+    def _turn_calls(self) -> list:
+        """This turn's LLM call timings: the classifier's client (when separate) and the answer client."""
+        il = getattr(self, "intent_llm", None)
+        extra = list(il.calls) if il is not None and il is not self.llm and hasattr(il, "calls") else []
+        return extra + (list(self.llm.calls[-6:]) if hasattr(self.llm, "calls") else [])
+
+    def _make_intent_llm(self):
+        """The intent classifier's own fast client (SARAL_INTENT_*); test doubles and unset config reuse self.llm."""
+        return build_intent_llm(self.llm, self.settings)
+
+    def _llm_kw(self, s, budget: float | None = None, llm=None) -> dict:
         """Deadline kwarg for LLM calls (absolute perf_counter time), when the client supports it."""
-        if not getattr(self.llm, "supports_deadline", False):
+        if not getattr(llm or self.llm, "supports_deadline", False):
             return {}
         d = s.get("deadline", float("inf"))
         if budget is not None:
@@ -458,10 +470,11 @@ class AdvisoryAgent:
         hist = [f"{h['role']}: {h['text'][:200]}" for h in (s.get("history") or [])[-4:]]
         intent, changes, by = None, None, "llm"
         try:
-            j = self.llm.chat_json("You are a precise intent classifier. Output JSON only.",
+            il = getattr(self, "intent_llm", None) or self.llm
+            j = il.chat_json("You are a precise intent classifier. Output JSON only.",
                                    P.CLASSIFY.format(values=json.dumps(values), history=json.dumps(hist, ensure_ascii=False),
                                                      message=req.message), max_tokens=400, tag="classify",
-                                   **self._llm_kw(s, self._classify_budget(req)))
+                                   **self._llm_kw(s, self._classify_budget(req), il))
             intent = j.get("intent") if j.get("intent") in INTENTS else None
             changes = j.get("what_if_changes") or None
         except (LLMError, AttributeError):
@@ -921,7 +934,7 @@ class AdvisoryAgent:
         if s.get("status") in ("info_requested", "bureau_review"):
             missing = F.borrower_missing_fields(s.get("record") or {})
         plan_steps = (s.get("plan") or {}).get("steps") or []
-        timings = {"total_ms": round((time.perf_counter() - s["t0"]) * 1000, 1), "llm_calls": list(self.llm.calls[-6:]) if hasattr(self.llm, "calls") else []}
+        timings = {"total_ms": round((time.perf_counter() - s["t0"]) * 1000, 1), "llm_calls": self._turn_calls()}
         if s.get("retrieval"):
             timings["retrieval_ms"] = s["retrieval"].get("latency_ms")
         if st is not None:
@@ -940,6 +953,12 @@ class AdvisoryAgent:
             guard_flags=gflags + (["fallback_template"] if fallback else []), timings=timings)
         self._audit(s, resp)
         hist = [{"role": "user", "text": req.message}, {"role": "assistant", "text": resp.answer[:600]}]
+        il = getattr(self, "intent_llm", None)
+        if il is not None and il is not self.llm:
+            if hasattr(il, "clear_calls"):
+                il.clear_calls()
+            elif hasattr(il, "calls"):
+                il.calls.clear()
         if hasattr(self.llm, "calls"):
             self.llm.calls.clear()
         return {"response": resp.model_dump(), "history": hist}
