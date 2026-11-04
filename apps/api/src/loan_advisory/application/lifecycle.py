@@ -309,6 +309,104 @@ def simulate(application_ref: str, store, overrides: dict, now=None, *, base: di
     return rec
 
 
+# ------------------------------------------------------------------ catalogue-v2 what-if (agent eval fix 5)
+# Borrower what-if fields -> the v2 data points they stand for. An income change is modelled as a verified income of
+# that amount (every income figure that is present moves together, so the hypothetical never trips a mismatch rule).
+V2_WHAT_IF_POINTS = {
+    "monthly_income": ("monthly_net_income", "declared_income", "verified_income", "ocr_extracted_income",
+                       "declared_salary", "bank_salary_credit_avg", "average_monthly_income"),
+    "monthly_obligations": ("existing_monthly_obligations", "declared_obligations"),
+    "loan_amount": ("requested_amount",),
+    "tenure_months": ("tenure_months",),
+}
+# Reason categories the four editable fields can change through the PL-129 sizing alone.
+_SIZING_CATEGORIES = {"REPAYMENTS_TOO_HIGH", "REQUEST_OUTSIDE_OFFER"}
+_STORED_BASE = ("requested_amount", "tenure_months", "loan_purpose", "monthly_net_income",
+                "existing_monthly_obligations", "employment_months", "bureau_score")
+
+
+def _apply_v2_overrides(dp: dict, overrides: dict) -> dict:
+    out = dict(dp)
+    for name, value in overrides.items():
+        keys = V2_WHAT_IF_POINTS.get(name)
+        if keys is None:
+            raise ValueError(f"not editable in a what-if: {name}")
+        first = True
+        for k in keys:
+            if first or k in out:  # the primary point always; the others only when the record has them
+                out[k] = value
+            first = False
+    return out
+
+
+def _sizing_estimate(record: dict, dp: dict) -> dict:
+    """Estimate from ZEN's own PL-129 sizing when the full data points are not at hand. Only valid when the stored
+    decision depended on sizing alone; anything else is an ERROR (the borrower hears it couldn't be estimated)."""
+    from decision_engine.catalogue_v2.engine import size_offer
+
+    stored = record.get("decision") or record.get("outcome")
+    cats = list(record.get("reason_categories") or [])
+    blocking = [c for c in cats if c not in _SIZING_CATEGORIES]
+    if stored in ("MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED") or "INCOME_NOT_VERIFIED_OR_INSUFFICIENT" in blocking \
+            or "OTHER" in blocking or "DETAILS_NOT_VERIFIED" in blocking or "DOCUMENTS_INCOMPLETE_OR_UNCLEAR" in blocking:
+        return {"decision": "ERROR", "reason_categories": [], "offer": None, "basis": "not_estimable"}
+    if stored == "DECLINE" and blocking:  # e.g. credit history: none of the editable fields changes it
+        return {"decision": "DECLINE", "reason_categories": blocking[:1], "offer": None, "basis": "unchanged_reason"}
+    try:
+        s = size_offer(float(dp["requested_amount"]), int(dp["tenure_months"]), dp["loan_purpose"],
+                       float(dp["monthly_net_income"]), float(dp.get("existing_monthly_obligations") or 0),
+                       score=dp.get("bureau_score"), employment_months=dp.get("employment_months"))
+    except (KeyError, TypeError, ValueError):
+        return {"decision": "ERROR", "reason_categories": [], "offer": None, "basis": "not_estimable"}
+    decision = {"APPROVED": "ELIGIBILITY_CONDITIONS_MET"}.get(s["offer_outcome"], s["offer_outcome"])
+    offer = None
+    if s["amount"]:
+        offer = {"amount": s["amount"], "emi": s["emi"], "tenure_months": s["tenure_months"],
+                 "counter_offer": decision == "COUNTER_OFFER", "request_outside_mvp_range": s["request_outside_mvp_range"]}
+    cats = [] if decision == "ELIGIBILITY_CONDITIONS_MET" else ["REPAYMENTS_TOO_HIGH"]
+    return {"decision": decision, "reason_categories": cats, "offer": offer, "basis": "sizing_only"}
+
+
+def simulate_v2(application_ref: str, store, record: dict, overrides: dict, *, kyc_client=None, now=None) -> dict:
+    """What-if under the ACTIVE catalogue-v2 policy (synthetic-v2), in memory, never persisted.
+
+    Starts from the values the stored evaluation used, applies the borrower's hypothetical change and runs the same
+    `decide_v2` path. Without the applicant's full KYC/AA data points the full engine cannot run, so the estimate
+    falls back to ZEN's own PL-129 sizing when the stored decision depended on sizing alone; otherwise the result is
+    ERROR, which the agent says it couldn't estimate (never "would not meet")."""
+    from decision_engine.catalogue_v2.engine import build_record_v2, decide_v2
+    from loan_advisory.infrastructure.kyc_aa_client import KycAaClient
+
+    pv = load_policy("PERSONAL_LOAN", V2_VERSION)
+    doc = store.get(application_ref)
+    inputs = _scored_inputs(doc)
+    applicant = doc.get("applicant") or doc.get("applicant_id")
+    used = (record.get("inputs") or {}).get("values") or {}
+    client = kyc_client or KycAaClient()
+    kyc = client.data_points(applicant) if client.configured else None
+    points = kyc.data_points if kyc is not None else None
+    dp = _v2_data_points(doc, inputs, used.get("bureau_score"), points)
+    for k in _STORED_BASE:
+        if used.get(k) is not None:
+            dp[k] = used[k]
+    dp = _apply_v2_overrides(dp, overrides)
+    if points is not None:
+        result = decide_v2(dp)
+        basis = "full"
+    else:
+        result = _sizing_estimate(record, dp)
+        basis = result["basis"]
+    result.setdefault("rule_evaluations", [])
+    result.setdefault("zen_trace", {})
+    rec = build_record_v2(result, pv, dp, application_ref=application_ref, applicant_ref=applicant,
+                          lifecycle_state="SIMULATION", now=now)
+    rec["is_simulation"] = True
+    rec["hypothetical_changes"] = dict(overrides)
+    rec["estimate_basis"] = basis
+    return rec
+
+
 __all__ = ["STATES", "TRANSITIONS", "AUTOMATED_TRANSITIONS", "NATIVE_STATUS", "IllegalTransition",
            "check_transition", "process_application",
-           "process_bureau_application", "simulate", "Outcome", "UnknownApplication", "FrappeUnavailable"]
+           "process_bureau_application", "simulate", "simulate_v2", "Outcome", "UnknownApplication",
+           "FrappeUnavailable"]

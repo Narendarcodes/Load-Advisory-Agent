@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from loan_advisory.agent import observability as obs
 from loan_advisory.agent.contracts import Citation, Session
 from loan_advisory.agent.facts import SCORED, counterfactual_targets
-from loan_advisory.application.lifecycle import simulate
+from loan_advisory.application.lifecycle import V2_VERSION, configured_policy_version, simulate, simulate_v2
 from loan_advisory.infrastructure.frappe_adapter import FrappeUnavailable, UnknownApplication
 from loan_advisory.state_paths import HANDOFF_LOG, append_private, resolve
 
@@ -23,7 +23,11 @@ FIELD_TO_DOC = {k: f"custom_{k}" for k in SCORED}
 _ZEN_LOCK = threading.Lock()   # the shared ZEN decision object is used from server/eval threads
 _RETRIEVER_LOCK = threading.Lock()
 LIMITS = {"monthly_income": (1, 100_000_000), "monthly_obligations": (0, 100_000_000),
-          "credit_score": (300, 900), "employment_months": (0, 600)}
+          "credit_score": (300, 900), "employment_months": (0, 600),
+          "loan_amount": (10_000, 50_000_000), "tenure_months": (12, 108)}
+V2_ONLY_FIELDS = ("loan_amount", "tenure_months")  # amount / loan-period estimates need the catalogue-v2 sizing (Q-03)
+WOULD_MEET = ("APPROVED", "ELIGIBILITY_CONDITIONS_MET")
+NOT_ESTIMABLE = ("ERROR", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED", "REVIEW")
 
 
 class NotAuthorized(Exception):
@@ -41,6 +45,12 @@ class FrappeEvidenceSource:
     def __init__(self, sink):
         self.sink = sink
 
+    def stamp(self, application_ref: str, doc: dict) -> str | None:
+        """Version stamp of the latest evidence: the evidence pointer plus the application's `modified` time. None when
+        the application carries no pointer (nothing to cache)."""
+        rid = doc.get("custom_latest_evidence")
+        return f"{rid}|{doc.get('modified') or ''}" if rid else None
+
     def latest(self, application_ref: str, doc: dict) -> dict | None:
         rid = doc.get("custom_latest_evidence")
         if not rid:
@@ -54,6 +64,15 @@ class InMemoryEvidenceSource:
 
     def __init__(self, sink):
         self.sink = sink
+
+    def stamp(self, application_ref: str, doc: dict) -> str | None:
+        """Latest record id for the application plus the number of stored records (a new evaluation changes it)."""
+        recs = getattr(self.sink, "records", {})
+        rid = getattr(self.sink, "latest_ids", {}).get(application_ref)
+        if rid is None:
+            mine = [k for k, r in recs.items() if r.get("application_ref") == application_ref and not r.get("is_simulation")]
+            rid = mine[-1] if mine else None
+        return f"{rid}|{len(recs)}" if rid else None
 
     def latest(self, application_ref: str, doc: dict) -> dict | None:
         rid = getattr(self.sink, "latest_ids", {}).get(application_ref)
@@ -93,17 +112,42 @@ class DecisionTools:
                 "lifecycle_state": doc.get("custom_lifecycle_state")}
 
     @obs.tool("get_decision_evidence")
-    def get_decision_evidence(self, application_ref: str, session: Session) -> dict | None:
+    def get_decision_evidence(self, application_ref: str, session: Session, cached: dict | None = None,
+                              with_stamp: bool = False):
+        """The latest stored decision. Ownership is re-checked on every call; the evidence record itself is re-read
+        only when its version stamp differs from `cached` ({"application_ref", "stamp", "record"}), so a conversation
+        reads its decision once and re-reads it only after a new evaluation. `with_stamp=True` returns
+        (record, stamp, "hit"|"miss"|"none")."""
         doc = self.owned_doc(application_ref, session)
-        return self.evidence.latest(application_ref, doc)
+        stamp_fn = getattr(self.evidence, "stamp", None)
+        stamp = stamp_fn(application_ref, doc) if stamp_fn else None
+        if stamp and cached and cached.get("application_ref") == application_ref and cached.get("stamp") == stamp \
+                and cached.get("record") is not None:
+            rec, status = cached["record"], "hit"
+        else:
+            rec, status = self.evidence.latest(application_ref, doc), ("miss" if stamp else "none")
+        sp = obs.current_span()
+        if rec is not None:
+            offer = rec.get("offer") or {}
+            obs.set_attrs(sp, **{"decision.cache": status, "decision.outcome": rec.get("outcome") or rec.get("decision"),
+                                 "decision.policy_version": (rec.get("policy") or {}).get("version"),
+                                 "decision.reason_categories": list(rec.get("reason_categories") or []),
+                                 "decision.offer_present": bool(offer.get("amount"))},
+                          **obs.lf_meta(decision_cache=status, reason_categories=list(rec.get("reason_categories") or []),
+                                        offer=({k: offer.get(k) for k in ("amount", "emi", "tenure_months", "counter_offer")}
+                                               if offer.get("amount") and obs.capture_content() else None)))
+        else:
+            obs.set_attrs(sp, **{"decision.cache": status})
+        return (rec, stamp, status) if with_stamp else rec
 
     @obs.tool("run_what_if")
     def run_what_if(self, application_ref: str, session: Session, changes: dict, record: dict | None = None) -> dict:
-        """Hypothetical re-evaluation through the unchanged ZEN path. Returns before/after per rule."""
+        """Hypothetical re-evaluation through the unchanged ZEN path, under the policy version the stored decision
+        was made with (catalogue v2 = synthetic-v2, else the v1 files). Returns before/after per rule (server side)."""
         doc = self.owned_doc(application_ref, session)
         clean = {}
         for k, v in (changes or {}).items():
-            if k not in FIELD_TO_DOC:
+            if k not in LIMITS:
                 raise InvalidWhatIf(f"unsupported what-if field (allowed: {', '.join(SCORED)})")
             try:
                 fv = float(v)
@@ -112,25 +156,50 @@ class DecisionTools:
             lo, hi = LIMITS[k]
             if not lo <= fv <= hi:
                 raise InvalidWhatIf(f"{k} is outside the allowed range {lo}..{hi}")
-            clean[k] = int(fv) if k in ("credit_score", "employment_months") else fv
+            clean[k] = int(fv) if k in ("credit_score", "employment_months", "tenure_months") else fv
         if not clean:
             raise InvalidWhatIf("no hypothetical change given")
+        record = record if record is not None else self.evidence.latest(application_ref, doc)
+        version = ((record or {}).get("policy") or {}).get("version") or configured_policy_version()
+        if version == V2_VERSION:
+            return self._what_if_v2(application_ref, doc, record or {}, clean)
+        if any(k in V2_ONLY_FIELDS for k in clean):
+            raise InvalidWhatIf("estimates for a different loan amount or loan period aren't available for this application yet")
         before_vals = {k: doc.get(FIELD_TO_DOC[k], doc.get(k)) for k in SCORED}
         # A bureau-underwritten application may carry no local score; simulate from the value the
         # stored evaluation actually used, so the what-if is not an ERROR caused by a missing field.
-        record = record if record is not None else self.evidence.latest(application_ref, doc)
         used = ((record or {}).get("inputs") or {}).get("values") or {}
         base = {FIELD_TO_DOC[k]: used[k] for k in SCORED
                 if doc.get(FIELD_TO_DOC[k], doc.get(k)) in (None, "") and used.get(k) is not None}
         with obs.span("zen.simulate", kind="TOOL", **{"zen.engine": "zen-engine 2.1.2", "zen.fields": sorted(clean)}) as sp, _ZEN_LOCK:
             sim = simulate(application_ref, self.store, {FIELD_TO_DOC[k]: v for k, v in clean.items()}, base=base)
-            obs.set_attrs(sp, **{"zen.simulated_decision": sim["decision"], "zen.policy_version": sim["policy"]["version"]})
+            _mark_sim(sp, sim["decision"], sim["policy"]["version"])
         after_doc = self.store.get(application_ref)
         unchanged = all(after_doc.get(FIELD_TO_DOC[k], after_doc.get(k)) == before_vals[k] for k in SCORED)
         return {"changes": clean, "simulated_decision": sim["decision"], "is_simulation": True,
                 "rule_results": {e["rule_id"]: e["result"] for e in sim["rule_evaluations"]},
                 "failed_reason_codes": sim["failed_reason_codes"], "record": sim,
-                "original_record_unchanged": unchanged,
+                "original_record_unchanged": unchanged, "policy_version": sim["policy"]["version"],
+                "sim_status": "error" if sim["decision"] in NOT_ESTIMABLE else "ok",
+                "label": "hypothetical result under the synthetic prototype policy; not a decision and not a guarantee"}
+
+    def _what_if_v2(self, application_ref: str, doc: dict, record: dict, clean: dict) -> dict:
+        before = dict(doc)
+        with obs.span("zen.simulate", kind="TOOL", **{"zen.engine": "zen-engine 2.1.2 (catalogue v2)",
+                                                      "zen.fields": sorted(clean)}) as sp, _ZEN_LOCK:
+            try:
+                sim = simulate_v2(application_ref, self.store, record, clean)
+            except ValueError as e:
+                raise InvalidWhatIf(str(e)) from None
+            _mark_sim(sp, sim["decision"], (sim.get("policy") or {}).get("version"), basis=sim.get("estimate_basis"))
+        unchanged = self.store.get(application_ref) == before
+        return {"changes": clean, "simulated_decision": sim["decision"], "is_simulation": True,
+                "rule_results": {e["rule_id"]: e["result"] for e in sim.get("rule_evaluations") or []},
+                "failed_reason_codes": sim.get("failed_reason_codes") or [], "record": sim,
+                "reason_categories": list(sim.get("reason_categories") or []), "offer": sim.get("offer"),
+                "original_record_unchanged": unchanged, "policy_version": (sim.get("policy") or {}).get("version"),
+                "estimate_basis": sim.get("estimate_basis"),
+                "sim_status": "error" if sim["decision"] in NOT_ESTIMABLE else "ok",
                 "label": "hypothetical result under the synthetic prototype policy; not a decision and not a guarantee"}
 
     @obs.tool("improvement_plan")
@@ -150,6 +219,22 @@ class DecisionTools:
             combined = {"changes": w["changes"], "simulated_decision": w["simulated_decision"],
                         "label": w["label"], "original_record_unchanged": w["original_record_unchanged"]}
         return {"steps": steps, "all_changes_together": combined}
+
+
+def _mark_sim(sp, decision, version, basis=None):
+    """zen.simulate span: the simulated decision and policy version; an ERROR / not-estimable result is an ERROR
+    status and level, so a failed estimate never looks like a normal span (Langfuse gap 8)."""
+    status = "error" if decision in NOT_ESTIMABLE else "ok"
+    obs.set_attrs(sp, **{"zen.simulated_decision": decision, "zen.policy_version": version, "zen.sim_status": status,
+                         "zen.estimate_basis": basis},
+                  **({"langfuse.observation.level": "ERROR", "langfuse.observation.status_message": "simulation not estimable"}
+                     if status == "error" else {}))
+    if sp is not None and status == "error":
+        try:
+            from opentelemetry.trace import Status, StatusCode
+            sp.set_status(Status(StatusCode.ERROR, "simulation not estimable"))
+        except Exception:  # telemetry must never break the turn
+            pass
 
 
 # ------------------------------------------------------------------ policy retrieval (read-only)

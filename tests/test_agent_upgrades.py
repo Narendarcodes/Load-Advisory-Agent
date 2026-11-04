@@ -203,12 +203,13 @@ def test_streamed_sentences_are_validated_and_the_full_answer_still_runs_validat
     ag = agent_for(llm, tmp_path=tmp_path)
     got = []
     r = ask(ag, "why was I rejected?", channel="voice", on_sentence=got.append)
-    assert got[0].startswith("Your application's recorded decision is REJECTED")  # deterministic English voice lead
-    assert got[1:3] == ["Your recorded decision is REJECTED.", "Your credit score is 690 and the synthetic limit is 700."]
-    assert r.answer.startswith(" ".join(got[:3]))
-    assert "fallback_template" not in r.guard_flags
+    # deterministic English voice lead: plain outcome + one plain reason (agent eval fix 2)
+    assert got[0].startswith("We can't approve this application right now, mainly because")
+    assert got[1] == "Your recorded decision is REJECTED."
+    # Q-08 / fix 2: the cut-off (700) is not a grounded number for the borrower: never spoken, never shown
+    assert not any("700" in g for g in got) and "700" not in r.answer
+    assert any(f.startswith("ungrounded_numbers:700") for f in r.guard_flags) and "fallback_template" in r.guard_flags
     assert r.timings.get("first_sentence_ms") is not None
-    assert remainder(got, r.answer) == ""
 
 
 def test_a_flagged_sentence_is_never_streamed_and_the_turn_falls_back(tmp_path):
@@ -317,7 +318,7 @@ def test_busy_llm_turn_finishes_inside_the_deadline_with_the_template(tmp_path):
     assert took < 2.6, took
     assert r.intent == "explain"  # classify budget hit -> deterministic rules
     assert "fallback_template" in r.guard_flags and "deadline" in r.guard_flags
-    assert "REJECTED" in r.answer and "synthetic" in r.answer.lower()
+    assert "can't approve this application" in r.answer and "synthetic" in r.answer.lower()
     assert all(d is not None for _, d in llm.deadlines)  # every LLM call carried the deadline
 
 
@@ -518,11 +519,11 @@ def test_a_read_timeout_at_the_deadline_is_reported_as_deadline(monkeypatch):
 
 
 def test_english_voice_explain_speaks_a_deterministic_lead_first_and_the_llm_continues(tmp_path):
-    llm = ScriptedLLM(intent="explain", compose="Your credit score is 690 and the synthetic limit is 700.")
+    llm = ScriptedLLM(intent="explain", compose="Paying EMIs on time helps, and this demo uses synthetic rules.")
     ag = agent_for(llm, tmp_path=tmp_path)
     got = []
     r = ask(ag, "why was I rejected?", channel="voice", on_sentence=got.append)
-    assert got[0].startswith("Your application's recorded decision is REJECTED") and "synthetic" in got[0]
+    assert got[0].startswith("We can't approve this application right now, mainly because")
     assert r.answer.startswith(got[0])
     sys_prompt = next(s for t, s, _ in llm.prompts if t == "compose_explain")
     assert "already heard" in sys_prompt.lower()

@@ -3,6 +3,8 @@
     AGENT_VOICE_DEADLINE_S   per-turn deadline for voice turns (s). Must stay well under the voice worker's HTTP timeout.
     AGENT_TEXT_DEADLINE_S    per-turn deadline for text turns (s).
     AGENT_CLASSIFY_BUDGET_S  max time the LLM intent classifier may take before the deterministic rules decide.
+    AGENT_CLASSIFY_BUDGET_INDIC_S  the same for Hindi / Telugu turns (longer prompts in tokens; agent eval: 15 hi/te
+                             turns passed the 6 s budget and fell to the regex rules).
     AGENT_MIN_COMPOSE_S      minimum time left in the turn to start (or retry) an LLM compose; otherwise the
                              deterministic template is used straight away.
     AGENT_FAST_CLASSIFY      off | voice | all — high-precision regex intents skip the LLM classifier.
@@ -22,6 +24,7 @@ class AgentSettings:
     voice_deadline_s: float = 25.0
     text_deadline_s: float = 75.0
     classify_budget_s: float = 6.0
+    classify_budget_indic_s: float = 14.0
     min_compose_s: float = 4.0
     fast_classify: str = "voice"
     citation_mode: str = "labels"
@@ -38,6 +41,9 @@ class AgentSettings:
 
     def deadline_for(self, channel: str) -> float:
         return self.voice_deadline_s if channel == "voice" else self.text_deadline_s
+
+    def classify_budget_for(self, locale: str) -> float:
+        return max(self.classify_budget_s, self.classify_budget_indic_s) if locale in ("hi", "te") else self.classify_budget_s
 
     def fast_classify_for(self, channel: str) -> bool:
         return self.fast_classify == "all" or (self.fast_classify == "voice" and channel == "voice")

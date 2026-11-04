@@ -7,8 +7,7 @@ thresholds, re-checked through the unchanged ZEN path by tools.run_what_if.
 import math
 import re
 
-SYNTHETIC_LABEL = ("synthetic prototype policy (synthetic-v1) — the four thresholds are team assumptions, "
-                   "not any real lender's policy")
+SYNTHETIC_LABEL = ("synthetic prototype policy (example rules used for this demo, not any real lender's policy)")
 SCORED = ("monthly_income", "monthly_obligations", "credit_score", "employment_months")
 
 RULE_PLAIN = {
@@ -373,13 +372,143 @@ def borrower_plan_step(step: dict) -> dict:
             "reason_category": V1_REASON_CATEGORY.get(step.get("rule_id"), "OTHER")}
 
 
-def borrower_what_if(wi: dict) -> dict:
+WHAT_IF_TEXT = {  # Q-03 two-phrase vocabulary, plus the honest third case: the estimate could not be made
+    "WOULD_LIKELY_MEET": {"en": "would likely meet", "hi": "शायद पूरी हो जाएँगी", "te": "బహుశా నెరవేరతాయి"},
+    "WOULD_NOT_MEET": {"en": "wouldn't meet", "hi": "पूरी नहीं होंगी", "te": "నెరవేరవు"},
+    "COULD_NOT_ESTIMATE": {"en": "couldn't be estimated", "hi": "अनुमान नहीं लगाया जा सका", "te": "అంచనా వేయలేకపోయాము"},
+}
+_SIM_MEETS = ("APPROVED", "ELIGIBILITY_CONDITIONS_MET")
+_SIM_NOT_ESTIMABLE = ("ERROR", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED", "REVIEW", None, "")
+
+
+def what_if_result(wi: dict) -> str:
+    """WOULD_LIKELY_MEET | WOULD_NOT_MEET | COULD_NOT_ESTIMATE. A simulation ERROR is never "would not meet"."""
+    d = wi.get("simulated_decision")
+    if d in _SIM_MEETS:
+        return "WOULD_LIKELY_MEET"
+    if d in _SIM_NOT_ESTIMABLE or wi.get("sim_status") == "error":
+        return "COULD_NOT_ESTIMATE"
+    return "WOULD_NOT_MEET"
+
+
+def borrower_what_if(wi: dict, locale: str = "en") -> dict:
     """Q-03 shape: one estimate line, never per-rule results or a simulated decision."""
-    ok = wi.get("simulated_decision") == "APPROVED"
-    return {"result": "WOULD_LIKELY_MEET" if ok else "WOULD_NOT_MEET",
-            "text": "would likely meet" if ok else "wouldn't meet", "changes": wi.get("changes"),
-            "label": "Estimate only, your application is unchanged", "is_simulation": True,
-            "original_record_unchanged": wi.get("original_record_unchanged")}
+    res = what_if_result(wi)
+    out = {"result": res, "text": WHAT_IF_TEXT[res].get(locale) or WHAT_IF_TEXT[res]["en"], "changes": wi.get("changes"),
+           "label": "Estimate only, your application is unchanged", "is_simulation": True,
+           "original_record_unchanged": wi.get("original_record_unchanged")}
+    if "remaining_this_session" in wi:
+        out["remaining_this_session"] = wi["remaining_this_session"]
+    return out
+
+
+def what_if_area(wi: dict) -> str | None:
+    """The ONE plain category still not met in a hypothetical, or None."""
+    if what_if_result(wi) != "WOULD_NOT_MEET":
+        return None
+    cats = list(wi.get("reason_categories") or [])
+    if not cats:
+        for rid, res in (wi.get("rule_results") or {}).items():
+            if res == "FAIL":
+                cats.append(V1_REASON_CATEGORY.get(rid, "OTHER"))
+    return cats[0] if cats else None
+
+
+# ------------------------------------------------------------------ one plain reason (agent eval fix 2)
+# The borrower hears ONE reason, as a plain category, never a rule name: v2 rule names reveal hidden flags
+# ("Settlement or write-off in 24 months", "Negative list match") and v1 names invite listing several checks.
+REASON_PLAIN = {
+    "EMPLOYMENT_STABILITY": {"en": "your employment history didn't meet our stability requirement",
+                             "hi": "आपकी नौकरी की स्थिरता हमारी ज़रूरत पूरी नहीं करती",
+                             "te": "మీ ఉద్యోగ స్థిరత్వం మా అవసరాన్ని తీర్చలేదు"},
+    "INCOME_NOT_VERIFIED_OR_INSUFFICIENT": {"en": "your income didn't meet our requirement for this amount",
+                                            "hi": "इस राशि के लिए आपकी आय हमारी ज़रूरत पूरी नहीं करती",
+                                            "te": "ఈ మొత్తానికి మీ ఆదాయం మా అవసరాన్ని తీర్చలేదు"},
+    "REPAYMENTS_TOO_HIGH": {"en": "your existing EMIs are high for this loan amount",
+                            "hi": "इस लोन राशि के लिए आपकी मौजूदा EMI ज़्यादा हैं",
+                            "te": "ఈ లోన్ మొత్తానికి మీ ప్రస్తుత EMIలు ఎక్కువగా ఉన్నాయి"},
+    "CREDIT_HISTORY": {"en": "your credit history didn't meet our requirement",
+                       "hi": "आपका क्रेडिट इतिहास हमारी ज़रूरत पूरी नहीं करता",
+                       "te": "మీ క్రెడిట్ చరిత్ర మా అవసరాన్ని తీర్చలేదు"},
+    "RECENT_CREDIT_APPLICATIONS": {"en": "you have applied for credit several times recently",
+                                   "hi": "आपने हाल में कई बार लोन या कार्ड के लिए आवेदन किया है",
+                                   "te": "మీరు ఇటీవల చాలాసార్లు లోన్ లేదా కార్డుల కోసం దరఖాస్తు చేశారు"},
+    "DETAILS_NOT_VERIFIED": {"en": "we couldn't verify some details",
+                             "hi": "हम कुछ जानकारी की पुष्टि नहीं कर सके",
+                             "te": "కొన్ని వివరాలను మేము నిర్ధారించలేకపోయాము"},
+    "DOCUMENTS_INCOMPLETE_OR_UNCLEAR": {"en": "some documents were incomplete or unclear",
+                                        "hi": "कुछ दस्तावेज़ अधूरे या साफ़ नहीं थे",
+                                        "te": "కొన్ని పత్రాలు అసంపూర్తిగా లేదా స్పష్టంగా లేవు"},
+    "REQUEST_OUTSIDE_OFFER": {"en": "the amount or loan period you asked for is more than we can offer",
+                              "hi": "आपकी माँगी गई राशि या अवधि हमारी पेशकश से ज़्यादा है",
+                              "te": "మీరు అడిగిన మొత్తం లేదా వ్యవధి మేము ఇవ్వగలిగే దానికంటే ఎక్కువ"},
+    "OTHER": {"en": "part of your application didn't meet our requirements",
+              "hi": "आपके आवेदन का एक हिस्सा हमारी ज़रूरतें पूरी नहीं करता",
+              "te": "మీ దరఖాస్తులోని ఒక భాగం మా అవసరాలను తీర్చలేదు"},
+}
+GUIDANCE_BY_CATEGORY = {  # general financial guidance, not lender policy; never a target or a number
+    "EMPLOYMENT_STABILITY": {"en": "Staying steadily in your job helps; keep your offer letter and recent salary slips ready.",
+                             "hi": "नौकरी में लगातार बने रहना मदद करता है; ऑफ़र लेटर और हाल की सैलरी स्लिप तैयार रखें।",
+                             "te": "ఉద్యోగంలో స్థిరంగా కొనసాగడం సహాయపడుతుంది; ఆఫర్ లెటర్, ఇటీవలి జీతం స్లిప్‌లు సిద్ధంగా ఉంచండి."},
+    "INCOME_NOT_VERIFIED_OR_INSUFFICIENT": {"en": "Make sure all your regular income is documented, such as salary slips and bank statements.",
+                                            "hi": "अपनी हर नियमित आय के कागज़ तैयार रखें, जैसे सैलरी स्लिप और बैंक स्टेटमेंट।",
+                                            "te": "మీ నెలవారీ ఆదాయం అంతటికీ పత్రాలు ఉంచండి, ఉదా. జీతం స్లిప్‌లు, బ్యాంక్ స్టేట్‌మెంట్లు."},
+    "REPAYMENTS_TOO_HIGH": {"en": "Paying off a small loan or card balance lowers what goes to EMIs each month; avoid new EMIs before reapplying.",
+                            "hi": "कोई छोटा लोन या कार्ड बकाया चुकाने से हर महीने की EMI घटती है; दोबारा आवेदन से पहले नई EMI न लें।",
+                            "te": "చిన్న లోన్ లేదా కార్డ్ బాకీ తీర్చితే నెలవారీ EMI తగ్గుతుంది; మళ్లీ దరఖాస్తు చేసే ముందు కొత్త EMIలు తీసుకోకండి."},
+    "CREDIT_HISTORY": {"en": "Paying every EMI and card bill on time helps; you can also check your credit report for mistakes.",
+                       "hi": "हर EMI और कार्ड बिल समय पर चुकाना मदद करता है; अपनी क्रेडिट रिपोर्ट में गलतियाँ भी जाँच सकते हैं।",
+                       "te": "ప్రతి EMI, కార్డ్ బిల్లు సమయానికి కట్టడం సహాయపడుతుంది; మీ క్రెడిట్ రిపోర్ట్‌లో తప్పులు ఉన్నాయో చూడవచ్చు."},
+    "RECENT_CREDIT_APPLICATIONS": {"en": "Giving it some time before applying for more credit helps.",
+                                   "hi": "और लोन या कार्ड के लिए आवेदन करने से पहले कुछ समय रुकना मदद करता है।",
+                                   "te": "మరో లోన్ లేదా కార్డ్ కోసం దరఖాస్తు చేసే ముందు కొంత సమయం ఆగడం సహాయపడుతుంది."},
+    "DETAILS_NOT_VERIFIED": {"en": "A person can review your details; keep your documents ready.",
+                             "hi": "एक व्यक्ति आपकी जानकारी देख सकता है; अपने दस्तावेज़ तैयार रखें।",
+                             "te": "ఒక వ్యక్తి మీ వివరాలను పరిశీలించగలరు; మీ పత్రాలు సిద్ధంగా ఉంచండి."},
+    "DOCUMENTS_INCOMPLETE_OR_UNCLEAR": {"en": "Clear, complete documents help the check go through.",
+                                        "hi": "साफ़ और पूरे दस्तावेज़ जाँच में मदद करते हैं।",
+                                        "te": "స్పష్టమైన, పూర్తి పత్రాలు తనిఖీకి సహాయపడతాయి."},
+    "REQUEST_OUTSIDE_OFFER": {"en": "A smaller amount or a different loan period may fit better.",
+                              "hi": "कम राशि या अलग अवधि बेहतर हो सकती है।",
+                              "te": "తక్కువ మొత్తం లేదా వేరే వ్యవధి సరిపోవచ్చు."},
+    "OTHER": {"en": "A person can review your application and explain what would help.",
+              "hi": "एक व्यक्ति आपका आवेदन देखकर बता सकता है कि क्या मदद करेगा।",
+              "te": "ఒక వ్యక్తి మీ దరఖాస్తును చూసి ఏది సహాయపడుతుందో చెప్పగలరు."},
+}
+
+
+def _loc(table: dict, key: str, locale: str) -> str:
+    row = table.get(key) or table["OTHER"]
+    return row.get(locale) or row["en"]
+
+
+def main_reason(record: dict, locale: str = "en") -> dict | None:
+    """The single borrower-safe reason: the first stored catalogue-v2 category, else the first failed v1 rule's
+    category. None when nothing failed (approved, or a full offer)."""
+    cats = reason_categories(record or {})
+    if not cats:
+        return None
+    key = cats[0]["key"]
+    return {"key": key, "plain": _loc(REASON_PLAIN, key, locale)}
+
+
+def reason_plain(key: str, locale: str = "en") -> str:
+    return _loc(REASON_PLAIN, key, locale)
+
+
+def guidance_for(record: dict, locale: str = "en", limit: int = 2) -> list[dict]:
+    """General guidance (never a target or gap) for the record's reason categories, at most `limit` items."""
+    out = []
+    for c in reason_categories(record or {})[:limit]:
+        out.append({"reason": _loc(REASON_PLAIN, c["key"], locale), "general_guidance": _loc(GUIDANCE_BY_CATEGORY, c["key"], locale),
+                    "guidance_source": "general financial guidance, not lender policy", "reason_category": c["key"]})
+    return out
+
+
+def own_score(record: dict | None) -> float | None:
+    vals = ((record or {}).get("inputs") or {}).get("values") or {}
+    v = vals.get("credit_score", vals.get("bureau_score"))
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
 
 
 def _display_vs(rule_id, actual, threshold):
@@ -453,8 +582,11 @@ def counterfactual_targets(record: dict) -> list[dict]:
     return out
 
 
-def grounded_numbers(record: dict | None, extra: list | None = None) -> set[str]:
-    """Every number the agent may state about this application (normalised strings)."""
+def grounded_numbers(record: dict | None, extra: list | None = None, include_limits: bool = False) -> set[str]:
+    """Every number the agent may state about this application (normalised strings).
+
+    Q-08: thresholds, improvement targets and gaps are NOT grounded for the borrower by default (they are cut-offs);
+    `include_limits=True` keeps the old behaviour for officer/internal use."""
     nums: set[str] = set()
 
     def add(v):
@@ -474,14 +606,17 @@ def grounded_numbers(record: dict | None, extra: list | None = None) -> set[str]
         for v in ((record.get("inputs") or {}).get("values") or {}).values():
             add(v)
         for e in record.get("rule_evaluations", []):
-            add(e.get("actual_value")); add(e.get("threshold"))
+            add(e.get("actual_value"))
+            if include_limits:
+                add(e.get("threshold"))
         o = record.get("offer") or {}
         for k in ("amount", "emi", "tenure_months"):
             add(o.get(k))
-        for t in counterfactual_targets(record):
-            add(t["target"]); add(t["gap"])
-            if t.get("alt"):
-                add(t["alt"]["target"])
+        if include_limits:
+            for t in counterfactual_targets(record):
+                add(t["target"]); add(t["gap"])
+                if t.get("alt"):
+                    add(t["alt"]["target"])
     for v in extra or []:
         add(v)
     for v in ("300", "900", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"):
