@@ -1,0 +1,52 @@
+{
+ "scope_answerable": {
+  "chunk_recall@5": {
+   "n": 149,
+   "mean": 0.7718
+  },
+  "chunk_mrr@5": {
+   "n": 149,
+   "mean": 0.6399
+  },
+  "chunk_ndcg@5": {
+   "n": 149,
+   "mean": 0.6441
+  },
+  "doc_recall@5": {
+   "n": 149,
+   "mean": 0.9262
+  },
+  "doc_mrr@5": {
+   "n": 149,
+   "mean": 0.8351
+  },
+  "doc_ndcg@5": {
+   "n": 149,
+   "mean": 0.8284
+  }
+ },
+ "scope_all_with_anchors": {
+  "chunk_recall@5": {
+   "n": 169,
+   "mean": 0.7189
+  },
+  "chunk_mrr@5": {
+   "n": 169,
+   "mean": 0.5964
+  },
+  "chunk_ndcg@5": {
+   "n": 169,
+   "mean": 0.5997
+  }
+ },
+ "citation_validity": {
+  "answers": 178,
+  "answers_with_citations": 152,
+  "invalid_labels_total": 0,
+  "answers_citing_nonexistent_chunk": 0,
+  "answers_cited_but_abstained": 0,
+  "quoted_spans_total": 36,
+  "quoted_spans_matching": 0,
+  "answers_citation_valid": 144
+ }
+}
