@@ -67,8 +67,9 @@ def test_thresholds_in_the_jdm_are_the_catalogue_values():
 def test_clean_applicant_still_passes_every_new_rule():
     r = run()
     assert r["decision"] == "ELIGIBILITY_CONDITIONS_MET", [e for e in r["rule_evaluations"] if e["result"] != "PASS"]
-    for rid in SIX + ("PL-013", "PL-016", "PL-130"):
+    for rid in SIX + ("PL-013", "PL-016"):
         assert result(r, rid) == "PASS", rid
+    assert result(r, "PL-130") == "NOT_APPLICABLE"  # the fixture is a wedding loan; PL-130 is home renovation only
 
 
 # ---------------------------------------------------------------- the six, one case each way
@@ -132,9 +133,10 @@ def test_d12_employer_churn_is_referred():
 
 
 def test_d13_non_resident_is_declined_and_missing_residency_is_asked():
-    r = run(residency_status="NRI")
+    """Home renovation only since the owner decision of 2026-11-04 10:15 IST (the fixture applicant is a wedding loan)."""
+    r = _for_purpose("home_renovation", residency_status="NRI")
     assert result(r, "PL-130") == "FAIL" and r["decision"] == "DECLINE" and r["offer"] is None
-    r = run(residency_status=None)
+    r = _for_purpose("home_renovation", residency_status=None)
     assert result(r, "PL-130") == "INSUFFICIENT_DATA" and r["decision"] == "MORE_INFORMATION_REQUIRED"
 
 
@@ -247,3 +249,30 @@ def test_zen_points_serve_residency_from_the_kyc_record():
     assert pts["residency_status"] == "NRI" and "applicant_name" not in pts
     assert served_points({"zen_inputs": {}, "declared": {"residency_status": "RESIDENT"}})["residency_status"] == "RESIDENT"
     assert "residency_status" not in served_points({"zen_inputs": {}})
+
+
+# ---------------------------------------------------------------- PL-130 scope (owner decision 2026-11-04 10:15 IST)
+def _for_purpose(purpose, **changes):
+    extra = {"property_ownership": "OWNED"} if purpose == "home_renovation" else {}
+    return run(loan_purpose=purpose, product_purpose=purpose, declared_purpose=purpose, **{**extra, **changes})
+
+
+def test_pl130_is_compiled_for_home_renovation_only():
+    assert pol()["rules"]["PL-130"]["applies_to_purposes"] == ["home_renovation"]
+    assert "(loan_purpose in ['home_renovation']) ? ((residency_status == null)" in C.JDM_PATH.read_text()
+
+
+def test_non_resident_is_declined_for_home_renovation():
+    r = _for_purpose("home_renovation", residency_status="NRI")
+    assert result(r, "PL-130") == "FAIL" and r["decision"] == "DECLINE" and r["offer"] is None
+    assert result(_for_purpose("home_renovation", residency_status="RESIDENT"), "PL-130") == "PASS"
+    assert result(_for_purpose("home_renovation", residency_status=None), "PL-130") == "INSUFFICIENT_DATA"
+
+
+@pytest.mark.parametrize("purpose", ["wedding", "higher_education", "medical_emergency"])
+def test_non_resident_is_not_affected_by_pl130_for_the_other_products(purpose):
+    nri, resident = _for_purpose(purpose, residency_status="NRI"), _for_purpose(purpose, residency_status="RESIDENT")
+    assert result(nri, "PL-130") == result(resident, "PL-130") == "NOT_APPLICABLE"
+    assert result(_for_purpose(purpose, residency_status=None), "PL-130") == "NOT_APPLICABLE"
+    assert nri["decision"] == resident["decision"] and nri["offer"] == resident["offer"]
+    assert not [e for e in nri["rule_evaluations"] if e["rule_id"] == "PL-130" and e["effect"] != "NONE"]

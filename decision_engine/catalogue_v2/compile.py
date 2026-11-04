@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -170,6 +171,29 @@ def _key(rule_id: str) -> str:
     return "o_" + rule_id.replace("-", "_")
 
 
+_SCOPE_EQ = re.compile(r"^\s*loan_purpose\s*==\s*'?(\w+)'?\s*$")
+_SCOPE_IN = re.compile(r"^\s*loan_purpose\s+in\s+\[([^\]]*)\]\s*$")
+
+
+def product_scope(rule: dict) -> tuple[str, ...] | None:
+    """The purposes a rule is limited to, from its catalogue applies_when ("loan_purpose == home_renovation" or
+    "loan_purpose in [a, b]"); None when it applies to every product. PL-130 is home renovation only (owner decision
+    2026-11-04 10:15 IST)."""
+    cond = rule.get("applies_when") or "ALL"
+    m = _SCOPE_EQ.match(cond)
+    if m:
+        found = (m.group(1),)
+    else:
+        m = _SCOPE_IN.match(cond)
+        if not m:
+            return None
+        found = tuple(x.strip().strip("'\"") for x in m.group(1).split(",") if x.strip())
+    unknown = [p for p in found if p not in PURPOSES]
+    if unknown:
+        raise ValueError(f"{rule['rule_id']} applies_when names unknown purposes {unknown}")
+    return found
+
+
 def rule_effects(rule: dict) -> dict:
     """outcome -> effect for one rule, from its catalogue decision_effect (risk signals never decline)."""
     de = rule.get("decision_effect") or {}
@@ -200,8 +224,13 @@ def compile_catalogue(cat: dict) -> tuple[dict, dict]:
         else:
             body = f"({pass_expr.format(**params)}) ? 'PASS' : '{on_false}'"
         missing = " or ".join(f"{i} == null" for i in inputs)
-        exprs.append({"id": _key(rid), "key": _key(rid), "value": f"({missing}) ? 'INSUFFICIENT_DATA' : ({body})"})
+        value = f"({missing}) ? 'INSUFFICIENT_DATA' : ({body})"
+        scope = product_scope(rule)
+        if scope is not None:  # a product-scoped rule: the other products never evaluate it (NOT_APPLICABLE, no effect)
+            value = f"(loan_purpose in {_lit(list(scope))}) ? ({value}) : 'NOT_APPLICABLE'"
+        exprs.append({"id": _key(rid), "key": _key(rid), "value": value})
         meta[rid] = {"name": rule["rule_name"], "effects": rule_effects(rule),
+                     **({"applies_to_purposes": list(scope)} if scope is not None else {}),
                      "reason_category": rule.get("borrower_reason_category") or "OTHER",
                      "missing_category": rule.get("borrower_message_when_missing_category") or "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
                      "inputs": inputs}

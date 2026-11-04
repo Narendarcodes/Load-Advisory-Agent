@@ -990,6 +990,9 @@
     "REVIEW": "MANUAL_REVIEW",
     "INSUFFICIENT_DATA": "MORE_INFORMATION_REQUIRED"
    },
+   "applies_to_purposes": [
+    "home_renovation"
+   ],
    "reason_category": "OTHER",
    "missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
    "inputs": [

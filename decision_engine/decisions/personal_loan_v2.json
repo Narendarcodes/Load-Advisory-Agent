@@ -385,7 +385,7 @@
      {
       "id": "o_PL_130",
       "key": "o_PL_130",
-      "value": "(residency_status == null) ? 'INSUFFICIENT_DATA' : ((residency_status in ['RESIDENT']) ? 'PASS' : 'FAIL')"
+      "value": "(loan_purpose in ['home_renovation']) ? ((residency_status == null) ? 'INSUFFICIENT_DATA' : ((residency_status in ['RESIDENT']) ? 'PASS' : 'FAIL')) : 'NOT_APPLICABLE'"
      },
      {
       "id": "o_PL_074",

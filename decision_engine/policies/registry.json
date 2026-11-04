@@ -18,8 +18,8 @@
       "synthetic-v2": {
         "policy_file": "personal_loan_synthetic_v2.json",
         "jdm_file": "../decisions/personal_loan_v2.json",
-        "policy_sha256": "d56e8812d72a071dcb6e3f25f16ba5bde45af676b1874db33743ff1fe914dc30",
-        "jdm_sha256": "f8ba7f5a469d6f58603616dc14b007fc4dac6918a48e171b974f32213c9849e7",
+        "policy_sha256": "3f941faac7ae602092875a216dd4ab1e21588a5ff401e07e5cf422069777db61",
+        "jdm_sha256": "9444ca4487d51db83b702cc41b05107f4015d8601b8088fbf2b0a5dcfdd04035",
         "status": "selectable",
         "synthetic": true,
         "threshold_source": "Catalogue v2 compiled to JDM (decision_engine/catalogue_v2/compile.py); ADR-0011 values OWNER_APPROVED for prototype_synthetic only. NOT a lender policy.",
