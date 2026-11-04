@@ -299,7 +299,8 @@
         "PL-126",
         "PL-127",
         "PL-128",
-        "PL-129"
+        "PL-129",
+        "PL-130"
       ],
       "not_for_live_use": true,
       "batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
@@ -2882,8 +2883,8 @@
       "profiles": [
         "prototype_synthetic"
       ],
-      "mvp_status": "DEFERRED",
-      "mvp_deferred_reason": "Employer history is not collected in the lean MVP form (only current employer + total experience).",
+      "mvp_status": "ACTIVE",
+      "mvp_deferred_reason": null,
       "borrower_reason_category": "EMPLOYMENT_STABILITY",
       "borrower_message": "Your employment history did not meet our stability requirement for this loan.",
       "borrower_message_when_missing": "Your employment history did not meet our stability requirement for this loan.",
@@ -3244,8 +3245,8 @@
       "profiles": [
         "prototype_synthetic"
       ],
-      "mvp_status": "DEFERRED",
-      "mvp_deferred_reason": "Employment status (permanent/probation/contract) is not in the MVP step-4 field list.",
+      "mvp_status": "ACTIVE",
+      "mvp_deferred_reason": null,
       "borrower_reason_category": "EMPLOYMENT_STABILITY",
       "borrower_message": "Your employment history did not meet our stability requirement for this loan.",
       "borrower_message_when_missing": "Your employment history did not meet our stability requirement for this loan.",
@@ -12083,7 +12084,7 @@
           "expected_value": null
         }
       ],
-      "note": "Self-employed list (KYC + PAN + 6 months of statements) is A-23, pending."
+      "note": "Self-employed list (KYC + PAN + 6 months of statements) is A-23, pending. A signed document whose signature box is blank (signature_present false: NACH mandate, application form) counts as not submitted, so it is asked for (ZEN gap fix D-15); PL-104 stays a screening signal with no effect when there is no signature to screen."
     },
     {
       "rule_id": "PL-089",
@@ -17742,6 +17743,114 @@
         }
       ],
       "note": "Runs after the request-independent gates. A DECLINE from such a gate wins; under MANUAL_REVIEW the offer is indicative for the underwriter. The borrower sees the offered amount, EMI and tenure only, never the binding cap (REASON_DISCLOSURE_POLICY)."
+    },
+    {
+      "rule_id": "PL-130",
+      "rule_name": "Residency eligibility",
+      "rule_group": "A_APPLICANT_ELIGIBILITY",
+      "implementation_type": "ZEN_DIRECT",
+      "check": "Applicant is resident in India",
+      "rule_origin": "OWNER_DIRECTIVE",
+      "kind": "GATE",
+      "enabled": true,
+      "input_schema": [
+        {
+          "name": "residency_status",
+          "type": "enum",
+          "unit": "RESIDENT/NRI",
+          "source": "APPLICATION",
+          "declared_in_user_catalogue": true
+        }
+      ],
+      "condition": "residency_status in eligible_residency_statuses",
+      "applies_when": "ALL",
+      "parameters": [
+        {
+          "name": "eligible_residency_statuses",
+          "value": [
+            "RESIDENT"
+          ],
+          "unit": null,
+          "approval_status": "PROTOTYPE_SYNTHETIC",
+          "source_chunk": null,
+          "assumption_id": null,
+          "value_origin": "HARK_NEW_PROPOSAL",
+          "context_chunks": [],
+          "note": "Prototype proposal (D-13): Bajaj states nationality only; an Indian national living abroad (NRI) is outside the MVP.",
+          "owner_decision": null,
+          "profile_scope": null
+        }
+      ],
+      "outcome": {
+        "when_condition_true": "PASS",
+        "when_condition_false": "FAIL",
+        "when_input_missing": "INSUFFICIENT_DATA"
+      },
+      "amount_dependent": false,
+      "decision_effect": {
+        "on_fail": "DECLINE",
+        "on_missing": "MORE_INFORMATION_REQUIRED",
+        "low_confidence_downgrades_decline_to_review": true,
+        "decline_active_only_in": "prototype_synthetic (not_for_live_use)"
+      },
+      "severity": "HARD_DECLINE",
+      "risk_signal": false,
+      "policy_source": {
+        "source_chunks": [],
+        "context_chunks": [],
+        "assumption_ids": [],
+        "conflict": null,
+        "open_interpretations": [],
+        "corpus": null
+      },
+      "policy_version": "saral-pl-catalogue-2.1.0-draft",
+      "approval_status": "PROTOTYPE_SYNTHETIC",
+      "owner_approval": null,
+      "zen_authority": "authoritative (prototype_synthetic)",
+      "prototype_batch_approval": "ADR-0009 #1 (owner, 2026-11-03 23:34 IST): prototype thresholds approved as one batch, prototype_synthetic only",
+      "public_guidance": null,
+      "effective_from": null,
+      "effective_to": null,
+      "profiles": [
+        "prototype_synthetic"
+      ],
+      "mvp_status": "ACTIVE",
+      "mvp_deferred_reason": null,
+      "borrower_reason_category": "OTHER",
+      "borrower_message": "Your application did not meet our basic eligibility criteria for this loan.",
+      "borrower_message_when_missing": "Some required documents or details are missing. Please provide them to continue.",
+      "borrower_message_when_missing_category": "DOCUMENTS_INCOMPLETE_OR_UNCLEAR",
+      "internal_reason": "Residency status {residency_status} is not in {eligible_residency_statuses}.",
+      "v2_ids": [],
+      "draft_ids": [],
+      "test_cases": [
+        {
+          "case_id": "PL-130-T1",
+          "inputs": {
+            "residency_status": "RESIDENT"
+          },
+          "expected_outcome": "PASS",
+          "description": "",
+          "expected_value": null
+        },
+        {
+          "case_id": "PL-130-T2",
+          "inputs": {
+            "residency_status": "NRI"
+          },
+          "expected_outcome": "FAIL",
+          "description": "",
+          "expected_value": null
+        },
+        {
+          "case_id": "PL-130-T3",
+          "inputs": {},
+          "expected_outcome": "INSUFFICIENT_DATA",
+          "description": "all inputs missing: never a FAIL",
+          "expected_value": null
+        }
+      ],
+      "note": ""
     }
   ]
 }

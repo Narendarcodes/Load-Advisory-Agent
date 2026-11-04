@@ -2202,7 +2202,7 @@
       "source": "APPLICATION",
       "mvp_supply": "NONE",
       "derived_from": [],
-      "formula_or_note": "Not in the MVP step-4 list (PL-016 deferred)",
+      "formula_or_note": "Not in the MVP step-4 list; the KYC/AA data points supply it on the synthetic test bed (PL-016, D-12)",
       "frappe_today": "MISSING",
       "pii_class": "PERSONAL",
       "masking_rule": "Personal data. Borrower and authorised staff only; never in logs, traces sent to observability, or LLM prompts.",
@@ -2214,7 +2214,7 @@
       "frontend_fields": [],
       "zen_input_class": "APPLICANT",
       "mvp_available": false,
-      "mvp_gap": "employment_status: no MVP source (Not in the MVP step-4 list (PL-016 deferred))"
+      "mvp_gap": "employment_status: no MVP source (Not in the MVP step-4 list; the KYC/AA data points supply it on the synthetic test bed (PL-016, D-12))"
     },
     {
       "name": "employment_type",
@@ -4354,6 +4354,27 @@
       "zen_input_class": "POLICY_PARAMETER",
       "mvp_available": true,
       "mvp_gap": null
+    },
+    {
+      "name": "residency_status",
+      "type": "enum",
+      "unit": "RESIDENT/NRI",
+      "source": "APPLICATION",
+      "mvp_supply": "NONE",
+      "derived_from": [],
+      "formula_or_note": "Declared residency; not in the MVP form; the KYC/AA data points supply it on the synthetic test bed (PL-130, D-13)",
+      "frappe_today": "MISSING",
+      "pii_class": "PERSONAL",
+      "masking_rule": "Personal data. Borrower and authorised staff only; never in logs, traces sent to observability, or LLM prompts.",
+      "storage": "LMS_SNAPSHOT",
+      "retention": "Kept immutable with the decision record (ADR-0010 #3, owner 2026-11-03 23:58 IST). Disbursed loan: at least 5 years after the business relationship ends (loan closure). Basis: RBI (NBFC – Know Your Customer) Directions, 2025 para 47(2), identification records 'for at least five years after the business relationship has ended', and para 47(1), transaction records 'for at least five years from the date of transaction' (rbi.org.in id=12943). Declined or withdrawn application: 5 years from the decision date, which is SARAL'S CHOICE (no RBI period was found for applications that never became a relationship). The earlier 8-year proposal is withdrawn; it had no RBI basis.",
+      "used_by_rules": [
+        "PL-130"
+      ],
+      "frontend_fields": [],
+      "zen_input_class": "APPLICANT",
+      "mvp_available": false,
+      "mvp_gap": "residency_status: no MVP source (Declared residency; not in the MVP form; the KYC/AA data points supply it on the synthetic test bed (PL-130, D-13))"
     },
     {
       "name": "residual_income",

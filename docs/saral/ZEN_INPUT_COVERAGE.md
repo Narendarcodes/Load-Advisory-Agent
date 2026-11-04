@@ -33,10 +33,10 @@ Every input of every rule, mapped to where the MVP gets it: a frontend field ([s
 | PL-010 | Average monthly income | ACTIVE | monthly_income_history <- DERIVED; assessment_period <- POLICY; average_monthly_income <- DERIVED |  |
 | PL-011 | Income consistency | ACTIVE | monthly_income_history <- DERIVED; income_variation <- DERIVED |  |
 | PL-012 | Salary credit verification | ACTIVE | declared_salary <- DERIVED; observed_salary_credits <- DERIVED; salary_match_status <- DERIVED; income_variance_ratio <- DERIVED |  |
-| PL-013 | Employer stability | DEFERRED | employer_history <- NONE (NOT IN MVP); employer_stability_indicator <- DERIVED (NOT IN MVP); employer_changes_24m <- DERIVED (NOT IN MVP) | Employer history is not collected in the lean MVP form (only current employer + total experience). |
+| PL-013 | Employer stability | ACTIVE | employer_history <- NONE (NOT IN MVP); employer_stability_indicator <- DERIVED (NOT IN MVP); employer_changes_24m <- DERIVED (NOT IN MVP) |  |
 | PL-014 | Employment duration | ACTIVE | employment_start_date <- FRONTEND:joining_date; assessment_date <- SYSTEM; employment_months <- DERIVED |  |
 | PL-015 | Employment gaps | DEFERRED | employment_history <- NONE (NOT IN MVP); employment_gap_months <- DERIVED (NOT IN MVP) | Employment gap history is not collected in the lean MVP form. |
-| PL-016 | Employment type | DEFERRED | employment_type <- FRONTEND:employment_type; employment_status <- NONE (NOT IN MVP) | Employment status (permanent/probation/contract) is not in the MVP step-4 field list. |
+| PL-016 | Employment type | ACTIVE | employment_type <- FRONTEND:employment_type; employment_status <- NONE (NOT IN MVP) |  |
 | PL-017 | Income source consistency | ACTIVE | declared_income <- FRONTEND:declared_net_monthly_income; verified_income <- DERIVED; income_match_status <- DERIVED |  |
 | PL-018 | Recent income reduction | ACTIVE | historical_income <- DERIVED; recent_income <- DERIVED; income_reduction_percentage <- DERIVED |  |
 | PL-019 | Bureau report availability | ACTIVE | bureau_report_status <- DERIVED |  |
@@ -150,6 +150,7 @@ Every input of every rule, mapped to where the MVP gets it: a frontend field ([s
 | PL-127 | Purpose-specific consistency | ACTIVE | loan_purpose <- FRONTEND:loan_purpose; wedding_date <- FRONTEND:wedding_date; course_start_date <- FRONTEND:course_start_date; property_ownership <- FRONTEND:property_ownership; treatment_date <- FRONTEND:treatment_date; assessment_date <- SYSTEM |  |
 | PL-128 | Disbursal mode | ACTIVE | loan_purpose <- FRONTEND:loan_purpose; payee_account_present <- SYSTEM |  |
 | PL-129 | MVP offer sizing (flat rate) | ACTIVE | requested_amount <- FRONTEND:requested_amount; tenure_months <- FRONTEND:tenure_months; loan_purpose <- FRONTEND:loan_purpose; monthly_net_income <- DERIVED; existing_monthly_obligations <- DERIVED; other_monthly_obligations <- SYSTEM; bureau_score <- SYNTHETIC_BUREAU:score.value; bureau_match_status <- SYNTHETIC_BUREAU:score.status; employment_months <- DERIVED; employment_category <- FRONTEND:employer_category; purpose_evidence_amount <- FRONTEND:fee_amount |  |
+| PL-130 | Residency eligibility | ACTIVE | residency_status <- NONE (NOT IN MVP) |  |
 
 ## Product and band variants
 
