@@ -1,8 +1,59 @@
 # Approach
 
-How the Loan Advisory Agent is built and why. Numbered evidence comes from PR descriptions or committed reports and is
-named next to each claim. Implementation history runs through PRs #1–#21 (#5 was closed with its commits already on
-`main`; #11 is the open docs-only PR); diagrams are in [docs/architecture/](docs/architecture/README.md).
+How Saral is built and why, as submitted on 2026-11-04. Architecture drawing (opens in draw.io):
+[docs/architecture.drawio.svg](docs/architecture.drawio.svg). Phases, dates and owners:
+[docs/build-plan.md](docs/build-plan.md). Final numbers: [docs/saral/FINAL_EVAL_20261104.md](docs/saral/FINAL_EVAL_20261104.md).
+
+## Who it is for
+
+| User | Need | What Saral gives them |
+|---|---|---|
+| **Borrower** applying for a personal loan (salaried, India; wedding, higher education, home renovation or medical emergency) | Understand the answer in their own language, without jargon, and know what to do next | A decision card (outcome, amount, EMI, tenure), a chat assistant in English, Hindi or Telugu that explains the one main reason category, 2-3 general next steps, up to 3 what-if estimates that never change the application, cited policy answers, and a person when they ask |
+| **Loan Officer** | Work the cases the rules send to a person | The built-in Frappe desk: a manual-review queue with internal reasons, Approve / Decline / Request info, audit trail (ADR-0008) |
+| **Lender / reviewer** | Trust that the explanation matches the decision | ZEN is the only decision authority; every decision is stored as evidence; the agent has no write path; evaluations and limitations are published with their bias disclosed |
+
+The brief (VaaniLabs.AI capstone): explain a rejection in plain language with a concrete, legitimate path to reapply,
+and evaluate it honestly. Saral never decides, never shows a cut-off, and never presents Bajaj Finance's public
+numbers as the applicant's own case.
+
+## Build vs reuse
+
+| Part | Choice | Why |
+|---|---|---|
+| Loan records, portal, officer desk | **Reuse** Frappe Lending (with ERPNext) and its desk; **build** the `loan_advisory_portal` app (Saral design, 229 data fields, decision snapshot) | A real loan system of record with roles and audit for free; only the borrower experience is custom |
+| Decisions | **Reuse** the ZEN rules engine; **build** the rule catalogue v2 (one JSON, compiled to a ZEN model) and the ADR-0011 prototype thresholds | Deterministic, auditable decisions; the catalogue is the single source of truth |
+| Agent | **Reuse** LangGraph and FastAPI; **build** the graph, guards, sanitiser, facts-first composer, what-if and handoff | A controlled workflow with a few read-only tools; one graph, not multi-agent |
+| LLMs | **Reuse** hosted models through OpenAI-compatible endpoints: Gemini 3.8 Flash via OmniRoute for answers (Claude Sonnet 4.6 fallback); Groq gpt-oss-120b chain for intent | No GPU to run; the intent step needed sub-second latency (96.4% on 140 dev turns, 0 timeouts) |
+| Policy search | **Reuse** Qdrant, EmbeddingGemma, BM25; **build** the corpus split (Bajaj and RBI collections), weighted fusion and citation rules | Hybrid retrieval beat either method alone; RAG explains, never decides |
+| Documents | **Reuse** PaddleOCR PP-OCRv5 mobile (default) and Tesseract (fallback, from the team's OCR work); **build** parsers, masking and refer-only signature screening | Paddle won both benchmarks; fallback keeps OCR working when Paddle fails |
+| Bureau, KYC, bank data | **Build** synthetic mock services | No real bureau or KYC access; nothing real is claimed |
+| Tone | **Build** rule-based customer segmentation (team work) that picks how to explain, never what | Literacy-aware explanations without exposing the segment |
+| Observability and evals | **Reuse** self-hosted Langfuse and DeepEval; **build** golden datasets (RAG and conversations) and deterministic leak checks | Traces stay on our machines; metrics are standard and re-runnable |
+| Fast intent router | **Reuse** the open Laya model, flag off | Fine-tuned hybrid missed its gate (+1.4 of +2.0 points) |
+
+## Architecture
+
+```
+Borrower (Saral portal on Frappe, EN / HI / TE)
+  -> assistant runtime (CopilotKit) with a 60 s signed assertion from Frappe
+  -> Saral agent (FastAPI + LangGraph)
+       classify (Groq gpt-oss-120b -> 20b -> OmniRoute flash-lite -> rules) -> request guards
+       -> read the stored ZEN decision only when the turn needs it (cached per conversation)
+       -> explain / improve / what-if (ZEN in memory, cap 3) / policy (RAG) / clarify / handoff
+       -> compose (Gemini 3.8 Flash, Sonnet 4.6 fallback) -> answer guards + sanitiser
+Decision runner (no LLM): SUBMITTED application -> KYC / AA / bureau mocks + OCR -> ZEN -> evidence in Frappe
+Loan Officer: Frappe desk review queue.   Telemetry: Langfuse (optional).   Evals: DeepEval.
+```
+
+Detail: [docs/saral/ARCHITECTURE.md](docs/saral/ARCHITECTURE.md). Limitations:
+[project-management/AGENT_LIMITATIONS.md](project-management/AGENT_LIMITATIONS.md).
+
+---
+
+# History: design rationale before Saral (October 2026)
+
+The sections below are the original approach for PRs #1–#21, kept as history. Where they disagree with the sections
+above (for example the LLM, the voice-first scope or the OCR engine), the sections above are current.
 
 ## 1. Problem statement
 

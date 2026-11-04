@@ -46,7 +46,7 @@ GitHub's no-reply address for merges made in the web interface); they are counte
 - How it is used: **PR #52** starts at his head `dc09ea6` and keeps all three commits as they are. Saral uses the
   segment to choose *how* to explain (Guided, Simple, Standard or Detailed), never *what* to say, and never shows it
   to the borrower. The rule-based idea and the hook points are his. His commits are in the `saral/integration` build.
-  PR #43 is left open for him to close.
+  GitHub marked #43 as merged when #52 landed on `main` (2026-11-04), since #52 contains its commits.
 
 ### Syed Imaaduddin: functional documentation
 
@@ -83,7 +83,9 @@ Every other commit and PR in the repository. Grouped from the PR list:
 | Integration build used for the live end-to-end test | #53 |
 | Live test seeding, synthetic KYC/AA service and decision runner | #54 |
 | DeepEval RAG and conversation evaluation | #55 |
-| Fixes found in the live end-to-end test | #56 |
+| Fixes found in the live end-to-end test, decision-engine gap fixes, intent classifier and answer model configuration | #56 |
+| Optional fast intent router (off by default) | #57 |
+| Final documentation, architecture drawing and build plan | #58 |
 
 He also made every product decision recorded in `project-management/DECISION_LOG.md` and ADR-0001 to ADR-0011:
 the Saral name, Bajaj Finance as the single reference NBFC, the four purpose products, salaried-only scope, ZEN as

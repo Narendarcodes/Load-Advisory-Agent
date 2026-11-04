@@ -141,7 +141,9 @@ low-confidence decline is downgraded to review; missing data refers or asks for 
 
 Known gaps in this flow as of 2026-11-04 03:50 IST (D-11..D-15): a bureau provider error ended as `ERROR` instead of
 review; contract employment, residency and missing EMI debits did not reach the rules; a missing signature
-(`INSUFFICIENT_DATA`) still approved. Status after the fixes: {{ZEN_GAP_STATUS}}.
+(`INSUFFICIENT_DATA`) still approved. Status: fixed, together with the six uncompiled rules (PL-074, 075, 079,
+082, 099, 127), on #56, merged to `main` on 2026-11-04. Group B re-decide after the fixes: 187/200 offline, 188/200
+with the owner's SYN-APP-0131 ruling, plus 12 accepted design choices; 0 open defects.
 
 ## 4. One assistant turn
 
@@ -182,10 +184,14 @@ Graph nodes (`apps/api/src/loan_advisory/agent/graph.py`): `receive` → `authen
 (`boundary` | `load_evidence` | `retrieve_policy` | `simple`) → (`plan` | `what_if`) → `compose` → `validate` (one
 rewrite, then a template) → `finalize`.
 
-Agent changes queued for today (2026-11-04) and not yet reflected above: route before fetching the decision, fetch it
-once and cache it; new intents for human review, distress and misrepresentation; a clarifying question for vague
-messages; what-if cap enforced in the agent; an optional fast intent router (Laya, off by default). Status:
-{{AGENT_FIX_STATUS}}.
+Agent changes made on 2026-11-04 (landed on #56, merged to `main` 2026-11-04): route before fetching the decision,
+fetch it once and cache it per conversation with a record version stamp; new intents for human review (creates a
+handoff), distress (calm reply and handoff) and misrepresentation (refuse); a clarifying question for vague messages;
+the what-if cap of 3 enforced in the agent; plain outcome words with one reason category; the decision tool returns the
+reason category and the offer; new trace spans. The intent step is its own client: Groq `gpt-oss-120b`, then
+`gpt-oss-20b`, then OmniRoute `gemini-3.5-flash-lite`, then rules. Answers come from Gemini 3.8 Flash via OmniRoute
+with Claude Sonnet 4.6 as fallback. Still open: Langfuse instrumentation gaps 2, 3, 6, 9 and 10. The optional Laya
+router (#57) ships off: its fine-tuned hybrid missed the +2-point gate.
 
 ## 5. Policy RAG
 
