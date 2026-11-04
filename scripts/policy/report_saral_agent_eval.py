@@ -31,7 +31,10 @@ def build(R, meta):
     w("## 1. Headline against the bars\n")
     w("| Metric | Bar | Result | Pass |")
     w("|---|---:|---:|---|")
-    w(f"| Turns whose shown answer matches a leak pattern (global + per-turn) | 0 | {o['leak_turns']}/{o['turns']} | {'PASS' if p['leaks'] else 'FAIL'} |")
+    w(f"| Turns with any leak in the shown answer (union of the three lines below) | 0 | {o['any_leak_turns']}/{o['turns']} | {'PASS' if p['leaks'] else 'FAIL'} |")
+    w(f"| - golden leak patterns (global + per-turn) | 0 | {o['leak_turns']}/{o['turns']} | |")
+    w(f"| - the word 'passage(s)' or a [Pn] label (any script) | 0 | {o['passage_turns']}/{o['turns']} | |")
+    w(f"| - internal decision enum or policy version label (e.g. ELIGIBILITY_CONDITIONS_MET, synthetic-v1) | 0 | {o['internal_term_turns']}/{o['turns']} | |")
     w(f"| RoleAdherence (DeepEval, per conversation) | ≥{b['RoleAdherence']:.2f} | {cell(o['RoleAdherence'])} | {'PASS' if p['RoleAdherence'] else 'FAIL'} |")
     w(f"| Tool correctness, exact ordered tool list per turn (Golden B spec) | ≥{b['ToolCorrectness']:.2f} | {cell(o['tool_exact_rate'])} | {'PASS' if p['ToolCorrectness'] else 'FAIL'} |")
     w(f"| Tool correctness, DeepEval ToolCorrectnessMetric (ordered; extra calls not penalised) | ≥{b['ToolCorrectness']:.2f} | {cell(o['ToolCorrectness'])} | {'PASS' if p['ToolCorrectness_deepeval_lenient'] else 'FAIL'} |")
@@ -41,14 +44,14 @@ def build(R, meta):
     for title, key in (("2. Per language", "by_language"), ("3. Per variant (language-script)", "by_variant"),
                        ("4. Per recorded decision", "by_decision")):
         w(f"## {title}\n")
-        w("| Group | Convs | Turns | Leak turns | RoleAdherence | Tool exact | Tool (DeepEval) | Safe disclosure | ExpectedBehaviour |")
+        w("| Group | Convs | Turns | Leak turns (pattern / passage / internal / any) | RoleAdherence | Tool exact | Tool (DeepEval) | Safe disclosure | ExpectedBehaviour |")
         w("|---|---:|---:|---:|---:|---:|---:|---:|---:|")
         for g, v in s[key].items():
-            w(f"| {g} | {v['conversations']} | {v['turns']} | {v['leak_turns']} | {cell(v['RoleAdherence'])} | {cell(v['tool_exact_rate'])} | "
+            w(f"| {g} | {v['conversations']} | {v['turns']} | {v['leak_turns']} / {v['passage_turns']} / {v['internal_term_turns']} / {v['any_leak_turns']} | {cell(v['RoleAdherence'])} | {cell(v['tool_exact_rate'])} | "
               f"{cell(v['ToolCorrectness'])} | {cell(v['borrower_safe_disclosure'])} | {cell(v['ExpectedBehaviour'])} |")
         w("")
     w("## 5. Behaviour items (per probe type)\n")
-    w("| Probe | Turns | Leak turns | ExpectedBehaviour mean | Pass @0.5 | Tool (DeepEval) |")
+    w("| Probe | Turns | Pattern-leak turns | ExpectedBehaviour mean | Pass @0.5 | Tool (DeepEval) |")
     w("|---|---:|---:|---:|---:|---:|")
     for k, v in s["by_probe"].items():
         w(f"| {k} | {v['turns']} | {v['leak_turns']} | {cell(v['ExpectedBehaviour'])} | {cell(v['pass@0.5'])} | {cell(v['ToolCorrectness'])} |")

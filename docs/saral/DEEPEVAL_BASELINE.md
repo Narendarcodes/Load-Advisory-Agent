@@ -255,3 +255,17 @@ Merge settings were chosen on dev without the LLM (run/results/merge_grid.json):
 | Generator fallback | ['gpt-5.6-terra'] used on 0 items []; no answer on 0 |
 | Judge | codex/gpt-6-luna, DeepEval 4.3.2, 636 metric jobs, 0 errors, 0 skipped; fallback used on 0 metric calls |
 | Merge settings | {"depth": "50", "router": false, "demote": 0.7, "subqueries": true, "original_first": 1, "min_score": 0.0} |
+
+## 12. Agent eval (Golden B v1 dev split, 2026-11-04 IST)
+
+Full report: `docs/saral/AGENT_EVAL.md` (raw results in `docs/saral/agent_eval_v1/`). 49 dev conversations / 158 turns (60 Golden B conversations minus the 11 held out) through the real LangGraph agent of `saral/integration` @ `23a673b`, in process in the Hark sandbox; generator antigravity/claude-sonnet-4-6, judge codex/gpt-6-luna via OmniRoute, fallback gpt-5.6-terra never used. Label: automated, no human review.
+
+| Bar | Target | Result | |
+|---|---:|---:|---|
+| Leaks in shown answers | 0 | 22/158 turns (8 golden patterns, 12 'passage(s)', 5 internal enum/policy label; overlaps counted once) | FAIL |
+| RoleAdherence | ≥0.90 | 0.464 (en 0.448, hi 0.548, te 0.467) | FAIL |
+| Tool correctness (exact ordered list) | ≥0.95 | 0.456 (DeepEval ordered, extras not penalised: 0.939) | FAIL |
+
+Main causes: the integration build lacks #46 (passage sanitiser); decision templates print raw enums and the v1 policy label; explanations list every failed rule name instead of one reason category; human-review / distress / misrepresentation requests have no intent and get a generic menu (1 handoff created for 9 requests); the classifier's 6 s budget expires on 15 Hindi/Telugu turns; the classify step prefetches decision evidence on 59 turns where Golden B expects none.
+
+Held-out count: MANIFEST.json `heldout_ids` has 60 ids = 49 RAG (R2-*, golden_a) + 11 conversations (AC-*, golden_b). No conflict with the 49 above.
