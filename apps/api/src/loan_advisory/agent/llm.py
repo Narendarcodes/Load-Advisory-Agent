@@ -5,24 +5,27 @@ time-to-first-token (TTFT) of every call is measured and reported in the turn tr
 
 Provider selection is explicit and env-driven (see `provider_from_env`). SARAL_LLM_* wins over the generic LLM_*:
 
-    SARAL_LLM_PROVIDER / LLM_PROVIDER   river (default) | omniroute | groq
+    SARAL_LLM_PROVIDER / LLM_PROVIDER   omniroute (default) | river | groq
+        omniroute  http://127.0.0.1:20128/v1 (OMNIROUTE_BASE_URL overrides), key OMNIROUTE_API_KEY if required,
+                   default model antigravity/gemini-3.8-flash
         river      https://api.river.ai/v1 (RIVER_BASE_URL overrides), key RIVER_API_KEY,
                    default model deepseek-ai/DeepSeek-V4.1-Flash
-        omniroute  http://127.0.0.1:20128/v1 (OMNIROUTE_BASE_URL overrides), key OMNIROUTE_API_KEY if required
         groq       https://api.groq.com/openai/v1, key GROQ_API_KEY
     SARAL_LLM_BASE_URL / LLM_BASE       endpoint override for the primary
-    SARAL_LLM_MODEL / LLM_MODEL         model id (required for omniroute/groq; river has a default)
+    SARAL_LLM_MODEL / LLM_MODEL         model id (required for groq; omniroute and river have a default)
     SARAL_LLM_FALLBACK_MODEL            comma list of `model[@river|omniroute|groq|URL]` tried in order when the
-                                        primary fails (a bare model uses the primary's provider). Default with the
-                                        river provider: GLM-5.3@river,antigravity/claude-sonnet-4-6@omniroute.
+                                        primary fails (a bare model uses the primary's provider). Defaults:
+                                        omniroute -> antigravity/claude-sonnet-4-6 (same gateway);
+                                        river -> GLM-5.3@river,antigravity/claude-sonnet-4-6@omniroute.
                                         Set it empty for no fallback.
     SARAL_LLM_REASONING_EFFORT / LLM_REASONING_EFFORT   empty omits the parameter. Default `low`, except DeepSeek
                                         on River (sending it switches reasoning on and slows the answer).
 
-Why River is the default: on 2026-11-04 the OmniRoute gateway (owner's laptop) was unreachable, so the answer
-generator moved to River AI; OmniRoute claude-sonnet-4-6 stays supported (primary via SARAL_LLM_PROVIDER=omniroute,
-and the last fallback by default). There is deliberately no fallback to a local vLLM server: an unconfigured
-provider fails loudly at startup, and an exhausted chain raises LLMError so the graph uses its safe template.
+Why OmniRoute Gemini 3.8 Flash is the default: owner decision 2026-11-04 13:42 IST. River AI (the default from
+earlier that day, while the OmniRoute gateway was unreachable) started returning 402 for every model; the gateway is
+reachable again and gemini-3.8-flash answers in ~4-5 s. River stays selectable with SARAL_LLM_PROVIDER=river. There is
+deliberately no fallback to a local vLLM server: an unconfigured provider fails loudly at startup, and an exhausted
+chain raises LLMError so the graph uses its safe template.
 """
 import json
 import os
@@ -35,15 +38,17 @@ import requests
 
 from loan_advisory.agent import observability as obs
 
-DEFAULT_PROVIDER = "river"
+DEFAULT_PROVIDER = "omniroute"
 PROVIDERS = {
     "river": {"base": "https://api.river.ai/v1", "key_env": "RIVER_API_KEY", "base_env": "RIVER_BASE_URL",
               "model": "deepseek-ai/DeepSeek-V4.1-Flash"},
     "groq": {"base": "https://api.groq.com/openai/v1", "key_env": "GROQ_API_KEY", "base_env": None},
-    "omniroute": {"base": "http://127.0.0.1:20128/v1", "key_env": "OMNIROUTE_API_KEY", "base_env": "OMNIROUTE_BASE_URL"},
+    "omniroute": {"base": "http://127.0.0.1:20128/v1", "key_env": "OMNIROUTE_API_KEY", "base_env": "OMNIROUTE_BASE_URL",
+                  "model": "antigravity/gemini-3.8-flash"},
 }
 # Answer-generator fallback chain per primary provider (SARAL_LLM_FALLBACK_MODEL overrides; empty = none).
-DEFAULT_FALLBACKS = {"river": "GLM-5.3@river,antigravity/claude-sonnet-4-6@omniroute"}
+DEFAULT_FALLBACKS = {"omniroute": "antigravity/claude-sonnet-4-6",
+                     "river": "GLM-5.3@river,antigravity/claude-sonnet-4-6@omniroute"}
 DEFAULT_BASE = PROVIDERS[DEFAULT_PROVIDER]["base"]
 DEFAULT_MODEL = os.environ.get("LLM_MODEL") or "llm"  # lenient default for ad-hoc clients only
 
