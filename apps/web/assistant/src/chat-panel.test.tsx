@@ -148,7 +148,7 @@ describe("ChatPanel", () => {
     const { container: element } = await mount(agent);
 
     const chips = element.querySelectorAll<HTMLButtonElement>(".chips button");
-    expect(chips.length).toBe(3);
+    expect(chips.length).toBe(2);
 
     await act(async () => {
       chips[0].click();
@@ -358,7 +358,7 @@ describe("ChatPanel conversation surface", () => {
   it("offers follow-ups after an answer and starters only while empty", async () => {
     const { agent, finish } = scriptedAgent([{ stages: [], final: { decision_card: CARD }, answer: "Reasons." }]);
     const { container: element } = await mount(agent);
-    expect(element.querySelectorAll(".chat-empty .chips button")).toHaveLength(3);
+    expect(element.querySelectorAll(".chat-empty .chips button")).toHaveLength(2);
     await ask(element, "Why?");
     await finish();
     expect(element.querySelector(".chat-empty")).toBeNull();

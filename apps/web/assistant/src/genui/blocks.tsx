@@ -66,7 +66,9 @@ export function DecisionCardBlock({ card, locale = "en" }: { card: DecisionCard;
     card.lifecycle_state === "INFO_REQUESTED"
       ? "INFO_REQUESTED"
       : (card.recorded_outcome ?? card.decision ?? card.lifecycle_state ?? "").toUpperCase();
-  const outcome = outcomeLabel(card.recorded_outcome ?? card.decision);
+  const known = outcomeLabel(card.recorded_outcome ?? card.decision);
+  // E2E D-16: a label the catalogue does not know comes back as the code itself; never show it.
+  const outcome = /^[A-Z_]+$/.test(known.label) ? { label: "Decision recorded", tone: "neutral" as const } : known;
   const summary = decisionSummary(code, language);
   const approved = code === "APPROVED";
   const showThemes = code === "REJECTED" || code === "REVIEW" || code === "MANUAL_REVIEW";
@@ -84,7 +86,7 @@ export function DecisionCardBlock({ card, locale = "en" }: { card: DecisionCard;
           {summary}
         </p>
       ) : null}
-      {approved ? <OfferFacts card={card} /> : null}
+      {approved || code === "COUNTER" ? <OfferFacts card={card} /> : null}
       {showThemes ? <ThemeList themes={card.themes} locale={language} /> : null}
       <p className="note">
         {card.policy_synthetic ? "Demo data. " : ""}This is the decision already on file, not a new assessment.

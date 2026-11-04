@@ -35693,6 +35693,8 @@ var fM = {
 	}
 }, pM = {
 	en: {
+		COUNTER: "We can't offer the full amount you asked for. The most we can offer you is shown below.",
+		OUTSIDE: "The amount you asked for is outside what we offer. We have shown the most we can offer instead.",
 		APPROVED: "Good news: your application was approved. Your loan details are below.",
 		REJECTED: "We can't approve this application right now. These are the main things that held it back.",
 		REVIEW: "Your application needs a closer look from our team. You don't need to do anything unless we contact you.",
@@ -35700,6 +35702,8 @@ var fM = {
 		ERROR: "We couldn't finish checking your application yet. It stays open, and you don't need to do anything right now."
 	},
 	hi: {
+		COUNTER: "हम आपकी माँगी गई पूरी राशि नहीं दे सकते। हम जितना अधिकतम दे सकते हैं, वह नीचे दिखाया गया है।",
+		OUTSIDE: "आपने जो राशि माँगी है, वह हमारे लोन विकल्पों से बाहर है। इसके बजाय हम जितना अधिकतम दे सकते हैं, वह नीचे दिखाया गया है।",
 		APPROVED: "अच्छी ख़बर: आपका आवेदन स्वीकृत हो गया है। आपके लोन का विवरण नीचे है।",
 		REJECTED: "हम अभी यह आवेदन स्वीकृत नहीं कर सकते। इसके मुख्य कारण ये हैं।",
 		REVIEW: "हमारी टीम आपके आवेदन को ध्यान से देख रही है। जब तक हम संपर्क न करें, आपको कुछ करने की ज़रूरत नहीं है।",
@@ -35707,6 +35711,8 @@ var fM = {
 		ERROR: "हम अभी आपके आवेदन की जाँच पूरी नहीं कर सके। आवेदन खुला रहेगा, अभी आपको कुछ करने की ज़रूरत नहीं है।"
 	},
 	te: {
+		COUNTER: "మీరు అడిగిన పూర్తి మొత్తాన్ని మేము ఇవ్వలేము. మేము ఇవ్వగల గరిష్ఠ మొత్తం క్రింద చూపించాము.",
+		OUTSIDE: "మీరు అడిగిన మొత్తం మేము అందించే రుణాల పరిధికి బయట ఉంది. బదులుగా మేము ఇవ్వగల గరిష్ఠ మొత్తం క్రింద చూపించాము.",
 		APPROVED: "శుభవార్త: మీ దరఖాస్తు ఆమోదించబడింది. మీ లోన్ వివరాలు క్రింద ఉన్నాయి.",
 		REJECTED: "ప్రస్తుతం ఈ దరఖాస్తును మేము ఆమోదించలేము. దీనికి ప్రధాన కారణాలు ఇవి.",
 		REVIEW: "మీ దరఖాస్తును మా బృందం జాగ్రత్తగా పరిశీలిస్తోంది. మేము సంప్రదించే వరకు మీరు ఏమీ చేయనవసరం లేదు.",
@@ -35835,7 +35841,9 @@ var wM = {
 	MANUAL_REVIEW: "REVIEW",
 	INFO_REQUESTED: "INFO",
 	INFO: "INFO",
-	ERROR: "ERROR"
+	ERROR: "ERROR",
+	COUNTER: "COUNTER",
+	OUTSIDE: "OUTSIDE"
 };
 function TM(e, t) {
 	let n = wM[String(e ?? "").toUpperCase()];
@@ -35927,10 +35935,20 @@ function BM(e) {
 	};
 	return n.amount || n.emi || n.tenure_months ? n : null;
 }
-function VM(e) {
+var VM = {
+	ELIGIBILITY_CONDITIONS_MET: "APPROVED",
+	COUNTER_OFFER: "COUNTER",
+	MANUAL_REVIEW: "REVIEW",
+	MORE_INFORMATION_REQUIRED: "INFO_REQUESTED",
+	DECLINE: "REJECTED"
+};
+function HM(e) {
+	return e && (VM[e.toUpperCase()] ?? e);
+}
+function UM(e) {
 	let t = OM(e);
 	if (!t) return null;
-	let n = kM(t.decision), r = kM(t.recorded_outcome), i = kM(t.lifecycle_state);
+	let n = HM(kM(t.decision)), r = HM(kM(t.recorded_outcome)), i = kM(t.lifecycle_state);
 	if (!n && !r && !i || t.rules !== void 0 && t.rules !== null && !Array.isArray(t.rules) || t.bureau !== void 0 && t.bureau !== null && !OM(t.bureau)) return null;
 	let a = (r ?? n ?? "").toUpperCase(), o = AM(t.reason_categories).map((e) => ({ category: e })), s = (Array.isArray(t.rules) ? t.rules : []).map(LM).filter((e) => e !== null && e.result === "FAIL"), c = AM(t.failed_reason_codes).map((e) => ({ code: e })), l = o.length ? o : [
 		...s,
@@ -35944,12 +35962,12 @@ function VM(e) {
 		lifecycle_state: i,
 		evaluated_at: kM(t.evaluated_at),
 		policy_synthetic: t.policy_synthetic === !0,
-		offer: a === "APPROVED" ? BM(t) : null,
+		offer: a === "APPROVED" || a === "COUNTER" ? BM(t) : null,
 		themes: u,
 		missing_fields: AM(t.missing_fields)
 	};
 }
-function HM(e) {
+function WM(e) {
 	let t = OM(e);
 	if (!t) return null;
 	let n = !!kM(t.error), r = OM(t.changes) ?? {}, i = Object.values(r).some((e) => MM(e) !== null), a = DM(kM(t.result) ?? kM(t.simulated_decision)), o = zM(t.hypothetical_amount) ?? zM(r.loan_amount), s = Object.keys(OM(t.rule_results) ?? {}).length > 0;
@@ -35960,7 +35978,7 @@ function HM(e) {
 		error: n
 	};
 }
-function UM(e) {
+function GM(e) {
 	return Array.isArray(e) ? e.flatMap((e) => {
 		let t = OM(e);
 		if (!t) return [];
@@ -35974,7 +35992,7 @@ function UM(e) {
 		return [{ theme: r ?? "OTHER" }];
 	}) : [];
 }
-function WM(e) {
+function KM(e) {
 	let t = OM(e);
 	if (!t) return {};
 	let n = {
@@ -35988,15 +36006,15 @@ function WM(e) {
 		evidence_refs: Array.isArray(t.evidence_refs) ? AM(t.evidence_refs) : void 0,
 		missing_information: Array.isArray(t.missing_information) ? AM(t.missing_information) : void 0,
 		handoff_ref: kM(t.handoff_ref) ?? void 0,
-		decision_card: t.decision_card === void 0 ? void 0 : VM(t.decision_card) ?? void 0,
-		improvement_plan: Array.isArray(t.improvement_plan) ? UM(t.improvement_plan) : void 0,
-		what_if: t.what_if === void 0 ? void 0 : HM(t.what_if) ?? void 0,
+		decision_card: t.decision_card === void 0 ? void 0 : UM(t.decision_card) ?? void 0,
+		improvement_plan: Array.isArray(t.improvement_plan) ? GM(t.improvement_plan) : void 0,
+		what_if: t.what_if === void 0 ? void 0 : WM(t.what_if) ?? void 0,
 		guard_flags: Array.isArray(t.guard_flags) ? AM(t.guard_flags) : void 0
 	}, r = OM(t.progress), i = r ? kM(r.stage) : null;
 	return i && (n.progress = { stage: i }), n;
 }
 // src/genui/catalog.ts
-var GM = {
+var qM = {
 	APPROVED: {
 		label: "Approved",
 		tone: "ok"
@@ -36014,8 +36032,8 @@ var GM = {
 		tone: "warn"
 	}
 };
-function KM(e) {
-	return e ? GM[e] ?? {
+function JM(e) {
+	return e ? qM[e] ?? {
 		label: e,
 		tone: "neutral"
 	} : {
@@ -36023,7 +36041,7 @@ function KM(e) {
 		tone: "neutral"
 	};
 }
-var qM = {
+var YM = {
 	monthly_income: {
 		label: "Monthly income",
 		explanation: "The income recorded for this application is missing or was flagged as needing correction."
@@ -36045,8 +36063,8 @@ var qM = {
 		explanation: "An identity detail on the application needs to be confirmed with a person before the check can run."
 	}
 };
-function JM(e, t) {
-	let n = qM[e] ?? {
+function XM(e, t) {
+	let n = YM[e] ?? {
 		label: e.replaceAll("_", " "),
 		explanation: "This detail is still needed before the decision can be completed."
 	}, r = encodeURIComponent(t);
@@ -36062,18 +36080,18 @@ function JM(e, t) {
 		linkLabel: "Correct this in your application"
 	};
 }
-var YM = {
+var ZM = {
 	authenticate: "Checking your application",
 	load_evidence: "Loading the decision record",
 	retrieve_policy: "Searching the policy library",
 	what_if: "Running the simulation",
 	compose: "Preparing the explanation"
 };
-function XM(e) {
-	return e ? YM[e] ?? null : null;
+function QM(e) {
+	return e ? ZM[e] ?? null : null;
 }
 // src/genui/blocks.tsx
-function ZM(e) {
+function $M(e) {
 	if (!e) return null;
 	try {
 		let t = new URL(e);
@@ -36082,52 +36100,55 @@ function ZM(e) {
 		return null;
 	}
 }
-function QM(e) {
+function eN(e) {
 	return `₹${Math.round(e).toLocaleString("en-IN")}`;
 }
-function $M(e) {
+function tN(e) {
 	return e === "en" ? void 0 : e;
 }
-function eN({ card: e }) {
+function nN({ card: e }) {
 	let t = e.offer;
 	if (!t) return null;
 	let n = [];
-	return t.amount && n.push(["Amount", QM(t.amount)]), t.emi && n.push(["Monthly EMI", QM(t.emi)]), t.tenure_months && n.push(["Tenure", `${t.tenure_months} months`]), /* @__PURE__ */ (0, z.jsx)("dl", {
+	return t.amount && n.push(["Amount", eN(t.amount)]), t.emi && n.push(["Monthly EMI", eN(t.emi)]), t.tenure_months && n.push(["Tenure", `${t.tenure_months} months`]), /* @__PURE__ */ (0, z.jsx)("dl", {
 		className: "offer-facts",
 		children: n.map(([e, t]) => /* @__PURE__ */ (0, z.jsxs)("div", { children: [/* @__PURE__ */ (0, z.jsx)("dt", { children: e }), /* @__PURE__ */ (0, z.jsx)("dd", { children: t })] }, e))
 	});
 }
-function tN({ themes: e, locale: t }) {
+function rN({ themes: e, locale: t }) {
 	return e.length ? /* @__PURE__ */ (0, z.jsx)("ul", {
 		className: "reason-themes",
-		lang: $M(t),
+		lang: tN(t),
 		children: e.slice(0, 3).map((e) => /* @__PURE__ */ (0, z.jsx)("li", { children: CM(e, t) }, e))
 	}) : null;
 }
-function nN({ card: e, locale: t = "en" }) {
-	let n = SM(t), r = e.lifecycle_state === "INFO_REQUESTED" ? "INFO_REQUESTED" : (e.recorded_outcome ?? e.decision ?? e.lifecycle_state ?? "").toUpperCase(), i = KM(e.recorded_outcome ?? e.decision), a = TM(r, n), o = r === "APPROVED", s = r === "REJECTED" || r === "REVIEW" || r === "MANUAL_REVIEW", c = `decision-card-${(0, R.useId)().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+function iN({ card: e, locale: t = "en" }) {
+	let n = SM(t), r = e.lifecycle_state === "INFO_REQUESTED" ? "INFO_REQUESTED" : (e.recorded_outcome ?? e.decision ?? e.lifecycle_state ?? "").toUpperCase(), i = JM(e.recorded_outcome ?? e.decision), a = /^[A-Z_]+$/.test(i.label) ? {
+		label: "Decision recorded",
+		tone: "neutral"
+	} : i, o = TM(r, n), s = r === "APPROVED", c = r === "REJECTED" || r === "REVIEW" || r === "MANUAL_REVIEW", l = `decision-card-${(0, R.useId)().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 	return /* @__PURE__ */ (0, z.jsxs)("div", {
 		className: "card-block decision",
 		role: "group",
-		"aria-labelledby": c,
+		"aria-labelledby": l,
 		children: [
 			/* @__PURE__ */ (0, z.jsxs)("div", {
 				className: "card-block__head",
 				children: [/* @__PURE__ */ (0, z.jsx)("h3", {
-					id: c,
+					id: l,
 					children: "Your decision"
 				}), /* @__PURE__ */ (0, z.jsx)("span", {
-					className: `badge badge--${i.tone}`,
-					children: i.label
+					className: `badge badge--${a.tone}`,
+					children: a.label
 				})]
 			}),
-			a ? /* @__PURE__ */ (0, z.jsx)("p", {
+			o ? /* @__PURE__ */ (0, z.jsx)("p", {
 				className: "decision__summary",
-				lang: $M(n),
-				children: a
+				lang: tN(n),
+				children: o
 			}) : null,
-			o ? /* @__PURE__ */ (0, z.jsx)(eN, { card: e }) : null,
-			s ? /* @__PURE__ */ (0, z.jsx)(tN, {
+			s || r === "COUNTER" ? /* @__PURE__ */ (0, z.jsx)(nN, { card: e }) : null,
+			c ? /* @__PURE__ */ (0, z.jsx)(rN, {
 				themes: e.themes,
 				locale: n
 			}) : null,
@@ -36138,8 +36159,8 @@ function nN({ card: e, locale: t = "en" }) {
 		]
 	});
 }
-function rN({ citation: e }) {
-	let t = ZM(e.source_url), n = [e.section ? `Section ${e.section}` : null, e.page ? `page ${e.page}` : null].filter(Boolean).join(", ");
+function aN({ citation: e }) {
+	let t = $M(e.source_url), n = [e.section ? `Section ${e.section}` : null, e.page ? `page ${e.page}` : null].filter(Boolean).join(", ");
 	return /* @__PURE__ */ (0, z.jsx)("li", { children: /* @__PURE__ */ (0, z.jsxs)("details", {
 		className: "source-chip",
 		children: [/* @__PURE__ */ (0, z.jsxs)("summary", { children: [/* @__PURE__ */ (0, z.jsx)("span", {
@@ -36176,16 +36197,16 @@ function rN({ citation: e }) {
 		})]
 	}) });
 }
-function iN({ citations: e }) {
+function oN({ citations: e }) {
 	return e.length ? /* @__PURE__ */ (0, z.jsxs)("div", {
 		className: "cites",
 		children: [/* @__PURE__ */ (0, z.jsx)("h3", { children: "Sources" }), /* @__PURE__ */ (0, z.jsx)("ul", {
 			className: "source-chips",
-			children: e.map((e) => /* @__PURE__ */ (0, z.jsx)(rN, { citation: e }, `${e.label}-${e.document_id}-${e.section ?? ""}`))
+			children: e.map((e) => /* @__PURE__ */ (0, z.jsx)(aN, { citation: e }, `${e.label}-${e.document_id}-${e.section ?? ""}`))
 		})]
 	}) : null;
 }
-function aN({ whatIf: e, onAdjust: t, locale: n = "en" }) {
+function sN({ whatIf: e, onAdjust: t, locale: n = "en" }) {
 	let r = hM[SM(n)], i = hM.en;
 	return /* @__PURE__ */ (0, z.jsxs)("div", {
 		className: "whatif",
@@ -36199,7 +36220,7 @@ function aN({ whatIf: e, onAdjust: t, locale: n = "en" }) {
 			}),
 			e.error ? /* @__PURE__ */ (0, z.jsx)("p", {
 				className: "note",
-				lang: $M(SM(n)),
+				lang: tN(SM(n)),
 				children: r.error
 			}) : /* @__PURE__ */ (0, z.jsxs)(z.Fragment, { children: [e.amount ? /* @__PURE__ */ (0, z.jsxs)("p", {
 				className: "whatif__amount",
@@ -36209,11 +36230,11 @@ function aN({ whatIf: e, onAdjust: t, locale: n = "en" }) {
 						children: "Loan amount"
 					}),
 					" ",
-					/* @__PURE__ */ (0, z.jsx)("b", { children: QM(e.amount) })
+					/* @__PURE__ */ (0, z.jsx)("b", { children: eN(e.amount) })
 				]
 			}) : null, e.meets === null ? null : /* @__PURE__ */ (0, z.jsx)("p", {
 				className: "whatif__outcome",
-				lang: $M(SM(n)),
+				lang: tN(SM(n)),
 				children: e.meets ? r.meet : r.miss
 			})] }),
 			SM(n) === "en" ? null : /* @__PURE__ */ (0, z.jsx)("p", {
@@ -36230,7 +36251,7 @@ function aN({ whatIf: e, onAdjust: t, locale: n = "en" }) {
 		]
 	});
 }
-function oN({ plan: e, showHeading: t = !0, locale: n = "en" }) {
+function cN({ plan: e, showHeading: t = !0, locale: n = "en" }) {
 	let r = (0, R.useId)();
 	if (!e.length) return null;
 	let i = SM(n), a = `improvement-plan-${r.replace(/[^a-zA-Z0-9_-]/g, "")}`, o = EM(e.map((e) => e.theme ?? bM(e)), i);
@@ -36244,7 +36265,7 @@ function oN({ plan: e, showHeading: t = !0, locale: n = "en" }) {
 				children: "What could help"
 			}) : null,
 			/* @__PURE__ */ (0, z.jsx)("ol", {
-				lang: $M(i),
+				lang: tN(i),
 				children: o.map((e) => /* @__PURE__ */ (0, z.jsx)("li", { children: /* @__PURE__ */ (0, z.jsx)("p", { children: e }) }, e))
 			}),
 			/* @__PURE__ */ (0, z.jsx)("p", {
@@ -36254,7 +36275,7 @@ function oN({ plan: e, showHeading: t = !0, locale: n = "en" }) {
 		]
 	});
 }
-function sN({ items: e }) {
+function lN({ items: e }) {
 	return e.length ? /* @__PURE__ */ (0, z.jsxs)("section", {
 		className: "missing",
 		"aria-labelledby": "missing-heading",
@@ -36280,7 +36301,7 @@ function sN({ items: e }) {
 		})]
 	}) : null;
 }
-function cN({ handoffRef: e }) {
+function uN({ handoffRef: e }) {
 	return /* @__PURE__ */ (0, z.jsxs)("section", {
 		className: "handoff",
 		"aria-labelledby": "handoff-heading",
@@ -36318,7 +36339,7 @@ function cN({ handoffRef: e }) {
 		})]
 	});
 }
-function lN({ tone: e, text: t }) {
+function dN({ tone: e, text: t }) {
 	return /* @__PURE__ */ (0, z.jsx)("div", {
 		className: e === "error" ? "error" : "notice",
 		role: e === "error" ? "alert" : "status",
@@ -36326,7 +36347,7 @@ function lN({ tone: e, text: t }) {
 	});
 }
 // src/what-if-form.tsx
-var uN = [
+var fN = [
 	{
 		key: "loan_amount",
 		label: "Loan amount",
@@ -36364,9 +36385,9 @@ var uN = [
 		phrase: (e) => `my monthly income was ${e}`
 	}
 ];
-function dN(e) {
+function pN(e) {
 	let t = [];
-	for (let n of uN) {
+	for (let n of fN) {
 		let r = e[n.key]?.trim();
 		if (!r) continue;
 		let i = Number(r);
@@ -36374,9 +36395,9 @@ function dN(e) {
 	}
 	return t.length ? `What if ${t.length === 1 ? t[0] : `${t.slice(0, -1).join(", ")} and ${t[t.length - 1]}`}?` : null;
 }
-function fN(e) {
+function mN(e) {
 	let t = {};
-	for (let n of uN) {
+	for (let n of fN) {
 		let r = e[n.key]?.trim();
 		if (!r) continue;
 		let i = Number(r);
@@ -36384,13 +36405,13 @@ function fN(e) {
 	}
 	return t;
 }
-function pN({ disabled: e, onAsk: t }) {
+function hN({ disabled: e, onAsk: t }) {
 	let [n, r] = (0, R.useState)({}), [i, a] = (0, R.useState)({}), [o, s] = (0, R.useState)(null);
 	function c(e) {
 		e.preventDefault();
-		let r = fN(n);
+		let r = mN(n);
 		a(r);
-		let i = dN(n);
+		let i = pN(n);
 		i ? Object.keys(r).length ? s("Check the values marked below.") : (s(null), t(i)) : s("Enter at least one number to try.");
 	}
 	return /* @__PURE__ */ (0, z.jsxs)("section", {
@@ -36411,7 +36432,7 @@ function pN({ disabled: e, onAsk: t }) {
 				children: [
 					/* @__PURE__ */ (0, z.jsx)("div", {
 						className: "whatif-form__fields",
-						children: uN.map((t) => {
+						children: fN.map((t) => {
 							let a = i[t.key], o = [`${t.key}-hint`, a ? `${t.key}-error` : null].filter(Boolean).join(" ");
 							return /* @__PURE__ */ (0, z.jsxs)("div", {
 								className: "field",
@@ -36474,7 +36495,7 @@ function pN({ disabled: e, onAsk: t }) {
 	});
 }
 // src/genui/registry.tsx
-var mN = Object.freeze([
+var gN = Object.freeze([
 	"decision_card",
 	"policy_citation",
 	"what_if_form",
@@ -36483,45 +36504,45 @@ var mN = Object.freeze([
 	"missing_information",
 	"human_assistance",
 	"notice"
-]), hN = {
-	decision_card: (e, t) => /* @__PURE__ */ (0, z.jsx)(nN, {
+]), _N = {
+	decision_card: (e, t) => /* @__PURE__ */ (0, z.jsx)(iN, {
 		card: e.card,
 		locale: t.locale
 	}),
-	policy_citation: (e) => /* @__PURE__ */ (0, z.jsx)(iN, { citations: e.citations }),
-	what_if_form: (e, t) => /* @__PURE__ */ (0, z.jsx)(pN, {
+	policy_citation: (e) => /* @__PURE__ */ (0, z.jsx)(oN, { citations: e.citations }),
+	what_if_form: (e, t) => /* @__PURE__ */ (0, z.jsx)(hN, {
 		disabled: !!t.busy,
 		recorded: e.card,
 		onAsk: t.onAsk
 	}),
-	what_if_result: (e, t) => /* @__PURE__ */ (0, z.jsx)(aN, {
+	what_if_result: (e, t) => /* @__PURE__ */ (0, z.jsx)(sN, {
 		whatIf: e.whatIf,
 		card: e.card,
 		locale: t.locale,
 		onAdjust: t.busy ? void 0 : t.onOpenWhatIf
 	}),
-	improvement_plan: (e, t) => /* @__PURE__ */ (0, z.jsx)(oN, {
+	improvement_plan: (e, t) => /* @__PURE__ */ (0, z.jsx)(cN, {
 		plan: e.plan,
 		locale: t.locale
 	}),
-	missing_information: (e) => /* @__PURE__ */ (0, z.jsx)(sN, { items: e.items }),
-	human_assistance: (e) => /* @__PURE__ */ (0, z.jsx)(cN, { handoffRef: e.handoffRef }),
-	notice: (e) => /* @__PURE__ */ (0, z.jsx)(lN, {
+	missing_information: (e) => /* @__PURE__ */ (0, z.jsx)(lN, { items: e.items }),
+	human_assistance: (e) => /* @__PURE__ */ (0, z.jsx)(uN, { handoffRef: e.handoffRef }),
+	notice: (e) => /* @__PURE__ */ (0, z.jsx)(dN, {
 		tone: e.tone,
 		text: e.text
 	})
 };
-function gN(e) {
+function vN(e) {
 	if (typeof e != "object" || !e) return !1;
 	let t = e.type;
-	return typeof t == "string" && mN.includes(t);
+	return typeof t == "string" && gN.includes(t);
 }
-function _N(e, t) {
-	if (!gN(e)) return null;
-	let n = hN[e.type];
+function yN(e, t) {
+	if (!vN(e)) return null;
+	let n = _N[e.type];
 	return n(e, t);
 }
-function vN(e, t) {
+function bN(e, t) {
 	let n = [], r = e.decision_card;
 	return r && n.push({
 		type: "decision_card",
@@ -36532,7 +36553,7 @@ function vN(e, t) {
 		card: r
 	}), e.missing_information?.length && n.push({
 		type: "missing_information",
-		items: e.missing_information.map((e) => JM(e, t.application))
+		items: e.missing_information.map((e) => XM(e, t.application))
 	}), e.abstained && n.push({
 		type: "notice",
 		tone: "info",
@@ -36546,7 +36567,7 @@ function vN(e, t) {
 	}), n;
 }
 // src/genui/trail.ts
-var yN = {
+var xN = {
 	authenticate: {
 		doing: "Confirming this is your application",
 		done: "Confirmed this is your application"
@@ -36568,20 +36589,20 @@ var yN = {
 		done: "Wrote the explanation"
 	}
 };
-function bN(e, t) {
-	let n = e ? yN[e] : void 0;
+function SN(e, t) {
+	let n = e ? xN[e] : void 0;
 	return n ? t ? n.done : n.doing : null;
 }
-function xN(e) {
-	return e.map((e) => bN(e, !0)).filter((e) => !!e);
+function CN(e) {
+	return e.map((e) => SN(e, !0)).filter((e) => !!e);
 }
 // src/markdown.tsx
-var SN = /^\s*(?:[-*•])\s+(.*)$/, CN = /^\s*(\d{1,3})[.)]\s+(.*)$/, wN = /^\s{0,3}#{1,4}\s+(.*?)\s*#*\s*$/, TN = /^\s{0,3}>\s?(.*)$/, EN = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
-function DN(e) {
+var wN = /^\s*(?:[-*•])\s+(.*)$/, TN = /^\s*(\d{1,3})[.)]\s+(.*)$/, EN = /^\s{0,3}#{1,4}\s+(.*?)\s*#*\s*$/, DN = /^\s{0,3}>\s?(.*)$/, ON = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+function kN(e) {
 	let t = e.trim();
 	return t.startsWith("|") && (t = t.slice(1)), t.endsWith("|") && (t = t.slice(0, -1)), t.split("|").map((e) => e.trim());
 }
-function ON(e) {
+function AN(e) {
 	let t = e.replace(/\r\n?/g, "\n").split("\n"), n = [], r = 0;
 	for (; r < t.length;) {
 		let e = t[r];
@@ -36589,7 +36610,7 @@ function ON(e) {
 			r += 1;
 			continue;
 		}
-		let i = wN.exec(e);
+		let i = EN.exec(e);
 		if (i) {
 			n.push({
 				kind: "h",
@@ -36597,18 +36618,18 @@ function ON(e) {
 			}), r += 1;
 			continue;
 		}
-		if (TN.test(e)) {
+		if (DN.test(e)) {
 			let e = [];
-			for (; r < t.length && TN.test(t[r]);) e.push(TN.exec(t[r])[1]), r += 1;
+			for (; r < t.length && DN.test(t[r]);) e.push(DN.exec(t[r])[1]), r += 1;
 			n.push({
 				kind: "quote",
 				lines: e
 			});
 			continue;
 		}
-		if (e.includes("|") && r + 1 < t.length && EN.test(t[r + 1]) && t[r + 1].includes("-")) {
-			let i = DN(e), a = [];
-			for (r += 2; r < t.length && t[r].includes("|") && t[r].trim();) a.push(DN(t[r])), r += 1;
+		if (e.includes("|") && r + 1 < t.length && ON.test(t[r + 1]) && t[r + 1].includes("-")) {
+			let i = kN(e), a = [];
+			for (r += 2; r < t.length && t[r].includes("|") && t[r].trim();) a.push(kN(t[r])), r += 1;
 			n.push({
 				kind: "table",
 				head: i,
@@ -36616,19 +36637,19 @@ function ON(e) {
 			});
 			continue;
 		}
-		if (SN.test(e)) {
+		if (wN.test(e)) {
 			let e = [];
-			for (; r < t.length && SN.test(t[r]);) e.push(SN.exec(t[r])[1]), r += 1;
+			for (; r < t.length && wN.test(t[r]);) e.push(wN.exec(t[r])[1]), r += 1;
 			n.push({
 				kind: "ul",
 				items: e
 			});
 			continue;
 		}
-		let a = CN.exec(e);
+		let a = TN.exec(e);
 		if (a) {
 			let e = [], i = Number(a[1]);
-			for (; r < t.length && CN.test(t[r]);) e.push(CN.exec(t[r])[2]), r += 1;
+			for (; r < t.length && TN.test(t[r]);) e.push(TN.exec(t[r])[2]), r += 1;
 			n.push({
 				kind: "ol",
 				items: e,
@@ -36637,7 +36658,7 @@ function ON(e) {
 			continue;
 		}
 		let o = [];
-		for (; r < t.length && t[r].trim() && !SN.test(t[r]) && !CN.test(t[r]) && !wN.test(t[r]) && !TN.test(t[r]);) o.push(t[r]), r += 1;
+		for (; r < t.length && t[r].trim() && !wN.test(t[r]) && !TN.test(t[r]) && !EN.test(t[r]) && !DN.test(t[r]);) o.push(t[r]), r += 1;
 		n.push({
 			kind: "p",
 			lines: o
@@ -36645,7 +36666,7 @@ function ON(e) {
 	}
 	return n;
 }
-function kN(e) {
+function jN(e) {
 	try {
 		let t = new URL(e);
 		return t.protocol === "https:" || t.protocol === "http:" ? t.toString() : null;
@@ -36653,8 +36674,8 @@ function kN(e) {
 		return null;
 	}
 }
-var AN = /(`[^`\n]+`)|(\[([^\]\n]{1,200})\]\((https?:\/\/[^\s)]+)\))|(\[(\d{1,2}(?:\s*,\s*\d{1,2})*)\])|(\*\*([^*\n]+?)\*\*|__([^_\n]+?)__)|(\*([^*\s][^*\n]*?)\*)/g;
-function jN({ label: e, citation: t }) {
+var MN = /(`[^`\n]+`)|(\[([^\]\n]{1,200})\]\((https?:\/\/[^\s)]+)\))|(\[(\d{1,2}(?:\s*,\s*\d{1,2})*)\])|(\*\*([^*\n]+?)\*\*|__([^_\n]+?)__)|(\*([^*\s][^*\n]*?)\*)/g;
+function NN({ label: e, citation: t }) {
 	let n = t ? `Source ${e}: ${t.title}` : `Source ${e}`;
 	return /* @__PURE__ */ (0, z.jsx)("span", {
 		className: "cite-chip",
@@ -36664,15 +36685,15 @@ function jN({ label: e, citation: t }) {
 		children: e
 	});
 }
-function MN(e, t = [], n = "i") {
+function PN(e, t = [], n = "i") {
 	let r = [], i = 0, a = 0, o = new Map(t.map((e) => [String(e.label), e]));
-	for (let s of e.matchAll(AN)) {
+	for (let s of e.matchAll(MN)) {
 		let c = s.index ?? 0;
 		c > i && r.push(e.slice(i, c));
 		let l = `${n}-${a++}`;
 		if (s[1]) r.push(/* @__PURE__ */ (0, z.jsx)("code", { children: s[1].slice(1, -1) }, l));
 		else if (s[2]) {
-			let e = kN(s[4]);
+			let e = jN(s[4]);
 			r.push(e ? /* @__PURE__ */ (0, z.jsx)("a", {
 				href: e,
 				target: "_blank",
@@ -36683,18 +36704,18 @@ function MN(e, t = [], n = "i") {
 			let e = s[6].split(",").map((e) => e.trim());
 			r.push(/* @__PURE__ */ (0, z.jsx)("span", {
 				className: "cite-chips",
-				children: e.map((e) => /* @__PURE__ */ (0, z.jsx)(jN, {
+				children: e.map((e) => /* @__PURE__ */ (0, z.jsx)(NN, {
 					label: e,
 					citation: o.get(e)
 				}, e))
 			}, l));
-		} else s[7] ? r.push(/* @__PURE__ */ (0, z.jsx)("strong", { children: MN(s[8] ?? s[9] ?? "", t, l) }, l)) : s[10] && r.push(/* @__PURE__ */ (0, z.jsx)("em", { children: s[11] }, l));
+		} else s[7] ? r.push(/* @__PURE__ */ (0, z.jsx)("strong", { children: PN(s[8] ?? s[9] ?? "", t, l) }, l)) : s[10] && r.push(/* @__PURE__ */ (0, z.jsx)("em", { children: s[11] }, l));
 		i = c + s[0].length;
 	}
 	return i < e.length && r.push(e.slice(i)), r;
 }
-function NN({ text: e, citations: t = [] }) {
-	let n = ON(e);
+function FN({ text: e, citations: t = [] }) {
+	let n = AN(e);
 	return /* @__PURE__ */ (0, z.jsx)("div", {
 		className: "md",
 		children: n.map((e, n) => {
@@ -36702,31 +36723,31 @@ function NN({ text: e, citations: t = [] }) {
 			switch (e.kind) {
 				case "h": return /* @__PURE__ */ (0, z.jsx)("p", {
 					className: "md-h",
-					children: /* @__PURE__ */ (0, z.jsx)("strong", { children: MN(e.text, t, r) })
+					children: /* @__PURE__ */ (0, z.jsx)("strong", { children: PN(e.text, t, r) })
 				}, r);
 				case "quote": return /* @__PURE__ */ (0, z.jsx)("blockquote", {
 					className: "md-quote",
-					children: /* @__PURE__ */ (0, z.jsx)("p", { children: e.lines.map((e, n) => /* @__PURE__ */ (0, z.jsxs)(R.Fragment, { children: [n ? /* @__PURE__ */ (0, z.jsx)("br", {}) : null, MN(e, t, `${r}-${n}`)] }, n)) })
+					children: /* @__PURE__ */ (0, z.jsx)("p", { children: e.lines.map((e, n) => /* @__PURE__ */ (0, z.jsxs)(R.Fragment, { children: [n ? /* @__PURE__ */ (0, z.jsx)("br", {}) : null, PN(e, t, `${r}-${n}`)] }, n)) })
 				}, r);
-				case "ul": return /* @__PURE__ */ (0, z.jsx)("ul", { children: e.items.map((e, n) => /* @__PURE__ */ (0, z.jsx)("li", { children: MN(e, t, `${r}-${n}`) }, n)) }, r);
+				case "ul": return /* @__PURE__ */ (0, z.jsx)("ul", { children: e.items.map((e, n) => /* @__PURE__ */ (0, z.jsx)("li", { children: PN(e, t, `${r}-${n}`) }, n)) }, r);
 				case "ol": return /* @__PURE__ */ (0, z.jsx)("ol", {
 					start: e.start,
-					children: e.items.map((e, n) => /* @__PURE__ */ (0, z.jsx)("li", { children: MN(e, t, `${r}-${n}`) }, n))
+					children: e.items.map((e, n) => /* @__PURE__ */ (0, z.jsx)("li", { children: PN(e, t, `${r}-${n}`) }, n))
 				}, r);
 				case "table": return /* @__PURE__ */ (0, z.jsx)("div", {
 					className: "md-table",
 					children: /* @__PURE__ */ (0, z.jsxs)("table", { children: [/* @__PURE__ */ (0, z.jsx)("thead", { children: /* @__PURE__ */ (0, z.jsx)("tr", { children: e.head.map((e, n) => /* @__PURE__ */ (0, z.jsx)("th", {
 						scope: "col",
-						children: MN(e, t, `${r}-h${n}`)
-					}, n)) }) }), /* @__PURE__ */ (0, z.jsx)("tbody", { children: e.rows.map((e, n) => /* @__PURE__ */ (0, z.jsx)("tr", { children: e.map((e, i) => /* @__PURE__ */ (0, z.jsx)("td", { children: MN(e, t, `${r}-${n}-${i}`) }, i)) }, n)) })] })
+						children: PN(e, t, `${r}-h${n}`)
+					}, n)) }) }), /* @__PURE__ */ (0, z.jsx)("tbody", { children: e.rows.map((e, n) => /* @__PURE__ */ (0, z.jsx)("tr", { children: e.map((e, i) => /* @__PURE__ */ (0, z.jsx)("td", { children: PN(e, t, `${r}-${n}-${i}`) }, i)) }, n)) })] })
 				}, r);
-				default: return /* @__PURE__ */ (0, z.jsx)("p", { children: e.lines.map((e, n) => /* @__PURE__ */ (0, z.jsxs)(R.Fragment, { children: [n ? /* @__PURE__ */ (0, z.jsx)("br", {}) : null, MN(e, t, `${r}-${n}`)] }, n)) }, r);
+				default: return /* @__PURE__ */ (0, z.jsx)("p", { children: e.lines.map((e, n) => /* @__PURE__ */ (0, z.jsxs)(R.Fragment, { children: [n ? /* @__PURE__ */ (0, z.jsx)("br", {}) : null, PN(e, t, `${r}-${n}`)] }, n)) }, r);
 			}
 		})
 	});
 }
 // src/feedback.ts
-async function PN(e, t, n) {
+async function IN(e, t, n) {
 	let r = await fetch("/api/method/loan_advisory_portal.api.feedback.submit_feedback", {
 		method: "POST",
 		credentials: "same-origin",
@@ -36745,42 +36766,42 @@ async function PN(e, t, n) {
 	if (r.redirected || !r.ok) throw Error(`feedback failed (${r.status})`);
 }
 // src/turns.ts
-var FN = 120, IN = 12e3;
-function LN(e) {
+var LN = 120, RN = 12e3;
+function zN(e) {
 	return e.replace(/\s+/g, " ").trim();
 }
-function RN(e, t) {
-	return typeof t != "string" || !t.trim() || t.length > IN ? e : LN(t) === LN(e) ? t : e;
-}
-function zN(e) {
-	return e.replace(/([^\n])[ \t]+(#{1,6} )/g, "$1\n\n$2").replace(/((?:^|\n)#{1,6} [^\n]*?)[ \t]+(?=(?:\d+\.|-|>) )/g, "$1\n").replace(/([.!?:;)*])[ \t]+(>[ \t])/g, "$1\n\n$2").replace(/([.!?:;)*])[ \t]+(\d+\. |- )/g, "$1\n$2").trim();
-}
 function BN(e, t) {
-	return e?.text ? RN(t, e.text) : t;
+	return typeof t != "string" || !t.trim() || t.length > RN ? e : zN(t) === zN(e) ? t : e;
 }
 function VN(e) {
-	return e.replace(/\s+/g, " ").trim().slice(0, FN);
+	return e.replace(/([^\n])[ \t]+(#{1,6} )/g, "$1\n\n$2").replace(/((?:^|\n)#{1,6} [^\n]*?)[ \t]+(?=(?:\d+\.|-|>) )/g, "$1\n").replace(/([.!?:;)*])[ \t]+(>[ \t])/g, "$1\n\n$2").replace(/([.!?:;)*])[ \t]+(\d+\. |- )/g, "$1\n$2").trim();
 }
 function HN(e, t) {
-	return typeof t != "string" || !XM(t) || e.includes(t) ? [...e] : [...e, t];
+	return e?.text ? BN(t, e.text) : t;
 }
 function UN(e) {
+	return e.replace(/\s+/g, " ").trim().slice(0, LN);
+}
+function WN(e, t) {
+	return typeof t != "string" || !QM(t) || e.includes(t) ? [...e] : [...e, t];
+}
+function GN(e) {
 	let t = {};
 	return e.decision_card && (t.decision_card = e.decision_card), e.what_if && (t.what_if = e.what_if), e.missing_information?.length && (t.missing_information = e.missing_information), e.handoff_ref && (t.handoff_ref = e.handoff_ref), e.citations?.length && (t.citations = e.citations), e.improvement_plan?.length && (t.improvement_plan = e.improvement_plan), e.abstained && (t.abstained = !0), Object.keys(t).length ? t : void 0;
 }
-function WN() {
+function KN() {
 	try {
 		return window.sessionStorage;
 	} catch {
 		return null;
 	}
 }
-function GN(e, t, n) {
+function qN(e, t, n) {
 	return `loan-advisory:turns:${e}:${t}:${n}`;
 }
-function KN(e) {
+function JN(e) {
 	if (!e) return [];
-	let t = WN()?.getItem(e);
+	let t = KN()?.getItem(e);
 	if (!t) return [];
 	try {
 		let e = JSON.parse(t);
@@ -36788,9 +36809,9 @@ function KN(e) {
 			if (!e || typeof e != "object") return [];
 			let t = e;
 			if (typeof t.answer != "string") return [];
-			let n = Array.isArray(t.stages) ? t.stages.reduce(HN, []) : [], r = t.state ? UN(WM(t.state)) : void 0, i = typeof t.text == "string" && t.text.length <= IN ? t.text : void 0;
+			let n = Array.isArray(t.stages) ? t.stages.reduce(WN, []) : [], r = t.state ? GN(KM(t.state)) : void 0, i = typeof t.text == "string" && t.text.length <= RN ? t.text : void 0;
 			return [{
-				answer: t.answer.slice(0, FN),
+				answer: t.answer.slice(0, LN),
 				stages: n,
 				state: r,
 				...i ? { text: i } : {}
@@ -36800,70 +36821,66 @@ function KN(e) {
 		return [];
 	}
 }
-function qN(e, t) {
+function YN(e, t) {
 	if (e) try {
-		WN()?.setItem(e, JSON.stringify(t.slice(-40)));
+		KN()?.setItem(e, JSON.stringify(t.slice(-40)));
 	} catch {}
 }
-function JN(e, t, n) {
-	let r = VN(n);
+function XN(e, t, n) {
+	let r = UN(n);
 	if (!r) return;
 	let i = e[t];
 	return i && i.answer === r ? i : e.find((e) => e.answer === r);
 }
-function YN(e) {
+function ZN(e) {
 	let t = [], n = e?.decision_card, r = !!n?.themes?.length && n?.recorded_outcome !== "APPROVED";
 	return e?.what_if && t.push("How is this different from my recorded decision?"), (r || n?.recorded_outcome === "REJECTED") && t.push("What can I do to improve before reapplying?"), e?.missing_information?.length && t.push("How do I provide the missing information?"), t.length || t.push("Why was this decision made?"), t.push("How do I talk to a person about this?"), Array.from(new Set(t)).slice(0, 3);
 }
 // src/chat-panel.tsx
-var XN = [
-	"Why was this decision made?",
-	"What can I do to improve before reapplying?",
-	"What if my credit score was 720?"
-], ZN = "Understand your loan decision. A person decides.", QN = "/assets/loan_advisory_portal/illustrations/assistant.svg", $N = "/assets/loan_advisory_portal/illustrations/service-unavailable.svg", eP = "/assets/loan_advisory_portal/illustrations/assistant-thinking.svg";
-function tP({ stages: e }) {
+var QN = ["Why was this decision made?", "What can I do to improve before reapplying?"], $N = "Understand your loan decision. A person decides.", eP = "/assets/loan_advisory_portal/illustrations/assistant.svg", tP = "/assets/loan_advisory_portal/illustrations/service-unavailable.svg", nP = "/assets/loan_advisory_portal/illustrations/assistant-thinking.svg";
+function rP({ stages: e }) {
 	return /* @__PURE__ */ (0, z.jsxs)("div", {
 		className: "msg__thinking",
 		children: [/* @__PURE__ */ (0, z.jsx)("div", {
 			className: "msg__thinking-mark",
 			children: /* @__PURE__ */ (0, z.jsx)("img", {
 				className: "msg__thinking-art",
-				src: eP,
+				src: nP,
 				alt: "",
 				width: 96,
 				height: 72
 			})
 		}), /* @__PURE__ */ (0, z.jsxs)("div", {
 			className: "msg__thinking-body",
-			children: [/* @__PURE__ */ (0, z.jsx)(lP, { stages: e }), /* @__PURE__ */ (0, z.jsx)(fP, {})]
+			children: [/* @__PURE__ */ (0, z.jsx)(dP, { stages: e }), /* @__PURE__ */ (0, z.jsx)(mP, {})]
 		})]
 	});
 }
-function nP(e) {
+function iP(e) {
 	let t = e.content;
 	return typeof t == "string" ? t : Array.isArray(t) ? t.map((e) => e && typeof e == "object" && "text" in e ? String(e.text ?? "") : "").join("") : "";
 }
-function rP(e) {
+function aP(e) {
 	return /401|sign in|session expired|invalid session|malformed session/i.test(e);
 }
-function iP(e) {
+function oP(e) {
 	return /403|another application|another account|does not match the signed-in session/i.test(e);
 }
-function aP(e) {
-	return rP(e) ? "Your session is no longer valid. Sign in again to continue." : iP(e) ? "That conversation can't be continued here. A new one has been started — please ask again." : /409|select an application/i.test(e) ? "Choose an application before asking about it." : /503|busy|unavailable/i.test(e) ? "Saral is busy or unavailable right now. Wait a moment and try again." : "Something went wrong and your question was not answered. Please try again.";
+function sP(e) {
+	return aP(e) ? "Your session is no longer valid. Sign in again to continue." : oP(e) ? "That conversation can't be continued here. A new one has been started — please ask again." : /409|select an application/i.test(e) ? "Choose an application before asking about it." : /503|busy|unavailable/i.test(e) ? "Saral is busy or unavailable right now. Wait a moment and try again." : "Something went wrong and your question was not answered. Please try again.";
 }
-function oP(e) {
+function cP(e) {
 	return e.filter((e) => e.role === "assistant").length;
 }
-function sP(e, t) {
+function lP(e, t) {
 	if (!e) return [];
-	let n = vN(e, t);
+	let n = bN(e, t);
 	return e.improvement_plan?.length && n.push({
 		type: "improvement_plan",
 		plan: e.improvement_plan
 	}), n;
 }
-function cP() {
+function uP() {
 	return /* @__PURE__ */ (0, z.jsx)("svg", {
 		className: "trail__icon",
 		viewBox: "0 0 16 16",
@@ -36881,8 +36898,8 @@ function cP() {
 		})
 	});
 }
-function lP({ stages: e }) {
-	let t = e.filter((e) => bN(e, !0));
+function dP({ stages: e }) {
+	let t = e.filter((e) => SN(e, !0));
 	return /* @__PURE__ */ (0, z.jsx)("ol", {
 		className: "progress trail",
 		role: "status",
@@ -36902,8 +36919,8 @@ function lP({ stages: e }) {
 					r ? /* @__PURE__ */ (0, z.jsx)("span", {
 						className: "progress__dot",
 						"aria-hidden": "true"
-					}) : /* @__PURE__ */ (0, z.jsx)(cP, {}),
-					/* @__PURE__ */ (0, z.jsx)("span", { children: bN(e, !r) }),
+					}) : /* @__PURE__ */ (0, z.jsx)(uP, {}),
+					/* @__PURE__ */ (0, z.jsx)("span", { children: SN(e, !r) }),
 					r ? null : /* @__PURE__ */ (0, z.jsx)("span", {
 						className: "sr-only",
 						children: " (done)"
@@ -36913,8 +36930,8 @@ function lP({ stages: e }) {
 		})
 	});
 }
-function uP({ stages: e, open: t }) {
-	let n = xN(e);
+function fP({ stages: e, open: t }) {
+	let n = CN(e);
 	return n.length ? /* @__PURE__ */ (0, z.jsxs)("details", {
 		className: "run-steps trail",
 		open: t,
@@ -36925,13 +36942,13 @@ function uP({ stages: e, open: t }) {
 			n.length === 1 ? "step" : "steps",
 			")"
 		] }), /* @__PURE__ */ (0, z.jsx)("ol", { children: n.map((e) => /* @__PURE__ */ (0, z.jsxs)("li", { children: [
-			/* @__PURE__ */ (0, z.jsx)(cP, {}),
+			/* @__PURE__ */ (0, z.jsx)(uP, {}),
 			" ",
 			e
 		] }, e)) })]
 	}) : null;
 }
-function dP({ down: e }) {
+function pP({ down: e }) {
 	return /* @__PURE__ */ (0, z.jsx)("svg", {
 		viewBox: "0 0 20 20",
 		width: "16",
@@ -36948,7 +36965,7 @@ function dP({ down: e }) {
 		})
 	});
 }
-function fP() {
+function mP() {
 	return /* @__PURE__ */ (0, z.jsxs)("span", {
 		className: "typing",
 		"aria-hidden": "true",
@@ -36959,12 +36976,12 @@ function fP() {
 		]
 	});
 }
-function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: i, onAnswered: a, onConversationReset: o, storageKey: s, csrfToken: c, locale: l = "en" }) {
-	let [u, d] = (0, R.useState)(""), [f, p] = (0, R.useState)(!1), [m, h] = (0, R.useState)(null), [g, _] = (0, R.useState)([]), [v, y] = (0, R.useState)(0), [b, x] = (0, R.useState)(() => KN(s)), [S, C] = (0, R.useState)(!1), [w, T] = (0, R.useState)({}), E = (0, R.useRef)([]), D = (0, R.useRef)(null), O = (0, R.useRef)(null), k = (0, R.useRef)(null);
+function hP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: i, onAnswered: a, onConversationReset: o, storageKey: s, csrfToken: c, locale: l = "en" }) {
+	let [u, d] = (0, R.useState)(""), [f, p] = (0, R.useState)(!1), [m, h] = (0, R.useState)(null), [g, _] = (0, R.useState)([]), [v, y] = (0, R.useState)(0), [b, x] = (0, R.useState)(() => JN(s)), [S, C] = (0, R.useState)(!1), [w, T] = (0, R.useState)({}), E = (0, R.useRef)([]), D = (0, R.useRef)(null), O = (0, R.useRef)(null), k = (0, R.useRef)(null);
 	(0, R.useEffect)(() => {
-		x(KN(s)), h(null), T({});
+		x(JN(s)), h(null), T({});
 	}, [s]);
-	let A = e.messages.filter((e) => e.role === "user" || e.role === "assistant"), ee = `${A.map((e) => `${e.id}:${nP(e).length}`).join("|")}#${g.length}#${f}#${+!!m}`;
+	let A = e.messages.filter((e) => e.role === "user" || e.role === "assistant"), ee = `${A.map((e) => `${e.id}:${iP(e).length}`).join("|")}#${g.length}#${f}#${+!!m}`;
 	(0, R.useEffect)(() => {
 		let e = O.current;
 		e && typeof e.scrollIntoView == "function" && A.length && e.scrollIntoView({ block: "end" });
@@ -36972,7 +36989,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 		t && (t.scrollTop = t.scrollHeight);
 	}, [ee]);
 	let j = (0, R.useCallback)((e) => {
-		let t = HN(E.current, e);
+		let t = WN(E.current, e);
 		t.length !== E.current.length && (E.current = t, _(t));
 	}, []), te = r.progress?.stage;
 	(0, R.useEffect)(() => {
@@ -36985,16 +37002,16 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 	async function M(r, c) {
 		let l = r.trim();
 		if (!l || f || !t) return;
-		h(null), p(!0), C(!1), E.current = [], _([]), y(oP(e.messages)), c && e.addMessage({
+		h(null), p(!0), C(!1), E.current = [], _([]), y(cP(e.messages)), c && e.addMessage({
 			id: crypto.randomUUID(),
 			role: "user",
 			content: l
 		});
 		let u = !1, d = !1, m = (e) => {
 			u = !0, h({
-				text: aP(e),
+				text: sP(e),
 				question: l
-			}), rP(e) ? i("Your session is no longer valid. Sign in again to continue.") : iP(e) && o();
+			}), aP(e) ? i("Your session is no longer valid. Sign in again to continue.") : oP(e) && o();
 		};
 		try {
 			await e.runAgent({
@@ -37007,7 +37024,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 				onStateSnapshotEvent: ({ event: e }) => {
 					d = !0;
 					let t = e.snapshot;
-					j(WM(t).progress?.stage);
+					j(KM(t).progress?.stage);
 				}
 			});
 		} catch (e) {
@@ -37016,12 +37033,12 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 			p(!1), k.current?.focus();
 		}
 		if (u) return;
-		let g = e.messages.filter((e) => e.role === "assistant"), v = g.length ? nP(g[g.length - 1]) : "";
+		let g = e.messages.filter((e) => e.role === "assistant"), v = g.length ? iP(g[g.length - 1]) : "";
 		if (!v) return;
-		let b = d ? WM(e.state) : void 0, S = RN(v, b?.answer), w = {
-			answer: VN(v),
+		let b = d ? KM(e.state) : void 0, S = BN(v, b?.answer), w = {
+			answer: UN(v),
 			stages: E.current,
-			state: b ? UN(b) : void 0,
+			state: b ? GN(b) : void 0,
 			...S === v ? {} : { text: S }
 		};
 		x((e) => {
@@ -37030,7 +37047,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 				answer: "",
 				stages: []
 			});
-			return t[g.length - 1] = w, qN(s, t), t;
+			return t[g.length - 1] = w, YN(s, t), t;
 		}), a(l, S);
 	}
 	function N(e) {
@@ -37045,7 +37062,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 				[e]: t ? "up" : "down"
 			}));
 			try {
-				await PN(c, n, t);
+				await IN(c, n, t);
 			} catch {
 				T((t) => ({
 					...t,
@@ -37060,8 +37077,8 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 		busy: re,
 		onAsk: (e) => void M(e, !0),
 		onOpenWhatIf: () => C(!0)
-	}, ie = oP(A), F = f && ie <= v, I = A.length === 0 && !f, ae = -1, oe = A.map((e) => {
-		let t = nP(e);
+	}, ie = cP(A), F = f && ie <= v, I = A.length === 0 && !f, ae = -1, oe = A.map((e) => {
+		let t = iP(e);
 		if (e.role === "user") return t ? /* @__PURE__ */ (0, z.jsxs)("div", {
 			className: "msg user",
 			children: [/* @__PURE__ */ (0, z.jsx)("span", {
@@ -37076,36 +37093,36 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 			children: /* @__PURE__ */ (0, z.jsx)("div", {
 				className: "msg__body",
 				children: t ? /* @__PURE__ */ (0, z.jsxs)(z.Fragment, { children: [
-					/* @__PURE__ */ (0, z.jsx)(lP, { stages: g }),
-					/* @__PURE__ */ (0, z.jsx)(NN, { text: zN(t) }),
+					/* @__PURE__ */ (0, z.jsx)(dP, { stages: g }),
+					/* @__PURE__ */ (0, z.jsx)(FN, { text: VN(t) }),
 					/* @__PURE__ */ (0, z.jsx)("div", {
 						className: "msg__stream-edge",
 						"aria-hidden": "true"
 					})
-				] }) : /* @__PURE__ */ (0, z.jsx)(tP, { stages: g })
+				] }) : /* @__PURE__ */ (0, z.jsx)(rP, { stages: g })
 			})
 		}, e.id);
 		if (!t) return null;
-		let r = JN(b, n, t), i = sP(r?.state, P), a = n === ie - 1 && !f && !m, o = w[n];
+		let r = XN(b, n, t), i = lP(r?.state, P), a = n === ie - 1 && !f && !m, o = w[n];
 		return /* @__PURE__ */ (0, z.jsx)("div", {
 			className: "msg bot",
 			children: /* @__PURE__ */ (0, z.jsxs)("div", {
 				className: "msg__body",
 				children: [
-					/* @__PURE__ */ (0, z.jsx)(uP, {
+					/* @__PURE__ */ (0, z.jsx)(fP, {
 						stages: r?.stages ?? [],
 						state: r?.state,
 						open: n === ie - 1
 					}),
-					/* @__PURE__ */ (0, z.jsx)(NN, {
-						text: BN(r, t),
+					/* @__PURE__ */ (0, z.jsx)(FN, {
+						text: HN(r, t),
 						citations: r?.state?.citations ?? []
 					}),
 					i.length ? /* @__PURE__ */ (0, z.jsx)("div", {
 						className: "msg__cards",
 						children: i.map((e, t) => /* @__PURE__ */ (0, z.jsx)("div", {
 							className: "msg__card",
-							children: _N(e, P)
+							children: yN(e, P)
 						}, `${e.type}-${t}`))
 					}) : null,
 					c ? /* @__PURE__ */ (0, z.jsx)("div", {
@@ -37125,7 +37142,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 									"aria-label": "Helpful",
 									title: "Helpful",
 									onClick: () => void ne(n, !0),
-									children: /* @__PURE__ */ (0, z.jsx)(dP, {})
+									children: /* @__PURE__ */ (0, z.jsx)(pP, {})
 								}),
 								/* @__PURE__ */ (0, z.jsx)("button", {
 									type: "button",
@@ -37133,7 +37150,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 									"aria-label": "Not helpful",
 									title: "Not helpful",
 									onClick: () => void ne(n, !1),
-									children: /* @__PURE__ */ (0, z.jsx)(dP, { down: !0 })
+									children: /* @__PURE__ */ (0, z.jsx)(pP, { down: !0 })
 								}),
 								o === "failed" ? /* @__PURE__ */ (0, z.jsx)("span", {
 									className: "feedback__thanks",
@@ -37145,7 +37162,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					a ? /* @__PURE__ */ (0, z.jsx)("div", {
 						className: "followups",
 						"aria-label": "Suggested follow-ups",
-						children: YN(r?.state).map((e) => /* @__PURE__ */ (0, z.jsx)("button", {
+						children: ZN(r?.state).map((e) => /* @__PURE__ */ (0, z.jsx)("button", {
 							type: "button",
 							className: "chip",
 							disabled: re,
@@ -37186,7 +37203,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 								className: "chat-empty__mark",
 								children: /* @__PURE__ */ (0, z.jsx)("img", {
 									className: "chat-empty__art",
-									src: QN,
+									src: eP,
 									alt: "",
 									width: 160,
 									height: 120
@@ -37196,7 +37213,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 							/* @__PURE__ */ (0, z.jsx)("p", { children: "Ask why, what to fix, or try a what-if." }),
 							/* @__PURE__ */ (0, z.jsx)("div", {
 								className: "chips",
-								children: XN.map((e) => /* @__PURE__ */ (0, z.jsx)("button", {
+								children: QN.map((e) => /* @__PURE__ */ (0, z.jsx)("button", {
 									type: "button",
 									className: "chip",
 									disabled: re,
@@ -37210,7 +37227,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 						className: "msg bot msg--live",
 						children: /* @__PURE__ */ (0, z.jsx)("div", {
 							className: "msg__body",
-							children: /* @__PURE__ */ (0, z.jsx)(tP, { stages: g })
+							children: /* @__PURE__ */ (0, z.jsx)(rP, { stages: g })
 						})
 					}) : null,
 					m && !f ? /* @__PURE__ */ (0, z.jsx)("div", {
@@ -37221,7 +37238,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 							children: [
 								/* @__PURE__ */ (0, z.jsx)("img", {
 									className: "msg__error-art",
-									src: $N,
+									src: tP,
 									alt: "",
 									width: 96,
 									height: 72
@@ -37245,9 +37262,9 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					}) : null,
 					S ? /* @__PURE__ */ (0, z.jsxs)("div", {
 						className: "whatif-panel",
-						children: [_N({
+						children: [yN({
 							type: "what_if_form",
-							card: mP(b, r)
+							card: gP(b, r)
 						}, P), /* @__PURE__ */ (0, z.jsx)("button", {
 							type: "button",
 							className: "btn btn--quiet btn--sm",
@@ -37305,7 +37322,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 					}),
 					/* @__PURE__ */ (0, z.jsx)("p", {
 						className: "trust-line",
-						children: ZN
+						children: $N
 					}),
 					t ? null : /* @__PURE__ */ (0, z.jsx)("p", {
 						className: "note",
@@ -37316,7 +37333,7 @@ function pP({ agent: e, isReady: t, application: n, state: r, onSessionExpired: 
 		]
 	});
 }
-function mP(e, t) {
+function gP(e, t) {
 	for (let t = e.length - 1; t >= 0; --t) {
 		let n = e[t].state?.decision_card;
 		if (n) return n;
@@ -37324,7 +37341,7 @@ function mP(e, t) {
 	return t.decision_card;
 }
 // src/plan-panel.tsx
-function hP({ plan: e, locale: t = "en" }) {
+function _P({ plan: e, locale: t = "en" }) {
 	return /* @__PURE__ */ (0, z.jsxs)("section", {
 		className: "plan",
 		"aria-labelledby": "plan-heading",
@@ -37335,7 +37352,7 @@ function hP({ plan: e, locale: t = "en" }) {
 		}), e.length === 0 ? /* @__PURE__ */ (0, z.jsx)("p", {
 			className: "empty",
 			children: "Ask “What can I do to improve before reapplying?”"
-		}) : /* @__PURE__ */ (0, z.jsx)(oN, {
+		}) : /* @__PURE__ */ (0, z.jsx)(cN, {
 			plan: e,
 			showHeading: !1,
 			locale: t
@@ -37343,21 +37360,21 @@ function hP({ plan: e, locale: t = "en" }) {
 	});
 }
 // src/voice.ts
-var gP = class extends Error {
+var vP = class extends Error {
 	status;
 	constructor(e, t) {
 		super(e), this.status = t, this.name = "VoiceError";
 	}
-}, _P = "/api/method/loan_advisory_portal.api.livekit.";
-function vP(e) {
+}, yP = "/api/method/loan_advisory_portal.api.livekit.";
+function bP(e) {
 	if (!e || typeof e != "object") return;
 	let t = e;
 	if (typeof t._error_message == "string" && t._error_message) return t._error_message;
 	if (typeof t.exc_type == "string" && t.exc_type) return t.exc_type;
 	if (typeof t.message == "string" && t.message) return t.message;
 }
-async function yP(e, t, n, r = {}) {
-	let i = await fetch(`${_P}${e}`, {
+async function xP(e, t, n, r = {}) {
+	let i = await fetch(`${yP}${e}`, {
 		method: "POST",
 		credentials: "same-origin",
 		keepalive: r.keepalive,
@@ -37369,33 +37386,33 @@ async function yP(e, t, n, r = {}) {
 		body: JSON.stringify(n),
 		signal: r.signal
 	});
-	if (i.redirected) throw new gP("sign in again", 401);
+	if (i.redirected) throw new vP("sign in again", 401);
 	let a;
 	try {
 		a = await i.json();
 	} catch {
 		a = void 0;
 	}
-	if (!i.ok) throw new gP(vP(a) ?? `request failed (${i.status})`, i.status);
+	if (!i.ok) throw new vP(bP(a) ?? `request failed (${i.status})`, i.status);
 	return a?.message;
 }
-function bP(e, t) {
-	return yP("create_voice_session", e, {
+function SP(e, t) {
+	return xP("create_voice_session", e, {
 		application: e.application,
 		consent: 1
 	}, { signal: t });
 }
-function xP(e, t, n = {}) {
-	return yP("end_voice_session", e, { session_id: t }, n);
+function CP(e, t, n = {}) {
+	return xP("end_voice_session", e, { session_id: t }, n);
 }
-function SP(e) {
-	return e instanceof gP && e.status === 401;
+function wP(e) {
+	return e instanceof vP && e.status === 401;
 }
-function CP(e) {
-	return SP(e) ? "Your session is no longer valid. Sign in again to start voice." : e instanceof gP && e.status === 409 ? "That voice session has already ended. Start a new one." : e instanceof gP && e.status === 503 ? "The voice service is not available right now. You can still ask by text." : "Voice could not start. Check the connection and try again, or ask by text.";
+function TP(e) {
+	return wP(e) ? "Your session is no longer valid. Sign in again to start voice." : e instanceof vP && e.status === 409 ? "That voice session has already ended. Start a new one." : e instanceof vP && e.status === 503 ? "The voice service is not available right now. You can still ask by text." : "Voice could not start. Check the connection and try again, or ask by text.";
 }
 // src/voice-transport.ts
-async function wP() {
+async function EP() {
 	let { ConnectionState: e, Room: t, RoomEvent: n, Track: r } = await import("./chunks/livekit-client.esm-CSxzrXF5.js"), i = new t(), a = /* @__PURE__ */ new Set(), o = /* @__PURE__ */ new Set(), s = /* @__PURE__ */ new Set(), c = (e) => {
 		for (let t of a) t(e);
 	};
@@ -37457,7 +37474,7 @@ async function wP() {
 	};
 }
 // src/voice-orb.ts
-var TP = {
+var DP = {
 	idle: "Ready when you are",
 	connecting: "Connecting",
 	listening: "Listening",
@@ -37465,11 +37482,11 @@ var TP = {
 	speaking: "Speaking",
 	muted: "Microphone off"
 };
-function EP(e, t) {
+function OP(e, t) {
 	return t.status === "idle" || t.status === "ended" || t.status === "failed" ? "idle" : t.status === "connecting" || t.status === "reconnecting" ? "connecting" : t.speaker === "assistant" ? "speaking" : t.muted ? "muted" : t.speaker === "user" || t.answered ? "listening" : t.previous === "user" || e === "thinking" ? "thinking" : "listening";
 }
 // src/voice-panel.tsx
-function DP({ state: e, level: t }) {
+function kP({ state: e, level: t }) {
 	return /* @__PURE__ */ (0, z.jsxs)("div", {
 		className: "voice-stage",
 		children: [/* @__PURE__ */ (0, z.jsx)("div", {
@@ -37481,27 +37498,27 @@ function DP({ state: e, level: t }) {
 			children: /* @__PURE__ */ (0, z.jsx)("span", { className: "voice-orb__core" })
 		}), /* @__PURE__ */ (0, z.jsx)("p", {
 			className: "voice-orb__label",
-			children: TP[e]
+			children: DP[e]
 		})]
 	});
 }
-var OP = {
+var AP = {
 	idle: "Not started",
 	connecting: "Connecting…",
 	connected: "Connected — the assistant is listening.",
 	reconnecting: "Connection lost. Reconnecting…",
 	ended: "Voice session ended.",
 	failed: "Voice could not start."
-}, kP = [
+}, jP = [
 	"connecting",
 	"connected",
 	"reconnecting"
 ];
-function AP(e) {
+function MP(e) {
 	let t = e?.name;
 	return t === "NotAllowedError" || t === "SecurityError" ? "The microphone is blocked. Allow microphone access for this site and try again." : t === "NotFoundError" ? "No microphone was found on this device. You can still ask by text." : t === "NotSupportedError" ? "This browser cannot start a voice call. You can still ask by text." : "The voice session could not connect. Check the connection and try again, or ask by text.";
 }
-function jP({ context: e, createTransport: t, onSessionExpired: n }) {
+function NP({ context: e, createTransport: t, onSessionExpired: n }) {
 	let [r, i] = (0, R.useState)(!1), [a, o] = (0, R.useState)("idle"), [s, c] = (0, R.useState)(null), [l, u] = (0, R.useState)(!1), [d, f] = (0, R.useState)([]), [p, m] = (0, R.useState)(!0), [h, g] = (0, R.useState)(null), [_, v] = (0, R.useState)({
 		state: "idle",
 		level: 0,
@@ -37519,9 +37536,9 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 		} catch {}
 		let r = x.current;
 		if (x.current = null, r) try {
-			await xP(e, r.session_id, { keepalive: !0 });
+			await CP(e, r.session_id, { keepalive: !0 });
 		} catch (e) {
-			SP(e) && n?.();
+			wP(e) && n?.();
 		}
 	}, [e, n]), T = (0, R.useRef)(w);
 	T.current = w, (0, R.useEffect)(() => () => {
@@ -37530,18 +37547,18 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 	let E = (0, R.useCallback)(async () => {
 		o("ended"), u(!1), g(null), await w();
 	}, [w]), D = (0, R.useCallback)(async () => {
-		if (!r || !e.voice.enabled || kP.includes(a)) return;
+		if (!r || !e.voice.enabled || jP.includes(a)) return;
 		c(null), f([]), m(!0), o("connecting"), g(null);
 		let i;
 		try {
-			i = await bP(e);
+			i = await SP(e);
 		} catch (e) {
-			SP(e) && n?.(), c(CP(e)), o("failed");
+			wP(e) && n?.(), c(TP(e)), o("failed");
 			return;
 		}
 		x.current = i, g(new Date(i.expires_at.replace(" ", "T")));
 		try {
-			let e = await (t ?? wP)();
+			let e = await (t ?? EP)();
 			if (x.current !== i) {
 				await e.disconnect();
 				return;
@@ -37549,7 +37566,7 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 			if (S.current = e, C.current = [e.onStatus((e) => o(e)), e.onUtterance((e) => {
 				f((t) => [...t, e]), e.role === "assistant" && v((e) => ({
 					...e,
-					state: EP(e.state, {
+					state: OP(e.state, {
 						status: y.current,
 						muted: b.current,
 						speaker: e.speaker,
@@ -37559,7 +37576,7 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 			})], e.onActivity && C.current.push(e.onActivity((e) => v((t) => ({
 				speaker: e.speaker,
 				level: e.speaker ? Math.min(1, Math.max(0, e.level)) : 0,
-				state: EP(t.state, {
+				state: OP(t.state, {
 					status: y.current,
 					muted: b.current,
 					speaker: e.speaker,
@@ -37568,7 +37585,7 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 			})))), await e.connect(i.url, i.token), S.current !== e) return;
 			await e.setMicrophoneEnabled(!0), u(!1), o("connected");
 		} catch (e) {
-			await w(), g(null), o("failed"), c(AP(e));
+			await w(), g(null), o("failed"), c(MP(e));
 		}
 	}, [
 		r,
@@ -37582,14 +37599,14 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 		if (e) try {
 			await e.setMicrophoneEnabled(l), u(!l);
 		} catch (e) {
-			c(AP(e));
+			c(MP(e));
 		}
 	}, [l]), k = (0, R.useCallback)(() => {
 		o("idle"), c(null), f([]), g(null);
 	}, []);
 	if ((0, R.useEffect)(() => {
 		v((e) => {
-			let t = EP(e.state, {
+			let t = OP(e.state, {
 				status: a,
 				muted: l,
 				speaker: e.speaker,
@@ -37602,7 +37619,7 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 			};
 		});
 	}, [a, l]), (0, R.useEffect)(() => {
-		if (!h || !kP.includes(a)) return;
+		if (!h || !jP.includes(a)) return;
 		let e = h.getTime() - Date.now();
 		if (!Number.isFinite(e)) return;
 		let t = window.setTimeout(() => {
@@ -37625,7 +37642,7 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 			children: "Voice is not available on this site. You can still ask by text."
 		})]
 	});
-	let A = kP.includes(a), ee = a === "ended" || a === "failed";
+	let A = jP.includes(a), ee = a === "ended" || a === "failed";
 	return /* @__PURE__ */ (0, z.jsxs)("section", {
 		className: "voice",
 		"aria-labelledby": "voice-heading",
@@ -37639,7 +37656,7 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 				className: "note",
 				children: "The assistant listens only while this page is open. Your speech goes to the advisory voice service to answer your question, and each question and answer also appears here as text."
 			}),
-			/* @__PURE__ */ (0, z.jsx)(DP, {
+			/* @__PURE__ */ (0, z.jsx)(kP, {
 				state: _.state,
 				level: _.level
 			}),
@@ -37673,7 +37690,7 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 				children: [/* @__PURE__ */ (0, z.jsx)("span", {
 					className: "voice__dot",
 					"aria-hidden": "true"
-				}), OP[a]]
+				}), AP[a]]
 			}),
 			s ? /* @__PURE__ */ (0, z.jsx)("div", {
 				className: "error",
@@ -37745,21 +37762,21 @@ function jP({ context: e, createTransport: t, onSessionExpired: n }) {
 	});
 }
 // src/history.ts
-var MP = class extends Error {
+var PP = class extends Error {
 	status;
 	constructor(e, t) {
 		super(e), this.status = t, this.name = "HistoryError";
 	}
-}, NP = "/api/method/loan_advisory_portal.api.agent.";
-function PP(e) {
+}, FP = "/api/method/loan_advisory_portal.api.agent.";
+function IP(e) {
 	if (!e || typeof e != "object") return;
 	let t = e;
 	if (typeof t._error_message == "string" && t._error_message) return t._error_message;
 	if (typeof t.exc_type == "string" && t.exc_type) return t.exc_type;
 	if (typeof t.message == "string" && t.message) return t.message;
 }
-async function FP(e, t, n = {}) {
-	let r = n.method ?? (n.body ? "POST" : "GET"), i = new URLSearchParams(n.query ?? {}).toString(), a = await fetch(`${NP}${e}${i ? `?${i}` : ""}`, {
+async function LP(e, t, n = {}) {
+	let r = n.method ?? (n.body ? "POST" : "GET"), i = new URLSearchParams(n.query ?? {}).toString(), a = await fetch(`${FP}${e}${i ? `?${i}` : ""}`, {
 		method: r,
 		credentials: "same-origin",
 		headers: {
@@ -37772,100 +37789,100 @@ async function FP(e, t, n = {}) {
 		body: r === "POST" ? JSON.stringify(n.body ?? {}) : void 0,
 		signal: n.signal
 	});
-	if (a.redirected) throw new MP("sign in again", 401);
+	if (a.redirected) throw new PP("sign in again", 401);
 	let o;
 	try {
 		o = await a.json();
 	} catch {
 		o = void 0;
 	}
-	if (!a.ok) throw new MP(PP(o) ?? `request failed (${a.status})`, a.status);
+	if (!a.ok) throw new PP(IP(o) ?? `request failed (${a.status})`, a.status);
 	return o?.message;
 }
-function IP(e, t) {
-	return FP("list_conversations", e, {
+function RP(e, t) {
+	return LP("list_conversations", e, {
 		query: { application: e.application },
 		signal: t
 	});
 }
-function LP(e, t, n) {
-	return FP("conversation_messages", e, {
+function zP(e, t, n) {
+	return LP("conversation_messages", e, {
 		query: { thread_id: t },
 		signal: n
 	});
 }
-function RP(e, t, n, r) {
-	return FP("record_turn", e, { body: {
+function BP(e, t, n, r) {
+	return LP("record_turn", e, { body: {
 		thread_id: t,
 		question: n,
 		answer: r
 	} });
 }
 // src/thread.ts
-var zP = /^[A-Za-z0-9._:-]{1,128}$/;
-function BP() {
+var VP = /^[A-Za-z0-9._:-]{1,128}$/;
+function HP() {
 	try {
 		return window.sessionStorage;
 	} catch {
 		return;
 	}
 }
-function VP(e, t) {
+function UP(e, t) {
 	return `loan-advisory:thread:${e}:${t}`;
 }
-function HP(e, t) {
-	return `${VP(e, t)}:pending`;
+function WP(e, t) {
+	return `${UP(e, t)}:pending`;
 }
-function UP(e, t) {
+function GP(e, t) {
 	try {
 		return e?.getItem(t) || null;
 	} catch {
 		return null;
 	}
 }
-function WP(e, t, n) {
+function KP(e, t, n) {
 	try {
 		e?.setItem(t, n);
 	} catch {}
 }
-function GP(e, t, n = BP()) {
-	let r = UP(n, VP(e, t));
-	return r && zP.test(r) ? r : null;
+function qP(e, t, n = HP()) {
+	let r = GP(n, UP(e, t));
+	return r && VP.test(r) ? r : null;
 }
-function KP(e, t, n = BP()) {
-	return UP(n, HP(e, t));
+function JP(e, t, n = HP()) {
+	return GP(n, WP(e, t));
 }
-function qP(e, t, n, r = BP()) {
-	KP(e, t, r) === n && WP(r, HP(e, t), "");
+function YP(e, t, n, r = HP()) {
+	JP(e, t, r) === n && KP(r, WP(e, t), "");
 }
-function JP(e, t, n = BP()) {
-	return GP(e, t, n) ?? YP(e, t, n);
+function XP(e, t, n = HP()) {
+	return qP(e, t, n) ?? ZP(e, t, n);
 }
-function YP(e, t, n = BP()) {
+function ZP(e, t, n = HP()) {
 	let r = crypto.randomUUID();
-	return WP(n, VP(e, t), r), WP(n, HP(e, t), r), r;
+	return KP(n, UP(e, t), r), KP(n, WP(e, t), r), r;
 }
 // src/island.tsx
-var XP = {
+var QP = {
 	en: "English",
 	hi: "हिन्दी",
 	te: "తెలుగు"
-}, ZP = {
+}, $P = {
 	low: "new to loans",
 	medium: "knows the basics",
 	high: "very familiar"
-}, QP = 8;
-function $P() {
+}, eF = 8;
+function tF() {
 	window.location.assign(`/login?redirect-to=${encodeURIComponent(window.location.pathname + window.location.search)}`);
 }
-function eF(e) {
+function nF(e) {
 	return e.messages.filter((e) => e.text).map((e, t) => ({
 		id: `stored-${t}`,
 		role: e.role,
 		content: e.text
 	}));
 }
-function tF({ context: e }) {
+function rF({ context: e }) {
 	let { agent: t, isReady: n } = dk({
 		agentId: "advisory",
 		updates: [
@@ -37874,13 +37891,13 @@ function tF({ context: e }) {
 			lk.OnRunStatusChanged
 		],
 		throttleMs: 60
-	}), [r, i] = (0, R.useState)(() => JP(e.user, e.application)), [a, o] = (0, R.useState)([]), [s, c] = (0, R.useState)(null), [l, u] = (0, R.useState)(null), d = (0, R.useCallback)(async (t) => {
+	}), [r, i] = (0, R.useState)(() => XP(e.user, e.application)), [a, o] = (0, R.useState)([]), [s, c] = (0, R.useState)(null), [l, u] = (0, R.useState)(null), d = (0, R.useCallback)(async (t) => {
 		try {
-			let n = await IP(e, t);
+			let n = await RP(e, t);
 			t?.aborted || (o(n), c(null));
 		} catch (e) {
 			if (t?.aborted || e?.name === "AbortError") return;
-			e instanceof MP && e.status === 401 ? $P() : t?.aborted || c("Earlier conversations could not be loaded.");
+			e instanceof PP && e.status === 401 ? tF() : t?.aborted || c("Earlier conversations could not be loaded.");
 		}
 	}, [e]);
 	(0, R.useEffect)(() => {
@@ -37889,12 +37906,12 @@ function tF({ context: e }) {
 	}, [d]), (0, R.useEffect)(() => {
 		if (!n) return;
 		let i = !1;
-		if (t.setMessages([]), t.setState({}), t.threadId = r, KP(e.user, e.application) !== r) return LP(e, r).then((e) => {
+		if (t.setMessages([]), t.setState({}), t.threadId = r, JP(e.user, e.application) !== r) return zP(e, r).then((e) => {
 			if (i || e.thread_id !== r) return;
-			let n = eF(e);
+			let n = nF(e);
 			n.length && t.messages.length === 0 && t.setMessages(n);
 		}).catch((e) => {
-			i || e instanceof MP && e.status === 401 && $P();
+			i || e instanceof PP && e.status === 401 && tF();
 		}), () => {
 			i = !0;
 		};
@@ -37906,17 +37923,17 @@ function tF({ context: e }) {
 	]);
 	let f = (0, R.useCallback)(async (t, n) => {
 		try {
-			await RP(e, r, t, n), qP(e.user, e.application, r), await d();
+			await BP(e, r, t, n), YP(e.user, e.application, r), await d();
 		} catch (e) {
-			e instanceof MP && e.status === 401 && $P();
+			e instanceof PP && e.status === 401 && tF();
 		}
 	}, [
 		e,
 		d,
 		r
-	]), p = (0, R.useCallback)(() => i(YP(e.user, e.application)), [e]), m = (0, R.useCallback)(() => {
+	]), p = (0, R.useCallback)(() => i(ZP(e.user, e.application)), [e]), m = (0, R.useCallback)(() => {
 		p();
-	}, [p]), h = WM(t.state), g = a.slice(0, QP), _ = GN(e.user, e.application, r), v = (e) => u((t) => t === e ? null : e), y = (e, t) => /* @__PURE__ */ (0, z.jsx)("button", {
+	}, [p]), h = KM(t.state), g = a.slice(0, eF), _ = qN(e.user, e.application, r), v = (e) => u((t) => t === e ? null : e), y = (e, t) => /* @__PURE__ */ (0, z.jsx)("button", {
 		type: "button",
 		className: `drawer-tab${l === e ? " drawer-tab--on" : ""}`,
 		"aria-expanded": l === e,
@@ -37945,12 +37962,12 @@ function tF({ context: e }) {
 					})
 				]
 			}),
-			/* @__PURE__ */ (0, z.jsx)(pP, {
+			/* @__PURE__ */ (0, z.jsx)(hP, {
 				agent: t,
 				isReady: n,
 				application: e.application,
 				state: h,
-				onSessionExpired: $P,
+				onSessionExpired: tF,
 				onAnswered: f,
 				onConversationReset: m,
 				storageKey: _,
@@ -37977,9 +37994,9 @@ function tF({ context: e }) {
 					/* @__PURE__ */ (0, z.jsx)("div", {
 						id: "drawer-voice",
 						hidden: l !== "voice",
-						children: /* @__PURE__ */ (0, z.jsx)(jP, {
+						children: /* @__PURE__ */ (0, z.jsx)(NP, {
 							context: e,
-							onSessionExpired: $P
+							onSessionExpired: tF
 						})
 					}),
 					/* @__PURE__ */ (0, z.jsxs)("section", {
@@ -38027,9 +38044,9 @@ function tF({ context: e }) {
 								className: "note",
 								children: [
 									"Answers use your profile settings — ",
-									XP[e.locale],
+									QP[e.locale],
 									", ",
-									ZP[e.literacy],
+									$P[e.literacy],
 									". Change them in ",
 									/* @__PURE__ */ (0, z.jsx)("a", {
 										href: "/borrower/profile",
@@ -38043,7 +38060,7 @@ function tF({ context: e }) {
 					/* @__PURE__ */ (0, z.jsx)("div", {
 						id: "drawer-plan",
 						hidden: l !== "plan",
-						children: /* @__PURE__ */ (0, z.jsx)(hP, {
+						children: /* @__PURE__ */ (0, z.jsx)(_P, {
 							plan: h.improvement_plan ?? [],
 							locale: e.locale
 						})
@@ -38054,13 +38071,13 @@ function tF({ context: e }) {
 	});
 }
 // src/main.tsx
-var nF = document.getElementById("assistant-root");
-if (!nF) throw Error("missing #assistant-root");
-var rF = dM(document);
-(0, oM.createRoot)(nF).render(/* @__PURE__ */ (0, z.jsx)(R.StrictMode, { children: /* @__PURE__ */ (0, z.jsx)(RO, {
+var iF = document.getElementById("assistant-root");
+if (!iF) throw Error("missing #assistant-root");
+var aF = dM(document);
+(0, oM.createRoot)(iF).render(/* @__PURE__ */ (0, z.jsx)(R.StrictMode, { children: /* @__PURE__ */ (0, z.jsx)(RO, {
 	runtimeUrl: "/api/copilotkit",
 	agentId: "advisory",
-	headers: () => ({ "x-frappe-csrf-token": rF.csrfToken }),
+	headers: () => ({ "x-frappe-csrf-token": aF.csrfToken }),
 	enableInspector: !1,
-	children: /* @__PURE__ */ (0, z.jsx)(tF, { context: rF })
+	children: /* @__PURE__ */ (0, z.jsx)(rF, { context: aF })
 }) }));
