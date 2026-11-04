@@ -310,7 +310,10 @@ def _parse_salary_slip(lines: list[TextLine]) -> tuple[dict[str, ExtractedField]
 # --------------------------------------------------------------------------- bank statement
 
 _BANK_PATTERNS = {
-    "account_holder": (r"(?:account\s*(?:holder|name)|name\s*of\s*(?:the\s*)?account\s*holder)\s*[:\-]?\s*(.+)",),
+    "account_holder": (
+        r"(?:account\s*holders?(?:['\u2019]s)?\s*(?:name)?|account\s*name|name\s*of\s*(?:the\s*)?account\s*holder)"
+        r"\s*[:\-]?\s*(.+)",
+    ),
     "statement_period": (r"(?:statement|account)\s*period\s*[:\-]?\s*(.+)",),
     "closing_balance": (
         r"(?:closing|available|current)\s*balance\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)",

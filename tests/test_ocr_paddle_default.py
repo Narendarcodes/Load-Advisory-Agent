@@ -257,3 +257,10 @@ def test_bank_salary_credit_on_merged_narration():
                                              "01/08/2026 NEFT CR-SALARY AUG 43,000.00 98,100.00"])
     assert fields["salary_credits"].value == 86000.0
     assert fields["salary_credit_months"].value == 2
+
+
+@pytest.mark.parametrize("label", ["Account Holders Name", "Account Holder's Name", "Account Holder", "AccountHolder:"])
+def test_bank_account_holder_label_variants(label):
+    fields, _, _ = _parse("Bank Statement", [f"{label} HEALTHPLUS PHARMA LTD", "Closing Balance Rs. 94,495.02"])
+    assert fields["account_holder"].value == "HEALTHPLUS PHARMA LTD"
+    assert fields["closing_balance"].value == 94495.02
