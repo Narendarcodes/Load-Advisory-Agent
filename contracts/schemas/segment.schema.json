@@ -1,0 +1,173 @@
+{
+  "$comment": "Generated from contracts/*.py by contracts/export_schemas.py. Synthetic development contract; cross-field rules are enforced by the pydantic models only.",
+  "$defs": {
+    "ApprovalStatus": {
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED"
+      ],
+      "title": "ApprovalStatus",
+      "type": "string"
+    },
+    "ChangeKind": {
+      "enum": [
+        "SET_THRESHOLD",
+        "ADD_RULE",
+        "SKIP_RULE",
+        "SET_EFFECT",
+        "SET_SOURCE"
+      ],
+      "title": "ChangeKind",
+      "type": "string"
+    },
+    "Dimension": {
+      "enum": [
+        "EMPLOYMENT_GEO",
+        "CREDIT",
+        "RELATIONSHIP"
+      ],
+      "title": "Dimension",
+      "type": "string"
+    },
+    "SegmentEffect": {
+      "additionalProperties": false,
+      "properties": {
+        "assumption_id": {
+          "anyOf": [
+            {
+              "pattern": "^A-[0-9]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assumption Id"
+        },
+        "basis": {
+          "$ref": "#/$defs/ThresholdBasis"
+        },
+        "change": {
+          "$ref": "#/$defs/ChangeKind"
+        },
+        "rule_id": {
+          "pattern": "^[A-Z][A-Z0-9_]+$",
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "source_chunk": {
+          "anyOf": [
+            {
+              "pattern": "^BFL-[A-Z0-9-]+#[0-9]{3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Chunk"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "rule_id",
+        "change",
+        "basis"
+      ],
+      "title": "SegmentEffect",
+      "type": "object"
+    },
+    "SegmentId": {
+      "enum": [
+        "SALARIED_METRO",
+        "SALARIED_NON_METRO",
+        "SELF_EMPLOYED",
+        "NEW_TO_CREDIT",
+        "PRIME",
+        "NEAR_PRIME",
+        "EXISTING_CUSTOMER"
+      ],
+      "title": "SegmentId",
+      "type": "string"
+    },
+    "ThresholdBasis": {
+      "description": "Where a rule's threshold comes from. Exactly one per rule row.",
+      "enum": [
+        "BAJAJ-SOURCED",
+        "ASSUMPTION"
+      ],
+      "title": "ThresholdBasis",
+      "type": "string"
+    }
+  },
+  "$id": "https://saral.invalid/contracts/segment.schema.json",
+  "additionalProperties": false,
+  "description": "A segment definition (catalogue entry).",
+  "properties": {
+    "approval_status": {
+      "$ref": "#/$defs/ApprovalStatus"
+    },
+    "assignment_rule": {
+      "maxLength": 400,
+      "minLength": 5,
+      "title": "Assignment Rule",
+      "type": "string"
+    },
+    "dimension": {
+      "$ref": "#/$defs/Dimension"
+    },
+    "effects": {
+      "items": {
+        "$ref": "#/$defs/SegmentEffect"
+      },
+      "title": "Effects",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "saral-segment/1",
+      "default": "saral-segment/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "segment_id": {
+      "$ref": "#/$defs/SegmentId"
+    }
+  },
+  "required": [
+    "segment_id",
+    "dimension",
+    "assignment_rule",
+    "approval_status"
+  ],
+  "title": "Segment",
+  "type": "object"
+}

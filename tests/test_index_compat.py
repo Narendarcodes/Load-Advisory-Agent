@@ -147,14 +147,37 @@ def test_distance_mismatch_fails(tmp_path):
 
 
 def test_runtime_open_rejects_unverified_or_mismatched_index(tmp_path):
-    from loan_advisory.agent.runtime import _open_dense
+    """The serving read path validates provenance and never repairs it."""
+    from loan_advisory.application.ports import assert_reader
+    from rag.dense_read import DEFAULT_COLLECTION, DenseBackend, ReadOnlyDenseSearch
 
+    backend = DenseBackend("embedded", str(tmp_path / "idx"), DEFAULT_COLLECTION)
     di = _build(tmp_path)
     di.client.close()
     with pytest.raises(IndexCompatibilityError, match="embed_model"):
-        _open_dense(str(tmp_path / "idx"), CHUNKS, _identity(embed_model="other/model"))
-    d = _open_dense(str(tmp_path / "idx"), CHUNKS, _identity())
+        ReadOnlyDenseSearch.open(CHUNKS, _identity(embed_model="other/model"), backend=backend)
+    handle = ReadOnlyDenseSearch.open(CHUNKS, _identity(), backend=backend)
     try:
-        assert d.col == "policy_chunks_v2"
+        assert handle.collection == "policy_chunks_v2" and handle.backend == "embedded"
+        assert_reader(handle, role="the serving dense handle")
+        for writer in ("upsert", "create_collection", "delete_collection", "delete_points",
+                       "create_payload_index", "client"):
+            assert not hasattr(handle, writer), writer
     finally:
-        d.client.close()
+        handle.close()
+
+
+def test_serving_runtime_never_builds_a_missing_index(tmp_path):
+    """An absent collection is a refusal that names the tooling, not an silent embed-and-write."""
+    from rag.dense_read import DenseBackend, ReadOnlyDenseSearch, select_dense_backend
+    from loan_advisory.application.ports import ReadOnlyBoundaryViolation, assert_reader
+    from rag.retrieve import DenseIndex
+
+    backend = DenseBackend("embedded", str(tmp_path / "nowhere"), "policy_chunks_v2")
+    with pytest.raises(RuntimeError, match="index tooling"):
+        ReadOnlyDenseSearch.open(CHUNKS, _identity(), backend=backend)
+    # a builder handle is exactly what the serving runtime must not hold
+    with pytest.raises(ReadOnlyBoundaryViolation):
+        assert_reader(DenseIndex(CHUNKS, [[1.0, 0.0], [0.0, 1.0]], path=str(tmp_path / "built2")),
+                      role="a builder handle")
+    assert select_dense_backend({}, default_dir=str(tmp_path / "d")).mode == "embedded"

@@ -143,7 +143,8 @@ class PortalTransitionTest(FrappeTestCase):
 		with as_user(self.borrower.name):
 			self.assertTrue(applications.get_decision(self.app)["information_needed"])
 		before = frappe.db.get_value(
-			"Loan Application", self.app, ["docstatus", "status", "loan_amount", "custom_loan_purpose"],
+			"Loan Application", self.app,
+			["docstatus", "status", "loan_amount", "custom_loan_purpose", "custom_credit_score"],
 			as_dict=True,
 		)
 
@@ -159,7 +160,7 @@ class PortalTransitionTest(FrappeTestCase):
 		self.assertEqual(doc.custom_lifecycle_state, "SUBMITTED")
 		self.assertEqual((doc.custom_monthly_income, doc.custom_monthly_obligations,
 		                  doc.custom_credit_score, doc.custom_employment_months),
-		                 (60000, 12000, 760, 48))
+		                 (60000, 12000, before.custom_credit_score, 48))  # the score is bureau-only
 		last = self._state_log()[-1]
 		self.assertEqual((last.from_state, last.to_state, last.source, last.native_written),
 		                 ("INFO_REQUESTED", "SUBMITTED", "portal", 0))

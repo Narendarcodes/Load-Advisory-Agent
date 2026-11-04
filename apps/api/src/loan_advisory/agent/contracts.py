@@ -39,6 +39,7 @@ class Citation(BaseModel):
     publisher: str | None = None
     relationship: str | None = None         # e.g. "public reference lender, not a partner"
     applies_to_entity: list[str] | None = None
+    excerpt: str | None = None              # opening of the cited passage, plain text (source chip)
 
 
 class AgentResponse(BaseModel):

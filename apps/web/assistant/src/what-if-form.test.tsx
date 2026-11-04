@@ -51,33 +51,32 @@ function submit(element: HTMLElement) {
 }
 
 describe("whatIfQuestion", () => {
-  it("asks a single field as a what-if question, in backend vocabulary", () => {
-    expect(whatIfQuestion({ credit_score: "720" })).toBe("What if my credit score was 720?");
-    expect(whatIfQuestion({ employment_months: "36" })).toBe("What if my employment tenure was 36 months?");
+  it("asks a single field as a what-if question", () => {
+    expect(whatIfQuestion({ loan_amount: "300000" })).toBe("What if I borrowed 300000?");
+    expect(whatIfQuestion({ tenure_months: "48" })).toBe("What if the repayment period was 48 months?");
   });
 
   it("joins several changes in one sentence the intent parser can recognise", () => {
-    expect(whatIfQuestion({ credit_score: "720", monthly_income: "45000", monthly_obligations: "12000" })).toBe(
-      "What if my credit score was 720, my monthly income was 45000 and my monthly obligations were 12000?",
-    );
-    expect(whatIfQuestion({ monthly_income: "45000", employment_months: "36" })).toBe(
-      "What if my monthly income was 45000 and my employment tenure was 36 months?",
+    expect(whatIfQuestion({ loan_amount: "300000", monthly_income: "45000", monthly_obligations: "12000" })).toBe(
+      "What if I borrowed 300000, my existing EMIs were 12000 and my monthly income was 45000?",
     );
   });
 
-  it("returns null when nothing usable was entered", () => {
+  it("ignores fields that are not editable in an estimate, and returns null when nothing usable was entered", () => {
+    expect(whatIfQuestion({ credit_score: "720", employment_months: "36" } as never)).toBeNull();
     expect(whatIfQuestion({})).toBeNull();
-    expect(whatIfQuestion({ credit_score: "  " })).toBeNull();
-    expect(whatIfQuestion({ credit_score: "lots" })).toBeNull();
+    expect(whatIfQuestion({ loan_amount: "  " })).toBeNull();
+    expect(whatIfQuestion({ loan_amount: "lots" })).toBeNull();
   });
 });
 
 describe("WhatIfForm", () => {
-  it("shows the recorded value where the decision record has one", async () => {
+  it("offers exactly loan amount, tenure, existing EMIs and income; never the credit score", async () => {
     const { element } = await mount();
-    expect(element.querySelector("#credit_score-recorded")?.textContent).toBe("Recorded: 640");
-    expect(element.querySelector("#monthly_income-recorded")?.textContent).toBe("Recorded: ₹45,000");
-    expect(element.querySelector("#employment_months-recorded")?.textContent).toContain("0 to 600");
+    const ids = [...element.querySelectorAll("input")].map((input) => input.id);
+    expect(ids).toEqual(["whatif-loan_amount", "whatif-tenure_months", "whatif-monthly_obligations", "whatif-monthly_income"]);
+    expect(element.textContent).not.toMatch(/credit score|score|Recorded:|640|700/i);
+    expect(element.textContent).toContain("Estimate only, your application is unchanged");
   });
 
   it("refuses an empty submission", async () => {
@@ -87,30 +86,27 @@ describe("WhatIfForm", () => {
     expect(element.querySelector('[role="alert"]')?.textContent).toMatch(/at least one number/i);
   });
 
-  it("validates ranges before anything is sent to the agent", async () => {
+  it("validates values before anything is sent to the agent", async () => {
     const { element, onAsk } = await mount();
-    await act(async () => type(element.querySelector("#whatif-credit_score") as HTMLInputElement, "950"));
-    await act(async () => type(element.querySelector("#whatif-employment_months") as HTMLInputElement, "12.5"));
+    await act(async () => type(element.querySelector("#whatif-tenure_months") as HTMLInputElement, "12.5"));
+    await act(async () => type(element.querySelector("#whatif-loan_amount") as HTMLInputElement, "-5"));
     await act(async () => submit(element));
 
     expect(onAsk).not.toHaveBeenCalled();
     const errors = [...element.querySelectorAll('[role="alert"]')].map((node) => node.textContent);
-    expect(errors.join(" ")).toMatch(/between 300 and 900/);
     expect(errors.join(" ")).toMatch(/whole number/);
-    expect((element.querySelector("#whatif-credit_score") as HTMLInputElement).getAttribute("aria-invalid")).toBe("true");
+    expect((element.querySelector("#whatif-loan_amount") as HTMLInputElement).getAttribute("aria-invalid")).toBe("true");
   });
 
   it("sends the composed question through the existing ask handler", async () => {
     const onAsk = vi.fn();
     const { element } = await mount({ onAsk });
-    await act(async () => type(element.querySelector("#whatif-credit_score") as HTMLInputElement, "720"));
+    await act(async () => type(element.querySelector("#whatif-loan_amount") as HTMLInputElement, "300000"));
     await act(async () => type(element.querySelector("#whatif-monthly_obligations") as HTMLInputElement, "12000"));
     await act(async () => submit(element));
 
     expect(onAsk).toHaveBeenCalledOnce();
-    expect(onAsk).toHaveBeenCalledWith(
-      "What if my credit score was 720 and my monthly obligations were 12000?",
-    );
+    expect(onAsk).toHaveBeenCalledWith("What if I borrowed 300000 and my existing EMIs were 12000?");
   });
 
   it("disables the fields while a turn is running", async () => {

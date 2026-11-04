@@ -604,11 +604,19 @@ documents:
   lender_relationship: public reference lender, not a partner
   licence: (c) Bajaj Finance Limited / Bajaj Finserv, all rights reserved (bajajfinserv.in/disclaimer); public page read for non-commercial research,
     not redistributed
-  start_marker: What are the eligibility criteria to buy products at no-cost EMIs
-  end_marker: How will I find out the due date of my EMI
-  notes: 'Excerpt sits in the EMI Network Card / consumer-durable section of the FAQ, not a personal-loan policy. Only published statement found
-    on rejection communication: ''We will send you an SMS ... regarding your rejection''. No standalone reject-communication policy found (searched
-    2026-10-14).'
+  start_marker: How will I know the reason for my loan rejection?
+  end_marker: How will I find out the due date of my EMI?
+  notes: 'Excerpt of the contact-us FAQ narrowed to the rejection-communication answer plus the credit-policy factor
+    sentence. FIX 2026-11-03: the previous start_marker began at "What are the eligibility criteria to buy products
+    at no-cost EMIs", so the ingested text opened with EMI Network Card / consumer-durable eligibility content and
+    the rejection answer landed in the second chunk. Both markers are verified UNIQUE in the extracted text
+    (corpus.py:136-139 slices `end_marker` with rindex, so a repeated anchor silently over-captures). Only published
+    statement found on rejection communication: ''We will send you an SMS ... regarding your rejection''. No
+    standalone reject-communication policy found (searched 2026-10-14). Re-verified against
+    runs/policy_local/src/BFL-FAQ-REJECTION.raw (725,475 B, extracted 111,036 chars) on 2026-11-03: yields 1 chunk,
+    607 chars. NOT re-ingested - the active index still holds the 2-chunk version until the Phase 2 rebuild.
+    Known hazard: a marker that no longer exists in the page is silently ignored by _get(), which would then ingest
+    the whole 111k-char FAQ page instead of failing.'
 - document_id: BFL-FPC-2026
   title: Bajaj Finance Ltd - Fair Practice Code Ver 7.1 (January 2026)
   publisher: Bajaj Finance Limited (NBFC, RBI-registered)

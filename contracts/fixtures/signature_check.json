@@ -1,0 +1,7 @@
+{
+  "reference_document_id": "SYN-DOC-PAN0101",
+  "candidate_document_id": "SYN-DOC-SIG0101",
+  "similarity": 0.91,
+  "method": "synthetic-fixture",
+  "experimental": true
+}

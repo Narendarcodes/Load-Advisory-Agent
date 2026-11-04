@@ -1,0 +1,48 @@
+{
+ "schema": "saral-synthetic-internal-lists/1",
+ "synthetic": true,
+ "specimen_marker": "SPECIMEN - SYNTHETIC - NOT A REAL PERSON OR DOCUMENT",
+ "negative_list": [
+  {
+   "synthetic": true,
+   "pan": "ZZHPR8424D",
+   "reason_code": "SYN_DECOY",
+   "listed_on": "2025-09-19",
+   "applicant_id_hint": null
+  },
+  {
+   "synthetic": true,
+   "pan": "ZZQPS6728G",
+   "reason_code": "SYN_DECOY",
+   "listed_on": "2025-09-19",
+   "applicant_id_hint": null
+  },
+  {
+   "synthetic": true,
+   "pan": "ZZBPN0181B",
+   "reason_code": "SYN_DECOY",
+   "listed_on": "2025-09-19",
+   "applicant_id_hint": null
+  }
+ ],
+ "employer_caution_list": [
+  {
+   "synthetic": true,
+   "employer_name": "Phantom Staffing Solutions Pvt Ltd",
+   "category": "PRIVATE",
+   "reason": "SYNTHETIC: salary-credit fraud ring flagged in prototype data"
+  },
+  {
+   "synthetic": true,
+   "employer_name": "Mirage Infra Projects Pvt Ltd",
+   "category": "PRIVATE",
+   "reason": "SYNTHETIC: employer under liquidation (prototype data)"
+  },
+  {
+   "synthetic": true,
+   "employer_name": "Hollow Crest Consultancy LLP",
+   "category": "PRIVATE",
+   "reason": "SYNTHETIC: unverifiable employer address (prototype data)"
+  }
+ ]
+}

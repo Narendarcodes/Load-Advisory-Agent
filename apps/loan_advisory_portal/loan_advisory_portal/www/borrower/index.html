@@ -1,42 +1,42 @@
 {% extends "templates/portal/base.html" %}
 {% block page_content %}
-<div class="page-head">
-	<div>
-		<p class="eyebrow">Overview</p>
-		<h1>Welcome back{% if boot.get("full_name") %}, {{ boot.get("full_name").split(" ")[0] }}{% endif %}</h1>
-		<p>Every application, document and decision in one place. The assistant explains what happened. It never approves or rejects an application.</p>
-	</div>
-	<div class="page-head__actions">
-		<a class="btn btn--ghost" href="/borrower/eligibility">Check eligibility</a>
-		<a class="btn" href="/borrower/apply">Start an application</a>
-	</div>
-</div>
-
-<section class="grid-3" id="summary" aria-label="At a glance">
-	<div class="card card--tight">
-		<div class="metric">
-			<span class="metric__label">Profile</span>
-			<span class="metric__value" data-stat="completion">—</span>
-			<span class="small muted">completed</span>
+{%- set first_name = ((boot.get('full_name') or '').split(' ') | first) -%}
+<section class="dash-hero" aria-labelledby="dash-title">
+	<div class="dash-hero__main">
+		<h1 id="dash-title">{{ 'Hello, ' ~ first_name if first_name else 'Dashboard' }}</h1>
+		<p class="dash-hero__lede">Every application, document and decision in one place.</p>
+		{#- The next step is the key card: white, with a hairline. #}
+		<div class="next-step next-card key-card" id="next-step" aria-live="polite">
+			<h2 id="next-step-heading"><span class="skeleton skeleton--title" aria-hidden="true"></span><span class="sr-only">Loading your next step</span></h2>
+			<p class="small" id="next-step-body"><span class="skeleton skeleton--line skeleton--w80" aria-hidden="true"></span></p>
+			<p class="small muted hidden" id="latest-status"></p>
+			<div class="dash-hero__actions">
+				<div id="next-step-action"></div>
+				<a class="btn btn--ghost btn--sm" href="/borrower/eligibility">Check eligibility</a>
+				<a class="btn btn--sm" href="/borrower/apply">Start an application</a>
+			</div>
 		</div>
 	</div>
-	<div class="card card--tight">
-		<div class="metric">
-			<span class="metric__label">Applications</span>
-			<span class="metric__value" data-stat="count">—</span>
-			<span class="small muted">on this account</span>
-		</div>
-	</div>
-	<div class="card card--tight">
-		<div class="metric">
-			<span class="metric__label">Latest</span>
-			<span class="metric__value metric__value--status" data-stat="latest">—</span>
-			<span class="small muted">status of the newest application</span>
-		</div>
-	</div>
+	{#- The illustration sits on the plain page. #}
+	<img class="dash-hero__art" src="/assets/loan_advisory_portal/illustrations/dashboard.svg" alt="" width="200" height="150">
 </section>
 
-<div class="dashboard mt">
+<dl class="summary-strip" id="summary" aria-label="At a glance">
+	<div>
+		<dt>Profile completed</dt>
+		<dd data-stat="completion">—</dd>
+	</div>
+	<div>
+		<dt>Applications on this account</dt>
+		<dd data-stat="count">—</dd>
+	</div>
+	<div>
+		<dt>Newest application</dt>
+		<dd data-stat="latest">—</dd>
+	</div>
+</dl>
+
+<div class="dashboard">
 	<div class="stack">
 		<section id="active-loan" class="card hidden" aria-labelledby="active-loan-heading">
 			<div class="card__head">
@@ -72,7 +72,7 @@
 			</div>
 		</section>
 
-		<section class="card" aria-labelledby="applications-heading">
+		<section aria-labelledby="applications-heading" id="applications-section">
 			<div class="card__head">
 				<div>
 					<h2 id="applications-heading">Applications</h2>
@@ -80,34 +80,33 @@
 				</div>
 				<a class="small" href="/borrower/profile">Update your profile</a>
 			</div>
-			<div id="applications" aria-live="polite">
-				<p class="muted small">Loading your applications…</p>
+			<div id="applications" aria-live="polite" aria-busy="true">
+				<p class="sr-only">Loading your applications</p>
+				<div class="skeleton-table" aria-hidden="true">
+					<span class="skeleton skeleton--row"></span>
+					<span class="skeleton skeleton--row skeleton--w80"></span>
+					<span class="skeleton skeleton--row"></span>
+					<span class="skeleton skeleton--row skeleton--w70"></span>
+				</div>
 			</div>
 		</section>
 	</div>
 
 	<aside class="dashboard__side" aria-label="Next steps and support">
-		<section class="card card--accent" id="next-step" aria-labelledby="next-step-heading" aria-live="polite">
-			<p class="eyebrow">Next step</p>
-			<h2 id="next-step-heading">Loading…</h2>
-			<p class="small" id="next-step-body">&nbsp;</p>
-			<div id="next-step-action" class="mt"></div>
-		</section>
-
-		<section class="card">
-			<h2>Ask about your application</h2>
-			<p class="small muted mt">The assistant explains policy and the reasons behind a decision in plain language. It never approves or rejects.</p>
+		<section class="card" aria-labelledby="ask-heading">
+			<h2 id="ask-heading">Ask about your application</h2>
+			<p class="small muted mt">Ask why a decision was made, what to fix, or try a what-if.</p>
 			<a class="btn btn--ghost btn--sm mt" href="/borrower/assistant">Open the assistant</a>
 		</section>
 
-		<section class="card">
-			<h2>Need a person?</h2>
+		<section class="card" aria-labelledby="person-heading">
+			<h2 id="person-heading">Need a person?</h2>
 			<p class="small muted mt">Ask for a human review, report a problem, or tell us what was unclear.</p>
-			<a class="btn btn--quiet btn--sm mt" href="/borrower/feedback">Send feedback</a>
-			<a class="btn btn--quiet btn--sm" href="/borrower/help">Read the help page</a>
+			<p class="mt"><a class="btn btn--quiet btn--sm" href="/borrower/feedback">Send feedback</a><a class="btn btn--quiet btn--sm" href="/borrower/help">Read the help page</a></p>
 		</section>
 	</aside>
 </div>
 
+<script src="/assets/loan_advisory_portal/js/status.js" defer></script>
 <script src="/assets/loan_advisory_portal/js/pages/applications.js" defer></script>
 {% endblock %}

@@ -1,0 +1,109 @@
+{
+  "status": "DRAFT - design only; the agent owner implements it",
+  "decisions": [
+    "ADR-0005 (2026-11-03 22:58 IST)",
+    "ADR-0007 #4 (2026-11-03 23:18 IST)",
+    "ADR-0010 #1 (2026-11-03 23:58 IST)"
+  ],
+  "editable_fields": {
+    "loan_amount": {
+      "dictionary_field": "requested_amount",
+      "zen_data_point": "loan_amount",
+      "label": "loan amount",
+      "range": [
+        40000,
+        2500000
+      ]
+    },
+    "tenure_months": {
+      "dictionary_field": "tenure_months",
+      "zen_data_point": "tenure_months",
+      "label": "repayment period",
+      "range": [
+        12,
+        84
+      ]
+    },
+    "existing_emis": {
+      "dictionary_field": "existing_monthly_obligations",
+      "zen_data_point": "existing_emi_total",
+      "label": "existing monthly repayments",
+      "range": [
+        0,
+        10000000
+      ]
+    },
+    "monthly_income": {
+      "dictionary_field": "monthly_net_income",
+      "zen_data_point": "net_monthly_income",
+      "label": "monthly income",
+      "range": [
+        1,
+        10000000
+      ]
+    }
+  },
+  "forbidden_fields": [
+    "credit_score",
+    "bureau_score",
+    "employment_months",
+    "employment_start_date",
+    "risk_grade",
+    "employment_category",
+    "loan_purpose"
+  ],
+  "result_vocabulary": {
+    "WOULD_LIKELY_MEET": "would likely meet",
+    "WOULD_NOT_MEET": "wouldn't meet"
+  },
+  "result_shape": {
+    "result": "WOULD_LIKELY_MEET | WOULD_NOT_MEET",
+    "text": "would likely meet | wouldn't meet",
+    "hypothetical_amount": "the loan amount the borrower typed (echo only)",
+    "label": "Estimate only, your application is unchanged",
+    "remaining_this_session": "int"
+  },
+  "never_returned": [
+    "rule_id",
+    "threshold",
+    "gap",
+    "target",
+    "binding cap",
+    "offered amount",
+    "decision",
+    "rule results"
+  ],
+  "per_session_cap": {
+    "value": 3,
+    "approval_status": "OWNER_APPROVED",
+    "note": "ADR-0010 #1: three what-ifs per session.",
+    "config_key": "SARAL_WHAT_IF_SESSION_CAP"
+  },
+  "side_effects": {
+    "in_memory_only": true,
+    "writes": "none",
+    "record_hash_unchanged": true,
+    "ingest_refuses_is_simulation": true
+  },
+  "evaluation": "WOULD_LIKELY_MEET when PL-129 sizing of the hypothetical request returns APPROVED in full at the asked tenure; otherwise WOULD_NOT_MEET. Request-independent gates keep their recorded result.",
+  "forbidden_words_in_answer": [
+    "approved",
+    "approve",
+    "sanction",
+    "offer",
+    "guarantee",
+    "eligible amount",
+    "threshold",
+    "cut-off",
+    "cutoff",
+    "minimum",
+    "maximum",
+    "limit",
+    "foir",
+    "score",
+    "rule",
+    "gap",
+    "target",
+    "pl-"
+  ]
+}
