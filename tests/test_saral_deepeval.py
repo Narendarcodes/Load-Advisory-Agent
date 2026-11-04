@@ -125,3 +125,52 @@ def test_agent_judge_and_summary_use_only_generated_conversations(tmp_path):
     _write(tmp_path / "agent_turns.jsonl", [{"conv_id": "C2", "turns": []}])
     g, r = m.gold_and_runs(SimpleNamespace(golden=str(gold), manifest=None), tmp_path)
     assert list(g) == ["C2"] and list(r) == ["C2"]
+
+
+def test_judge_routes_default_to_river_kimi_then_glm_then_omniroute(monkeypatch):
+    m = _load("eval_saral_deepeval")
+    for k in ("SARAL_JUDGE_BASE_URL", "SARAL_JUDGE_MODEL", "SARAL_JUDGE_FALLBACKS", "OMNIROUTE_BASE_URL"):
+        monkeypatch.delenv(k, raising=False)
+    assert m.judge_routes() == [("https://api.river.ai/v1", "moonshotai/Kimi-K3"),
+                                ("https://api.river.ai/v1", "GLM-5.3"),
+                                (m.OMNIROUTE_BASE_DEFAULT, "codex/gpt-6-luna")]
+
+
+def test_judge_routes_env_and_cli_overrides(monkeypatch):
+    m = _load("eval_saral_deepeval")
+    monkeypatch.setenv("SARAL_JUDGE_BASE_URL", "http://judge.local/v1")
+    monkeypatch.setenv("SARAL_JUDGE_MODEL", "zai-org/GLM-5.3-Flash")
+    monkeypatch.setenv("SARAL_JUDGE_FALLBACKS", "small/judge, other@river ,x@http://x/v1,")
+    monkeypatch.setenv("OMNIROUTE_BASE_URL", "http://omni/v1")
+    assert m.judge_routes() == [("http://judge.local/v1", "zai-org/GLM-5.3-Flash"), ("http://judge.local/v1", "small/judge"),
+                                ("https://api.river.ai/v1", "other"), ("http://x/v1", "x")]
+    # CLI wins over env; a legacy list of model names stays on the primary endpoint; duplicates dropped
+    assert m.judge_routes("omniroute", "codex/gpt-6-luna", ["codex/gpt-6-luna", "gpt-5.6-terra"]) == [
+        ("http://omni/v1", "codex/gpt-6-luna"), ("http://omni/v1", "gpt-5.6-terra")]
+    assert m.judge_api_key("https://api.river.ai/v1") == __import__("os").environ.get("RIVER_API_KEY", "placeholder")
+
+
+def test_judge_falls_back_to_next_route_on_bad_json(monkeypatch):
+    pytest.importorskip("deepeval")
+    from pydantic import BaseModel
+    m = _load("eval_saral_deepeval")
+    monkeypatch.setenv("SARAL_JUDGE_FALLBACKS", "b@http://b/v1")
+    monkeypatch.delenv("SARAL_JUDGE_BASE_URL", raising=False)
+    monkeypatch.delenv("SARAL_JUDGE_MODEL", raising=False)
+
+    class V(BaseModel):
+        verdict: str
+
+    replies = {"moonshotai/Kimi-K3": "not json", "b": 'noise {"verdict": "yes"} tail'}
+
+    class _Comp:
+        def create(self, model, **_):
+            msg = type("M", (), {"content": replies[model]})
+            return type("R", (), {"choices": [type("C", (), {"message": msg})]})
+
+    j = m.OpenAICompatJudge()
+    for c in j.c.values():
+        monkeypatch.setattr(c, "chat", type("Ch", (), {"completions": _Comp()})(), raising=False)
+    j.tl.used = set()
+    assert j.generate("q", schema=V).verdict == "yes"
+    assert j.tl.used == {"b"} and j.calls == {"b": 1} and j.name == "moonshotai/Kimi-K3"

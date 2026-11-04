@@ -505,28 +505,89 @@ GEVALS = {
 }
 
 
-class OpenAICompatJudge:
-    """DeepEval custom judge over an OpenAI-compatible endpoint (OmniRoute). JSON mode (response_format json_object; the
-    DeepEval templates already spell out the JSON keys), parsed into DeepEval's pydantic schema. If the primary judge
-    model fails after the client's retries, the call goes to the fallback model; the model used is recorded per call."""
+RIVER_BASE = "https://api.river.ai/v1"
+OMNIROUTE_BASE_DEFAULT = "https://victus-laptop.tailbe5bba.ts.net/v1"
+DEFAULT_JUDGE_MODEL = "moonshotai/Kimi-K3"
+DEFAULT_JUDGE_FALLBACKS = "GLM-5.3@river,codex/gpt-6-luna@omniroute"
 
-    def __new__(cls, base, model, fallbacks=()):
+
+def _resolve_base(tag, default):
+    """`river` / `omniroute` aliases, an explicit URL, or empty (= the primary judge's endpoint)."""
+    tag = (tag or "").strip()
+    if not tag:
+        return default
+    if tag.lower() == "river":
+        return RIVER_BASE
+    if tag.lower() == "omniroute":
+        return os.environ.get("OMNIROUTE_BASE_URL", OMNIROUTE_BASE_DEFAULT)
+    return tag
+
+
+def judge_routes(base=None, model=None, fallbacks=None):
+    """Ordered (base_url, model) routes for the LLM judge. CLI args win over env, env over defaults:
+    SARAL_JUDGE_BASE_URL (default River AI), SARAL_JUDGE_MODEL (default moonshotai/Kimi-K3) and
+    SARAL_JUDGE_FALLBACKS, a comma list of `model@endpoint` where endpoint is `river`, `omniroute` or a URL
+    (default GLM-5.3 on River, then codex/gpt-6-luna via OmniRoute). A fallback without `@` uses the primary endpoint.
+    `fallbacks` may be a list (legacy: model names on the primary endpoint) or a comma string in the same syntax."""
+    b0 = _resolve_base(base or os.environ.get("SARAL_JUDGE_BASE_URL"), RIVER_BASE)
+    m0 = model or os.environ.get("SARAL_JUDGE_MODEL") or DEFAULT_JUDGE_MODEL
+    if fallbacks is None:
+        fallbacks = os.environ.get("SARAL_JUDGE_FALLBACKS", DEFAULT_JUDGE_FALLBACKS)
+    items = fallbacks.split(",") if isinstance(fallbacks, str) else list(fallbacks)
+    routes = [(b0, m0)]
+    for it in items:
+        it = it.strip()
+        if not it:
+            continue
+        m, _, b = it.rpartition("@") if "@" in it else (it, "", "")
+        r = (_resolve_base(b, b0), m.strip())
+        if r not in routes:
+            routes.append(r)
+    return routes
+
+
+def judge_api_key(base):
+    """Placeholder key per endpoint; the real key is injected on the wire by the gateway host."""
+    if "river.ai" in base:
+        return os.environ.get("RIVER_API_KEY", "placeholder")
+    if base == os.environ.get("OMNIROUTE_BASE_URL", OMNIROUTE_BASE_DEFAULT) and os.environ.get("OMNIROUTE_API_KEY"):
+        return os.environ["OMNIROUTE_API_KEY"]
+    return os.environ.get("JUDGE_API_KEY", "placeholder")
+
+
+class OpenAICompatJudge:
+    """DeepEval custom judge over OpenAI-compatible endpoints (default: Kimi-K3 on River AI, then GLM-5.3 on River,
+    then codex/gpt-6-luna via OmniRoute; see `judge_routes`). JSON mode (response_format json_object; the DeepEval
+    templates already spell out the JSON keys), parsed into DeepEval's pydantic schema. If a route fails (HTTP error
+    after the client's retries, or output that does not parse into the schema), the next route is tried; the model
+    used is recorded per call."""
+
+    def __new__(cls, base=None, model=None, fallbacks=None):
         import threading
         from deepeval.models import DeepEvalBaseLLM
         from openai import AsyncOpenAI, OpenAI
 
+        routes = judge_routes(base, model, fallbacks)
+
         class _J(DeepEvalBaseLLM):
             def __init__(self):
-                self.base, self.name, self.models = base, model, [model, *fallbacks]
-                key = os.environ.get("JUDGE_API_KEY", "placeholder")  # injected on the wire by the gateway host
+                self.routes = routes
+                self.base, self.name = routes[0]
+                self.models = [m for _, m in routes]
                 tmo = float(os.environ.get("JUDGE_TIMEOUT", "120"))
-                self.c = OpenAI(base_url=base, api_key=key, timeout=tmo, max_retries=3)
-                self.ac = AsyncOpenAI(base_url=base, api_key=key, timeout=tmo, max_retries=3)
+                retries = int(os.environ.get("JUDGE_MAX_RETRIES", "3"))
+                self.max_tokens = int(os.environ.get("SARAL_JUDGE_MAX_TOKENS", "6000"))  # reasoning tokens count here
+                self.c = {b: OpenAI(base_url=b, api_key=judge_api_key(b), timeout=tmo, max_retries=retries)
+                          for b, _ in routes}
+                self.ac = {b: AsyncOpenAI(base_url=b, api_key=judge_api_key(b), timeout=tmo, max_retries=retries)
+                           for b, _ in routes}
                 self.tl = threading.local()
-                super().__init__(model)
+                self.lock = threading.Lock()
+                self.calls = {}
+                super().__init__(self.name)
 
             def load_model(self):
-                return self.c
+                return self.c[self.base]
 
             def get_model_name(self):
                 return self.name
@@ -544,16 +605,21 @@ class OpenAICompatJudge:
                     return schema.model_validate_json(m.group(0)) if m else schema.model_validate_json(txt)
 
             def _note(self, m):
+                with self.lock:
+                    self.calls[m] = self.calls.get(m, 0) + 1
                 used = getattr(self.tl, "used", None)
                 if used is not None:
                     used.add(m)
 
+            def _req(self, m, prompt, schema):
+                return dict(model=m, temperature=0.0, max_tokens=self.max_tokens,
+                            messages=[{"role": "user", "content": prompt}], **self._kw(schema))
+
             def generate(self, prompt, schema=None, **_):
                 err = None
-                for m in self.models:
+                for b, m in self.routes:
                     try:
-                        r = self.c.chat.completions.create(model=m, temperature=0.0, max_tokens=3000,
-                                                           messages=[{"role": "user", "content": prompt}], **self._kw(schema))
+                        r = self.c[b].chat.completions.create(**self._req(m, prompt, schema))
                         out = self._parse(r.choices[0].message.content, schema)
                         self._note(m)
                         return out
@@ -563,10 +629,9 @@ class OpenAICompatJudge:
 
             async def a_generate(self, prompt, schema=None, **_):
                 err = None
-                for m in self.models:
+                for b, m in self.routes:
                     try:
-                        r = await self.ac.chat.completions.create(model=m, temperature=0.0, max_tokens=3000,
-                                                                  messages=[{"role": "user", "content": prompt}], **self._kw(schema))
+                        r = await self.ac[b].chat.completions.create(**self._req(m, prompt, schema))
                         out = self._parse(r.choices[0].message.content, schema)
                         self._note(m)
                         return out
@@ -580,7 +645,8 @@ def judge(a):
     from deepeval.metrics import (AnswerRelevancyMetric, ContextualPrecisionMetric, ContextualRecallMetric,
                                   ContextualRelevancyMetric, FaithfulnessMetric, GEval)
     from deepeval.test_case import LLMTestCase, LLMTestCaseParams as P
-    jm = OpenAICompatJudge(a.judge_base, a.judge_model, [m for m in os.environ.get("JUDGE_FALLBACK", "").split(",") if m])
+    jm = OpenAICompatJudge(a.judge_base, a.judge_model, os.environ.get("JUDGE_FALLBACK") or None)
+    a.judge_model = jm.name
     by_id = {c["chunk_id"]: c for col in COLLECTIONS for c in jl(Path(a.data) / f"{col}.chunks.jsonl")}
     gold = {g["qid"]: g for g in load_golden(a.data, a.golden)}
     ans = {r["qid"]: r for r in jl(Path(a.out) / "answers.jsonl")}
@@ -681,8 +747,9 @@ def judge(a):
     import deepeval
     Path(a.out, "judge_info.json").write_text(json.dumps({"judge_model": a.judge_model, "deepeval": deepeval.__version__,
         "jobs": len(jobs), "errors": sum(r["error"] is not None and not str(r["error"]).startswith("skipped") for r in rows),
-        "skipped_deadline": sum(str(r["error"]).startswith("skipped") for r in rows), "endpoints": a.judge_base,
-        "fallback_models": [m for m in os.environ.get("JUDGE_FALLBACK", "").split(",") if m],
+        "skipped_deadline": sum(str(r["error"]).startswith("skipped") for r in rows),
+        "routes": [{"base_url": b, "model": m} for b, m in jm.routes], "calls_by_model_this_run": jm.calls,
+        "fallback_models": [m for _, m in jm.routes[1:]],
         "jobs_using_fallback": [f"{r['qid']}|{r['metric']}" for r in rows if r.get("judge_fallback")],
         "seconds": round(time.time() - t0, 1)}, indent=1))
 

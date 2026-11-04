@@ -12,7 +12,7 @@ Two steps, each resumable:
             run needs no embedding model in memory. The LLM is reached through OmniRoute; on an LLM error the
             fallback model is tried and the call is logged.
   judge     Deterministic: leak patterns (global + per-turn) on every shown answer, ToolCorrectness (ordered tool
-            names per turn, deepeval ToolCorrectnessMetric). LLM-judged (DeepEval, judge via OmniRoute):
+            names per turn, deepeval ToolCorrectnessMetric). LLM-judged (DeepEval, judge on River AI, see judge_routes):
             RoleAdherence per conversation, borrower_safe_disclosure ConversationalGEval per conversation, and an
             ExpectedBehaviour GEval per turn (must_include / must_not_include / expected_behaviour).
   summarise Aggregate by bar, language, scenario decision and probe type -> agent_summary.json.
@@ -325,11 +325,13 @@ def judge(a):
     from deepeval.metrics import ConversationalGEval, GEval, RoleAdherenceMetric, ToolCorrectnessMetric
     from deepeval.test_case import ConversationalTestCase, LLMTestCase, LLMTestCaseParams as P, ToolCall, Turn
     sys.path.insert(0, str(Path(a.eval_script_dir)))
-    from eval_saral_deepeval import OpenAICompatJudge  # same judge client (OmniRoute, fallback logged per call)
+    from eval_saral_deepeval import OpenAICompatJudge  # same judge client (River AI by default, fallback logged per call)
 
     out = Path(a.out)
     gold, runs = gold_and_runs(a, out)
-    jm = OpenAICompatJudge(a.judge_base, a.judge_model, [m for m in (a.judge_fallback or "").split(",") if m])
+    jm = OpenAICompatJudge(a.judge_base, a.judge_model, a.judge_fallback or None)
+    a.judge_model = jm.name
+    t_start = time.time()
     part = out / "agent_scores.partial.jsonl"
     done = {(r["conv_id"], r["metric"], r.get("turn")) for r in jl(part) if r.get("error") is None} if part.exists() else set()
     lock = threading.Lock()
@@ -430,7 +432,12 @@ def judge(a):
         with (out / "agent_scores.jsonl").open("w", encoding="utf-8") as f:
             for r in best.values():
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
-    print(json.dumps({"scored": ok, "total": total}))
+    (out / "judge_info.json").write_text(json.dumps({
+        "judge_model": jm.name, "routes": [{"base_url": b, "model": m} for b, m in jm.routes],
+        "calls_by_model_this_run": jm.calls, "jobs_this_run": len(jobs), "scored": ok, "total": total,
+        "jobs_using_fallback": sum(1 for r in best.values() if r.get("judge_fallback")),
+        "seconds_this_run": round(time.time() - t_start, 1)}, indent=1))
+    print(json.dumps({"scored": ok, "total": total, "judge_calls": jm.calls}))
 
 
 # ---------------------------------------------------------------------------------------------- summarise
@@ -542,8 +549,9 @@ def main():
     p.add_argument("--llm-model", default="antigravity/claude-sonnet-4-6")
     p.add_argument("--llm-fallback", default="gpt-5.6-terra")
     p.add_argument("--judge-base")
-    p.add_argument("--judge-model", default="codex/gpt-6-luna")
-    p.add_argument("--judge-fallback", default="gpt-5.6-terra")
+    p.add_argument("--judge-model", help="default: env SARAL_JUDGE_MODEL, else moonshotai/Kimi-K3 on River AI")
+    p.add_argument("--judge-fallback", help="comma list of model@endpoint (river|omniroute|URL); default: env "
+                                            "SARAL_JUDGE_FALLBACKS, else GLM-5.3@river,codex/gpt-6-luna@omniroute")
     p.add_argument("--eval-script-dir", default=str(Path(__file__).parent))
     p.add_argument("--workers", type=int, default=3)
     p.add_argument("--budget-s", type=float, default=1e9, help="stop starting new work after this many seconds")
