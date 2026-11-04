@@ -74,5 +74,8 @@ describe("plain decision copy", () => {
     expect(whatIfMeets("APPROVED")).toBe(true);
     expect(whatIfMeets("REJECTED")).toBe(false);
     expect(whatIfMeets(undefined)).toBeNull();
+    expect(whatIfMeets("COULD_NOT_ESTIMATE")).toBeNull();
+    expect(whatIfMeets("ERROR")).toBeNull();
+    expect(whatIfMeets("WOULD_NOT_MEET")).toBe(false);
   });
 });
