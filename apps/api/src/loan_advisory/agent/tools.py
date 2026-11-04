@@ -26,6 +26,8 @@ LIMITS = {"monthly_income": (1, 100_000_000), "monthly_obligations": (0, 100_000
           "credit_score": (300, 900), "employment_months": (0, 600),
           "loan_amount": (10_000, 50_000_000), "tenure_months": (12, 108)}
 V2_ONLY_FIELDS = ("loan_amount", "tenure_months")  # amount / loan-period estimates need the catalogue-v2 sizing (Q-03)
+# Outcome names only catalogue v2 records; a record carrying one is estimated under v2 even if its policy version is blank.
+V2_DECISIONS = ("ELIGIBILITY_CONDITIONS_MET", "COUNTER_OFFER", "DECLINE", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED")
 WOULD_MEET = ("APPROVED", "ELIGIBILITY_CONDITIONS_MET")
 NOT_ESTIMABLE = ("ERROR", "MANUAL_REVIEW", "MORE_INFORMATION_REQUIRED", "REVIEW")
 
@@ -161,7 +163,7 @@ class DecisionTools:
             raise InvalidWhatIf("no hypothetical change given")
         record = record if record is not None else self.evidence.latest(application_ref, doc)
         version = ((record or {}).get("policy") or {}).get("version") or configured_policy_version()
-        if version == V2_VERSION:
+        if version == V2_VERSION or (record or {}).get("decision") in V2_DECISIONS:
             return self._what_if_v2(application_ref, doc, record or {}, clean)
         if any(k in V2_ONLY_FIELDS for k in clean):
             raise InvalidWhatIf("estimates for a different loan amount or loan period aren't available for this application yet")

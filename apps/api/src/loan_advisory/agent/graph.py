@@ -407,12 +407,14 @@ class AdvisoryAgent:
         it fetch it, once, in load_evidence."""
         req = self._req(s)
         flags = G.request_flags(req.message, req.application_ref)
-        if req.application_ref and DISPUTE.search(req.message) and not flags \
-                and not G.is_informational_question(req.message):
-            flags = ["dispute"]
+        if req.application_ref and DISPUTE.search(req.message) and not G.is_informational_question(req.message) \
+                and not {"injection", "other_applicant", "misrepresentation"} & set(flags):
+            flags = ["dispute"]  # a claim that the recorded data is wrong goes to a person, even with "update/approve it"
+        if req.application_ref and _foreign_ref(req.message, req.application_ref) and "other_applicant" not in flags:
+            flags = ["other_applicant"] + flags
         route = first_route(self.routers, req.message, req.locale, _last_assistant(s))
-        if route is not None and route.intent in ("misrepresentation", "bureau_request", "other_applicant", "injection") \
-                and not flags:
+        if route is not None and route.intent in ("misrepresentation", "bureau_request", "other_applicant", "injection",
+                                                  "guarantee") and not flags:
             flags = [route.intent]
         if flags:
             if "misrepresentation" not in flags and route is not None and route.intent == "misrepresentation":
@@ -444,6 +446,8 @@ class AdvisoryAgent:
             changes = j.get("what_if_changes") or None
         except (LLMError, AttributeError):
             intent = None
+        if intent == "status":  # "status" is only taken from the keyword router; the LLM's status reads as explain
+            intent = "explain"
         if intent == "misrepresentation":
             self._ev(s, "classify", intent="boundary", flags=["misrepresentation"], by="llm")
             return {"intent": "boundary", "flags": ["misrepresentation"], "trace": s["trace"]}
@@ -537,7 +541,7 @@ class AdvisoryAgent:
         except InvalidWhatIf as e:
             self._ev(s, "run_what_if", error=str(e))
             obs.set_attrs(sp, **{"what_if.count": used, "what_if.cap": cap, "what_if.status": "invalid"})
-            return {"status": "bad_what_if", "what_if": {"error": str(e)}, "trace": s["trace"]}
+            return {"status": "bad_what_if", "what_if": {"error": _plain_wi_error(str(e), req.locale)}, "trace": s["trace"]}
         res = F.what_if_result(w)
         count = used + (0 if res == "COULD_NOT_ESTIMATE" else 1)  # a failed estimate reveals nothing; not counted
         w = {**w, "remaining_this_session": max(0, cap - count)}
@@ -826,7 +830,7 @@ class AdvisoryAgent:
             pe = bf.get("provider_error") or {}
             retryable = bool(pe.get("retryable"))
             txt = P.template("bureau_provider_retry" if retryable else "bureau_provider_manual", req.locale,
-                             code=pe.get("code") or "BUREAU_ERROR")
+                             reason=P.bureau_reason(pe.get("code"), req.locale))
             action = "clarify" if retryable else "handoff"
         elif st == "manual_review":
             txt, action = P.template("manual_review", flags=", ".join(rec.get("flags") or ["flagged for review"])), "handoff"
@@ -1115,12 +1119,22 @@ _WI = [("credit_score", re.compile(r"(?:credit\s*score|cibil|score)\D{0,20}(\d{3
        ("monthly_obligations", re.compile(r"(?:emi|emis|obligations?)\D{0,25}(?:₹\s?)?(\d[\d,]*)", re.I)),
        ("monthly_income", re.compile(r"(?:income|salary|earn)\D{0,25}(?:₹\s?)?(\d[\d,]*)", re.I)),
        ("tenure_months", re.compile(r"(\d{2,3})\s*months?\b(?![^.]{0,20}\b(job|work|employ))", re.I)),
-       ("loan_amount", re.compile(r"(?:loan(?:\s+amount)?|borrow|amount)\D{0,15}(?:₹\s?)?(\d[\d,.]*)\s*(lakh|lac|l\b)?", re.I))]
+       ("loan_amount", re.compile(r"(?:loan\s+amount|borrow(?:ed)?|ask(?:ed)?\s+for|apply\s+for|get(?:\s+the\s+full)?|take)\s*"
+                                  r"(?:of\s+)?(?:₹\s?)?(\d[\d,.]*)\s*(lakh|lac|l\b)?", re.I))]
+
+
+_CLOSE_LOAN = re.compile(r"\b(close|clear|pay\s+off|repay|prepay|foreclose)\s+(my\s+|one\s+|the\s+|a\s+)?(\w+\s+)?(loan|emi|card)\b"
+                         r"[^.?\d]{0,30}(?:₹\s?)?(\d[\d,]*)\s*(?:a|per|/)\s*month", re.I)
 
 
 def _regex_changes(msg: str) -> dict | None:
     out = {}
+    m = _CLOSE_LOAN.search(msg)
+    if m:  # "if I close my bike loan, which is 4,000 a month" -> EMIs down by that amount
+        out["monthly_obligations"] = {"delta": -float(m.group(5).replace(",", ""))}
     for field, rx in _WI:
+        if field in out:
+            continue
         m = rx.search(msg)
         if m:
             try:
@@ -1129,6 +1143,8 @@ def _regex_changes(msg: str) -> dict | None:
                 continue
             if field == "loan_amount" and (m.lastindex or 0) >= 2 and m.group(2):
                 v *= 100_000
+            if field == "loan_amount" and v < 10_000:
+                continue
             out[field] = {"set": v}
     return out or None
 
@@ -1212,4 +1228,47 @@ def _local_violations(text: str, decision_turn: bool, own: set, limits: set) -> 
             if n in limits:
                 out.append("limit_value:" + n)
     return sorted(set(out))
+
+
+_WI_WORDS = {
+    "en": {"monthly_income": "monthly income", "monthly_obligations": "monthly EMIs", "loan_amount": "loan amount",
+           "tenure_months": "loan period", "credit_score": "credit score", "employment_months": "time in your job"},
+    "hi": {"monthly_income": "मासिक आय", "monthly_obligations": "मासिक EMI", "loan_amount": "लोन राशि",
+           "tenure_months": "लोन की अवधि", "credit_score": "क्रेडिट स्कोर", "employment_months": "नौकरी की अवधि"},
+    "te": {"monthly_income": "నెలవారీ ఆదాయం", "monthly_obligations": "నెలవారీ EMIలు", "loan_amount": "లోన్ మొత్తం",
+           "tenure_months": "లోన్ వ్యవధి", "credit_score": "క్రెడిట్ స్కోర్", "employment_months": "ఉద్యోగంలో ఉన్న కాలం"},
+}
+_WI_PHRASES = {
+    "en": ("that {w} is outside what I can estimate", "I couldn't read the {w} as a number", "number",
+           "that change isn't one I can estimate"),
+    "hi": ("यह {w} उस दायरे से बाहर है जिसका मैं अनुमान लगा सकता हूँ", "मैं {w} को संख्या के रूप में नहीं पढ़ सका", "संख्या",
+           "इस बदलाव का अनुमान मैं नहीं लगा सकता"),
+    "te": ("ఆ {w} నేను అంచనా వేయగల పరిధికి బయట ఉంది", "{w}ను సంఖ్యగా చదవలేకపోయాను", "సంఖ్య",
+           "ఆ మార్పుకు నేను అంచనా వేయలేను"),
+}
+
+
+def _plain_wi_error(msg: str, locale: str = "en") -> str:
+    """An InvalidWhatIf message in plain words: field names as words, never an allowed range or limit."""
+    words, (out_of_range, not_number, generic_word, generic) = (_WI_WORDS.get(locale) or _WI_WORDS["en"],
+                                                              _WI_PHRASES.get(locale) or _WI_PHRASES["en"])
+    m = re.match(r"(\w+) is outside the allowed range", msg)
+    if m:
+        return out_of_range.format(w=words.get(m.group(1), generic_word))
+    m = re.match(r"(\w+) must be a number", msg)
+    if m:
+        return not_number.format(w=words.get(m.group(1), generic_word))
+    if locale in ("hi", "te"):  # the remaining messages are English sentences; say it plainly in the borrower's language
+        return generic
+    for k, w in words.items():
+        msg = msg.replace(k, w)
+    return msg
+
+
+_APP_REF = re.compile(r"\b(?:SYN-LA|APP-TEST|ACC-LOAP-\d{4})-\d+\b|\bSYN-LA-\d+\b", re.I)
+
+
+def _foreign_ref(msg: str, own: str) -> bool:
+    """An application reference in the message that is not the signed-in applicant's own."""
+    return any(m.group(0).upper() != (own or "").upper() for m in _APP_REF.finditer(msg or ""))
 
