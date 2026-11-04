@@ -36030,11 +36030,39 @@ var qM = {
 	ERROR: {
 		label: "Check could not be completed",
 		tone: "warn"
+	},
+	COUNTER: {
+		label: "Smaller offer",
+		tone: "warn"
+	},
+	INFO_REQUESTED: {
+		label: "Details needed",
+		tone: "warn"
+	},
+	MANUAL_REVIEW: {
+		label: "Needs review",
+		tone: "warn"
+	},
+	ELIGIBILITY_CONDITIONS_MET: {
+		label: "Approved",
+		tone: "ok"
+	},
+	COUNTER_OFFER: {
+		label: "Smaller offer",
+		tone: "warn"
+	},
+	MORE_INFORMATION_REQUIRED: {
+		label: "Details needed",
+		tone: "warn"
+	},
+	DECLINE: {
+		label: "Not approved",
+		tone: "bad"
 	}
 };
 function JM(e) {
-	return e ? qM[e] ?? {
-		label: e,
+	return e ? qM[e.toUpperCase()] ?? {
+		label: "Decision recorded",
 		tone: "neutral"
 	} : {
 		label: "Not recorded",
