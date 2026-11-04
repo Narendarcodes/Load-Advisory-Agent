@@ -232,9 +232,15 @@ def generate(a):
         tl.wrap(col_tools, "search", "search_approved_policy")
 
     from loan_advisory.agent.contracts import AgentRequest, Session
+    intent_mode = os.environ.get("SARAL_EVAL_INTENT", "production")  # production | answer (classify with the answer model)
 
     def run_conv(conv):
         agent, tools, rec = build_agent_for(conv, llm, policy_tools, profile)
+        if intent_mode == "production" and hasattr(agent, "intent_llm"):
+            # the harness wraps the answer client, so the graph cannot see a ChatLLM and would classify with the answer
+            # model; build the classifier exactly as production does (SARAL_INTENT_*: Groq gpt-oss-120b -> 20b -> gateway)
+            from loan_advisory.agent.intent_llm import build_intent_llm
+            agent.intent_llm = build_intent_llm(llm.primary, agent.settings)
         for m in ("authorize", "get_application_summary", "get_decision_evidence", "run_what_if", "improvement_plan"):
             tl.wrap(tools, m, m)
         tl.wrap(agent.handoff, "create", "create_human_handoff")
@@ -265,6 +271,7 @@ def generate(a):
                           "handoff_ref": bool(rd.get("handoff_ref")), "tools_called": names,
                           "expected_tools": t["expected_tool_calls"], "seconds": round(time.time() - t0, 1),
                           "llm_errors": [c.get("error") for c in llm_calls if c.get("error")],
+                          "llm_tags": [f"{c.get('tag')}" + (f":ERR:{c.get('error')}" if c.get("error") else "") for c in llm_calls],
                           "template_fallback": any("fallback" in str(f) for f in rd.get("guard_flags") or []) or rd.get("action") == "fallback",
                           "error": err})
         return {"conv_id": conv["conv_id"], "language": conv["language"], "script": conv.get("script"),
