@@ -291,7 +291,7 @@ test("a signed-in turn mints one assertion and completes through Runtime -> Fast
   assert.equal((events[0] as unknown as { threadId?: string }).threadId, "thread-spike");
 
   assert.match(textOf(events), /synthetic prototype policy/i);
-  assert.match(textOf(events), /credit score/i);
+  assert.match(textOf(events), /existing EMIs are high for this loan amount/i);
   const state = agent.state as Record<string, unknown>;
   const card = state.decision_card as Record<string, unknown>;
   assert.equal(card.application_ref, "APP-TEST-005");
