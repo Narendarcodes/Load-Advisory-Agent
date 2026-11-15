@@ -11,18 +11,23 @@ Retrieval uses the repo's own pieces and config/rag.yaml settings: EmbeddingGemm
 query prompt) + BM25, weighted RRF, bge-reranker-v2-m3 over the top candidates.
 
     python scripts/policy/index_corpus_v3.py --chunks <build_corpus_v3 --out dir> --qdrant-dir <dir> \
-        --report data/corpus_v3/smoke_test.json [--replace-index] [--no-rerank]
+        --report data/corpus_v3/smoke_test.json --model-revision <immutable-commit-sha>
+        [--replace-index] [--no-rerank]
 """
 import argparse
 import json
 import os
 import sys
 import time
+import warnings
+from importlib import metadata as importlib_metadata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from rag.index_meta import index_identity  # noqa: E402
+from rag.index_meta import (  # noqa: E402
+    checkpoint_artifact_sha256, index_build_provenance, index_identity, validate_model_revision,
+)
 from rag.retrieve import (DOC_PREFIX, BM25Index, CrossEncoderReranker, DenseIndex, HybridRetriever,  # noqa: E402
                           RetrievalFilter, doc_string, load_rag_config, rebuild_index)
 
@@ -122,11 +127,67 @@ def audit(col: str, chunks: list[dict], foreign: dict) -> dict:
             "pass": not (wrong_doc or banned_doc or banned_text or wrong_col or leaked)}
 
 
+def _loaded_model_configuration(model, device: str, dtype: str) -> dict:
+    config = {
+        "model_id": EMBED,
+        "device": device,
+        "torch_dtype": dtype,
+        "normalize_embeddings": True,
+        "query_prompt": QUERY_PROMPT,
+        "query_prompt_text": (getattr(model, "prompts", {}) or {}).get(QUERY_PROMPT),
+    }
+    modules = getattr(model, "_modules", {})
+    values = modules.values() if hasattr(modules, "values") else ()
+    for module in values:
+        transformer = getattr(module, "auto_model", None)
+        model_config = getattr(transformer, "config", None)
+        if model_config is not None:
+            to_dict = getattr(model_config, "to_dict", None)
+            config["transformer_config"] = to_dict() if callable(to_dict) else vars(model_config)
+            break
+    return config
+
+
+def _library_versions() -> dict:
+    packages = ("torch", "transformers", "sentence-transformers", "qdrant-client")
+    versions = {}
+    for package in packages:
+        try:
+            versions[package] = importlib_metadata.version(package)
+        except importlib_metadata.PackageNotFoundError:
+            versions[package] = None
+    return versions
+
+
+def _checkpoint_sha256(model_id: str, revision: str) -> str | None:
+    try:
+        from huggingface_hub import snapshot_download
+        snapshot = Path(snapshot_download(repo_id=model_id, revision=revision, local_files_only=True))
+        weight_suffixes = {".safetensors", ".bin", ".pt", ".pth", ".ckpt", ".msgpack"}
+        files = [path for path in snapshot.rglob("*") if path.is_file() and path.suffix.lower() in weight_suffixes]
+        if not files:
+            warnings.warn(f"No checkpoint weight artifacts found in cached snapshot for {model_id}@{revision}; checkpoint_sha256 will be null.", RuntimeWarning)
+            return None
+        return checkpoint_artifact_sha256(snapshot, files)
+    except Exception as exc:
+        warnings.warn(f"Could not compute checkpoint artifact hash for {model_id}@{revision}: {type(exc).__name__}: {exc}; checkpoint_sha256 will be null.", RuntimeWarning)
+        return None
+
+
+def _model_revision_arg(value: str) -> str:
+    try:
+        return validate_model_revision(value)
+    except Exception as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--chunks", required=True)
     ap.add_argument("--qdrant-dir", required=True, help="LOCAL embedded Qdrant root (never a server)")
     ap.add_argument("--report", required=True)
+    ap.add_argument("--model-revision", required=True, type=_model_revision_arg,
+                    help="immutable 40- or 64-character Hugging Face commit ID used to build vectors")
     ap.add_argument("--replace-index", action="store_true")
     ap.add_argument("--no-rerank", action="store_true")
     ap.add_argument("--dtype", default="bfloat16", choices=["bfloat16", "float32"])
@@ -138,16 +199,30 @@ def main(argv=None):
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = getattr(torch, a.dtype)
     t0 = time.time()
-    emb = SentenceTransformer(EMBED, device=dev, model_kwargs={"torch_dtype": dtype})
-    identity = index_identity(embed_model=EMBED, dimension=getattr(emb, "get_embedding_dimension", emb.get_sentence_embedding_dimension)(),
+    emb = SentenceTransformer(EMBED, device=dev, model_kwargs={"torch_dtype": dtype},
+                              revision=a.model_revision)
+    dimension = getattr(emb, "get_embedding_dimension", emb.get_sentence_embedding_dimension)()
+    query_prompt_text = (getattr(emb, "prompts", {}) or {}).get(QUERY_PROMPT)
+    versions = _library_versions()
+    checkpoint_hash = _checkpoint_sha256(EMBED, a.model_revision)
+    provenance = index_build_provenance(
+        model_id=EMBED, model_revision=a.model_revision, dimension=dimension,
+        distance="COSINE",
+        model_configuration=_loaded_model_configuration(emb, dev, str(dtype)),
+        embedding_dtype=str(dtype), library_versions=versions,
+        checkpoint_sha256=checkpoint_hash,
+    )
+    identity = index_identity(embed_model=EMBED, dimension=dimension,
                               doc_prefix=DOC_PREFIX, query_prompt=QUERY_PROMPT,
-                              query_prompt_text=(getattr(emb, "prompts", {}) or {}).get(QUERY_PROMPT))
+                              query_prompt_text=query_prompt_text,
+                              provenance=provenance)
     cfg, _, _ = load_rag_config()
     if a.no_rerank:
         cfg.rerank_candidates = 0
     reranker = CrossEncoderReranker(device=dev) if cfg.rerank_candidates else None
     embed_q = lambda q: emb.encode(q, prompt_name=QUERY_PROMPT, normalize_embeddings=True)  # noqa: E731
     report = {"mode": "automated / live-local", "device": dev, "dtype": a.dtype, "embed_model": EMBED,
+              "provenance": provenance,
               "reranker": None if reranker is None else "BAAI/bge-reranker-v2-m3",
               "fusion": {"k": cfg.k, "w_dense": cfg.w_dense, "w_bm25": cfg.w_bm25, "rerank_candidates": cfg.rerank_candidates},
               "collections": {}, "questions": []}

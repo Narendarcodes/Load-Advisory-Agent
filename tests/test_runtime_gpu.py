@@ -4,6 +4,7 @@ torch, sentence_transformers, rag.retrieve and rag.dense_read are replaced by fa
 without a GPU, a model download or a Qdrant collection. The dense handle is faked rather than built
 because the serving runtime no longer creates one: `test_index_compat.py` covers what a real open does.
 """
+import json
 import sys
 import types
 
@@ -51,7 +52,7 @@ class FakeRetriever:
 @pytest.fixture
 def fakes(monkeypatch, tmp_path):
     cuda = FakeCuda()
-    torch = types.SimpleNamespace(cuda=cuda, bfloat16="bf16")
+    torch = types.SimpleNamespace(cuda=cuda, bfloat16="torch.bfloat16", float32="torch.float32")
     st = types.SimpleNamespace(SentenceTransformer=lambda *a, **kw: types.SimpleNamespace(encode=lambda *a, **kw: [[0.0]]))
     flt = types.SimpleNamespace(mode="current", lender_id=None, entity_type=None)
     rr = types.SimpleNamespace(
@@ -62,6 +63,9 @@ def fakes(monkeypatch, tmp_path):
         load_profile=lambda name: {}, profile_filter=lambda profile, mode="current": flt,
         load_rag_config=lambda: (types.SimpleNamespace(rerank_candidates=0), {}, "current"))
     monkeypatch.setitem(sys.modules, "torch", torch)
+    from loan_advisory.agent.model_manager import ModelManager
+    monkeypatch.setattr(runtime, "MODEL_MANAGER", ModelManager(available_memory=lambda: 32 * 1024**3))
+    monkeypatch.setattr(runtime, "_check_embedding_index_compatibility", lambda *a, **kw: None)
     monkeypatch.setitem(sys.modules, "sentence_transformers", st)
     class FakeDenseSearch:
         @staticmethod
@@ -122,3 +126,75 @@ def test_retriever_device_env_forces_cpu_without_vram_cap(fakes, monkeypatch):
     tools, _ = runtime.load_policy_tools(policy_dir=pdir)
     assert cuda.fractions == []
     assert tools.retriever.search.__name__ != "search_and_release"
+
+
+def _write_compat_sidecar(path, *, model_revision=None):
+    path.mkdir(parents=True, exist_ok=True)
+    metadata = {"embed_model": "google/embeddinggemma-2", "dimension": 768}
+    if model_revision is not None:
+        metadata["model_revision"] = model_revision
+    (path / "index_compat.json").write_text(json.dumps(metadata), encoding="utf-8")
+
+
+def _use_embedded_backend(monkeypatch, path):
+    from rag import dense_read
+    from rag.dense_read import DenseBackend
+
+    backend = DenseBackend("embedded", str(path), "saral_nbfc_policy")
+    monkeypatch.setattr(dense_read, "select_dense_backend", lambda **kwargs: backend)
+
+
+def test_index_revision_compatibility_accepts_matching_immutable_revision(monkeypatch, tmp_path):
+    from loan_advisory.agent.runtime import _check_embedding_index_compatibility
+
+    revision = "a" * 40
+    _write_compat_sidecar(tmp_path, model_revision=revision)
+    _use_embedded_backend(monkeypatch, tmp_path)
+
+    _check_embedding_index_compatibility(tmp_path, "google/embeddinggemma-2", revision)
+
+
+def test_index_revision_compatibility_rejects_mismatched_revision(monkeypatch, tmp_path):
+    from loan_advisory.agent.runtime import _check_embedding_index_compatibility
+    from rag.index_meta import IndexCompatibilityError
+
+    _write_compat_sidecar(tmp_path, model_revision="a" * 40)
+    _use_embedded_backend(monkeypatch, tmp_path)
+
+    with pytest.raises(IndexCompatibilityError, match="embedding revision mismatch"):
+        _check_embedding_index_compatibility(tmp_path, "google/embeddinggemma-2", "b" * 40)
+
+
+def test_index_revision_compatibility_rejects_unknown_index_metadata(monkeypatch, tmp_path):
+    from loan_advisory.agent.runtime import _check_embedding_index_compatibility
+    from rag.index_meta import IndexCompatibilityError
+
+    _write_compat_sidecar(tmp_path)
+    _use_embedded_backend(monkeypatch, tmp_path)
+
+    with pytest.raises(IndexCompatibilityError, match="missing model_revision.*UNKNOWN"):
+        _check_embedding_index_compatibility(tmp_path, "google/embeddinggemma-2", "a" * 40)
+
+
+def test_index_revision_compatibility_rejects_unpinned_serving_revision(monkeypatch, tmp_path):
+    from loan_advisory.agent.runtime import _check_embedding_index_compatibility
+    from rag.index_meta import IndexCompatibilityError
+
+    _write_compat_sidecar(tmp_path, model_revision="a" * 40)
+    _use_embedded_backend(monkeypatch, tmp_path)
+
+    with pytest.raises(IndexCompatibilityError, match="serving embedding revision is unpinned/UNKNOWN"):
+        _check_embedding_index_compatibility(tmp_path, "google/embeddinggemma-2", None)
+
+
+def test_index_revision_compatibility_rejects_server_without_provenance(monkeypatch, tmp_path):
+    from loan_advisory.agent.runtime import _check_embedding_index_compatibility
+    from rag import dense_read
+    from rag.dense_read import DenseBackend
+    from rag.index_meta import IndexCompatibilityError
+
+    backend = DenseBackend("server", "https://qdrant.invalid", "saral_nbfc_policy")
+    monkeypatch.setattr(dense_read, "select_dense_backend", lambda **kwargs: backend)
+
+    with pytest.raises(IndexCompatibilityError, match="no local index_compat.json sidecar"):
+        _check_embedding_index_compatibility(tmp_path, "google/embeddinggemma-2", "a" * 40)

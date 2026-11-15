@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import os
 import re
+import threading
 
 COLLECTIONS_ENV = "AGENT_RAG_COLLECTIONS"
+_COLLECTION_ENV_LOCK = threading.RLock()
 PRODUCT, REGULATORY = "saral_nbfc_policy", "rbi_regulatory"
 
 _REG = re.compile(
@@ -82,17 +84,20 @@ class RoutedPolicyTools:
 
 
 def load_routed_policy_tools(load_one, collections: list[str], policy_dir: str, **kw):
-    """Build one retriever per collection with `load_one(policy_dir=..., **kw)` (agent.runtime.load_policy_tools),
-    each over `<policy_dir>/<collection>` and the Qdrant collection of that name."""
+    """Build one retriever per collection without racing the shared Qdrant env selector.
+
+    Collection data remains separate; only model instances may be shared by the loader.
+    """
     tools, profile = {}, None
-    prev = os.environ.get("AGENT_QDRANT_COLLECTION")
-    try:
-        for c in collections:
-            os.environ["AGENT_QDRANT_COLLECTION"] = c
-            tools[c], profile = load_one(policy_dir=os.path.join(policy_dir, c), **kw)
-    finally:
-        if prev is None:
-            os.environ.pop("AGENT_QDRANT_COLLECTION", None)
-        else:
-            os.environ["AGENT_QDRANT_COLLECTION"] = prev
+    with _COLLECTION_ENV_LOCK:
+        prev = os.environ.get("AGENT_QDRANT_COLLECTION")
+        try:
+            for c in collections:
+                os.environ["AGENT_QDRANT_COLLECTION"] = c
+                tools[c], profile = load_one(policy_dir=os.path.join(policy_dir, c), **kw)
+        finally:
+            if prev is None:
+                os.environ.pop("AGENT_QDRANT_COLLECTION", None)
+            else:
+                os.environ["AGENT_QDRANT_COLLECTION"] = prev
     return RoutedPolicyTools(tools), profile

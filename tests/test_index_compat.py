@@ -5,8 +5,9 @@ import pytest
 
 pytest.importorskip("qdrant_client")
 
-from rag.index_meta import (IndexCompatibilityError, index_identity, load_index_meta, validate_collection,  # noqa: E402
-                            validate_index, validate_vectors)
+from rag.index_meta import (IndexCompatibilityError, checkpoint_artifact_sha256,
+                            index_build_provenance, index_identity, load_index_meta,
+                            validate_collection, validate_index, validate_vectors)
 from rag.retrieve import DOC_PREFIX, DenseIndex  # noqa: E402
 
 
@@ -39,6 +40,47 @@ def test_matching_index_round_trips(tmp_path):
         assert load_index_meta(tmp_path / "idx")["embed_model"] == "google/embeddinggemma-2"
     finally:
         di.client.close()
+
+
+def test_index_metadata_records_immutable_build_provenance_and_checkpoint_hash(tmp_path):
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    artifact = snapshot / "model.safetensors"
+    artifact.write_bytes(b"mock-checkpoint-bytes")
+    checkpoint_hash = checkpoint_artifact_sha256(snapshot, [artifact])
+    provenance = index_build_provenance(
+        model_id="google/embeddinggemma-2", model_revision="a" * 40,
+        dimension=2, distance="COSINE",
+        model_configuration={"model_type": "mock-transformer", "normalize_embeddings": True},
+        embedding_dtype="float32", library_versions={"torch": "mock"},
+        checkpoint_sha256=checkpoint_hash,
+    )
+    identity = _identity(provenance=provenance)
+    di = _build(tmp_path, identity=identity)
+    try:
+        meta = load_index_meta(tmp_path / "idx")
+        assert meta["model_id"] == "google/embeddinggemma-2"
+        assert meta["model_revision"] == "a" * 40
+        assert meta["embedding_dimensions"] == 2
+        assert meta["distance_metric"] == "COSINE"
+        assert meta["model_configuration"]["model_type"] == "mock-transformer"
+        assert meta["embedding_dtype"] == "float32"
+        assert meta["checkpoint_sha256"] == checkpoint_hash
+        assert meta["library_versions"] == {"torch": "mock"}
+        assert meta["corpus_hash"] and meta["build_timestamp"] == meta["created_at"]
+        validate_index(tmp_path / "idx", chunks=CHUNKS, identity=identity,
+                       collection="policy_chunks_v2")
+    finally:
+        di.client.close()
+
+
+def test_index_build_provenance_rejects_mutable_revision_names():
+    with pytest.raises(IndexCompatibilityError, match="immutable"):
+        index_build_provenance(
+            model_id="google/embeddinggemma-2", model_revision="main", dimension=2,
+            distance="COSINE", model_configuration={"model_type": "mock"},
+            embedding_dtype="float32", library_versions={"torch": "mock"},
+        )
 
 
 def test_changed_model_fails(tmp_path):
