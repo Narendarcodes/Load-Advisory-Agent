@@ -1225,7 +1225,9 @@ class AdvisoryAgent:
                 lines.append(f"{i}. {t['general_guidance']}")
             lines.append(_fx_offer(loc))
         elif intent == "what_if":
-            w = s["what_if"]
+            w = s.get("what_if")
+            if not w:
+                return _tmpl("what_if_error", loc)
             res = F.what_if_result(w)
             lines.append(_tmpl("what_if_line", loc, result=F.WHAT_IF_TEXT[res].get(loc) or F.WHAT_IF_TEXT[res]["en"]))
             area = F.what_if_area(w)

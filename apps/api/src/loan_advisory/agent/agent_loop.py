@@ -125,6 +125,7 @@ def run_tool(agent, name, args, req, sess, s):
             if not changes:
                 return {"error": "no hypothetical change given"}
             w = agent.tools.run_what_if(req.application_ref, sess, changes, record=rec)
+            s["what_if"] = w
             out = {"changes": w.get("changes"), "simulated_decision": w.get("simulated_decision"),
                    "is_simulation": True, "label": w.get("label")}
             if w.get("reason_categories"):
