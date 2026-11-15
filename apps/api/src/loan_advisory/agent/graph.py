@@ -241,6 +241,7 @@ class AgentState(TypedDict, total=False):
     prefetched: dict | None
     voice_lead: str | None
     customer_segmentation: dict | None
+    profile: dict | None              # the applicant's own record (name, refs, amount, period, status)
     decision_cache: dict | None   # {"application_ref", "stamp", "record"}: kept across turns of the conversation
     what_if_count: int            # simulations run in this conversation (per-session cap, ADR-0005)
     route: dict | None            # {"intent", "source", "flags"} from the pre-router
@@ -413,24 +414,6 @@ class AdvisoryAgent:
             return f"{plain[0].upper() + plain[1:]}, mainly because {reason['plain']}."
         return f"The main thing to work on: {reason['plain']}."
 
-    def _details_lead(self, s):
-        """The applicant's OWN record, stated first: who they are and what they asked for.
-
-        Data-driven (no pattern matching), so a grounded answer can never withhold the applicant's own details.
-        """
-        rec = s.get("record")
-        if not rec or s.get("intent") not in EXPLAIN_LIKE:
-            return None
-        d = F.application_details(rec)
-        parts = []
-        if d.get("application_ref"):
-            parts.append(f"You are the applicant on application {d['application_ref']}"
-                         + (f" (applicant reference {d['applicant_ref']})" if d.get("applicant_ref") else "") + ".")
-        if d.get("requested_amount"):
-            parts.append(f"You asked for {d['requested_amount']}"
-                         + (f" for {d['tenure_months']} months" if d.get("tenure_months") else "") + ".")
-        return " ".join(parts) or None
-
     def _borrower_context(self, s):
         """The applicant's OWN recorded application, for the general (no-RAG) and clarify chat paths.
 
@@ -443,6 +426,7 @@ class AdvisoryAgent:
         req = self._req(s)
         sess = self._session(s)
         parts = []
+        name = (sess.applicant_name if sess else None) or (rec or {}).get("applicant_name")
         if rec:
             d = F.application_details(rec)
             if rec.get("application_ref"):
@@ -461,6 +445,8 @@ class AdvisoryAgent:
             if outcome:
                 parts.append(f"recorded decision: {outcome}")
         else:
+            if name:
+                parts.append(f"the applicant is {name}")
             if req.application_ref:
                 parts.append(f"application {req.application_ref}")
             if sess and sess.applicant_ref:
@@ -473,6 +459,8 @@ class AdvisoryAgent:
         allowed = F.grounded_numbers(rec, extra=G.numbers_in(req.message))
         # the applicant's OWN identifiers (application / applicant reference) are always shareable
         allowed |= set(G.numbers_in(f"{rec.get('application_ref') or ''} {rec.get('applicant_ref') or ''}"))
+        prof = s.get("profile") or {}
+        allowed |= F.grounded_numbers(None, extra=[prof.get("loan_amount"), prof.get("tenure_months")])
         if intent == "what_if" and s.get("what_if") and "record" in s["what_if"]:
             allowed |= F.grounded_numbers(None, extra=list(s["what_if"]["changes"].values()))
             o = s["what_if"].get("offer") or {}
@@ -631,7 +619,22 @@ class AdvisoryAgent:
                       **obs.lf_meta(decision_cache=cache_status,
                                     reason_categories=[c["key"] for c in F.reason_categories(rec)] if rec else None))
         seg = get_customer_segmentation(bureau_report_from_record(rec))  # tone only: HOW to explain, never WHAT
-        return {"record": rec, "status": st, "trace": s["trace"], "decision_cache": new_cache, "customer_segmentation": seg}
+        profile = None
+        if s.get("intent") in EXPLAIN_LIKE and req.application_ref:
+            try:  # the applicant's own profile, read from the application the agent is authorised for
+                doc = self.tools.owned_doc(req.application_ref, sess)
+                profile = {
+                    "application_ref": req.application_ref,
+                    "applicant_ref": doc.get("applicant"),
+                    "applicant_name": doc.get("applicant_name") or (sess.applicant_name if sess else None),
+                    "loan_amount": doc.get("loan_amount"),
+                    "tenure_months": doc.get("repayment_periods") or doc.get("loan_tenure_months"),
+                    "product": doc.get("loan_product"),
+                }
+            except Exception:
+                profile = None
+        return {"record": rec, "status": st, "trace": s["trace"], "decision_cache": new_cache,
+                "customer_segmentation": seg, "profile": profile}
 
     def _decision(self, req, sess, cache):
         """(record, stamp, hit|miss|none). The tool re-checks ownership every call and re-reads the evidence only when
@@ -720,7 +723,6 @@ class AdvisoryAgent:
             obs.set_attrs(obs.current_span(), **{"llm.facts_keys": sorted(facts)},
                           **obs.lf_meta(facts_keys=sorted(facts), facts=obs.lf_content(facts_json)))
             lead = self._voice_lead(s, req, intent) if (stream is not None or s.get("voice_lead")) else None
-            details = self._details_lead(s)
             if lead:
                 s["voice_lead"] = lead
                 if stream is not None:
@@ -743,8 +745,6 @@ class AdvisoryAgent:
                 gate.close()
             if lead:
                 txt = f"{lead} {txt}".strip()
-            elif details:
-                txt = f"{details} {txt}".strip()
             return {"draft": txt, "attempts": attempts, "action": "simulate" if intent == "what_if" else "answer",
                     "voice_lead": lead}
         except LLMError as e:
@@ -1110,6 +1110,9 @@ class AdvisoryAgent:
             base["offer"] = offer
         if intent in EXPLAIN_LIKE:
             base["application"] = F.application_details(rec)
+        prof = s.get("profile")
+        if prof:
+            base["profile"] = prof
         bf = F.bureau_facts(rec)
         if bf:  # what kind of outcome it is and where the score came from; never the data-quality or provider codes
             base["bureau"] = {k: bf[k] for k in ("is_credit_rejection", "is_data_quality_hold", "is_provider_failure",

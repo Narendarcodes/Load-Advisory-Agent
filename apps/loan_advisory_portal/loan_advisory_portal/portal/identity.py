@@ -24,6 +24,7 @@ class BorrowerContext:
 	profile: str
 	literacy: str
 	locale: str
+	name: str = ""
 
 
 def _require_user() -> str:
@@ -65,6 +66,7 @@ def borrower_context(*, require_role: bool = True) -> BorrowerContext:
 		profile=profile.name,
 		literacy=vocabulary.normalise_literacy(profile.literacy),
 		locale=vocabulary.normalise_locale(profile.preferred_locale),
+		name=frappe.db.get_value("Customer", profile.customer, "customer_name") or "",
 	)
 
 

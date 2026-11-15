@@ -115,7 +115,7 @@ def mint_assertion(application: str | None = None, thread_id: str | None = None)
 	limits.enforce("agent-mint", 90, 60)
 	ref = _resolve_application(application, ctx)
 	thread = _touch_conversation(thread_id, ctx, ref)
-	result = assertion.mint(ctx.user, ctx.customer, ref, thread, ctx.literacy, ctx.locale)
+	result = assertion.mint(ctx.user, ctx.customer, ref, thread, ctx.literacy, ctx.locale, ctx.name)
 	result.update({"application": ref, "customer": ctx.customer, "thread_id": thread})
 	return result
 

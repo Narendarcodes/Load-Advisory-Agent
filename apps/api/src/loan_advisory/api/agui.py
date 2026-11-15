@@ -98,7 +98,8 @@ async def _sse(service, req: AgentRequest, claims: dict, headers, thread_id: str
     def work():
         try:
             from loan_advisory.agent import observability as obs
-            resp = service.agent.run(req, Session(applicant_ref=claims["applicant_ref"]),
+            resp = service.agent.run(req, Session(applicant_ref=claims["applicant_ref"],
+                                                  applicant_name=claims.get("applicant_name")),
                                      trace_context=obs.extract_context(headers), on_sentence=emit, on_stage=emit_stage)
             put(("final", resp.model_dump()))
         except Exception as e:  # generic client message; the detail stays in the server log

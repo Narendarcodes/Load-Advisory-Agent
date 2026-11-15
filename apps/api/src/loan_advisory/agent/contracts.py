@@ -15,6 +15,7 @@ Intent = Literal["explain", "improve", "what_if", "policy", "boundary", "greetin
 class Session(BaseModel):
     """Server-side authenticated identity. NEVER taken from the message or the LLM."""
     applicant_ref: str
+    applicant_name: str | None = None
     authenticated: bool = True
 
 

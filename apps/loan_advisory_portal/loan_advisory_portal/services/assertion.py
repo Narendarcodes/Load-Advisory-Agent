@@ -88,6 +88,7 @@ def mint(
 	thread_id: str | None,
 	literacy: str | None = None,
 	locale: str | None = None,
+	applicant_name: str | None = None,
 ) -> dict:
 	now = int(time.time())
 	payload = {
@@ -102,4 +103,6 @@ def mint(
 		"exp": now + TTL_SECONDS,
 		"jti": secrets.token_hex(16),
 	}
+	if applicant_name:
+		payload["applicant_name"] = applicant_name
 	return {"assertion": sign(payload), "expires_in": TTL_SECONDS, "jti": payload["jti"]}

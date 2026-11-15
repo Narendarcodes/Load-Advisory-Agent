@@ -60,7 +60,8 @@ class App:
     def chat(self, claims, body, headers=None, on_sentence=None):
         req = self._request(claims, body)
         from loan_advisory.agent import observability as obs
-        resp = self.agent.run(req, Session(applicant_ref=claims["applicant_ref"]),
+        resp = self.agent.run(req, Session(applicant_ref=claims["applicant_ref"],
+                                           applicant_name=claims.get("applicant_name")),
                               trace_context=obs.extract_context(headers) if headers is not None else None,
                               **({"on_sentence": on_sentence} if on_sentence is not None else {}))
         return 200, resp.model_dump()

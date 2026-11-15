@@ -239,6 +239,7 @@ def session_claims(payload: dict) -> dict:
         "sub": payload["sub"],
         "customer": payload["customer"],
         "applicant_ref": payload["customer"],
+        "applicant_name": payload.get("applicant_name"),
         "application_ref": payload.get("application") or None,
         "thread": payload.get("thread") or None,
         "literacy": literacy if literacy in ("low", "medium", "high") else "medium",
