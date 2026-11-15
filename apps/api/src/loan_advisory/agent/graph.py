@@ -26,6 +26,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from loan_advisory.agent import facts as F
+from loan_advisory.agent.agent_loop import run_agent
 from loan_advisory.agent import observability as obs
 from loan_advisory.agent import guards as G
 from loan_advisory.agent import prompts as P
@@ -502,6 +503,51 @@ class AdvisoryAgent:
         self._ev(s, "authenticate", status=status or "ok")
         return {"status": status, "trace": s["trace"]}
 
+    def guard(self, s):
+        """Deterministic SAFETY guards only — never intent routing. A claim that the recorded data is wrong,
+        another applicant's reference, an injection, a guarantee ask, a bureau re-pull or a misrepresentation
+        request goes to a person. Everything else is the agent's to work out from the live data."""
+        req = self._req(s)
+        flags = G.request_flags(req.message, req.application_ref)
+        if req.application_ref and DISPUTE.search(req.message) and not G.is_informational_question(req.message) \
+                and not {"injection", "other_applicant", "misrepresentation"} & set(flags):
+            flags = ["dispute"]  # a claim that the recorded data is wrong goes to a person
+        if req.application_ref and _foreign_ref(req.message, req.application_ref) and "other_applicant" not in flags:
+            flags = ["other_applicant"] + flags
+        route = first_route(self.routers, req.message, req.locale, _last_assistant(s))
+        if route is not None and route.intent in ("misrepresentation", "bureau_request", "other_applicant",
+                                                  "injection", "guarantee") and not flags:
+            flags = [route.intent]
+        if flags:
+            if "misrepresentation" not in flags and route is not None and route.intent == "misrepresentation":
+                flags = ["misrepresentation"] + flags
+            self._ev(s, "guard", flags=flags)
+            return {"intent": "boundary", "flags": flags, "route": _route_dict(route), "trace": s["trace"]}
+        self._ev(s, "guard", flags=[])
+        return {"trace": s["trace"]}
+
+    def agent(self, s):
+        """The tool-calling agent: it reads the message, decides which live read it needs, calls it and answers."""
+        try:
+            draft, used, record, profile = run_agent(self, s)
+        except LLMError as e:
+            self._ev(s, "agent", error=str(e)[:120])
+            return {"draft": None, "intent": "explain", "attempts": 99, "guard_flags": ["llm_error"],
+                    "trace": s["trace"]}
+        intent = "explain"
+        if "create_human_handoff" in used:
+            intent = "human_review"
+        elif "run_what_if" in used:
+            intent = "what_if"
+        elif "search_policy" in used:
+            intent = "policy"
+        self._ev(s, "agent", tools=used)
+        if not draft:
+            return {"draft": None, "intent": intent, "attempts": 99, "guard_flags": ["llm_error"], "trace": s["trace"]}
+        return {"draft": draft, "intent": intent, "action": "answer", "abstained": False,
+                "attempts": int(s.get("attempts") or 0) + 1, "record": record, "profile": profile,
+                "trace": s["trace"]}
+
     def classify(self, s):
         out = self._classify(s)
         if out.get("intent") == "what_if" and self._cap_left(s) <= 0:  # 4th estimate: refused before any read
@@ -864,7 +910,7 @@ class AdvisoryAgent:
     def _after_validate(self, s):
         if s.get("guard_flags") and s.get("attempts", 0) < 2:
             if self._left(s) >= self.settings.min_compose_s:
-                return "compose"
+                return "agent" if os.environ.get("SARAL_AGENT_CORE", "graph").strip().lower() == "tools" else "compose"
         return "finalize"  # finalize marks "deadline" when a rewrite was skipped for lack of time
 
     def boundary(self, s):
@@ -1204,6 +1250,32 @@ class AdvisoryAgent:
 
     # ------------------------------------------------------------------ wiring
     def _build(self):
+        core = os.environ.get("SARAL_AGENT_CORE", "graph").strip().lower()
+        return self._build_agent() if core == "tools" else self._build_graph()
+
+    def _build_agent(self):
+        """The tool-calling core: authenticate, apply the deterministic safety guards, then let the
+        agent decide what to read and answer. No intent routing, no fixed tool plan."""
+        g = StateGraph(AgentState)
+        for name in ("receive", "authenticate", "guard", "agent", "validate", "boundary", "human_review",
+                     "simple", "finalize"):
+            g.add_node(name, self._node(name, getattr(self, name)))
+        g.add_edge(START, "receive")
+        g.add_edge("receive", "authenticate")
+        g.add_conditional_edges("authenticate",
+                                lambda s: "simple" if s.get("status") in ("not_authorized", "unavailable") else "guard",
+                                ["simple", "guard"])
+        g.add_conditional_edges("guard", lambda s: "boundary" if s.get("intent") == "boundary" else "agent",
+                                ["boundary", "agent"])
+        g.add_edge("agent", "validate")
+        g.add_conditional_edges("validate", self._after_validate, ["agent", "finalize"])
+        g.add_edge("boundary", "finalize")
+        g.add_edge("human_review", "finalize")
+        g.add_edge("simple", "finalize")
+        g.add_edge("finalize", END)
+        return g
+
+    def _build_graph(self):
         g = StateGraph(AgentState)
         for name in ("receive", "authenticate", "classify", "load_evidence", "plan", "what_if", "retrieve_policy",
                      "compose", "validate", "boundary", "human_review", "clarify", "simple", "finalize"):

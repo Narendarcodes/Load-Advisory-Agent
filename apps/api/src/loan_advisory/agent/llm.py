@@ -142,6 +142,22 @@ STATS = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}  # process-wide
 _STATS_LOCK = threading.Lock()
 
 
+class ToolCalls:
+    """The result of a tool-calling chat: the text the model wrote (if any) and the tools it asked for."""
+
+    def __init__(self):
+        self.content: list[str] = []
+        self.calls: list[dict] = []
+
+    @property
+    def text(self) -> str:
+        return "".join(self.content).strip()
+
+    @property
+    def has_calls(self) -> bool:
+        return bool(self.calls)
+
+
 class LLMError(Exception):
     pass
 
@@ -210,9 +226,10 @@ class ChatLLM:
         return "".join(self.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
                                         deadline=deadline)).strip()
 
-    def chat_stream(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
-                    deadline: float | None = None):
-        """Yield content deltas as they arrive. Raises LLMError on failure or when `deadline` passes."""
+    def chat_stream(self, system: str = None, user: str = None, max_tokens: int = 900, temperature: float = 0.0,
+                    tag: str = "", deadline: float | None = None, tools=None, tc=None, on_delta=None, messages=None):
+        """Yield content deltas as they arrive. Raises LLMError on failure or when `deadline` passes.
+        With `tools`, the model's tool calls are collected into `tc` (a ToolCalls)."""
         params = {"max_tokens": max_tokens, "temperature": temperature}
         if self.reasoning_effort:
             params["reasoning_effort"] = self.reasoning_effort
@@ -224,7 +241,8 @@ class ChatLLM:
                                                               "input.value": obs.content(user), "llm.system": obs.content(system)}) as sp:
             parts = []
             try:
-                for d in self._stream(system, user, max_tokens, temperature, tag, deadline):
+                for d in self._stream(system, user, max_tokens, temperature, tag, deadline,
+                                     tools=tools, tc=tc, on_delta=on_delta, messages=messages):
                     parts.append(d)
                     yield d
             finally:
@@ -244,10 +262,15 @@ class ChatLLM:
                                      "langfuse.observation.output": obs.lf_content("".join(parts)),
                                      "output.value": obs.content("".join(parts))})
 
-    def _stream(self, system: str, user: str, max_tokens: int, temperature: float, tag: str, deadline: float | None):
-        body = {"model": self.model, "messages": [{"role": "system", "content": system},
-                                                  {"role": "user", "content": user}],
+    def _stream(self, system: str | None = None, user: str | None = None, max_tokens: int = 900,
+                temperature: float = 0.0, tag: str = "", deadline: float | None = None,
+                tools=None, tc=None, on_delta=None, messages=None):
+        msgs = messages if messages is not None else [{"role": "system", "content": system},
+                                                     {"role": "user", "content": user}]
+        body = {"model": self.model, "messages": msgs,
                 "max_tokens": max_tokens, "temperature": temperature, "stream": True}
+        if tools:
+            body["tools"] = tools
         if self.stream_usage:
             body["stream_options"] = {"include_usage": True}
         if self.reasoning_effort:  # optional: routed gateways may not accept it
@@ -301,7 +324,24 @@ class ChatLLM:
                                 if ttft is None:
                                     ttft = time.perf_counter() - t0
                                 yielded = True
+                                if tc is not None:
+                                    tc.content.append(c)
+                                if on_delta is not None:
+                                    on_delta(c)
                                 yield c
+                            if tc is not None:
+                                for call in delta.get("tool_calls") or []:
+                                    idx = call.get("index", 0)
+                                    while len(tc.calls) <= idx:
+                                        tc.calls.append({"id": "", "name": "", "arguments": ""})
+                                    slot = tc.calls[idx]
+                                    if call.get("id"):
+                                        slot["id"] = call["id"]
+                                    fn = call.get("function") or {}
+                                    if fn.get("name"):
+                                        slot["name"] += fn["name"]
+                                    if fn.get("arguments"):
+                                        slot["arguments"] += fn["arguments"]
                     break
                 except _Deadline:
                     raise LLMError("deadline exceeded while the LLM was answering")
@@ -318,7 +358,7 @@ class ChatLLM:
                     time.sleep(1.5 * (attempt + 1))
             else:
                 raise LLMError(str(last_err))
-            if not yielded:
+            if not yielded and not (tc is not None and tc.calls):
                 raise LLMError("LLM returned no content")  # e.g. a filtered or non-SSE response
         except LLMError as e:
             rec["error"] = "deadline" if "deadline" in str(e) else str(e)[:120]
@@ -337,6 +377,15 @@ class ChatLLM:
     def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "", deadline: float | None = None) -> dict:
         txt = self.chat(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline)
         return parse_json(txt)
+
+    def chat_tools(self, system: str, user: str, tools: list, max_tokens: int = 900, temperature: float = 0.0,
+                   tag: str = "", deadline: float | None = None, on_delta=None, messages=None) -> ToolCalls:
+        """One streaming call with tools. Returns the text written and the tool calls the model asked for."""
+        tc = ToolCalls()
+        for _ in self.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
+                                  deadline=deadline, tools=tools, tc=tc, on_delta=on_delta, messages=messages):
+            pass
+        return tc
 
 
 class FallbackChatLLM:
@@ -396,6 +445,21 @@ class FallbackChatLLM:
 
     def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "", deadline: float | None = None) -> dict:
         return parse_json(self.chat(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline))
+
+    def chat_tools(self, system: str, user: str, tools: list, max_tokens: int = 900, temperature: float = 0.0,
+                   tag: str = "", deadline: float | None = None, on_delta=None, messages=None) -> ToolCalls:
+        tc = ToolCalls()
+        for c in self.clients:
+            try:
+                for _ in c.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
+                                       deadline=deadline, tools=tools, tc=tc, on_delta=on_delta, messages=messages):
+                    pass
+                return tc
+            except LLMError as e:
+                tc = ToolCalls()
+                if "deadline" in str(e):
+                    raise
+        raise LLMError("every provider failed")
 
 
 def parse_json(txt: str) -> dict:

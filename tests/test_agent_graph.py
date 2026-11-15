@@ -37,6 +37,8 @@ class ScriptedLLM:
             return self.compose_txt(system)
         if self.compose_txt is not None:
             return self.compose_txt
+        if not system or "FACTS (JSON):" not in system:
+            return ""
         facts = json.loads(system[system.index("FACTS (JSON):") + 13: system.rindex("}") + 1])
         # agent eval fix 2: the facts carry plain outcome words and ONE plain reason, never rule names or limits
         lines = [facts.get("outcome_plain", "")] + ([f"Mainly because {facts['main_reason']}."] if facts.get("main_reason") else [])
@@ -44,6 +46,12 @@ class ScriptedLLM:
 
     def chat_json(self, system, user, max_tokens=900, tag=""):
         return json.loads(self.chat(system, user, max_tokens, tag=tag))
+
+    def chat_tools(self, system, user, tools, max_tokens=900, tag="", deadline=None, on_delta=None, messages=None):
+        from loan_advisory.agent.llm import ToolCalls
+        tc = ToolCalls()
+        tc.content.append(self.chat(system, user, max_tokens=max_tokens, tag="compose_explain"))
+        return tc
 
 
 class FakePolicy:

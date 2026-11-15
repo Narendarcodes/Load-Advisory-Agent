@@ -230,7 +230,7 @@ def reason_categories(record: dict) -> list[dict]:
 
 def borrower_offer(record: dict) -> dict | None:
     """{amount, emi, tenure_months} from the stored offer (catalogue v2), else None. Never a cut-off."""
-    o = record.get("offer") or {}
+    o = (record or {}).get("offer") or {}
     if not o.get("amount"):
         return None
     return {"amount": _finite(o.get("amount")), "emi": _finite(o.get("emi")), "tenure_months": _finite(o.get("tenure_months")),
@@ -281,7 +281,7 @@ def borrower_outcome(code: str | None) -> str | None:
 
 def outcome_plain(record: dict, locale: str = "en") -> str:
     """The recorded outcome in plain words for the borrower, never the code."""
-    key = borrower_outcome(record.get("outcome") or record.get("decision")) or ""
+    key = borrower_outcome((record or {}).get("outcome") or (record or {}).get("decision")) or ""
     words = OUTCOME_PLAIN.get(key) or OUTCOME_PLAIN["REVIEW" if key in ("MANUAL_REVIEW", "REFER") else "ERROR"]
     return words.get(locale) or words["en"]
 
