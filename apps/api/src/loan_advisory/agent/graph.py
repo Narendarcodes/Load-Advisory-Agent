@@ -199,18 +199,6 @@ _FAST = [
 _QUESTION = re.compile(r"\?|^\s*(can|could|is|are|do|does|how|what|when|where|which|who|why|will|should|must)\b|"
                        r"क्या|कैसे|कब|कौन|क्यों|ఎలా|ఏమి|ఎప్పుడు|ఎవరు|ఎందుకు", re.I)
 _FAST_NOT = re.compile(r"\b(rate|fee|fees|charges?|interest|offer|bajaj|bank|lender|nbfc|rbi)\b", re.I)
-# A question that names the applicant's OWN loan/application. Even when the classifier calls it
-# "other"/"policy", it must reach the grounded path (which loads the recorded decision) rather than
-# the no-RAG chat path, whose prompt says it has no access to records.
-_APPLICATION_QUERY_RE = re.compile(
-    r"\bmy\s+(loan|home loan|personal loan)\s+(details|amount|tenure|status|emi|instal?ment)\b|"
-    r"\bmy\s+(emi|tenure|loan amount|loan details|application details)\b|"
-    r"\b(my|the)\s+(loan|application)\s+(details|amount|tenure|status|emi|instal?ment)\b|"
-    r"\b(loan|application)\s+(details|amount|tenure|status)\b|"
-    r"\bwhat(?:'s| is| was)\s+my\s+(emi|loan|application)\b|"
-    r"\bmonthly\s+emi\b|\bemi\s+amount\b",
-    re.I,
-)
 
 
 class AgentState(TypedDict, total=False):
@@ -413,30 +401,6 @@ class AdvisoryAgent:
             return f"{plain[0].upper() + plain[1:]}, mainly because {reason['plain']}."
         return f"The main thing to work on: {reason['plain']}."
 
-    def _details_lead(self, s):
-        """A deterministic sentence with the applicant's OWN loan details, for questions that ask for them.
-
-        The LLM may lead with the decision; the amount/tenure/EMI the applicant asked for is still stated
-        plainly, from the recorded request (grounded, never invented).
-        """
-        rec = s.get("record")
-        if not rec or s.get("intent") not in EXPLAIN_LIKE:
-            return None
-        if not _APPLICATION_QUERY_RE.search(self._req(s).message):
-            return None
-        vals = ((rec.get("inputs") or {}).get("values") or {})
-        offer = rec.get("offer") or {}
-        parts = []
-        if vals.get("requested_amount"):
-            parts.append(f"The amount you requested is {F.inr(vals['requested_amount'])}.")
-        if vals.get("tenure_months"):
-            parts.append(f"The loan period is {int(vals['tenure_months'])} months.")
-        if offer.get("emi"):
-            parts.append(f"The monthly EMI for the offered amount is {F.inr(offer['emi'])}.")
-        elif not offer and vals.get("requested_amount"):
-            parts.append("The application was not approved, so there is no EMI amount to share.")
-        return " ".join(parts) or None
-
     def _allowed(self, s) -> set:
         req, intent = self._req(s), s.get("intent")
         allowed = F.grounded_numbers(s.get("record"), extra=G.numbers_in(req.message))
@@ -543,8 +507,6 @@ class AdvisoryAgent:
             if intent == "other" and _QUESTION.search(req.message):
                 intent, by = "policy", "rules_question_default"  # cite-or-abstain path, never a guess
             changes = _regex_changes(req.message) if intent == "what_if" else None
-        if intent in ("other", "policy", "greeting") and req.application_ref and _APPLICATION_QUERY_RE.search(req.message):
-            intent, by = "explain", "application_query_override"
         self._ev(s, "classify", intent=intent, by=by)
         return {"intent": intent, "wi_changes": changes, "trace": s["trace"]}
 
@@ -688,7 +650,6 @@ class AdvisoryAgent:
             obs.set_attrs(obs.current_span(), **{"llm.facts_keys": sorted(facts)},
                           **obs.lf_meta(facts_keys=sorted(facts), facts=obs.lf_content(facts_json)))
             lead = self._voice_lead(s, req, intent) if (stream is not None or s.get("voice_lead")) else None
-            details = self._details_lead(s)
             if lead:
                 s["voice_lead"] = lead
                 if stream is not None:
@@ -711,8 +672,6 @@ class AdvisoryAgent:
                 gate.close()
             if lead:
                 txt = f"{lead} {txt}".strip()
-            elif details:
-                txt = f"{details} {txt}".strip()
             return {"draft": txt, "attempts": attempts, "action": "simulate" if intent == "what_if" else "answer",
                     "voice_lead": lead}
         except LLMError as e:
