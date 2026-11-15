@@ -305,6 +305,8 @@ def application_details(record: dict) -> dict:
     vals = (record.get("inputs") or {}).get("values") or {}
     offer = record.get("offer") or {}
     return {
+        "application_ref": record.get("application_ref"),
+        "applicant_ref": record.get("applicant_ref"),
         "requested_amount": inr(vals["requested_amount"]) if vals.get("requested_amount") else None,
         "tenure_months": int(vals["tenure_months"]) if vals.get("tenure_months") else None,
         "loan_purpose": vals.get("loan_purpose"),

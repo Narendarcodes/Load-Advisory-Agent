@@ -47,9 +47,15 @@ _COUNTER_FALLBACK = "We can offer {amount}, with an EMI of {emi} a month for {te
 
 _NO_RAG_SYSTEM_PROMPT = (
     "You are Saral's conversational assistant in a local test mode with policy retrieval disabled. "
-    "Answer general questions naturally using general knowledge. You do not have access to Saral policy documents, customer records, or live loan data. "
-    "For Saral-specific rates, eligibility, fees, rules, or personal application status, say you cannot verify those details in this no-document mode; do not guess. "
-    "Never claim to have checked records and never invent a policy citation. Reply in the user's language, simply and respectfully."
+    "You are speaking to one specific applicant. If a BORROWER CONTEXT is given below, it is their OWN recorded "
+    "application: use it to answer questions about who they are, what you know about them, and the details of their "
+    "application (amount, period, purpose, recorded decision). Never invent details that are not in it. "
+    "Answer general questions naturally using general knowledge. You do not have access to Saral policy documents. "
+    "For Saral-specific rates, eligibility, fees or rules, say you cannot verify those in this no-document mode; "
+    "do not guess. Ask AT MOST ONE clarifying question in the whole conversation, and only when the question is "
+    "genuinely ambiguous. If the user has already been asked to clarify, do NOT ask another question: answer "
+    "generally, or offer a human review. Never claim you have no records when a borrower context is given. "
+    "Never invent a policy citation. Reply in the user's language, simply and respectfully."
 )
 
 def _no_rag_chat_enabled() -> bool:
@@ -139,13 +145,18 @@ def _prompt(name: str, default: str) -> str:
 _DISTRESS_ADDON = ("\nThe applicant is upset or worried. Start with ONE short, calm, kind sentence that acknowledges how "
                    "they feel, with no blame. If they feel accused, say plainly that this is not an accusation. Then "
                    "answer their question as above. End by offering a human review of their application.")
-_CLARIFY_DEFAULT = """The applicant's latest message to a personal-loan assistant is too vague to answer. Write ONE short
-clarifying question in {lang} that offers the 2 or 3 most likely meanings as options (for example: "Do you mean the
-processing fee, or the charge for closing the loan early?"). Use simple everyday words. Do not answer the question, do
-not mention internal systems, and do not use any number.
+_CLARIFY_DEFAULT = """The applicant's latest message to a personal-loan assistant is too vague to answer on its own.
+{context_block}If the borrower context above has ANY information about the applicant — their application reference,
+applicant reference, amount, period, purpose or recorded decision — answer the message directly and completely in
+{lang}, using only that context, and never ask a question. For example, for the message "who am I?" with the context
+"application ACC-LOAP-2026-00043; applicant reference SYN-APP-0031", the answer is "You are the applicant on
+application ACC-LOAP-2026-00043 (applicant reference SYN-APP-0031)." Only when the context is empty or clearly
+unrelated, write ONE short clarifying question in {lang} that offers the 2 or 3 most likely meanings as options (for
+example: "Do you mean the processing fee, or the charge for closing the loan early?"). Use simple everyday words.
+Do not mention internal systems, and do not use any number.
 Recent conversation: {history}
 Latest message: {message}
-Return JSON only: {{"question": "..."}}"""
+Return JSON only: {{"answer": "..."}} or {{"question": "..."}}"""
 
 EXCERPT_MAX_CHARS = 320  # source-chip excerpt: plain text, bounded
 
@@ -234,6 +245,7 @@ class AgentState(TypedDict, total=False):
     what_if_count: int            # simulations run in this conversation (per-session cap, ADR-0005)
     route: dict | None            # {"intent", "source", "flags"} from the pre-router
     clarify: bool
+    clarify_count: int            # clarifying questions already asked in this conversation (capped at 1)
 
 
 class AdvisoryAgent:
@@ -401,9 +413,66 @@ class AdvisoryAgent:
             return f"{plain[0].upper() + plain[1:]}, mainly because {reason['plain']}."
         return f"The main thing to work on: {reason['plain']}."
 
+    def _details_lead(self, s):
+        """The applicant's OWN record, stated first: who they are and what they asked for.
+
+        Data-driven (no pattern matching), so a grounded answer can never withhold the applicant's own details.
+        """
+        rec = s.get("record")
+        if not rec or s.get("intent") not in EXPLAIN_LIKE:
+            return None
+        d = F.application_details(rec)
+        parts = []
+        if d.get("application_ref"):
+            parts.append(f"You are the applicant on application {d['application_ref']}"
+                         + (f" (applicant reference {d['applicant_ref']})" if d.get("applicant_ref") else "") + ".")
+        if d.get("requested_amount"):
+            parts.append(f"You asked for {d['requested_amount']}"
+                         + (f" for {d['tenure_months']} months" if d.get("tenure_months") else "") + ".")
+        return " ".join(parts) or None
+
+    def _borrower_context(self, s):
+        """The applicant's OWN recorded application, for the general (no-RAG) and clarify chat paths.
+
+        From the loaded decision record when there is one (their amount, period, purpose, recorded decision);
+        otherwise from the authenticated request (application and applicant reference). It lets the chat answer
+        "who am I", "what do you know about me" and "what is my loan amount" from Frappe instead of claiming it
+        has no records. Never invented.
+        """
+        rec = s.get("record")
+        req = self._req(s)
+        sess = self._session(s)
+        parts = []
+        if rec:
+            d = F.application_details(rec)
+            if rec.get("application_ref"):
+                parts.append(f"application {rec['application_ref']}")
+            if d.get("requested_amount"):
+                parts.append(f"requested amount {d['requested_amount']}")
+            if d.get("tenure_months"):
+                parts.append(f"loan period {d['tenure_months']} months")
+            if d.get("loan_purpose"):
+                parts.append(f"purpose {str(d['loan_purpose']).replace('_', ' ')}")
+            if d.get("offer_amount"):
+                parts.append(f"offered amount {d['offer_amount']}")
+            if d.get("offer_emi"):
+                parts.append(f"EMI {d['offer_emi']}")
+            outcome = F.outcome_plain(rec, "en")
+            if outcome:
+                parts.append(f"recorded decision: {outcome}")
+        else:
+            if req.application_ref:
+                parts.append(f"application {req.application_ref}")
+            if sess and sess.applicant_ref:
+                parts.append(f"applicant reference {sess.applicant_ref}")
+        return "; ".join(parts)
+
     def _allowed(self, s) -> set:
         req, intent = self._req(s), s.get("intent")
-        allowed = F.grounded_numbers(s.get("record"), extra=G.numbers_in(req.message))
+        rec = s.get("record") or {}
+        allowed = F.grounded_numbers(rec, extra=G.numbers_in(req.message))
+        # the applicant's OWN identifiers (application / applicant reference) are always shareable
+        allowed |= set(G.numbers_in(f"{rec.get('application_ref') or ''} {rec.get('applicant_ref') or ''}"))
         if intent == "what_if" and s.get("what_if") and "record" in s["what_if"]:
             allowed |= F.grounded_numbers(None, extra=list(s["what_if"]["changes"].values()))
             o = s["what_if"].get("offer") or {}
@@ -427,6 +496,7 @@ class AdvisoryAgent:
                 "fallback_used": False, "action": None, "handoff_ref": None, "response": None,
                 "route": None, "clarify": False, "decision_cache": s.get("decision_cache"),
                 "what_if_count": int(s.get("what_if_count") or 0),
+                "clarify_count": int(s.get("clarify_count") or 0),
                 "customer_segmentation": None}
 
     def authenticate(self, s):
@@ -650,6 +720,7 @@ class AdvisoryAgent:
             obs.set_attrs(obs.current_span(), **{"llm.facts_keys": sorted(facts)},
                           **obs.lf_meta(facts_keys=sorted(facts), facts=obs.lf_content(facts_json)))
             lead = self._voice_lead(s, req, intent) if (stream is not None or s.get("voice_lead")) else None
+            details = self._details_lead(s)
             if lead:
                 s["voice_lead"] = lead
                 if stream is not None:
@@ -672,6 +743,8 @@ class AdvisoryAgent:
                 gate.close()
             if lead:
                 txt = f"{lead} {txt}".strip()
+            elif details:
+                txt = f"{details} {txt}".strip()
             return {"draft": txt, "attempts": attempts, "action": "simulate" if intent == "what_if" else "answer",
                     "voice_lead": lead}
         except LLMError as e:
@@ -831,24 +904,36 @@ class AdvisoryAgent:
         """A vague question: ONE short clarifying question in the applicant's language offering 2-3 likely meanings.
         No decision and no policy search; not an abstention. The next turn is answered once it is clear."""
         req = self._req(s)
+        if int(s.get("clarify_count") or 0) >= 1:
+            # one clarifying question per conversation: answer with the general help line, never a second question
+            self._ev(s, "clarify", by="capped")
+            return {"draft": P.template("other", req.locale), "action": "answer", "abstained": False,
+                    "clarify": False, "trace": s["trace"]}
         hist = [f"{h['role']}: {h['text'][:200]}" for h in (s.get("history") or [])[-4:]]
-        q = None
+        ctx = self._borrower_context(s)
+        block = f"BORROWER CONTEXT (their own recorded application):\n{ctx}\n" if ctx else ""
+        q, ans = None, None
         if self._left(s) >= self.settings.min_compose_s:
             try:
-                j = self.llm.chat_json("You write one short clarifying question. Output JSON only.",
+                j = self.llm.chat_json("You answer or clarify. Output JSON only.",
                                        _prompt("CLARIFY", _CLARIFY_DEFAULT).format(
                                            lang=P.LANG.get(req.locale, "English"), message=req.message,
-                                           history=json.dumps(hist, ensure_ascii=False)),
-                                       max_tokens=200, tag="clarify", **self._llm_kw(s, self._classify_budget(req)))
+                                           history=json.dumps(hist, ensure_ascii=False), context_block=block),
+                                       max_tokens=250, tag="clarify", **self._llm_kw(s, self._classify_budget(req)))
+                ans = str(j.get("answer") or "").strip()
                 q = str(j.get("question") or "").strip()
             except (LLMError, AttributeError, ValueError):
                 q = None
-        ok = bool(q) and q.rstrip().endswith(("?", "？")) and len(q.split()) <= 40 and not G.numbers_in(q) \
+        if ans and not self._violations(s, ans):
+            self._ev(s, "clarify", by="llm_answer")
+            return {"draft": ans, "action": "answer", "abstained": False, "clarify": False, "trace": s["trace"]}
+        ok = bool(q) and q.rstrip().endswith(("?", "?")) and len(q.split()) <= 40 and not G.numbers_in(q) \
             and not self._violations(s, q)
         if not ok:
             q = _tmpl(_clarify_key(req.message), req.locale)
         self._ev(s, "clarify", by="llm" if ok else "template")
-        return {"draft": q, "action": "clarify", "abstained": False, "clarify": True, "trace": s["trace"]}
+        return {"draft": q, "action": "clarify", "abstained": False, "clarify": True,
+                "clarify_count": int(s.get("clarify_count") or 0) + 1, "trace": s["trace"]}
 
     def simple(self, s):
         req = self._req(s)
@@ -897,9 +982,16 @@ class AdvisoryAgent:
         else:
             fallback = P.template("greeting" if s.get("intent") == "greeting" else "other", req.locale)
             if _no_rag_chat_enabled() and st in (None, "ok") and s.get("intent") in ("policy", "greeting", "other"):
+                system = _NO_RAG_SYSTEM_PROMPT
+                ctx = self._borrower_context(s)
+                if ctx:
+                    system += "\n\nBORROWER CONTEXT (their own recorded application):\n" + ctx
+                if int(s.get("clarify_count") or 0) >= 1:
+                    system += ("\nThe user has already been asked to clarify once. Do NOT ask another question: "
+                               "answer generally, or offer a human review.")
                 try:
                     answer = self.llm.chat(
-                        _NO_RAG_SYSTEM_PROMPT,
+                        system,
                         req.message,
                         max_tokens=500,
                         tag="no_rag_chat",
@@ -910,6 +1002,8 @@ class AdvisoryAgent:
                 if isinstance(answer, str) and answer.strip():
                     txt = answer.strip()
                     no_rag_answered = True
+                    if txt.rstrip().endswith(("?", "?")):
+                        s["clarify_count"] = int(s.get("clarify_count") or 0) + 1
                 else:
                     txt = fallback
             else:
@@ -918,7 +1012,7 @@ class AdvisoryAgent:
         if no_rag_answered:
             declined = False
         return {"draft": txt, "action": action, "abstained": declined,
-                "trace": s["trace"], "plan": s.get("plan")}
+                "trace": s["trace"], "plan": s.get("plan"), "clarify_count": int(s.get("clarify_count") or 0)}
 
     def finalize(self, s):
         req = self._req(s)
