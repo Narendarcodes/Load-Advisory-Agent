@@ -18,3 +18,8 @@ docs/borrower-frontend/acceptance/** -whitespace -text linguist-generated=true
 # declared here too. Fixing this at checkout is the only place it can be fixed: the blobs are already LF.
 *.sh text eol=lf
 .githooks/* text eol=lf
+
+# Vendored contract snapshots are pinned by SHA-256 in
+# tests/test_saral_synthetic_contract_match.py. Store them byte-exact: with core.autocrlf=true a
+# Windows checkout rewrites them to CRLF and the pinned digests stop matching.
+synthetic_data/saral_kyc_bank/contracts_snapshot/*.json -text

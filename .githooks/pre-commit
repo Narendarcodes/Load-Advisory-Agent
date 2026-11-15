@@ -6,11 +6,22 @@ set -e
 
 git diff --cached --check
 
-PY=python
-command -v python >/dev/null 2>&1 || PY=python3
+# Use the repo virtualenv when it exists. The system interpreter (C:\Python314 on this
+# machine) is a different environment: it has been missing pypdfium2 and other test-only
+# dependencies, which made the suite fail for reasons that had nothing to do with the change.
+ROOT=$(git rev-parse --show-toplevel)
+if [ -x "$ROOT/.venv/Scripts/python.exe" ]; then
+  PY="$ROOT/.venv/Scripts/python.exe"
+elif [ -x "$ROOT/.venv/bin/python" ]; then
+  PY="$ROOT/.venv/bin/python"
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  PY=python3
+fi
 
-if ! "$PY" -m ruff --version >/dev/null 2>&1; then
-  echo "pre-commit: ruff is not installed for $PY. Run: $PY -m pip install -r requirements.txt" >&2
+if ! "$PY" -m ruff --version >/dev/null 2>&1 || ! "$PY" -m pytest --version >/dev/null 2>&1; then
+  echo "pre-commit: $PY is missing the test tooling. Run: $PY -m pip install -r requirements.txt -r requirements-test.txt" >&2
   exit 1
 fi
 

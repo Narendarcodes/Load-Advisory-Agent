@@ -33,3 +33,12 @@ data/synthetic/bureau/*.json
 work/ocr_real/
 **/ocr_real/raw/
 **/ocr_real/images/
+
+# Tool caches (the pytest cache directory can even be unreadable on Windows; it is never source)
+.pytest_cache/
+.ruff_cache/
+
+# pnpm artifacts from ad-hoc experiments. This repo installs with npm (package-lock.json is
+# tracked); the pnpm-workspace.yaml files are pnpm's placeholder stubs, not configuration.
+pnpm-lock.yaml
+pnpm-workspace.yaml
