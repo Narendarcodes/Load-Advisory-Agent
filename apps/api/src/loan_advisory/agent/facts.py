@@ -296,6 +296,23 @@ def offer_plain(record: dict) -> dict | None:
             "is_counter_offer": bool(o.get("counter_offer"))}
 
 
+def application_details(record: dict) -> dict:
+    """The applicant's own loan request: amount, tenure, purpose, and the offer EMI when there is one.
+
+    Grounded for the borrower (it is their own recorded request); the EMI is null when the application was not
+    approved, so the answer says so instead of withholding the details.
+    """
+    vals = (record.get("inputs") or {}).get("values") or {}
+    offer = record.get("offer") or {}
+    return {
+        "requested_amount": inr(vals["requested_amount"]) if vals.get("requested_amount") else None,
+        "tenure_months": int(vals["tenure_months"]) if vals.get("tenure_months") else None,
+        "loan_purpose": vals.get("loan_purpose"),
+        "offer_amount": inr(offer["amount"]) if offer.get("amount") else None,
+        "offer_emi": inr(offer["emi"]) if offer.get("emi") else None,
+    }
+
+
 # E2E D-17: catalogue-v2 rule ids never reach the borrower as a missing item. Same map as the portal API (D-07,
 # loan_advisory_portal/api/applications.py RULE_FIELD); an unknown rule id becomes the generic "documents".
 RULE_FIELD = {

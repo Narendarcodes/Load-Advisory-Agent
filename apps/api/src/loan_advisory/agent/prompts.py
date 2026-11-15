@@ -126,6 +126,9 @@ Task: explain the recorded decision in plain language, in this order: what happe
   accept the offer, ask about a smaller amount, or ask for a human review.
 - If the decision is approved or a counter-offer and "offer" is in the facts, you may state its amount, EMI and loan
   period; say it is not a final loan sanction.
+- If the applicant asks for their loan or application details (amount, tenure, EMI), state them from "application".
+  If "application.offer_emi" is present, state that EMI; if it is null, say the application was not approved so there
+  is no EMI, and they can ask for a what-if or a human review.
 - When nothing failed (approved or counter-offer), do not write "no failed check" or "no failed reason was recorded";
   just explain the decision.
 - What you can do next: one short, general, honest step, and offer a human review or to answer questions.
