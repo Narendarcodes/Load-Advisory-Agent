@@ -36,7 +36,9 @@ TOOL_SCHEMAS = [
         "description": "Re-check the applicant's details under a HYPOTHETICAL change (monthly income, monthly EMIs, "
                        "loan amount or loan period). This is a practice check, not a new decision.",
         "parameters": {"type": "object", "properties": {
-            "changes": {"type": "object", "description": "field -> {set: number} or {delta: number}"}},
+            "changes": {"type": "object", "description": "field -> a number. Use {\"set\": value} for an absolute "
+                                                          "value, or {\"delta\": number} for a change from the recorded "
+                                                          "value (negative = decrease)."}},
             "required": ["changes"]}}},
     {"type": "function", "function": {
         "name": "create_human_handoff",
@@ -124,7 +126,31 @@ def run_tool(agent, name, args, req, sess, s):
             changes = args.get("changes") or {}
             if not changes:
                 return {"error": "no hypothetical change given"}
-            w = agent.tools.run_what_if(req.application_ref, sess, changes, record=rec)
+            # the model sometimes adds a "reason" note or uses a synonym; map and ignore both
+            aliases = {"monthly_emis": "monthly_obligations", "emis": "monthly_obligations",
+                       "income": "monthly_income", "salary": "monthly_income", "amount": "loan_amount",
+                       "tenure": "tenure_months", "loan_period": "tenure_months", "period": "tenure_months"}
+            ignore = {"reason", "note", "explanation", "comment", "why"}
+            base = (((rec or {}).get("inputs") or {}).get("values") or {})
+            clean = {}
+            for k, v in changes.items():
+                if k in ignore:
+                    continue
+                key = aliases.get(k, k)
+                if isinstance(v, dict):
+                    if "set" in v:
+                        clean[key] = v["set"]
+                    elif "delta" in v:
+                        if base.get(key) is None:
+                            return {"error": f"cannot apply a relative change to {key} without a recorded value"}
+                        clean[key] = float(base[key]) + float(v["delta"])
+                    else:
+                        return {"error": f"{k} must use set or delta"}
+                else:
+                    clean[key] = v
+            if not clean:
+                return {"error": "no hypothetical change given"}
+            w = agent.tools.run_what_if(req.application_ref, sess, clean, record=rec)
             s["what_if"] = w
             out = {"changes": w.get("changes"), "simulated_decision": w.get("simulated_decision"),
                    "is_simulation": True, "label": w.get("label")}
