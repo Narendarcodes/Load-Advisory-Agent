@@ -86,6 +86,11 @@ def ensure_officer_permissions():
 	if frappe.db.exists("DocType", "Loan Origination Settings"):
 		add_permission("Loan Origination Settings", OFFICER_ROLE, 0)
 		update_permission_property("Loan Origination Settings", OFFICER_ROLE, 0, "read", 1)
+	# The desk router probes `desk_page.getpage` on every route it does not already know. Page read is
+	# checked before existence, so without this the officer gets "does not have doctype access via role
+	# permission for document Page" on /desk instead of the route resolving (2026-11-15).
+	add_permission("Page", OFFICER_ROLE, 0)
+	update_permission_property("Page", OFFICER_ROLE, 0, "read", 1)
 	# System Manager must keep seeing the officer-only fields it already administers.
 	add_permission("Loan Application", "System Manager", 1)
 	update_permission_property("Loan Application", "System Manager", 1, "read", 1)
