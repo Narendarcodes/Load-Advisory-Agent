@@ -175,23 +175,19 @@
 			.map(function (doc, index) {
 				var meta = [labelOf(doc.document_type), sizeText(doc.size)].filter(Boolean).join(" · ");
 				var actions =
-					'<button type="button" class="btn btn--quiet btn--sm" data-preview="' +
-					index +
-					'">Preview</button><button type="button" class="btn btn--quiet btn--sm" data-download="' +
+					'<button type="button" class="btn btn--quiet btn--sm" data-download="' +
 					index +
 					'">Download</button>';
 				if (state.canEdit) {
-					if (!DEMO) {
-						var reading = state.extractingRow === doc.row;
-						actions +=
-							'<button type="button" class="btn btn--quiet btn--sm" data-extract="' +
-							index +
-							'"' +
-							(reading ? " disabled aria-busy=\"true\"" : "") +
-							">" +
-							(reading ? "Reading…" : state.confirmedRows[doc.row] ? "View fields" : "Read fields") +
-							"</button>";
-					}
+					var reading = state.extractingRow === doc.row;
+					actions +=
+						'<button type="button" class="btn btn--ghost btn--sm" data-extract="' +
+						index +
+						'"' +
+						(reading ? " disabled aria-busy=\"true\"" : "") +
+						">" +
+						(reading ? "Reading…" : state.confirmedRows[doc.row] ? "View details" : "Read details") +
+						"</button>";
 					actions +=
 						'<button type="button" class="btn btn--quiet btn--sm" data-remove="' + index + '">Remove</button>';
 				}
@@ -218,7 +214,7 @@
 		hide(field("preview-close"));
 		field("preview-body").removeAttribute("aria-busy");
 		field("preview-body").innerHTML =
-			'<p class="small muted">Choose Preview for a person-review note, or Read fields to read the details from an attached document.</p>';
+			'<p class="small muted">Choose Read details on a document.</p>';
 	}
 
 	function previewHeader(doc, badge) {
@@ -385,7 +381,7 @@
 		show(field("preview-close"));
 		field("preview-body").setAttribute("aria-busy", "true");
 		field("preview-body").innerHTML =
-			'<div class="preview-sheet"><p class="small muted">Reading the attached document on our own server. Your document is not sent to any AI chat service.</p><div class="skeleton skeleton--block" aria-hidden="true"></div></div>';
+			'<div class="preview-sheet"><p class="small muted">Reading your document…</p><div class="skeleton skeleton--block" aria-hidden="true"></div></div>';
 		renderDocuments();
 
 		try {
@@ -511,8 +507,8 @@
 			select.value = "";
 			renderDocuments();
 			setStatus("Added " + (uploaded.file_name || file.name), "ok");
-			Portal.flash("success", "Document added", "Add any other documents, then submit from the application page.");
-			renderPreview(state.documents[state.documents.length - 1]);
+			// Read it straight away: the borrower checks the values instead of hunting for a button.
+			readDocument(state.documents[state.documents.length - 1]);
 			field("preview-card").scrollIntoView({
 				behavior: reduceMotion ? "auto" : "smooth",
 				block: "nearest",

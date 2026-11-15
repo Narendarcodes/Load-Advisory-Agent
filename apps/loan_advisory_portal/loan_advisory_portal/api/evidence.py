@@ -66,6 +66,24 @@ def _engine(record: dict) -> str:
 	return str(engine or "").strip()
 
 
+
+# The record id is a hash of the application, inputs, policy and outcome, so re-running the
+# same application with the same inputs (a resubmission with unchanged values) yields the
+# same id. Only the run's own timestamp and trace pointer differ then; they are not part of
+# the decision, so they must not turn an identical decision into a "different content" error.
+VOLATILE_KEYS = ("evaluated_at", "trace_ref")
+
+
+def _decision_content(record_json: str) -> dict:
+	try:
+		data = json.loads(record_json or "{}")
+	except ValueError:
+		return {"__unreadable__": record_json}
+	for key in VOLATILE_KEYS:
+		data.pop(key, None)
+	return data
+
+
 @frappe.whitelist(methods=["POST"])
 def ingest(record: dict | str, native_status: str = "Open", expected_application: str | None = None,
 		trace_store: str | None = None) -> dict:
@@ -115,7 +133,7 @@ def ingest(record: dict | str, native_status: str = "Open", expected_application
 	if existing:
 		if existing.loan_application != application_ref:
 			raise frappe.PermissionError(_("record id is already linked to another application"))
-		if existing.record_json != record_json:
+		if _decision_content(existing.record_json) != _decision_content(record_json):
 			frappe.throw(_("record id already exists with different content"), frappe.ValidationError)
 		action = "unchanged"
 

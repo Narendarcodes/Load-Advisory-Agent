@@ -3,9 +3,8 @@
 {% block page_content %}
 <div class="page-head page-head--art">
 	<div>
-		<h1>Add the documents for your application</h1>
-		<p>Upload private copies of the documents you are asked for. We can read some details from a document for you to check; a person reviews the submitted documents. Keep any originals until your application is complete.</p>
-		<p><a class="small" href="/borrower">Back to applications</a></p>
+		<h1>Documents</h1>
+		<p>Upload what you're asked for. A person reviews every file.</p>
 	</div>
 	<img class="page-head__art" src="/assets/loan_advisory_portal/illustrations/documents-header.svg" alt="" width="160" height="120">
 </div>
@@ -18,7 +17,7 @@
 </ol>
 <div class="alert alert--success" role="status">
 	<strong>Draft application created</strong>
-	<span>Add at least one document here, then open the application page to submit it for review.</span>
+	<span>Add a document, then submit from the application page.</span>
 </div>
 {% endif %}
 
@@ -50,7 +49,7 @@
 			<div class="empty">
 				<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-documents.svg" alt="" width="180" height="135">
 				<h2 id="no-app-title">Choose an application</h2>
-				<p id="no-app-text">Documents belong to a single application. Open one to add or review its documents.</p>
+				<p id="no-app-text">Pick the application these documents are for.</p>
 				<div class="stack mt" id="application-choices"></div>
 			</div>
 		</div>
@@ -58,26 +57,23 @@
 		<section class="card hidden" id="upload-card" aria-labelledby="upload-heading">
 			<div class="card__head">
 				<h2 id="upload-heading">Add a document</h2>
-				<span class="small muted">Private to you and your advisor</span>
 			</div>
 			<form class="upload-form" id="upload-form" novalidate>
 				<div class="field">
-					<label for="doc-type">What kind of document is this?</label>
+					<label for="doc-type">Document type</label>
 					<select id="doc-type" required>
 						<option value="">Loading document types</option>
 					</select>
-					<p class="hint">Choose the closest type. An advisor can reclassify it if needed.</p>
 					<p class="error hidden" id="doc-type-error"></p>
 				</div>
 				<label class="dropzone" id="dropzone" for="doc-file" tabindex="0">
 					<span class="dropzone__mark" aria-hidden="true">UP</span>
 					<strong>Choose a file or drop it here</strong>
-					<span class="small muted">PDF, JPEG or PNG. Up to 10 MB each.</span>
+					<span class="small muted">PDF, JPG or PNG · 10 MB · up to 12</span>
 					<input id="doc-file" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
 				</label>
 				<p class="upload-status" id="upload-status" role="status" aria-live="polite">No file chosen</p>
-				<p class="small muted">Up to 12 documents per application. Files are stored privately and are never used to train AI.</p>
-				<p class="small muted" id="ocr-privacy-note">Read fields runs on our own server. Check every suggestion before confirming; it will not update your application automatically, and your document is not sent to any AI chat service.</p>
+				<p class="small muted" id="ocr-privacy-note">Private. Never used to train AI. Check each value before confirming.</p>
 			</form>
 		</section>
 
@@ -88,11 +84,11 @@
 			</div>
 			<div class="alert alert--info hidden" id="locked-note" role="note">
 				<strong>Documents are locked</strong>
-				<span>This application has been submitted, so documents cannot be added or removed now.</span>
+				<span>Submitted applications can't change documents.</span>
 			</div>
 			<div class="empty empty--compact hidden" id="doc-empty">
 				<img class="empty__art" src="/assets/loan_advisory_portal/illustrations/empty-documents.svg" alt="" width="180" height="135">
-				<p class="muted">No documents attached yet. Choose a document type and upload a file above.</p>
+				<p class="muted">No documents yet.</p>
 			</div>
 			<ul class="doc-list" id="doc-list"></ul>
 		</section>
@@ -103,7 +99,7 @@
 				<button type="button" class="btn btn--quiet btn--sm hidden" id="preview-close">Close preview</button>
 			</div>
 			<div id="preview-body" aria-live="polite">
-				<p class="small muted">Choose Preview for a person-review note, or Read fields to read the details from an attached document.</p>
+				<p class="small muted">Choose Read details on a document.</p>
 			</div>
 		</section>
 	</div>
@@ -121,27 +117,12 @@
 			</dl>
 		</div>
 
-		<div class="card card--tight">
-			<h2>Before you submit</h2>
-			<ul class="plain-list mt">
-				<li>At least one document attached</li>
-				<li>PDF, JPEG or PNG files, up to 10 MB</li>
-				<li>Submit from the application page</li>
-			</ul>
-			<p class="small muted mt">Documents cannot be added or removed after you submit.</p>
-		</div>
-
 		<div class="card card--tight hidden" id="handoff-card">
-			<h2 id="handoff-title">Ready for the next step?</h2>
-			<p class="small muted" id="handoff-text">Open the application to check the details and submit it for review.</p>
-			<a class="btn btn--block mt" id="continue-application" href="/borrower">Open the application</a>
+			<h2 id="handoff-title">Ready to submit?</h2>
+			<p class="small muted" id="handoff-text">Documents lock once you submit.</p>
+			<a class="btn btn--block mt" id="continue-application" href="/borrower">Review and submit</a>
 		</div>
 
-		<div class="card card--tight">
-			<h2>Need another document?</h2>
-			<p class="small muted mt">Ask the assistant what a document type means, or contact your loan advisor through the help page.</p>
-			<a class="small link-arrow" href="/borrower/assistant">Ask the assistant</a>
-		</div>
 	</aside>
 </div>
 

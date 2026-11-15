@@ -81,20 +81,19 @@
 
 			<nav class="rail__nav" aria-label="Main">
 				<div class="rail__group">
-					{{ rail_link('/borrower', 'applications', 'Dashboard', 'dashboard') }}
-					{{ rail_link('/borrower#applications', 'application', 'My applications', 'applications') }}
+					{{ rail_link('/borrower', 'applications', 'Applications', 'applications', ['applications', 'application']) }}
 					{{ rail_link('/borrower/apply', 'apply', 'New application', 'apply') }}
-					{{ rail_link('/borrower/assistant', 'assistant', 'Assistant', 'assistant') }}
+					{{ rail_link('/borrower/eligibility', 'eligibility', 'Check eligibility', 'eligibility') }}
 					{{ rail_link('/borrower/documents', 'documents', 'Documents', 'documents') }}
-					{{ rail_link('/borrower/profile', 'profile', 'Profile', 'profile') }}
-					{{ rail_link('/borrower/help', 'help', 'Help & Feedback', 'help', ['help', 'feedback']) }}
+					{{ rail_link('/borrower/assistant', 'assistant', 'Assistant', 'assistant') }}
 				</div>
 				<div class="rail__group">
-					<p class="rail__label" id="rail-more">More</p>
-					{{ rail_link('/borrower/products', 'products', 'Loan products', 'products') }}
-					{{ rail_link('/borrower/eligibility', 'eligibility', 'Check eligibility', 'eligibility') }}
+					<p class="rail__label" id="rail-more">Account</p>
+					{{ rail_link('/borrower/profile', 'profile', 'Profile', 'profile') }}
 					{{ rail_link('/borrower/kyc', 'kyc', 'Identity check', 'kyc') }}
 					{{ rail_link('/borrower/servicing', 'servicing', 'Repayments', 'servicing') }}
+					{{ rail_link('/borrower/products', 'products', 'Loan products', 'products') }}
+					{{ rail_link('/borrower/help', 'help', 'Help', 'help', ['help', 'feedback']) }}
 				</div>
 			</nav>
 
@@ -122,6 +121,7 @@
 				<nav class="topbar__nav" aria-label="Main">
 					<a href="/borrower"{% if active_page == "applications" %} aria-current="page"{% endif %}>Applications</a>
 					<a href="/borrower/apply"{% if active_page == "apply" %} aria-current="page"{% endif %}>Apply</a>
+					<a href="/borrower/eligibility"{% if active_page == "eligibility" %} aria-current="page"{% endif %}>Eligibility</a>
 					<a href="/borrower/documents"{% if active_page == "documents" %} aria-current="page"{% endif %}>Documents</a>
 					<a href="/borrower/assistant"{% if active_page == "assistant" %} aria-current="page"{% endif %}>Assistant</a>
 				</nav>

@@ -24,6 +24,8 @@ def portal_bootstrap() -> dict:
 		"demo": bool(
 			frappe.conf.get("developer_mode") or frappe.conf.get("enable_demo_fixtures")
 		),
+		# Dev mode: a live panel of the OCR and ZEN steps under an application (api/progress.py).
+		"dev_panel": bool(frappe.conf.get("saral_dev_panel")),
 	}
 	if user == "Guest":
 		return context

@@ -3,8 +3,8 @@
 {% block page_content %}
 <div class="page-head">
 	<div>
-		<h1>Apply in three stages</h1>
-		<p>Tell us about you, choose your loan, then add your documents. Your details are saved as you go, and nothing is sent for review until you choose to submit.</p>
+		<h1>New application</h1>
+		<p>Saved as you go. Nothing is sent until you submit.</p>
 	</div>
 	{% if product %}
 	<div class="page-head__actions">
@@ -28,51 +28,47 @@
 		<ol class="wizard-steps" id="wizard-steps">
 			<li data-step="about" data-state="current">
 				<button type="button" data-goto="0" aria-current="step">
-					<span class="wizard-step__num" aria-hidden="true">1a</span>
-					<span class="wizard-step__label">About you<span class="wizard-step__meta">Contact details</span></span>
+					<span class="wizard-step__num" aria-hidden="true">1</span>
+					<span class="wizard-step__label">About you</span>
 				</button>
 			</li>
 			<li data-step="work">
 				<button type="button" data-goto="1">
-					<span class="wizard-step__num" aria-hidden="true">1b</span>
-					<span class="wizard-step__label">Employment<span class="wizard-step__meta">How you earn</span></span>
+					<span class="wizard-step__num" aria-hidden="true">2</span>
+					<span class="wizard-step__label">Employment</span>
 				</button>
 			</li>
 			<li data-step="money">
 				<button type="button" data-goto="2">
-					<span class="wizard-step__num" aria-hidden="true">1c</span>
-					<span class="wizard-step__label">Income<span class="wizard-step__meta">Income and commitments</span></span>
+					<span class="wizard-step__num" aria-hidden="true">3</span>
+					<span class="wizard-step__label">Income</span>
 				</button>
 			</li>
 			<li data-step="loan">
 				<button type="button" data-goto="3">
-					<span class="wizard-step__num" aria-hidden="true">2a</span>
-					<span class="wizard-step__label">Loan request<span class="wizard-step__meta">Amount and tenure</span></span>
+					<span class="wizard-step__num" aria-hidden="true">4</span>
+					<span class="wizard-step__label">Loan request</span>
 				</button>
 			</li>
 			<li data-step="review">
 				<button type="button" data-goto="4">
-					<span class="wizard-step__num" aria-hidden="true">2b</span>
-					<span class="wizard-step__label">Review<span class="wizard-step__meta">Create the draft</span></span>
+					<span class="wizard-step__num" aria-hidden="true">5</span>
+					<span class="wizard-step__label">Review</span>
 				</button>
 			</li>
 			<li data-step="documents" data-state="locked">
 				<button type="button" disabled>
-					<span class="wizard-step__num" aria-hidden="true">3a</span>
-					<span class="wizard-step__label">Documents<span class="wizard-step__meta">After you create</span></span>
+					<span class="wizard-step__num" aria-hidden="true">6</span>
+					<span class="wizard-step__label">Documents</span>
 				</button>
 			</li>
 			<li data-step="submit" data-state="locked">
 				<button type="button" disabled>
-					<span class="wizard-step__num" aria-hidden="true">3b</span>
-					<span class="wizard-step__label">Submit<span class="wizard-step__meta">When you are ready</span></span>
+					<span class="wizard-step__num" aria-hidden="true">7</span>
+					<span class="wizard-step__label">Submit</span>
 				</button>
 			</li>
 		</ol>
-		<div class="alert alert--info">
-			<strong>Saved as you go</strong>
-			<span>Name, contact, work and income are saved to your profile when you press Continue. The loan request is saved when you create the application.</span>
-		</div>
 	</nav>
 
 	<div class="wizard__main">
@@ -91,7 +87,7 @@
 				<div class="wizard-panel__head">
 					<img class="stage-art" src="/assets/loan_advisory_portal/illustrations/wizard-about.svg" alt="" width="120" height="90">
 					<h2 tabindex="-1">About you</h2>
-					<p>These details come from your profile. You can correct your name and phone here. The email is the one you signed in with.</p>
+					<p>From your profile.</p>
 				</div>
 				<div class="field">
 					<label for="about-name">Full name</label>
@@ -101,12 +97,12 @@
 				<div class="field">
 					<label for="about-email">Email</label>
 					<input id="about-email" type="email" readonly value="Loading">
-					<p class="hint">Used for updates about this application. Ask your loan advisor if it needs to change.</p>
+
 				</div>
 				<div class="field">
 					<label for="about-phone">Phone</label>
 					<input id="about-phone" type="tel" autocomplete="tel" placeholder="+91 98765 43210" required>
-					<p class="hint">Include the country code. We use this number only to discuss this application.</p>
+					<p class="hint">With country code.</p>
 					<p class="error hidden" id="about-phone-error"></p>
 				</div>
 			</section>
@@ -114,7 +110,6 @@
 			<section data-panel="work" class="hidden">
 				<div class="wizard-panel__head">
 					<h2 tabindex="-1">Employment</h2>
-					<p>How you earn helps an advisor read the income figures on the next step.</p>
 				</div>
 				<div class="grid-2">
 					<div class="field">
@@ -128,26 +123,25 @@
 							<option value="Retired">Retired</option>
 							<option value="Unemployed">Not working</option>
 						</select>
-						<p class="hint">Choose the option closest to how you earn.</p>
 					</div>
 					<div class="field">
 						<label for="work-months">Months in your current work</label>
 						<input id="work-months" type="number" min="0" max="720" step="1" inputmode="numeric" required>
-						<p class="hint">If you started less than a month ago, enter 0.</p>
+						<p class="hint">0 if under a month.</p>
 						<p class="error hidden" id="work-months-error"></p>
 					</div>
 				</div>
 				<div class="field">
 					<label for="work-employer">Employer or business name</label>
 					<input id="work-employer" type="text" maxlength="140" autocomplete="organization">
-					<p class="hint">Optional. It helps an advisor understand where your income comes from.</p>
+					<p class="hint">Optional.</p>
 				</div>
 			</section>
 
 			<section data-panel="money" class="hidden">
 				<div class="wizard-panel__head">
 					<h2 tabindex="-1">Income and commitments</h2>
-					<p>These figures are used when your application is assessed. Give your own monthly amounts, not yearly ones.</p>
+					<p>Monthly amounts.</p>
 				</div>
 				<div class="grid-2">
 					<div class="field">
@@ -165,7 +159,7 @@
 							<span class="input-group__prefix" aria-hidden="true">₹</span>
 							<input id="money-obligations" type="number" min="0" step="500" inputmode="numeric" required>
 						</div>
-						<p class="hint">Loan EMIs and other fixed repayments. Enter 0 if you have none.</p>
+						<p class="hint">EMIs and fixed repayments. 0 if none.</p>
 						<p class="error hidden" id="money-obligations-error"></p>
 					</div>
 				</div>
@@ -179,7 +173,7 @@
 				<div class="wizard-panel__head">
 					<img class="stage-art" src="/assets/loan_advisory_portal/illustrations/wizard-loan.svg" alt="" width="120" height="90">
 					<h2 tabindex="-1">Loan request</h2>
-					<p>The product rate is shown for context. Your actual amount and terms depend on the assessment of this application.</p>
+
 				</div>
 				<div class="field">
 					<label for="loan-amount">Amount you want to borrow (₹)</label>
@@ -203,7 +197,7 @@
 							<option value="72">72 months</option>
 							<option value="84">84 months</option>
 						</select>
-						<p class="hint">72 and 84 months are for education and home renovation. The final tenure is agreed in any offer.</p>
+						<p class="hint">72 and 84 months: education or home renovation only.</p>
 					</div>
 					<div class="field">
 						<label for="loan-purpose">What is the loan for?</label>
@@ -223,7 +217,7 @@
 				<div class="field hidden" id="loan-purpose-other-field">
 					<label for="loan-purpose-other">Describe the purpose</label>
 					<input id="loan-purpose-other" type="text" maxlength="200">
-					<p class="hint">Up to 200 characters. Be specific enough for an advisor to understand.</p>
+					<p class="hint">Up to 200 characters.</p>
 					<p class="error hidden" id="loan-purpose-other-error"></p>
 				</div>
 			</section>
@@ -231,7 +225,7 @@
 			<section data-panel="review" class="hidden">
 				<div class="wizard-panel__head">
 					<h2 tabindex="-1">Review and create</h2>
-					<p>Check the details below. Editing a section takes you back to that step. Nothing is submitted yet.</p>
+					<p>Nothing is submitted yet.</p>
 				</div>
 				<div id="review-body"></div>
 				<div class="alert alert--warn mt">
@@ -281,15 +275,8 @@
 			</dl>
 			<div class="summary-rail__foot">
 				<span class="save-state" id="save-state" data-state="saving">Loading your profile</span>
-				<p class="tiny muted">The EMI is calculated at the product rate over the tenure you choose. It is an estimate, not an offer.</p>
+				<p class="tiny muted">EMI is an estimate, not an offer.</p>
 			</div>
-		</div>
-		<div class="card card--tight">
-			<img class="stage-art" src="/assets/loan_advisory_portal/illustrations/wizard-documents.svg" alt="" width="120" height="90">
-			<h2>Stage 3: Documents</h2>
-			<p class="small muted mt">After you create the draft, add at least one document in the application workspace.</p>
-			<p class="small muted mt">Submit when you are ready. Submitting sends the application for checks and fixes the loan request.</p>
-			<p class="small muted mt">You can withdraw a draft at any time before you submit it.</p>
 		</div>
 	</aside>
 </div>

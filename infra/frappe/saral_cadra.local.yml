@@ -1,0 +1,63 @@
+# Local override for the saral_cadra stack.
+#
+#   docker compose -p saral_cadra -f infra/frappe/saral_cadra.yml -f infra/frappe/saral.image.yml \
+#     -f infra/frappe/saral_cadra.local.yml up -d
+#
+# * pull_policy: the base file pins `pull_policy: always` for the droplet; these images are
+#   built locally and never published, so a pull would fail.
+# * The portal app is mounted from this checkout, so an edit shows up on reload (Python
+#   changes need `docker compose restart backend`). No image rebuild for day-to-day work.
+# * `ocr` is the GPU OCR sidecar (infra/ocr). The backend sends pages to it; it loads
+#   PaddleOCR on the first page and frees the GPU after OCR_IDLE_SECONDS idle.
+x-portal-src: &portal-src
+  - ../../apps/loan_advisory_portal:/home/frappe/frappe-bench/apps/loan_advisory_portal
+  # Frappe serves /assets/<app> from this link; mounting it keeps it across container recreates.
+  - ../../apps/loan_advisory_portal/loan_advisory_portal/public:/home/frappe/frappe-bench/assets/loan_advisory_portal:ro
+
+services:
+  backend:
+    pull_policy: missing
+    volumes: *portal-src
+    environment:
+      SARAL_OCR_URL: http://ocr:8866
+      SARAL_OCR_ENGINES: paddle,tesseract
+  configurator:
+    pull_policy: missing
+  frontend:
+    pull_policy: missing
+    volumes: *portal-src
+  queue-long:
+    pull_policy: missing
+    volumes: *portal-src
+    environment:
+      SARAL_OCR_URL: http://ocr:8866
+  queue-short:
+    pull_policy: missing
+    volumes: *portal-src
+    environment:
+      SARAL_OCR_URL: http://ocr:8866
+  redis-cache:
+    pull_policy: missing
+  redis-queue:
+    pull_policy: missing
+  scheduler:
+    pull_policy: missing
+    volumes: *portal-src
+  websocket:
+    pull_policy: missing
+    volumes: *portal-src
+  db:
+    pull_policy: missing
+  ocr:
+    image: saral-ocr:gpu
+    build: ../ocr
+    pull_policy: never
+    gpus: all
+    restart: unless-stopped
+    environment:
+      OCR_IDLE_SECONDS: "300"
+    volumes:
+      - ocr_models:/models
+
+volumes:
+  ocr_models:

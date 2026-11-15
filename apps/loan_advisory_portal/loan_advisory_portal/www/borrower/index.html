@@ -4,7 +4,6 @@
 <section class="dash-hero" aria-labelledby="dash-title">
 	<div class="dash-hero__main">
 		<h1 id="dash-title">{{ 'Hello, ' ~ first_name if first_name else 'Dashboard' }}</h1>
-		<p class="dash-hero__lede">Every application, document and decision in one place.</p>
 		{#- The next step is the key card: white, with a hairline. #}
 		<div class="next-step next-card key-card" id="next-step" aria-live="polite">
 			<h2 id="next-step-heading"><span class="skeleton skeleton--title" aria-hidden="true"></span><span class="sr-only">Loading your next step</span></h2>
@@ -12,8 +11,10 @@
 			<p class="small muted hidden" id="latest-status"></p>
 			<div class="dash-hero__actions">
 				<div id="next-step-action"></div>
-				<a class="btn btn--ghost btn--sm" href="/borrower/eligibility">Check eligibility</a>
-				<a class="btn btn--sm" href="/borrower/apply">Start an application</a>
+				<span class="dash-hero__defaults" id="hero-defaults">
+					<a class="btn btn--sm" href="/borrower/eligibility">Check eligibility</a>
+					<a class="btn btn--ghost btn--sm" href="/borrower/apply">New application</a>
+				</span>
 			</div>
 		</div>
 	</div>
@@ -42,7 +43,6 @@
 			<div class="card__head">
 				<div>
 					<h2 id="active-loan-heading">Your current loan</h2>
-					<p class="tiny muted">Preview data from the development fixture. No real loan is attached to this account.</p>
 				</div>
 				<span class="demo-flag">Demo</span>
 			</div>
@@ -67,7 +67,7 @@
 				<div class="progress__bar" style="width:16%"></div>
 			</div>
 			<div class="card__foot">
-				<span class="small muted">Preview only. Repayment records are not connected to a payment system.</span>
+				<span class="spacer"></span>
 				<a class="btn btn--ghost btn--sm" href="/borrower/servicing">Open repayments</a>
 			</div>
 		</section>
@@ -76,9 +76,7 @@
 			<div class="card__head">
 				<div>
 					<h2 id="applications-heading">Applications</h2>
-					<p class="tiny muted">Newest first. Every row is a separate application.</p>
 				</div>
-				<a class="small" href="/borrower/profile">Update your profile</a>
 			</div>
 			<div id="applications" aria-live="polite" aria-busy="true">
 				<p class="sr-only">Loading your applications</p>
@@ -95,14 +93,13 @@
 	<aside class="dashboard__side" aria-label="Next steps and support">
 		<section class="card" aria-labelledby="ask-heading">
 			<h2 id="ask-heading">Ask about your application</h2>
-			<p class="small muted mt">Ask why a decision was made, what to fix, or try a what-if.</p>
+			<p class="small muted mt">Ask why, what to fix, or what if.</p>
 			<a class="btn btn--ghost btn--sm mt" href="/borrower/assistant">Open the assistant</a>
 		</section>
 
 		<section class="card" aria-labelledby="person-heading">
 			<h2 id="person-heading">Need a person?</h2>
-			<p class="small muted mt">Ask for a human review, report a problem, or tell us what was unclear.</p>
-			<p class="mt"><a class="btn btn--quiet btn--sm" href="/borrower/feedback">Send feedback</a><a class="btn btn--quiet btn--sm" href="/borrower/help">Read the help page</a></p>
+			<p class="mt"><a class="btn btn--ghost btn--sm" href="/borrower/feedback">Request review</a></p>
 		</section>
 	</aside>
 </div>

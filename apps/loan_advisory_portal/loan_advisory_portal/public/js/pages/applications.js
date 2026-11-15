@@ -154,7 +154,7 @@
 		if (!applications.length) {
 			title.textContent = "Start with a quick check";
 			body.textContent =
-				"See an indicative amount before you fill in a full application. It does not affect your credit score.";
+				"See what you may borrow first. No credit check.";
 			// The hero already carries "Check eligibility" and "Start an application".
 			action.innerHTML = "";
 			return;
@@ -166,8 +166,10 @@
 		body.textContent = step.body;
 		renderLatestStatus(latest);
 		var href = latest.lifecycle === "WITHDRAWN" ? "/borrower/apply" : applicationUrl(latest);
-		// Ghost, not coral: the page head already carries the one coral action ("Start an application").
-		action.innerHTML = '<a class="btn btn--ghost btn--sm" href="' + href + '">' + Portal.esc(step.label) + "</a>";
+		// One clear next step: the latest application's action is the only primary button.
+		var defaults = document.getElementById("hero-defaults");
+		if (defaults) defaults.classList.add("hidden");
+		action.innerHTML = '<a class="btn btn--sm" href="' + href + '">' + Portal.esc(step.label) + "</a>";
 	}
 
 	function renderActiveLoan() {

@@ -76,14 +76,14 @@
 	function updateEmploymentCopy() {
 		var type = selectedEmployment();
 		var copy = {
-			Salaried: ["Months in your current job", "Count from your first day with this employer. Enter 0 for less than a month."],
-			"Self-employed": ["Months self-employed", "Count from when you started working for yourself."],
-			Business: ["Months running your business", "Count from when the business began trading."],
-			Student: ["Months in your current course", "Enter 0 if you started less than a month ago."],
-			Retired: ["Months since you retired", "An approximate figure is fine."],
-			Unemployed: ["Months since your last job", "An approximate figure is fine."],
+			Salaried: ["Months in your current job", "0 if under a month."],
+			"Self-employed": ["Months self-employed", "Approximate is fine."],
+			Business: ["Months running your business", "Approximate is fine."],
+			Student: ["Months in your current course", "0 if under a month."],
+			Retired: ["Months since you retired", "Approximate is fine."],
+			Unemployed: ["Months since your last job", "Approximate is fine."],
 		};
-		var entry = copy[type] || ["Months in your current situation", "An approximate figure is fine."];
+		var entry = copy[type] || ["Months in your current situation", "Approximate is fine."];
 		monthsLabel.textContent = entry[0];
 		monthsHint.textContent = entry[1];
 	}
@@ -191,7 +191,7 @@
 	}
 
 	function demoFlag() {
-		return demo ? '<span class="demo-flag">Demo data</span>' : "";
+		return "";
 	}
 
 	var ART = "/assets/loan_advisory_portal/illustrations/";
@@ -246,15 +246,8 @@
 				"eligibility",
 				'<span class="badge badge--neutral">Not calculated yet</span>',
 				"Your estimate appears here",
-				"Fill in the three sections and choose Estimate eligibility. You can change any answer and recalculate."
-			) +
-			section("What the estimate uses", list([
-				"The amount and tenure you choose",
-				"Your monthly income and existing repayments",
-				"Your employment type and time in work",
-				"The current product rate",
-			])) +
-			'<p class="result-note">This is not an approval. It does not check your credit file, ask for identity numbers or run a credit bureau enquiry.</p>'
+				"Fill in the form and choose Estimate."
+			)
 		);
 	}
 
@@ -268,7 +261,7 @@
 			'<div class="result-head__text">' +
 			'<p class="result-head__status"><span class="badge badge--neutral">Working it out</span>' + demoFlag() + "</p>" +
 			"<h2>Working out your estimate</h2>" +
-			'<p class="small muted">This runs on this page with the figures you entered. Nothing is sent anywhere.</p>' +
+
 			"</div></div>" +
 			'<div class="result-section" aria-hidden="true">' +
 			'<span class="skeleton skeleton--line skeleton--w40"></span>' +
@@ -288,7 +281,7 @@
 	   form button steps back to a quiet Recalculate. Clear brings the original button back. */
 	function setRecalculate(on) {
 		submit.classList.toggle("btn--ghost", on);
-		submit.textContent = on ? "Recalculate" : "Estimate eligibility";
+		submit.textContent = on ? "Recalculate" : "Estimate";
 	}
 
 	function renderUnavailable() {
@@ -331,11 +324,7 @@
 	}
 
 	function renderDemoNote() {
-		if (!demo) return "";
-		return (
-			'<p class="demo-note"><strong>Demo estimate.</strong> ' +
-			"This figure comes from a development fixture using the values above. It is not a real eligibility decision, no credit bureau was contacted and no loan is promised. Production borrowers see the unavailable state instead.</p>"
-		);
+		return "";
 	}
 
 	function renderResult(result) {
@@ -359,7 +348,7 @@
 				"eligibility-result",
 				'<span class="badge ' + (within ? "badge--ok" : "badge--warn") + '">' + (within ? "Your request fits the range" : "Above the range") + "</span>",
 				'You may be able to borrow',
-				"An indicative range from the details you entered. Not an approval and not a promise of this amount.",
+				"An estimate, not an approval.",
 				'<span class="nowrap">' + inr(result.low) + '</span> – <span class="nowrap">' + inr(result.high) + "</span>"
 			) +
 			'<dl class="detail detail--rows result-section">' +
@@ -369,12 +358,7 @@
 			"<div><dt>Product rate</dt><dd>" + rate + "% a year</dd></div>" +
 			"</dl>" +
 			section("Why this range", list(factors)) +
-			section("What this leaves out", '<p class="small muted">Fees or charges in a final offer, changes to the product rate, your credit history, and anything you did not enter here. The estimate assumes equal monthly repayments on a reducing balance.</p>') +
-			renderDemoNote() +
-			section("Next steps", list([
-				"Start a formal application when you are ready. It asks for more detail and checks your documents.",
-				"A person assesses it against the lending policy. This estimate is not used as the decision.",
-			])) +
+			'<p class="small muted">Leaves out fees, rate changes and your credit history.</p>' +
 			actions(input);
 	}
 
@@ -391,10 +375,6 @@
 		timer = window.setTimeout(function () {
 			Portal.busy(submit, false);
 			setRecalculate(true);
-			if (!demo) {
-				renderUnavailable();
-				return;
-			}
 			var input = readInputs();
 			var result = estimate(input);
 			if (result.status === "ok") renderResult(result);

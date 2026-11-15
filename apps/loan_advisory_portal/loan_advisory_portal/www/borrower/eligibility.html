@@ -3,11 +3,11 @@
 {% block page_content %}
 <div class="page-head">
 	<div>
-		<h1>See what you may be able to borrow</h1>
-		<p>Answer a few questions about income and commitments. You get an indicative estimate, not an approval, and nothing is sent for review from this page.</p>
+		<h1>Check eligibility</h1>
+		<p>An estimate, not an approval. No credit check.</p>
 	</div>
 	<div class="page-head__actions">
-		<a class="btn btn--ghost" href="/borrower/apply">Skip to the application</a>
+		<a class="btn btn--quiet" href="/borrower/apply">Skip to application</a>
 	</div>
 </div>
 
@@ -20,19 +20,14 @@
 </div>
 {% else %}
 
-<div class="alert alert--info" role="note">
-	<strong>What this check does</strong>
-	<span>It uses only the details you enter here. It does not check your credit file, does not ask for Aadhaar or PAN, and does not promise a loan. A formal application is assessed separately.</span>
-</div>
-
 <div class="eligibility mt">
 	<form class="eligibility__form" id="eligibility-form" novalidate>
 		<section class="form-section" aria-labelledby="req-heading">
 			<div class="form-section__head">
-				<h2 id="req-heading">What you need</h2>
+				<h2 id="req-heading">Loan</h2>
 			</div>
 			<div class="field">
-				<label for="el-amount">Amount you want to borrow (₹)</label>
+				<label for="el-amount">Amount (₹)</label>
 				<div class="input-group">
 					<span class="input-group__prefix" aria-hidden="true">₹</span>
 					<input id="el-amount" name="amount" type="number" min="10000" max="{{ product.maximum or 1000000 }}" step="5000" inputmode="numeric" value="300000" required>
@@ -43,7 +38,7 @@
 			</div>
 			<div class="grid-2">
 				<div class="field">
-					<label for="el-tenure">Preferred tenure</label>
+					<label for="el-tenure">Tenure</label>
 					<select id="el-tenure" name="tenure">
 						<option value="12">12 months</option>
 						<option value="24">24 months</option>
@@ -51,10 +46,9 @@
 						<option value="48">48 months</option>
 						<option value="60">60 months</option>
 					</select>
-					<p class="hint">The final tenure is agreed in your offer.</p>
 				</div>
 				<div class="field">
-					<label for="el-purpose">What is the loan for?</label>
+					<label for="el-purpose">Purpose</label>
 					<select id="el-purpose" name="purpose">
 						<option value="">Prefer not to say yet</option>
 						<option value="Home renovation">Home renovation</option>
@@ -76,19 +70,19 @@
 			<fieldset>
 				<legend class="field__label">Employment type</legend>
 				<div class="choice-grid">
-					<label class="choice"><input type="radio" name="employment_type" value="Salaried" required><span><strong>Salaried</strong><small>Paid by an employer</small></span></label>
-					<label class="choice"><input type="radio" name="employment_type" value="Self-employed"><span><strong>Self-employed</strong><small>Own practice or contract</small></span></label>
-					<label class="choice"><input type="radio" name="employment_type" value="Business"><span><strong>Business owner</strong><small>You run a business</small></span></label>
-					<label class="choice"><input type="radio" name="employment_type" value="Student"><span><strong>Student</strong><small>Currently studying</small></span></label>
-					<label class="choice"><input type="radio" name="employment_type" value="Retired"><span><strong>Retired</strong><small>Drawing a pension</small></span></label>
-					<label class="choice"><input type="radio" name="employment_type" value="Unemployed"><span><strong>Not working</strong><small>Between jobs</small></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Salaried" required><span><strong>Salaried</strong></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Self-employed"><span><strong>Self-employed</strong></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Business"><span><strong>Business owner</strong></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Student"><span><strong>Student</strong></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Retired"><span><strong>Retired</strong></span></label>
+					<label class="choice"><input type="radio" name="employment_type" value="Unemployed"><span><strong>Not working</strong></span></label>
 				</div>
 				<p class="error hidden mt" id="el-employment-error">Choose the option that describes you best.</p>
 			</fieldset>
 			<div class="field mt">
 				<label for="el-months" id="el-months-label">Months in your current work</label>
 				<input id="el-months" name="employment_months" type="number" min="0" max="720" step="1" inputmode="numeric" required>
-				<p class="hint" id="el-months-hint">If you started less than a month ago, enter 0.</p>
+				<p class="hint" id="el-months-hint">0 if under a month.</p>
 				<p class="error hidden" id="el-months-error">Enter a whole number of months between 0 and 720.</p>
 			</div>
 		</section>
@@ -113,15 +107,14 @@
 						<span class="input-group__prefix" aria-hidden="true">₹</span>
 						<input id="el-obligations" name="monthly_obligations" type="number" min="0" step="500" inputmode="numeric" value="0">
 					</div>
-					<p class="hint">Loan EMIs and other fixed repayments. Enter 0 if you have none.</p>
+					<p class="hint">EMIs and fixed repayments. 0 if none.</p>
 					<p class="error hidden" id="el-obligations-error">Enter a whole amount of 0 or more.</p>
 				</div>
 			</div>
-			<p class="tiny muted">Why we ask: these two figures decide how much of a monthly repayment the estimate can support. They are not shared with anyone from this page.</p>
 		</section>
 
 		<div class="form-actions">
-			<button class="btn" type="submit" id="el-submit">Estimate eligibility</button>
+			<button class="btn" type="submit" id="el-submit">Estimate</button>
 			<button class="btn btn--quiet" type="reset" id="el-reset">Clear</button>
 			<span class="spacer"></span>
 			<span class="form-note">Nothing is submitted for review.</span>
@@ -139,7 +132,7 @@
 				<div class="result-head__text">
 					<p class="result-head__status"><span class="badge badge--neutral">Not calculated yet</span></p>
 					<h2>Your estimate appears here</h2>
-					<p class="small muted">Fill in the three sections and choose Estimate eligibility. You can change any answer and recalculate.</p>
+					<p class="small muted">Fill in the form and choose Estimate.</p>
 				</div>
 			</div>
 			<section class="result-section">
@@ -151,7 +144,6 @@
 					<li>The current product rate</li>
 				</ul>
 			</section>
-			<p class="result-note">This is not an approval. It does not check your credit file, ask for identity numbers or run a credit bureau enquiry.</p>
 		</div>
 	</aside>
 </div>

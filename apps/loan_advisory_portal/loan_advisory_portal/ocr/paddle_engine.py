@@ -12,10 +12,17 @@ PaddleOCR returns one box per text region, not per line: a table row comes back 
 boxes. `group_boxes_into_lines` merges boxes whose vertical centres overlap into one
 left-to-right line, which is what the parser's line regexes expect.
 
-Like the Tesseract path, document bytes stay in memory (Paddle accepts a numpy array), no
-raw text is returned to callers of the pipeline, and the model is loaded once per process.
-Requires ``paddlepaddle`` (CPU build) and ``paddleocr>=3``; when they are missing,
-`OcrUnavailable` is raised so the chain falls back to Tesseract.
+Two ways to run it:
+
+* ``SARAL_OCR_URL`` set (local stack: ``http://ocr:8866``): pages go to the OCR sidecar
+  (infra/ocr), which runs PaddleOCR on the GPU, loads the model on the first page and
+  releases it after a few idle minutes. Frappe's Python has no Paddle wheels, so this is
+  the default for the Docker stack.
+* Otherwise in-process: requires ``paddlepaddle`` and ``paddleocr>=3``; the model loads on
+  the first page and stays for the process. ``PADDLE_OCR_DEVICE`` picks the device (cpu).
+
+Either way document bytes stay in memory, no raw text is returned to callers of the
+pipeline, and a missing engine raises `OcrUnavailable` so the chain falls back to Tesseract.
 """
 
 from __future__ import annotations
@@ -40,12 +47,27 @@ from .schemas import TextLine
 DEFAULT_DET = os.environ.get("PADDLE_OCR_DET_MODEL", "PP-OCRv5_mobile_det")
 DEFAULT_REC = os.environ.get("PADDLE_OCR_REC_MODEL", "PP-OCRv5_mobile_rec")
 MIN_BOX_SCORE = 0.30  # boxes below this are almost always watermark fragments or noise
+OCR_URL = os.environ.get("SARAL_OCR_URL", "").rstrip("/")
+OCR_TIMEOUT = float(os.environ.get("SARAL_OCR_TIMEOUT", "120"))  # first page includes model load
+DEVICE = os.environ.get("PADDLE_OCR_DEVICE", "cpu")
 
 _lock = threading.Lock()
 _engines: dict[tuple[str, str, bool], object] = {}
 
 
+def _health() -> dict | None:
+    import requests  # noqa: PLC0415
+
+    try:
+        response = requests.get(f"{OCR_URL}/health", timeout=3)
+        return response.json() if response.ok else None
+    except Exception:  # noqa: BLE001 - sidecar down means "not available"
+        return None
+
+
 def is_available() -> bool:
+    if OCR_URL:
+        return _health() is not None
     try:
         import paddle  # noqa: F401, PLC0415
         import paddleocr  # noqa: F401, PLC0415
@@ -55,6 +77,9 @@ def is_available() -> bool:
 
 
 def engine_version() -> str:
+    if OCR_URL:
+        health = _health() or {}
+        return f"paddleocr sidecar ({health.get('models', f'{DEFAULT_DET}/{DEFAULT_REC}')} on {health.get('device', '?')})"
     try:
         import paddleocr  # noqa: PLC0415
     except Exception:  # noqa: BLE001
@@ -77,7 +102,7 @@ def _engine(det: str = DEFAULT_DET, rec: str = DEFAULT_REC, orientation: bool = 
                     use_doc_orientation_classify=orientation,
                     use_doc_unwarping=False,
                     use_textline_orientation=orientation,
-                    device="cpu",
+                    device=DEVICE,
                 )
             except Exception as exc:  # noqa: BLE001 - missing models / bad runtime: let Tesseract take over
                 raise OcrUnavailable("PaddleOCR could not start on this machine.") from exc
@@ -149,17 +174,40 @@ def ocr_image_lines(image, *, det: str = DEFAULT_DET, rec: str = DEFAULT_REC,
     array = np.asarray(levelled.convert("RGB"))[:, :, ::-1]
     if levelled is not image:
         levelled.close()  # Paddle expects BGR like OpenCV
-    try:
-        results = _engine(det, rec, orientation).predict(array)
-    except OcrUnavailable:
-        raise
-    except Exception as exc:  # noqa: BLE001 - Paddle raises bare RuntimeErrors
-        raise ExtractionFailed("PaddleOCR could not read this document.") from exc
-    if not results:
-        return []
-    page = results[0]
+    if OCR_URL:
+        from PIL import Image  # noqa: PLC0415
+
+        page = _remote(Image.fromarray(array[:, :, ::-1]))
+    else:
+        try:
+            results = _engine(det, rec, orientation).predict(array)
+        except OcrUnavailable:
+            raise
+        except Exception as exc:  # noqa: BLE001 - Paddle raises bare RuntimeErrors
+            raise ExtractionFailed("PaddleOCR could not read this document.") from exc
+        if not results:
+            return []
+        page = results[0]
     boxes = [tuple(float(v) for v in box) for box in page["rec_boxes"]]
     return group_boxes_into_lines(boxes, list(page["rec_texts"]), list(page["rec_scores"]))
+
+
+def _remote(image) -> dict:
+    """One page to the GPU sidecar; same keys as a local Paddle result."""
+    import requests  # noqa: PLC0415
+
+    buffer = BytesIO()
+    image.convert("RGB").save(buffer, "PNG")
+    try:
+        response = requests.post(f"{OCR_URL}/ocr", data=buffer.getvalue(), timeout=OCR_TIMEOUT,
+                                 headers={"Content-Type": "application/octet-stream"})
+    except Exception as exc:  # noqa: BLE001
+        raise OcrUnavailable("The OCR service is not reachable.") from exc
+    if not response.ok:
+        raise ExtractionFailed("PaddleOCR could not read this document.")
+    body = response.json()
+    return {"rec_boxes": body.get("boxes") or [], "rec_texts": body.get("texts") or [],
+            "rec_scores": body.get("scores") or []}
 
 
 def extract_lines_paddle(content: bytes, filename: str) -> tuple[list[TextLine], int, bool]:

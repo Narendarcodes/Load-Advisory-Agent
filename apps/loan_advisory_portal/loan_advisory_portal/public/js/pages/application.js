@@ -316,8 +316,8 @@
 		var has = decision && decision.available;
 		var when = has && decision.evaluated_at && window.PortalStatus ? window.PortalStatus.assessedText(decision.evaluated_at) : "";
 		var lead = guidance.summary || "";
-		if (lifecycle === "UNDER_REVIEW") lead = "Your details are being checked against the lending policy. Nothing is needed from you right now.";
-		if (lifecycle === "SUBMITTED") lead = "The checks are queued and run without any action from you.";
+		if (lifecycle === "UNDER_REVIEW") lead = "Checks are running. Nothing needed from you.";
+		if (lifecycle === "SUBMITTED") lead = "Checks are queued. Nothing needed from you.";
 		if (lifecycle === "DRAFT") {
 			var ready = (application.documents || []).length > 0;
 			view = {
@@ -326,8 +326,8 @@
 				title: ready ? "Your application is ready to submit" : "Add a document before you submit",
 			};
 			lead = ready
-				? "It has not been assessed yet. Submitting sends it for the checks and fixes the loan request."
-				: "It has not been assessed yet. At least one document is needed before you can submit.";
+				? "Submitting runs the checks and locks the loan request."
+				: "Add at least one document first.";
 		}
 		// Plain words only: the record picks the summary and themes, never a number, cut-off or rule id.
 		var locale = (Portal.boot && Portal.boot.locale) || "en";
@@ -392,8 +392,8 @@
 		if (action) parts.push('<div class="result-actions">' + action + "</div>");
 
 		// The policy version is in Application facts; the note says what this section can and cannot show.
-		var meta = ["Only checks recorded on this application appear here."];
-		parts.push(
+		var meta = [];
+		if (meta.length) parts.push(
 			'<p class="decision-meta">' +
 				meta
 					.map(function (entry) {

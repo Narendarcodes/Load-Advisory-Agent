@@ -6793,3 +6793,43 @@ textarea:focus-visible {
 		margin-top: -64px;
 	}
 }
+
+/* ---- Dev mode drawer (saral_dev_panel) ---------------------------------------------------- */
+.devpanel {
+	position: fixed; left: var(--rail); right: 0; bottom: 0; z-index: 40;
+	background: #1d1817; color: #efe7e1; font-size: 13px;
+	border-top: 1px solid #3a302d; max-height: 45vh; display: flex; flex-direction: column;
+}
+.devpanel__bar {
+	display: flex; align-items: center; gap: var(--s3); width: 100%; padding: var(--s2) var(--s5);
+	background: none; border: 0; color: inherit; font: inherit; cursor: pointer; text-align: left;
+}
+.devpanel__tag { font-weight: 700; color: var(--coral); letter-spacing: .02em; }
+.devpanel__status { color: #b9ada6; flex: 1; }
+.devpanel__chev { transition: transform .15s; }
+.devpanel--closed .devpanel__chev { transform: rotate(180deg); }
+.devpanel--closed .devpanel__steps { display: none; }
+.devpanel__steps { list-style: none; margin: 0; padding: 0 var(--s5) var(--s4); overflow: auto; }
+.devpanel__step { display: grid; grid-template-columns: 18px 1fr auto; gap: var(--s2); padding: 4px 0; }
+.devpanel__mark { color: #8f837c; }
+.devpanel__step--done .devpanel__mark { color: #7fc29b; }
+.devpanel__step--current .devpanel__mark { color: var(--coral); animation: devpulse 1s ease-in-out infinite; }
+.devpanel__step--failed .devpanel__mark { color: #f08a7e; }
+.devpanel__detail, .devpanel__at { color: #a99d96; }
+.devpanel__rules { list-style: none; margin: 6px 0 0; padding: 0; columns: 2 320px; column-gap: var(--s5); }
+.devpanel__rule { break-inside: avoid; display: flex; gap: 6px; padding: 1px 0; color: #cfc4bd; }
+.devpanel__rule code { color: #8f837c; font-family: ui-monospace, Consolas, monospace; }
+.devpanel__res { margin-left: auto; font-size: 11px; color: #7fc29b; }
+.devpanel__rule--fail .devpanel__res, .devpanel__rule--fail { color: #f08a7e; }
+.devpanel__rule--insufficient-data .devpanel__res, .devpanel__rule--refer .devpanel__res { color: #e2b56b; }
+body.has-devpanel .devpanel--closed ~ * { }
+body.has-devpanel .page { padding-bottom: 64px; }
+@keyframes devpulse { 50% { opacity: .35; } }
+@media (max-width: 900px) { .devpanel { left: 0; } }
+@media (prefers-reduced-motion: reduce) { .devpanel__step--current .devpanel__mark { animation: none; } }
+
+/* One progress indicator per screen: the step rail on wide screens, the bar on narrow ones. */
+.wizard-panel > .stage-stepper { display: none; }
+@media (min-width: 1181px) { .wizard-panel > .wizard-progress { display: none; } }
+.dash-hero__defaults { display: contents; }
+.dash-hero__defaults.hidden { display: none; }
