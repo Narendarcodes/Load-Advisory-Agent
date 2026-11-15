@@ -168,11 +168,23 @@ function Typing() {
   );
 }
 
+/** Shown when the CopilotKit runtime (port 4200) cannot be reached, so the page never looks frozen. */
+function OfflineNote() {
+  return (
+    <div className="alert alert--warn" role="status">
+      <strong>Assistant is offline</strong>
+      <span>Your decision and its reasons are still on the application page. A person can help.</span>
+    </div>
+  );
+}
+
 type Vote = "up" | "down" | "failed";
 
 interface ChatPanelProps {
   agent: AbstractAgent;
   isReady: boolean;
+  /** True when the CopilotKit runtime could not be reached; the composer is disabled. */
+  offline?: boolean;
   application: string;
   state: PublicState;
   onSessionExpired: (message: string) => void;
@@ -190,6 +202,7 @@ interface ChatPanelProps {
 export function ChatPanel({
   agent,
   isReady,
+  offline = false,
   application,
   state,
   onSessionExpired,
@@ -325,7 +338,7 @@ export function ChatPanel({
     }
   }
 
-  const disabled = busy || !isReady;
+  const disabled = busy || !isReady || offline;
   const genui: GenUiContext = {
     application,
     locale,
@@ -441,13 +454,17 @@ export function ChatPanel({
             </div>
             <h3>Ask about your decision</h3>
             <p>Ask why, what to fix, or try a what-if.</p>
-            <div className="chips">
-              {STARTERS.map((chip) => (
-                <button key={chip} type="button" className="chip" disabled={disabled} onClick={() => void run(chip, true)}>
-                  {chip}
-                </button>
-              ))}
-            </div>
+            {offline ? (
+              <OfflineNote />
+            ) : (
+              <div className="chips">
+                {STARTERS.map((chip) => (
+                  <button key={chip} type="button" className="chip" disabled={disabled} onClick={() => void run(chip, true)}>
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           rendered
@@ -515,7 +532,7 @@ export function ChatPanel({
           </button>
         </form>
         <p className="trust-line">{TRUST_LINE}</p>
-        {!isReady ? <p className="note">Connecting…</p> : null}
+        {offline ? (empty ? null : <OfflineNote />) : !isReady ? <p className="note">Connecting…</p> : null}
       </div>
     </section>
   );

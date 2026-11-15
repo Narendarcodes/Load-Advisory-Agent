@@ -37,6 +37,27 @@ export function Island({ context }: { context: AssistantContext }) {
   const [history, setHistory] = useState<Conversation[]>([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<Drawer>(null);
+  // The runtime is a separate service on :4200. Probe it so a down runtime shows a calm
+  // "Assistant is offline" state instead of an endless "Connecting…".
+  const [offline, setOffline] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const probe = async () => {
+      try {
+        const response = await fetch("/api/copilotkit/info", { headers: { accept: "application/json" } });
+        if (!cancelled) setOffline(!response.ok);
+      } catch {
+        if (!cancelled) setOffline(true);
+      }
+    };
+    void probe();
+    const timer = window.setInterval(() => void probe(), 15000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const refreshHistory = useCallback(
     async (signal?: AbortSignal) => {
@@ -145,6 +166,7 @@ export function Island({ context }: { context: AssistantContext }) {
       <ChatPanel
         agent={agent}
         isReady={isReady}
+        offline={offline}
         application={context.application}
         state={state}
         onSessionExpired={signInAgain}
