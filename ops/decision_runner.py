@@ -126,6 +126,7 @@ def main(argv=None) -> int:
     bureau = BureauClient(base_url=os.environ.get("SARAL_BUREAU_URL", "http://127.0.0.1:8011"))
     snap = snapshot_recorder(FrappeClient.for_evidence(), store)
     interval = float(os.environ.get("SARAL_DECIDE_INTERVAL_S", "10"))
+    print(json.dumps({"decider": "polling", "interval_s": interval}), flush=True)
     while True:
         try:
             run_pass(store, sink, bureau, snap=snap)
