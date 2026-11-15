@@ -43,6 +43,31 @@ class TestSalarySlip:
         }
         assert warnings == []
 
+    def test_label_and_value_on_separate_lines_are_read(self):
+        # PaddleOCR returns one box per region, so the label and its value are often two lines.
+        fields, warnings, _ = _parse(
+            "Salary Slip",
+            [
+                "ACME TECHNOLOGIES PVT LTD",
+                "Employee Name: Asha Rao",
+                "Pay Period:",
+                "October 2026",
+                "Pay Date:",
+                "31/10/2026",
+            ],
+        )
+        assert fields["pay_period"].value == "Oct 2026"
+        assert fields["salary_date"].value == "2026-10-31"
+        assert warnings == []
+
+    def test_a_stacked_value_is_not_taken_from_another_label(self):
+        fields, _, _ = _parse(
+            "Salary Slip",
+            ["Employee Name: Asha Rao", "Pay Period:", "Pay Date:", "31/10/2026"],
+        )
+        assert fields["pay_period"].value is None
+        assert fields["salary_date"].value == "2026-10-31"
+
     def test_identifiers_in_other_fields_are_still_masked(self):
         fields, _, _ = _parse(
             "Salary Slip",

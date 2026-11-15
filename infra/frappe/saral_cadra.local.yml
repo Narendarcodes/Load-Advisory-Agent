@@ -20,7 +20,10 @@ services:
     volumes: *portal-src
     environment:
       SARAL_OCR_URL: http://ocr:8866
-      SARAL_OCR_ENGINES: paddle,tesseract
+      # PaddleOCR only. The backend image does not carry tesseract-ocr, so listing it as a
+      # fallback would be a lie: a Paddle failure would try Tesseract, fail, and only then go
+      # to manual review. With one engine the chain is honest and the outcome is the same.
+      SARAL_OCR_ENGINES: paddle
   configurator:
     pull_policy: missing
   frontend:

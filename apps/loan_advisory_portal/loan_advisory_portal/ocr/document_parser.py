@@ -142,6 +142,35 @@ def _capture_context(lines: list[TextLine], *patterns: str) -> tuple[str | None,
     return (value.strip(" :\t-") if value else None), confidence_of(line), (line.text if line else "")
 
 
+# A salary label that starts another field: a stacked value is never taken from one of these.
+_SALARY_LABEL_RE = re.compile(
+    r"(?i)^\s*(?:employee\s*(?:name|id)|employer|company|designation|pay\s*(?:period|month|cycle|date)"
+    r"|salary\s*(?:month|period|date)|date\s*of\s*(?:payment|credit)|paid\s*on|for\s*the\s*(?:month|period))"
+)
+
+
+def _capture_or_next_line(lines: list[TextLine], *patterns: str) -> tuple[str | None, float | None]:
+    """Value on the label line, else on the next line.
+
+    PaddleOCR returns one box per region, so a payslip's "Pay Period:" and "October 2026" often
+    arrive as two lines. The next line is used only when it is not itself another salary label.
+    """
+    match, line = _search(lines, *patterns)
+    if not match:
+        return None, None
+    value = next((group for group in match.groups() if group), None)
+    if value is not None and value.strip(" :\t-"):
+        return value.strip(" :\t-"), confidence_of(line)
+    usable = _lines(lines)
+    index = next((i for i, item in enumerate(usable) if item is line), None)
+    if index is None or index + 1 >= len(usable):
+        return None, None
+    following = usable[index + 1]
+    if _SALARY_LABEL_RE.match(following.text):
+        return None, None
+    return following.text.strip(" :\t-/|"), confidence_of(following)
+
+
 _DATE_TOKEN_RE = re.compile(r"(?<!\d)(\d{1,2})\s*([./-])\s*(\d{1,2})\s*[./-]\s*(\d{2,4})(?!\d)")
 _STANDALONE_DATE_RE = re.compile(r"^\s*\d{1,2}\s*[./-]\s*\d{1,2}\s*[./-]\s*\d{4}\s*$")
 
@@ -280,10 +309,10 @@ _SALARY_PATTERNS = {
     ),
     "total_deductions": (r"(?:total\s*)?deductions?\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)",),
     "pay_period": (
-        r"(?:pay\s*(?:period|month|cycle)|salary\s*(?:month|period)|for\s*the\s*(?:month|period))\s*[:\-]?\s*(.+)",
+        r"(?:pay\s*(?:period|month|cycle)|salary\s*(?:month|period)|for\s*the\s*(?:month|period))\s*[:\-]?\s*(.*)",
     ),
     "salary_date": (
-        r"(?:pay\s*date|salary\s*date|date\s*of\s*(?:payment|credit)|paid\s*on)\s*[:\-]?\s*(.+)",
+        r"(?:pay\s*date|salary\s*date|date\s*of\s*(?:payment|credit)|paid\s*on)\s*[:\-]?\s*(.*)",
     ),
 }
 
@@ -302,10 +331,10 @@ def _parse_salary_slip(lines: list[TextLine]) -> tuple[dict[str, ExtractedField]
         raw, confidence = _capture(lines, *_SALARY_PATTERNS[key])
         fields[key] = money_field(key, _LABELS[key], raw, confidence=confidence, minimum=1.0)
 
-    period, confidence = _capture(lines, *_SALARY_PATTERNS["pay_period"])
+    period, confidence = _capture_or_next_line(lines, *_SALARY_PATTERNS["pay_period"])
     fields["pay_period"] = field("pay_period", _LABELS["pay_period"], _normalise_period(period), confidence=confidence)
 
-    raw_date, confidence = _capture(lines, *_SALARY_PATTERNS["salary_date"])
+    raw_date, confidence = _capture_or_next_line(lines, *_SALARY_PATTERNS["salary_date"])
     parsed = parse_date((raw_date or "").split(" ")[0]) if raw_date else None
     fields["salary_date"] = field("salary_date", _LABELS["salary_date"], parsed, confidence=confidence,
                                   note=None if parsed else ("could not read the date" if raw_date else None))
