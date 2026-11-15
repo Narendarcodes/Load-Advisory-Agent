@@ -28,7 +28,14 @@ services:
     pull_policy: missing
   frontend:
     pull_policy: missing
-    volumes: *portal-src
+    volumes:
+      - ../../apps/loan_advisory_portal:/home/frappe/frappe-bench/apps/loan_advisory_portal
+      - ../../apps/loan_advisory_portal/loan_advisory_portal/public:/home/frappe/frappe-bench/assets/loan_advisory_portal:ro
+      # The public tunnel points at this container's :8080; this template also proxies
+      # /api/copilotkit to the chat runtime so the assistant works on the public hostname.
+      # The entrypoint envsubst's this template into conf.d/frappe.conf, so mount the
+      # template (not the generated file, which the entrypoint writes).
+      - ./frontend-frappe.conf.template:/templates/nginx/frappe.conf.template:ro
   queue-long:
     pull_policy: missing
     volumes: *portal-src
