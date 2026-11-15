@@ -1,0 +1,22 @@
+services:
+  backend:
+    image: saral-cadra-frappe:separated-20261111
+    pull_policy: never
+  configurator:
+    image: saral-cadra-frappe:separated-20261111
+    pull_policy: never
+  frontend:
+    image: saral-cadra-frappe:separated-20261111
+    pull_policy: never
+  queue-long:
+    image: saral-cadra-frappe:separated-20261111
+    pull_policy: never
+  queue-short:
+    image: saral-cadra-frappe:separated-20261111
+    pull_policy: never
+  scheduler:
+    image: saral-cadra-frappe:separated-20261111
+    pull_policy: never
+  websocket:
+    image: saral-cadra-frappe:separated-20261111
+    pull_policy: never

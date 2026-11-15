@@ -1,0 +1,7 @@
+FROM saral-frappe:16
+USER root
+WORKDIR /home/frappe/frappe-bench/apps
+COPY --chown=frappe:frappe . /home/frappe/frappe-bench/apps/loan_advisory_portal
+RUN /home/frappe/frappe-bench/env/bin/python -m pip install --no-cache-dir -e /home/frappe/frappe-bench/apps/loan_advisory_portal
+USER frappe
+WORKDIR /home/frappe/frappe-bench

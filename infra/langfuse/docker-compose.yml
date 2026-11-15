@@ -9,7 +9,7 @@
 #
 # Upstream: https://github.com/langfuse/langfuse/blob/main/docker-compose.yml
 # Docs:     https://langfuse.com/self-hosting/docker-compose
-name: loan-advisory-langfuse
+name: saral_cadra_langfuse
 
 x-langfuse-env: &langfuse-env
   NEXTAUTH_URL: ${NEXTAUTH_URL:-http://127.0.0.1:3000}
