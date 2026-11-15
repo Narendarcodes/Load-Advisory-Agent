@@ -16,6 +16,7 @@ template built from the same facts if a draft fails twice.
 import hashlib
 import json
 import operator
+import os
 import re
 import time
 import uuid
@@ -43,6 +44,16 @@ from loan_advisory.state_paths import AUDIT_LOG, append_line, resolve
 
 _COUNTER_FALLBACK = "We can offer {amount}, with an EMI of {emi} a month for {tenure} months."  # prompts.FALLBACK_EXPLAIN localises it (PR #46)
 
+
+_NO_RAG_SYSTEM_PROMPT = (
+    "You are Saral's conversational assistant in a local test mode with policy retrieval disabled. "
+    "Answer general questions naturally using general knowledge. You do not have access to Saral policy documents, customer records, or live loan data. "
+    "For Saral-specific rates, eligibility, fees, rules, or personal application status, say you cannot verify those details in this no-document mode; do not guess. "
+    "Never claim to have checked records and never invent a policy citation. Reply in the user's language, simply and respectfully."
+)
+
+def _no_rag_chat_enabled() -> bool:
+    return os.environ.get("SARAL_NO_RAG_CHAT", "").strip().lower() in {"1", "true", "yes", "on"}
 
 def _sanitize(text: str, locale: str = "en") -> str:
     """guards.sanitize_answer (PR #46) when it is available; a no-op on a base without it."""
@@ -838,6 +849,7 @@ class AdvisoryAgent:
         st = s.get("status")
         rec = s.get("record") or {}
         action = "answer"
+        no_rag_answered = False
         if st == "no_app":
             txt, action = P.template("no_app"), "clarify"
         elif st == "not_authorized":
@@ -877,8 +889,28 @@ class AdvisoryAgent:
         elif st == "what_if_error":
             txt, action = _tmpl("what_if_error", req.locale), "answer"
         else:
-            txt = P.template("greeting" if s.get("intent") == "greeting" else "other", req.locale)
+            fallback = P.template("greeting" if s.get("intent") == "greeting" else "other", req.locale)
+            if _no_rag_chat_enabled() and st in (None, "ok") and s.get("intent") in ("policy", "greeting", "other"):
+                try:
+                    answer = self.llm.chat(
+                        _NO_RAG_SYSTEM_PROMPT,
+                        req.message,
+                        max_tokens=500,
+                        tag="no_rag_chat",
+                        **self._llm_kw(s),
+                    )
+                except LLMError:
+                    answer = ""
+                if isinstance(answer, str) and answer.strip():
+                    txt = answer.strip()
+                    no_rag_answered = True
+                else:
+                    txt = fallback
+            else:
+                txt = fallback
         declined = st in ("no_decision", "unavailable", "bureau_provider_error") or (st in (None, "ok") and s.get("intent") == "other")
+        if no_rag_answered:
+            declined = False
         return {"draft": txt, "action": action, "abstained": declined,
                 "trace": s["trace"], "plan": s.get("plan")}
 
@@ -1108,7 +1140,7 @@ def _after_classify(s):
     if i in DECISION_INTENTS:
         return "load_evidence"
     if i == "policy":
-        return "retrieve_policy"
+        return "simple" if _no_rag_chat_enabled() else "retrieve_policy"
     return "simple"
 
 
