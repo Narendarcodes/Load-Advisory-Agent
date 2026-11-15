@@ -1,5 +1,10 @@
 # Phase 5 — Loan Advisory Agent (one LangGraph graph) + Phase 6 voice
 
+> **Two cores.** The live agent is the **tool-calling core** (`SARAL_AGENT_CORE=tools`): the model
+> decides which read it needs and answers from the live record. This document describes the original
+> fixed-intent graph, which is kept as `SARAL_AGENT_CORE=graph` (fallback + the core the tests
+> describe). See **[agent-tool-loop.md](../architecture/agent-tool-loop.md)** for the live design.
+
 **The agent explains; it never decides.** Decisions come only from the conventional workflow
 (`lifecycle.process_application` → ZEN 2.1.2 → Decision Evidence record, PR #3). The graph reads that stored record.
 What-if answers are in-memory ZEN simulations (`lifecycle.simulate`) that are never persisted. All four thresholds
