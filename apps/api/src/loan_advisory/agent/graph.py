@@ -30,6 +30,7 @@ from loan_advisory.agent.agent_loop import run_agent
 from loan_advisory.agent import observability as obs
 from loan_advisory.agent import guards as G
 from loan_advisory.agent import prompts as P
+from loan_advisory.agent import prompt_store as PS
 from loan_advisory.agent.intent_router import build_routers, first_route
 from loan_advisory.agent.segmentation import bureau_report_from_record, get_customer_segmentation, with_tone
 from loan_advisory.agent.settings import AgentSettings
@@ -141,6 +142,19 @@ def _tmpl(key: str, locale: str = "en", **kw) -> str:
 
 def _prompt(name: str, default: str) -> str:
     return getattr(P, name, None) or default
+
+
+# Langfuse prompt name for each answer-composing intent (status and distress share the explain composer).
+_PROMPT_KEY = {"explain": "explain", "status": "explain", "distress": "explain", "improve": "improve",
+               "what_if": "what_if"}
+
+
+def _pr(kw: dict, ref: dict | None) -> dict:
+    """Link the call to its Langfuse prompt version only when a served prompt was used (test doubles have no such
+    keyword, so the link is added only when it exists)."""
+    if ref:
+        kw["prompt_ref"] = ref
+    return kw
 
 
 _DISTRESS_ADDON = ("\nThe applicant is upset or worried. Start with ONE short, calm, kind sentence that acknowledges how "
@@ -457,7 +471,10 @@ class AdvisoryAgent:
     def _allowed(self, s) -> set:
         req, intent = self._req(s), s.get("intent")
         rec = s.get("record") or {}
-        allowed = F.grounded_numbers(rec, extra=G.numbers_in(req.message))
+        # SARAL_DISCLOSURE=open (default) grounds the thresholds too: the applicant is told their value and the limit
+        # it was measured against. `strict` keeps the old behaviour (cut-offs are not groundable).
+        allowed = F.grounded_numbers(rec, extra=G.numbers_in(req.message),
+                                     include_limits=P.disclosure_mode() == "open")
         # the applicant's OWN identifiers (application / applicant reference) are always shareable
         allowed |= set(G.numbers_in(f"{rec.get('application_ref') or ''} {rec.get('applicant_ref') or ''}"))
         prof = s.get("profile") or {}
@@ -592,10 +609,11 @@ class AdvisoryAgent:
         intent, changes, by = None, None, "llm"
         try:
             il = getattr(self, "intent_llm", None) or self.llm
-            j = il.chat_json("You are a precise intent classifier. Output JSON only.",
-                                   P.CLASSIFY.format(values=json.dumps(values), history=json.dumps(hist, ensure_ascii=False),
-                                                     message=req.message), max_tokens=400, tag="classify",
-                                   **self._llm_kw(s, self._classify_budget(req), il))
+            classify, classify_ref = PS.render("classify", P.CLASSIFY, {
+                "values": json.dumps(values), "history": json.dumps(hist, ensure_ascii=False), "message": req.message})
+            j = il.chat_json("You are a precise intent classifier. Output JSON only.", classify,
+                                   max_tokens=400, tag="classify",
+                                   **_pr(self._llm_kw(s, self._classify_budget(req), il), classify_ref))
             intent = j.get("intent") if j.get("intent") in INTENTS else None
             changes = j.get("what_if_changes") or None
         except (LLMError, AttributeError):
@@ -762,12 +780,16 @@ class AdvisoryAgent:
             tmpl = {"explain": P.EXPLAIN, "status": P.EXPLAIN, "distress": P.EXPLAIN, "improve": P.IMPROVE,
                     "what_if": P.WHAT_IF}[intent]
             facts_json = json.dumps(facts, ensure_ascii=False, indent=1)
-            system = tmpl.format(style=style, lang=lang, voice=voice, facts=facts_json) + retry
+            base, prompt_ref = PS.render(_PROMPT_KEY.get(intent, "explain"), tmpl,
+                                         {"style": style, "lang": lang, "voice": voice, "facts": facts_json})
+            system = base + retry
             if intent == "distress" or (s.get("route") or {}).get("flags", {}).get("distress"):
                 system += _prompt("DISTRESS_ADDON", _DISTRESS_ADDON)
             # Langfuse gap 5: what the LLM was given. Field names always; the values only with content capture on.
             obs.set_attrs(obs.current_span(), **{"llm.facts_keys": sorted(facts)},
-                          **obs.lf_meta(facts_keys=sorted(facts), facts=obs.lf_content(facts_json)))
+                          **obs.lf_meta(facts_keys=sorted(facts), facts=obs.lf_content(facts_json),
+                                        prompt=(prompt_ref or {}).get("name"),
+                                        prompt_version=(prompt_ref or {}).get("version")))
             lead = self._voice_lead(s, req, intent) if (stream is not None or s.get("voice_lead")) else None
             if lead:
                 s["voice_lead"] = lead
@@ -777,6 +799,7 @@ class AdvisoryAgent:
             elif req.channel == "voice":
                 system += P.VOICE_FIRST_SENTENCE
             kw = dict(max_tokens=1100, tag=f"compose_{intent}", **self._llm_kw(s))
+            _pr(kw, prompt_ref)
             if gate is not None and hasattr(self.llm, "chat_stream"):
                 parts = []
                 for d in self.llm.chat_stream(system, req.message, **kw):
@@ -804,14 +827,18 @@ class AdvisoryAgent:
                            f"{p['citation']['title']} — {p['citation'].get('section') or ''}\n{p['text'][:1800]}"
                            for p in s["passages"]) + f"\n\nQuestion: {req.message}"
         mode = self.settings.citation_mode
-        system = (P.POLICY_SPANS if mode in ("spans", "spans_verify") else P.POLICY).format(
-            profile_desc=desc, style=style, lang=lang, voice=voice) + retry
+        spans_mode = mode in ("spans", "spans_verify")
+        system, prompt_ref = PS.render("policy_spans" if spans_mode else "policy",
+                                       P.POLICY_SPANS if spans_mode else P.POLICY,
+                                       {"profile_desc": desc, "style": style, "lang": lang, "voice": voice})
+        system = system + retry
         if mode in ("one_source", "one_source_soft"):
             system = system.replace("\nStyle:", P.ONE_SOURCE_RULE + "\nStyle:", 1)
         if req.channel == "voice":
             system += P.VOICE_FIRST_SENTENCE
         labels = [p["label"] for p in s["passages"]]
         kw = dict(max_tokens=1400 if mode.startswith("spans") else 1200, tag="compose_policy", **self._llm_kw(s))
+        _pr(kw, prompt_ref)
         if gate is not None and hasattr(self.llm, "chat_stream"):
             fs, parts = JSONFieldStreamer("answer"), []
 
@@ -854,9 +881,11 @@ class AdvisoryAgent:
         ps = "\n\n".join(f"[{p['label']}] {p['citation']['title']} — {p['citation'].get('section') or ''}\n{p['text'][:1500]}"
                           for p in s["passages"])
         try:
-            j = self.llm.chat_json("You are a precise source checker. Output JSON only.",
-                                   P.VERIFY_CITATIONS.format(question=req.message, answer=ans, passages=ps),
-                                   max_tokens=500, tag="verify_citations", **self._llm_kw(s))
+            check, verify_ref = PS.render("verify_citations", P.VERIFY_CITATIONS,
+                                          {"question": req.message, "answer": ans, "passages": ps})
+            j = self.llm.chat_json("You are a precise source checker. Output JSON only.", check,
+                                   max_tokens=500, tag="verify_citations",
+                                   **_pr(self._llm_kw(s), verify_ref))
             got = [c for c in (j.get("supporting") or []) if isinstance(c, str) and c in labels]
         except (LLMError, AttributeError):
             got = []
@@ -886,18 +915,24 @@ class AdvisoryAgent:
     def _violations(self, s, text: str) -> list[str]:
         """Final deterministic output check (fix 2): outcome codes, rule ids / internal codes, passage labels, internal
         system names, and on decision turns hidden-flag words, a credit-score number that is not the applicant's own,
-        and any cut-off. guards.output_violations (PR #46) does the matching; a local minimum runs without it."""
+        and (in strict disclosure only) any cut-off. guards.output_violations (PR #46) does the matching; a local
+        minimum runs without it."""
         intent = s.get("intent")
         rec = s.get("record") or {}
+        open_book = P.disclosure_mode() == "open"
         own = set()
         sc = F.own_score(rec)
         if sc is not None:
             own.add(F._norm(sc))
         limits = set()
         if rec and intent != "policy":
-            limits = {F._norm(e["threshold"]) for e in rec.get("rule_evaluations") or []
-                      if isinstance(e.get("threshold"), (int, float)) and not isinstance(e.get("threshold"), bool)}
-            limits -= F.grounded_numbers(rec, extra=G.numbers_in(self._req(s).message))
+            raw = {F._norm(e["threshold"]) for e in rec.get("rule_evaluations") or []
+                   if isinstance(e.get("threshold"), (int, float)) and not isinstance(e.get("threshold"), bool)}
+            if open_book:
+                # the requirement is part of the applicant's own assessment: stating it is correct, not a leak
+                own |= raw
+            else:
+                limits = raw - F.grounded_numbers(rec, extra=G.numbers_in(self._req(s).message))
         fn = getattr(G, "output_violations", None)
         decision_turn = intent in DECISION_INTENTS
         if fn is not None:
@@ -1091,12 +1126,8 @@ class AdvisoryAgent:
                         s["abstained"], s["cited"] = True, []
                 if self._violations(s, draft):  # last resort: a template that carries no data at all
                     draft = _tmpl("what_if_error", req.locale) if intent == "what_if" else P.template("other", req.locale)
-        if draft and intent in ("explain", "improve", "what_if", "status", "distress") and s.get("status") in (None, "ok") \
-                and not re.search(P.SYNTHETIC_MARK, draft, re.I):
-            draft = draft.rstrip() + "\n\n" + P.SYNTHETIC_NOTE.get(req.locale, P.SYNTHETIC_NOTE["en"])
-            gflags.append("synthetic_label_appended")
         st = self._stream(s)
-        if st is not None and draft:  # stream whatever has not been spoken yet (template, synthetic note, boundary text)
+        if st is not None and draft:  # stream whatever has not been spoken yet (template, boundary text)
             rest = remainder(st["spoken"], draft, P.STREAM_BRIDGE.get(req.locale, self.settings.stream_bridge) if req.locale != "en" else self.settings.stream_bridge)
             if rest:
                 done, tail = split_sentences(rest + " ")
@@ -1143,17 +1174,27 @@ class AdvisoryAgent:
 
     # ------------------------------------------------------------------ facts / fallback / audit
     def _facts(self, s):
-        """What the LLM may phrase. Plain outcome words, ONE plain reason category, the offer; never a rule name, rule
-        id, outcome code, threshold, target or gap (agent eval fix 2, Langfuse case B)."""
+        """What the LLM may phrase: the applicant's own values, every check with its result and the requirement it was
+        measured against, the plain outcome and the offer. Rule IDs, reason codes and outcome codes never appear.
+        SARAL_DISCLOSURE=strict drops the per-check detail back to one plain reason category."""
         rec, locale, intent = s["record"], self._req(s).locale, s["intent"]
-        base = {"application_ref": rec["application_ref"], "policy": F.SYNTHETIC_LABEL,
-                "outcome_plain": F.outcome_plain(rec, locale)}
+        open_book = P.disclosure_mode() == "open"
+        base = {"application_ref": rec["application_ref"], "outcome_plain": F.outcome_plain(rec, locale)}
         reason = F.main_reason(rec, locale)
         if reason:
             base["main_reason"] = reason["plain"]
         offer = F.offer_plain(rec)
         if offer:
             base["offer"] = offer
+        if open_book:
+            base["your_values"] = F.your_values(rec)
+            checks = [{"check": f.get("name"), "what_it_measures": f.get("what_it_measures_simple"),
+                       "your_value": f.get("your_value"), "requirement": f.get("required"), "result": "did not meet"}
+                      for f in F.reason_facts(rec)]
+            checks += [{"check": p.get("name"), "your_value": p.get("your_value"), "result": "met"}
+                       for p in F.passed_facts(rec)]
+            if checks:
+                base["checks"] = checks
         if intent in EXPLAIN_LIKE:
             base["application"] = F.application_details(rec)
         prof = s.get("profile")
@@ -1170,6 +1211,15 @@ class AdvisoryAgent:
                 base["question_is_about_status"] = True
         if intent == "improve":
             base["tasks"] = F.guidance_for(rec, locale)
+            if open_book:
+                try:  # the smallest change that would meet each failed check, in plain words
+                    targets = F.counterfactual_targets(rec)
+                except (KeyError, TypeError, ValueError):  # a partial record: guidance still stands, targets do not
+                    targets = []
+                if targets:
+                    base["changes_that_would_help"] = [
+                        {"check": F.RULE_PLAIN.get(t.get("rule_id"), {}).get("name"), "to_meet_it": t.get("task"),
+                         "target": t.get("target_display"), "change_by": t.get("gap_display")} for t in targets]
             p = s.get("plan") or {}
             c = p.get("all_changes_together")
             if c and c.get("simulated_decision") in ("APPROVED", "ELIGIBILITY_CONDITIONS_MET"):

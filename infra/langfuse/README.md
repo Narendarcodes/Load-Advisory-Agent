@@ -83,8 +83,30 @@ python scripts/development/langfuse_check.py --stack-env --send-trace
 Exit `0` means health, Basic-auth project lookup and trace delivery all passed. Exit `2` means the config is
 inactive (the agent still runs). Exit `1` means the stack or key is wrong.
 
-## Day-to-day operations
+> `--stack-env` reads `infra/langfuse/.env` for `LANGFUSE_PUBLIC_KEY`/`LANGFUSE_SECRET_KEY`, but that file only holds
+> the stack's bootstrap names (`LANGFUSE_INIT_PROJECT_PUBLIC_KEY`, …), so it reports `"active": false`. Use
+> `--env-file .env` from the repo root instead — it carries the agent-side keys.
 
+## Prompt Management and the Playground
+
+The agent's answer/classifier prompts are versioned Langfuse prompts (`loan-advisory-explain`, …) with movable
+labels; publish, diff, promote and A/B them with `scripts/development/langfuse_prompts.py` and
+`scripts/development/langfuse_prompt_experiment.py`. Full walkthrough:
+[`docs/observability/langfuse-prompts.md`](../../docs/observability/langfuse-prompts.md).
+
+Two OpenAI-compatible LLM connections are registered for the Playground: `groq` (hosted; its tokens-per-minute cap
+applies) and `omniroute` (`http://host.docker.internal:20128/v1`, the local answer gateway on the Docker host).
+The Playground's SSRF guard blocks internal hostnames, so `docker-compose.yml` allowlists exactly one host:
+
+```yaml
+LANGFUSE_LLM_CONNECTION_WHITELISTED_HOST: ${LANGFUSE_LLM_CONNECTION_WHITELISTED_HOST:-host.docker.internal}
+```
+
+Change the default (or set the variable) if your gateway is reachable under a different name, and recreate
+`langfuse-web`/`langfuse-worker` after the change. A rejected base URL reads
+`Invalid base URL: Blocked hostname detected`.
+
+## Day-to-day operations
 ```bash
 # status / health
 docker compose --env-file infra/langfuse/.env -f infra/langfuse/docker-compose.yml ps

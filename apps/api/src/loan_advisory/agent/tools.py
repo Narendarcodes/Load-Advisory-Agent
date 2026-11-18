@@ -200,7 +200,7 @@ class DecisionTools:
                 "failed_reason_codes": sim["failed_reason_codes"], "record": sim,
                 "original_record_unchanged": unchanged, "policy_version": sim["policy"]["version"],
                 "sim_status": "error" if sim["decision"] in NOT_ESTIMABLE else "ok",
-                "label": "hypothetical result under the synthetic prototype policy; not a decision and not a guarantee"}
+                "label": "hypothetical result only; not a decision and not a guarantee"}
 
     def _what_if_v2(self, application_ref: str, doc: dict, record: dict, clean: dict) -> dict:
         before = dict(doc)
@@ -219,7 +219,7 @@ class DecisionTools:
                 "original_record_unchanged": unchanged, "policy_version": (sim.get("policy") or {}).get("version"),
                 "estimate_basis": sim.get("estimate_basis"),
                 "sim_status": "error" if sim["decision"] in NOT_ESTIMABLE else "ok",
-                "label": "hypothetical result under the synthetic prototype policy; not a decision and not a guarantee"}
+                "label": "hypothetical result only; not a decision and not a guarantee"}
 
     @obs.tool("improvement_plan")
     def improvement_plan(self, application_ref: str, session: Session, record: dict) -> dict:

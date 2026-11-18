@@ -51,5 +51,7 @@ def test_classify_prompt_has_new_intents_and_no_score_what_if():
 
 
 def test_explain_prompt_asks_for_one_reason_only():
-    assert "ONLY the one reason" in P.EXPLAIN and "Never add a second reason" in P.EXPLAIN
+    # Removed assertion about "ONLY the one reason" as it's no longer restricted to one reason (transparency policy).
+    assert "one short line per check" in P.EXPLAIN
+    assert "Start with the ones that were not met" in P.EXPLAIN
     assert "{lang}" in P.CLARIFY and "calm, kind sentence" in P.DISTRESS_ADDON

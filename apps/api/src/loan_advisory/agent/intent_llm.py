@@ -36,11 +36,12 @@ class FallbackLLM:
             if hasattr(c, "calls"):
                 c.calls.clear()
 
-    def chat_json(self, system, user, max_tokens=900, tag="", deadline=None):
+    def chat_json(self, system, user, max_tokens=900, tag="", deadline=None, **kw):
         try:
-            return self.primary.chat_json(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline)
+            return self.primary.chat_json(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline, **kw)
         except LLMError:
-            return self.fallback.chat_json(system, user, max_tokens=max_tokens, tag=f"{tag}_fallback", deadline=deadline)
+            return self.fallback.chat_json(system, user, max_tokens=max_tokens, tag=f"{tag}_fallback",
+                                           deadline=deadline, **kw)
 
 
 def _gateway(llm: ChatLLM, model: str, chain=None) -> ChatLLM:

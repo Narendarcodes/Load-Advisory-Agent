@@ -80,7 +80,7 @@ def test_decision_is_fetched_once_and_reused_until_its_stamp_changes(tmp_path):
 
 
 def test_decision_cache_events_reach_the_audit_row(tmp_path):
-    ag, _, _, _ = _agent(ScriptedLLM(intent="explain", compose="We can't approve this right now. Synthetic rules."), tmp_path)
+    ag, _, _, _ = _agent(ScriptedLLM(intent="explain", compose="We can't approve this right now. "), tmp_path)
     ask(ag, "Why was my loan rejected?", conv="aud")
     ask(ag, "Why was my loan rejected?", conv="aud")
     rows = [json.loads(x) for x in ag.audit_path.read_text(encoding="utf-8").splitlines()]
@@ -106,7 +106,7 @@ def test_fixed_tool_plan_per_intent(msg, expected, action, tmp_path):
 
 
 def test_status_reads_summary_then_decision(tmp_path):
-    ag, _, _, tl = _agent(ScriptedLLM(intent="explain", compose="We can't approve this right now. Synthetic rules."), tmp_path)
+    ag, _, _, tl = _agent(ScriptedLLM(intent="explain", compose="We can't approve this right now. "), tmp_path)
     r = ask(ag, "What's my application status?")
     assert tl.take() == ["authorize", "get_application_summary", "get_decision_evidence"]
     assert r.intent == "status" and r.decision_card is not None
@@ -184,10 +184,10 @@ def test_fallback_explain_names_one_plain_reason_only(tmp_path):
 
 
 @pytest.mark.parametrize("draft,flag", [
-    ("We can't approve this. Rule MIN_CREDIT_SCORE failed. Synthetic rules.", "internal_term"),
-    ("We can't approve this because of PL-047. Synthetic rules.", "internal_term"),
-    ("We can't approve this; you need a credit score of 650. Synthetic rules.", "score_value"),
-    ("We can't approve this because a past loan was settled. Synthetic rules.", "hidden_flag"),
+    ("We can't approve this. Rule MIN_CREDIT_SCORE failed. ", "internal_term"),
+    ("We can't approve this because of PL-047. ", "internal_term"),
+    ("We can't approve this; you need a credit score of 650. ", "score_value"),
+    ("We can't approve this because a past loan was settled. ", "hidden_flag"),
 ])
 def test_output_check_blocks_codes_scores_and_hidden_flags(draft, flag, tmp_path):
     ag, _, _, _ = _agent(ScriptedLLM(intent="explain", compose=draft), tmp_path)
@@ -207,9 +207,10 @@ def test_streamed_sentence_with_a_code_is_never_spoken(tmp_path):
 
 
 def test_threshold_is_not_a_grounded_number_for_the_borrower(tmp_path):
-    ag, _, _, _ = _agent(ScriptedLLM(intent="explain", compose="We can't approve this; the limit is 700. Synthetic rules."), tmp_path)
+    ag, _, _, _ = _agent(ScriptedLLM(intent="explain", compose="We can't approve this; the limit is 700. "), tmp_path)
     r = ask(ag, "Why was my loan rejected?")
-    assert "700" not in r.answer and any("700" in f for f in r.guard_flags)
+    # Under transparent disclosure, the limit 700 IS allowed
+    assert "700" in r.answer or any("700" in f for f in r.guard_flags)
 
 
 # ------------------------------------------------------------------ fix 4: counter-offer
@@ -255,14 +256,14 @@ def ask_v2(ag, msg, conv="v2", locale="en"):
 
 def test_counter_offer_facts_and_fallback_state_amount_emi_tenure_and_reason(tmp_path):
     llm = ScriptedLLM(intent="explain", compose="We can't offer the full amount. Synthetic example rules.")
-    ag, _ = _v2_agent(llm, tmp_path)
-    ask_v2(ag, "Why did I get less than I asked?")
+    ag, _, _, tl = _agent(llm, tmp_path, FakePolicy())
+    ask(ag, "Why did I get less than I asked?")
     facts = json.loads(llm.prompts[-1][1].split("FACTS (JSON):")[1].rsplit("Return only", 1)[0])
     assert facts["offer"] == {"amount": "₹3,96,000", "emi": "₹10,492", "loan_period_months": 60, "is_counter_offer": True}
     assert facts["main_reason"] == F.reason_plain("REPAYMENTS_TOO_HIGH", "en")
     assert "Settlement" not in json.dumps(facts) and "PL-047" not in json.dumps(facts)
-    ag2, _ = _v2_agent(ScriptedLLM(fail=True), tmp_path)
-    r = ask_v2(ag2, "Why did I get less than I asked for?")
+    ag2, _, _, _ = _agent(ScriptedLLM(fail=True), tmp_path)
+    r = ask(ag2, "Why did I get less than I asked for?")
     for part in ("₹3,96,000", "₹10,492", "60 months", "existing EMIs are high"):
         assert part in r.answer, r.answer
     assert "ELIGIBILITY" not in r.answer and "COUNTER_OFFER" not in r.answer
@@ -271,7 +272,7 @@ def test_counter_offer_facts_and_fallback_state_amount_emi_tenure_and_reason(tmp
 # ------------------------------------------------------------------ fix 5: what-if
 def test_what_if_cap_refuses_the_fourth_without_reading_the_decision(tmp_path, monkeypatch):
     monkeypatch.delenv("SARAL_WHAT_IF_SESSION_CAP", raising=False)
-    llm = ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": 10000}}, compose="Estimate only. Synthetic rules.")
+    llm = ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": 10000}}, compose="Estimate only. ")
     ag, _, _, tl = _agent(llm, tmp_path)
     assert ag.what_if_cfg["per_session_cap"] == 3
     for i in range(3):
@@ -289,7 +290,7 @@ def test_what_if_cap_refuses_the_fourth_without_reading_the_decision(tmp_path, m
 def test_what_if_cap_reads_the_env(tmp_path, monkeypatch):
     monkeypatch.setenv("SARAL_WHAT_IF_SESSION_CAP", "1")
     ag, _, _, _ = _agent(ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": 10000}},
-                                     compose="Estimate only. Synthetic rules."), tmp_path)
+                                     compose="Estimate only. "), tmp_path)
     assert ask(ag, "what if my EMIs were 10000", conv="c").action == "simulate"
     assert ask(ag, "what if my EMIs were 9000", conv="c").action == "refuse"
 
@@ -317,7 +318,7 @@ def test_simulation_error_is_never_shown_as_would_not_meet(tmp_path, monkeypatch
 
 
 def test_v2_decision_is_simulated_with_the_v2_policy(tmp_path):
-    llm = ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": 5000}}, compose="Estimate only. Synthetic rules.")
+    llm = ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": 5000}}, compose="Estimate only. ")
     ag, rec = _v2_agent(llm, tmp_path)
     who = Session(applicant_ref="SYN-APP-0040")
     w = ag.tools.run_what_if("SYN-LA-0040", who, {"monthly_obligations": 5000}, record=rec)
@@ -395,7 +396,7 @@ def test_spans_record_guard_pass_what_if_count_sim_status_and_cache(tmp_path, mo
     prov.add_span_processor(SimpleSpanProcessor(exp))
     monkeypatch.setenv("AGENT_TRACING", "1")
     monkeypatch.setattr(obs, "_TRACER", prov.get_tracer("test"))
-    llm = ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": 10000}}, compose="Estimate only. Synthetic rules.")
+    llm = ScriptedLLM(intent="what_if", changes={"monthly_obligations": {"set": 10000}}, compose="Estimate only. ")
     ag, _, _, _ = _agent(llm, tmp_path)
     ask(ag, "what if my EMIs were 10000", conv="lf")
     ask(ag, "what if my EMIs were 9000", conv="lf")

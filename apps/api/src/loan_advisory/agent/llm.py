@@ -37,6 +37,7 @@ from dataclasses import dataclass
 import requests
 
 from loan_advisory.agent import observability as obs
+from loan_advisory.agent import prompt_store as prompt_store
 
 DEFAULT_PROVIDER = "omniroute"
 PROVIDERS = {
@@ -222,14 +223,16 @@ class ChatLLM:
     supports_deadline = True  # the graph passes an absolute perf_counter() deadline to every call
 
     def chat(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
-             deadline: float | None = None) -> str:
+             deadline: float | None = None, prompt_ref: dict | None = None) -> str:
         return "".join(self.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
-                                        deadline=deadline)).strip()
+                                        deadline=deadline, prompt_ref=prompt_ref)).strip()
 
     def chat_stream(self, system: str = None, user: str = None, max_tokens: int = 900, temperature: float = 0.0,
-                    tag: str = "", deadline: float | None = None, tools=None, tc=None, on_delta=None, messages=None):
+                    tag: str = "", deadline: float | None = None, tools=None, tc=None, on_delta=None, messages=None,
+                    prompt_ref: dict | None = None):
         """Yield content deltas as they arrive. Raises LLMError on failure or when `deadline` passes.
-        With `tools`, the model's tool calls are collected into `tc` (a ToolCalls)."""
+        With `tools`, the model's tool calls are collected into `tc` (a ToolCalls). `prompt_ref`
+        ({"name","version"} from prompt_store.render) links the generation to its Langfuse prompt version."""
         params = {"max_tokens": max_tokens, "temperature": temperature}
         if self.reasoning_effort:
             params["reasoning_effort"] = self.reasoning_effort
@@ -238,7 +241,8 @@ class ChatLLM:
                                                               "langfuse.observation.model.name": self.model,
                                                               "langfuse.observation.model.parameters": json.dumps(params),
                                                               "langfuse.observation.input": obs.lf_content(user),
-                                                              "input.value": obs.content(user), "llm.system": obs.content(system)}) as sp:
+                                                              "input.value": obs.content(user), "llm.system": obs.content(system),
+                                                              **prompt_store.attrs(prompt_ref)}) as sp:
             parts = []
             try:
                 for d in self._stream(system, user, max_tokens, temperature, tag, deadline,
@@ -374,16 +378,19 @@ class ChatLLM:
                 STATS["prompt_tokens"] += usage.get("prompt_tokens") or 0
                 STATS["completion_tokens"] += usage.get("completion_tokens") or 0
 
-    def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "", deadline: float | None = None) -> dict:
-        txt = self.chat(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline)
+    def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "", deadline: float | None = None,
+                  prompt_ref: dict | None = None) -> dict:
+        txt = self.chat(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline, prompt_ref=prompt_ref)
         return parse_json(txt)
 
     def chat_tools(self, system: str, user: str, tools: list, max_tokens: int = 900, temperature: float = 0.0,
-                   tag: str = "", deadline: float | None = None, on_delta=None, messages=None) -> ToolCalls:
+                   tag: str = "", deadline: float | None = None, on_delta=None, messages=None,
+                   prompt_ref: dict | None = None) -> ToolCalls:
         """One streaming call with tools. Returns the text written and the tool calls the model asked for."""
         tc = ToolCalls()
         for _ in self.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
-                                  deadline=deadline, tools=tools, tc=tc, on_delta=on_delta, messages=messages):
+                                  deadline=deadline, tools=tools, tc=tc, on_delta=on_delta, messages=messages,
+                                  prompt_ref=prompt_ref):
             pass
         return tc
 
@@ -415,13 +422,13 @@ class FallbackChatLLM:
         return self.primary.calls
 
     def chat_stream(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
-                    deadline: float | None = None):
+                    deadline: float | None = None, prompt_ref: dict | None = None):
         last = None
         for i, c in enumerate(self.clients):
             yielded = False
             try:
                 for d in c.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
-                                       deadline=deadline):
+                                       deadline=deadline, prompt_ref=prompt_ref):
                     yielded = True
                     yield d
                 if i:
@@ -439,20 +446,24 @@ class FallbackChatLLM:
         raise last
 
     def chat(self, system: str, user: str, max_tokens: int = 900, temperature: float = 0.0, tag: str = "",
-             deadline: float | None = None) -> str:
+             deadline: float | None = None, prompt_ref: dict | None = None) -> str:
         return "".join(self.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
-                                        deadline=deadline)).strip()
+                                        deadline=deadline, prompt_ref=prompt_ref)).strip()
 
-    def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "", deadline: float | None = None) -> dict:
-        return parse_json(self.chat(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline))
+    def chat_json(self, system: str, user: str, max_tokens: int = 900, tag: str = "", deadline: float | None = None,
+                  prompt_ref: dict | None = None) -> dict:
+        return parse_json(self.chat(system, user, max_tokens=max_tokens, tag=tag, deadline=deadline,
+                                    prompt_ref=prompt_ref))
 
     def chat_tools(self, system: str, user: str, tools: list, max_tokens: int = 900, temperature: float = 0.0,
-                   tag: str = "", deadline: float | None = None, on_delta=None, messages=None) -> ToolCalls:
+                   tag: str = "", deadline: float | None = None, on_delta=None, messages=None,
+                   prompt_ref: dict | None = None) -> ToolCalls:
         tc = ToolCalls()
         for c in self.clients:
             try:
                 for _ in c.chat_stream(system, user, max_tokens=max_tokens, temperature=temperature, tag=tag,
-                                       deadline=deadline, tools=tools, tc=tc, on_delta=on_delta, messages=messages):
+                                       deadline=deadline, tools=tools, tc=tc, on_delta=on_delta, messages=messages,
+                                       prompt_ref=prompt_ref):
                     pass
                 return tc
             except LLMError as e:

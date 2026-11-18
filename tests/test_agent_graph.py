@@ -371,10 +371,11 @@ def test_temporal_questions_search_historical_versions(tmp_path):
     assert pol.historical is False
 
 
-def test_missing_synthetic_label_is_appended(tmp_path):
+def test_decision_is_fully_transparent_instead_of_synthetic_label_appended(tmp_path):
     ag, _, _ = agent_for(ScriptedLLM(intent="explain", compose="Your credit score is 690; 700 is needed."), tmp_path=tmp_path)
     r = ask(ag, "Why was I rejected?")
-    assert "synthetic_label_appended" in r.guard_flags and "synthetic prototype policy" in r.answer
+    assert "synthetic_label_appended" not in r.guard_flags and "synthetic prototype policy" not in r.answer
+    assert "690" in r.answer and "700" in r.answer
 
 
 def test_guard_false_positives_seen_in_eval_stay_fixed():

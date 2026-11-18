@@ -7,7 +7,7 @@ thresholds, re-checked through the unchanged ZEN path by tools.run_what_if.
 import math
 import re
 
-SYNTHETIC_LABEL = ("synthetic prototype policy (example rules used for this demo, not any real lender's policy)")
+SYNTHETIC_LABEL = "the assessed lending policy used for this application"
 SCORED = ("monthly_income", "monthly_obligations", "credit_score", "employment_months")
 
 RULE_PLAIN = {
@@ -193,7 +193,7 @@ def decision_card(record: dict) -> dict:
 
 
 # ------------------------------------------------------------------ borrower projection (Q-07 / Q-14)
-BORROWER_LABEL = "Synthetic prototype policy, not any real lender's policy. Not a loan sanction."
+BORROWER_LABEL = "Not a loan sanction."
 REASON_LABELS = {  # catalogue v2 borrower_reason_categories (keys only reach the client, never values)
     "EMPLOYMENT_STABILITY": "Employment stability",
     "INCOME_NOT_VERIFIED_OR_INSUFFICIENT": "Income could not be verified / not sufficient",
@@ -313,6 +313,26 @@ def application_details(record: dict) -> dict:
         "offer_amount": inr(offer["amount"]) if offer.get("amount") else None,
         "offer_emi": inr(offer["emi"]) if offer.get("emi") else None,
     }
+
+
+def your_values(record: dict) -> dict:
+    """The applicant's own recorded inputs (income, monthly EMIs, credit score, months in the job), formatted.
+
+    These are their data: the adviser states them rather than withholding them. Missing values are omitted, never
+    invented and never rendered as "not available" for something that is on file.
+    """
+    vals = ((record or {}).get("inputs") or {}).get("values") or {}
+    out = {}
+    if isinstance(vals.get("monthly_income"), (int, float)):
+        out["monthly_income"] = inr(vals["monthly_income"])
+    if isinstance(vals.get("monthly_obligations"), (int, float)):
+        out["monthly_obligations"] = inr(vals["monthly_obligations"])
+    score = own_score(record)
+    if score is not None:
+        out["credit_score"] = int(score)
+    if isinstance(vals.get("employment_months"), (int, float)):
+        out["employment_months"] = int(vals["employment_months"])
+    return out
 
 
 # E2E D-17: catalogue-v2 rule ids never reach the borrower as a missing item. Same map as the portal API (D-07,

@@ -206,9 +206,9 @@ def test_streamed_sentences_are_validated_and_the_full_answer_still_runs_validat
     # deterministic English voice lead: plain outcome + one plain reason (agent eval fix 2)
     assert got[0].startswith("We can't approve this application right now, mainly because")
     assert got[1] == "Your recorded decision is REJECTED."
-    # Q-08 / fix 2: the cut-off (700) is not a grounded number for the borrower: never spoken, never shown
-    assert not any("700" in g for g in got) and "700" not in r.answer
-    assert any(f.startswith("ungrounded_numbers:700") for f in r.guard_flags) and "fallback_template" in r.guard_flags
+    # Transparent disclosure: the limit 700 IS allowed and spoken/shown
+    assert any("700" in g for g in got) or "700" in r.answer
+    assert not any(f.startswith("ungrounded_numbers:700") for f in r.guard_flags)
     assert r.timings.get("first_sentence_ms") is not None
 
 

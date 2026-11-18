@@ -66,6 +66,8 @@ conversations or model prompts/answers (unless content capture is explicitly ena
 | `LANGFUSE_TIMEOUT` | `5` | SDK HTTP timeout (seconds) |
 | `LANGFUSE_ALLOW_REMOTE` | off | Allows a non-loopback endpoint; Langfuse Cloud hosts are always refused |
 | `LANGFUSE_TRACING_ENABLED=false` | — | SDK-style hard off that overrides `LANGFUSE_ENABLED` |
+| `LANGFUSE_PROMPTS` | off | Serve answer/classifier prompts from Prompt Management instead of `prompts.py` (see [langfuse-prompts.md](langfuse-prompts.md)) |
+| `LANGFUSE_PROMPT_LABEL` | `production` | Which prompt version label the agent resolves |
 
 Invalid configuration is reported (`missing_credentials`, `invalid_base_url`, `cloud_endpoint_refused`,
 `non_loopback_endpoint`, `invalid_sample_rate`, `invalid_timeout`) and disables the exporter. It never raises and
@@ -146,6 +148,14 @@ curl -s -u "$LANGFUSE_PUBLIC_KEY:$LANGFUSE_SECRET_KEY" \
 `tests/test_langfuse_live.py` does exactly this (opt-in with `LANGFUSE_LIVE=1`) and is skipped in the normal suite.
 
 ## Evaluation workflow
+
+### 0. Prompt versions (Prompt Management)
+
+The answer and classifier templates are published as versioned Langfuse prompts (`loan-advisory-explain`,
+`loan-advisory-policy`, …) with movable labels (`production`, `candidate`). With `LANGFUSE_PROMPTS=1` the agent serves
+the labelled version and links each `llm.*` generation to it; with the flag off (default) it renders `prompts.py`
+exactly as before. Publish, diff, promote, run a Playground comparison and run the deterministic prompt A/B in
+[langfuse-prompts.md](langfuse-prompts.md).
 
 ### 1. Reproducible offline eval (no Langfuse, no credentials, no Qdrant)
 

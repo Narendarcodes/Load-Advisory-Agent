@@ -44,6 +44,10 @@ x-langfuse-env: &langfuse-env
   REDIS_PORT: "6379"
   REDIS_AUTH: ${REDIS_AUTH}
   REDIS_TLS_ENABLED: "false"
+  # The Playground's LLM connections pass an SSRF guard that blocks internal hostnames. Allow the one host the local
+  # gateway is reached on (the OmniRoute/answer-gateway endpoint on the Docker host), nothing else. Remove the default
+  # to restore the strict block.
+  LANGFUSE_LLM_CONNECTION_WHITELISTED_HOST: ${LANGFUSE_LLM_CONNECTION_WHITELISTED_HOST:-host.docker.internal}
 
 x-logging: &logging
   driver: json-file
